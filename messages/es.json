@@ -1,0 +1,97 @@
+{
+  "common": {
+    "appName": "CLP Hub",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "comingSoon": "Próximamente",
+    "comingSoonDescription": "Esta sección se construirá en una fase posterior.",
+    "noAccess": "No tienes acceso a esta sección.",
+    "skipToContent": "Ir al contenido"
+  },
+  "locale": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "nav": {
+    "overview": "Resumen",
+    "applications": "Solicitudes",
+    "participants": "Participantes",
+    "screening": "Evaluación",
+    "cohorts": "Cohortes",
+    "sessions": "Sesiones",
+    "communications": "Comunicaciones",
+    "logistics": "Logística VR",
+    "content": "Contenido",
+    "tasks": "Tareas",
+    "alerts": "Alertas",
+    "team": "Equipo",
+    "settings": "Configuración"
+  },
+  "roles": {
+    "ADMIN": "Administración",
+    "STUDY_MANAGER": "Coordinación del estudio",
+    "FACILITATOR": "Facilitación",
+    "RESEARCHER": "Investigación",
+    "LOGISTICS": "Logística"
+  },
+  "auth": {
+    "login": {
+      "title": "Acceso del equipo",
+      "subtitle": "Panel operativo del estudio. Solo personal autorizado.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "invalid": "Correo o contraseña incorrectos.",
+      "inactive": "Tu cuenta no está activa. Contacta con la administración del estudio.",
+      "noStudies": "Tu cuenta no tiene acceso a ningún estudio todavía.",
+      "unavailable": "No se pudo conectar con el servicio de acceso. Inténtalo de nuevo en unos minutos."
+    },
+    "logout": "Cerrar sesión"
+  },
+  "team": {
+    "header": {
+      "study": "Estudio",
+      "switchStudy": "Cambiar de estudio",
+      "openMenu": "Abrir menú",
+      "account": "Cuenta"
+    },
+    "noStudy": {
+      "title": "Sin estudios asignados",
+      "description": "Tu cuenta existe pero no tiene roles en ningún estudio. Pide a la administración que te asigne uno."
+    },
+    "overview": {
+      "title": "Resumen",
+      "today": "Hoy",
+      "todayEmpty": "No hay eventos programados para hoy.",
+      "attention": "Requiere atención",
+      "attentionEmpty": "Nada requiere atención en este momento.",
+      "stats": {
+        "applications": "Solicitudes",
+        "screeningPending": "Evaluaciones pendientes",
+        "eligible": "Elegibles",
+        "enrolled": "Inscritos"
+      },
+      "foundationNote": "Fase 0: estructura base. Los datos operativos aparecerán en las fases siguientes."
+    },
+    "yourRoles": "Tus roles"
+  },
+  "status": {
+    "study": {
+      "DRAFT": "Borrador",
+      "ACTIVE": "Activo",
+      "PAUSED": "En pausa",
+      "CLOSED": "Cerrado",
+      "ARCHIVED": "Archivado"
+    }
+  },
+  "public": {
+    "landing": {
+      "title": "Estudio de investigación",
+      "subtitle": "Esta página se está preparando. Pronto encontrarás aquí la información sobre el estudio y cómo participar.",
+      "teamAccess": "Acceso del equipo"
+    }
+  }
+}

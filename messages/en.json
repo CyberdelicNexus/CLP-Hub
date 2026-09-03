@@ -1,0 +1,97 @@
+{
+  "common": {
+    "appName": "CLP Hub",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "comingSoon": "Coming soon",
+    "comingSoonDescription": "This section will be built in a later phase.",
+    "noAccess": "You do not have access to this section.",
+    "skipToContent": "Skip to content"
+  },
+  "locale": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "nav": {
+    "overview": "Overview",
+    "applications": "Applications",
+    "participants": "Participants",
+    "screening": "Screening",
+    "cohorts": "Cohorts",
+    "sessions": "Sessions",
+    "communications": "Communications",
+    "logistics": "VR Logistics",
+    "content": "Content",
+    "tasks": "Tasks",
+    "alerts": "Alerts",
+    "team": "Team",
+    "settings": "Settings"
+  },
+  "roles": {
+    "ADMIN": "Admin",
+    "STUDY_MANAGER": "Study manager",
+    "FACILITATOR": "Facilitator",
+    "RESEARCHER": "Researcher",
+    "LOGISTICS": "Logistics"
+  },
+  "auth": {
+    "login": {
+      "title": "Team access",
+      "subtitle": "Study operations dashboard. Authorized staff only.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "invalid": "Incorrect email or password.",
+      "inactive": "Your account is not active. Contact the study administration.",
+      "noStudies": "Your account has no study access yet.",
+      "unavailable": "Could not reach the sign-in service. Try again in a few minutes."
+    },
+    "logout": "Sign out"
+  },
+  "team": {
+    "header": {
+      "study": "Study",
+      "switchStudy": "Switch study",
+      "openMenu": "Open menu",
+      "account": "Account"
+    },
+    "noStudy": {
+      "title": "No studies assigned",
+      "description": "Your account exists but has no roles in any study. Ask an administrator to assign one."
+    },
+    "overview": {
+      "title": "Overview",
+      "today": "Today",
+      "todayEmpty": "No events scheduled for today.",
+      "attention": "Needs attention",
+      "attentionEmpty": "Nothing needs attention right now.",
+      "stats": {
+        "applications": "Applications",
+        "screeningPending": "Screenings pending",
+        "eligible": "Eligible",
+        "enrolled": "Enrolled"
+      },
+      "foundationNote": "Phase 0: foundation shell. Operational data will appear in later phases."
+    },
+    "yourRoles": "Your roles"
+  },
+  "status": {
+    "study": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "PAUSED": "Paused",
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
+    }
+  },
+  "public": {
+    "landing": {
+      "title": "Research study",
+      "subtitle": "This page is being prepared. Information about the study and how to take part will appear here soon.",
+      "teamAccess": "Team access"
+    }
+  }
+}

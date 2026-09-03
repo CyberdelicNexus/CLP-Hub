@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CLP Hub
 
-## Getting Started
+Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-First, run the development server:
+**Status: Phase 0 — foundation shell.** No recruitment, screening, randomization, messaging or participant content exists yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+
+## Surfaces
+
+| Surface | Path | Who | Phase |
+|---|---|---|---|
+| Public recruitment site | `/` | Anyone | 1 |
+| Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 4–5 |
+| Team dashboard | `/equipo` | Authenticated staff | 0+ |
+
+Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles.
+
+## Stack
+
+Next.js 16 (App Router, React 19) · TypeScript strict · Tailwind 4 + shadcn/ui · PostgreSQL on Supabase · Drizzle ORM with hand-written SQL migrations · next-intl · Zod · Vitest · pino.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local      # fill in the Supabase dev project values
+npm run db:migrate              # applies supabase/migrations/*.sql
+npm run db:seed                 # DEMO study + synthetic staff (needs ALLOW_DEMO_DATA=true)
+npm run dev                     # http://localhost:3000/equipo/login
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example.com`, `demo.facilitator@example.com`, `demo.researcher@example.com`, `demo.logistics@example.com`, password = `SEED_STAFF_PASSWORD`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Purpose |
+|---|---|
+| `npm run dev` / `build` / `start` | Next.js |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest (authorization, scoping, audit, env guards) |
+| `npm run db:migrate` | Apply pending SQL migrations |
+| `npm run db:seed` | Synthetic development data (refuses in production) |
 
-## Learn More
+## Documentation
 
-To learn more about Next.js, take a look at the following resources:
+- `docs/architecture.md` — surfaces, layers, request flow, security model
+- `docs/domain-model.md` — entities, status enums, phase-by-phase schema plan
+- `docs/permissions.md` — roles → permissions matrix
+- `docs/automations.md` — events, rules, scheduled actions (design, Phase 8)
+- `docs/content-model.md` — versioned study content (design, Phase 5)
+- `docs/research-data-boundaries.md` — what this app must never store
+- `docs/development.md` — environments, migrations, seeding, testing
+- `docs/decisions.md` — append-only decision log
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Non-negotiables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+No randomization algorithm. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.
