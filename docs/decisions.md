@@ -2,7 +2,7 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 1 (Recruitment) — started 2026-09-04 on founder approval. Phase 0 shipped.**
+**Current phase: 2 (Participant operations) — started 2026-09-05 on founder approval. Phases 0–1 shipped.**
 
 ---
 
@@ -127,12 +127,78 @@ which is what makes the proposed erasure approach — clear contact data, keep
 history — possible. Audit snapshots reference the code, not the person's name or
 email.
 
+## D-017 · 2026-09-05 · Randomization moves to Phase 3, with study arms
+
+Founder decision, amending the phase plan in `docs/domain-model.md`. `randomizations`
+cannot record a meaningful allocation without an arm to point at, and `study_arms`
+was scheduled for Phase 3. Rather than store an unvalidated arm code and migrate
+it later, both tables land together in Phase 3.
+
+Consequences: `enrollment_status` keeps its full vocabulary, but RANDOMIZED and
+COHORT_ASSIGNED are deliberately unreachable in Phase 2 — no code path can set
+them, and `PHASE_3_ENROLLMENT_STATUSES` in `src/domain/participant-state.ts`
+names them so the gap is explicit rather than accidental.
+
+Also noted: `docs/permissions.md` defines `randomization.read` but no
+`randomization.manage`, so as written nobody could record an allocation. The key
+was **not** added now, since an unused permission is worse than a missing one.
+Adding it is a prerequisite for Phase 3.
+
+## D-018 · 2026-09-05 · Allocations are recorded manually, never generated
+
+Founder decision, settled ahead of Phase 3. When randomization arrives, a
+`RandomizationProvider` interface will exist so an approved mechanism can be
+plugged in, but the only implementation will be manual entry: staff record an
+arm and an external reference produced by the approved system.
+
+A demo fixture provider was considered and rejected. No code capable of producing
+an allocation belongs in this repository, not even guarded by `ALLOW_DEMO_DATA` —
+the guarantee is easier to audit if it is absolute.
+
+## D-019 · 2026-09-05 · Screening stores an appointment and a result, nothing else
+
+The `screenings` table has no free-text column at all, deliberately. Screening
+answers, instrument scores and clinical notes are Category C and live in the
+institution's approved system; `external_record_id` is an opaque pointer to it,
+capped at 120 characters and validated against `^[\w.:/-]*$` so it cannot quietly
+become a notes field. A staff member who types prose there is told why it was
+refused.
+
+Database constraints back this up rather than trusting application code: a result
+requires status COMPLETED, a completed screening requires a timestamp, and
+'PENDING' is rejected as a result because "not determined" is expressed by the
+absence of one.
+
+New vocabulary: screening status SCHEDULED / COMPLETED / NO_SHOW / CANCELLED.
+This is **not** from the founder's brief — it is an assumption, and researchers
+should confirm it covers the real workflow (see open questions).
+
+## D-020 · 2026-09-05 · Consent is a status record, and is historical
+
+`consents` records which form version was used, when the decision was made, who
+recorded it and an external reference. No document, no signature, no upload.
+
+Rows are never rewritten into a different decision: re-consenting to a newer
+version creates a new row and marks the previous one SUPERSEDED, and a partial
+unique index permits only one PENDING/CONSENTED row per participant at a time.
+SUPERSEDED is not reachable by any staff action — only the service sets it.
+
+Consenting enrols the participant in the same transaction. Declining or
+withdrawing consent does **not** automatically un-enrol anyone: that is a
+separate, deliberate decision, recorded on its own.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
 - Captcha / WAF and rate limiting for the public application form (D-015).
 - Whether the permitted application question vocabulary should be enforced in the
   database rather than by convention (D-014).
+- Confirm the screening status vocabulary (SCHEDULED / COMPLETED / NO_SHOW /
+  CANCELLED) reflects the real workflow — it is an assumption, not from the brief (D-019).
+- Whether an eligibility determination may be corrected after the fact, and by
+  whom. The app currently permits it and audits every change.
+- Consent form versions are free-text labels today. Should they become study
+  configuration rows so the set of valid versions is controlled?
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Whether email reminders may be AUTOMATIC or should also be manual.

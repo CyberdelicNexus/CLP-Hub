@@ -12,6 +12,32 @@ This application is an **operations** tool. It is not the research outcomes data
 
 Keep the separation visible: no table or column for Category C data may be added without a recorded researcher decision in `docs/decisions.md`.
 
+### How Phase 2 holds the line
+
+`screenings` deliberately has **no free-text column**. It stores an appointment,
+a staff-recorded eligibility result, and `external_record_id` — an opaque pointer
+to the approved system, capped at 120 characters and validated against
+`^[\\w.:/-]*# Research data boundaries
+
+This application is an **operations** tool. It is not the research outcomes database and not a REDCap substitute.
+
+## Three categories
+
+| Category | Examples | Stored here? |
+|---|---|---|
+| A. Operational identity | Name, email, phone, shipping address, timezone, cohort, schedule | Yes, minimum necessary, contact fields gated by `participants.contact.read` |
+| B. Study operations | Screening *status*, eligibility *result*, consent *status*, randomization *status* and arm, attendance, VR readiness, logistics, communications | Yes |
+| C. Research / clinical | Screening answers, psychometrics, clinical notes, outcome measures, adverse events, health history | **No.** Lives in the institution's approved system. This app stores only `external_record_id` and result/status fields. |
+
+Keep the separation visible: no table or column for Category C data may be added without a recorded researcher decision in `docs/decisions.md`.
+
+ so prose is refused. `consents` likewise stores a status, a form
+version label and an external reference, never the signed document.
+
+Database check constraints enforce the rules rather than trusting application
+code: a result requires status COMPLETED, a completed screening requires a
+timestamp, and 'PENDING' is rejected as a result.
+
 ### Where Category C is most likely to leak in
 
 `application_answers` (Phase 1) stores free-form answers to questions that are **configuration rows**, so the boundary depends on what is configured rather than on the schema. Per D-014, application questions may ask only operational things — contact, availability, location, referral source, consent to be contacted. A health, symptom, diagnosis, medication or psychometric question would put Category C data in this app.

@@ -1,5 +1,10 @@
 import { pgTable, text, timestamp, uuid, index, unique } from "drizzle-orm/pg-core";
-import { recruitmentStatusEnum, uiLocaleEnum } from "./enums";
+import {
+  eligibilityStatusEnum,
+  enrollmentStatusEnum,
+  recruitmentStatusEnum,
+  uiLocaleEnum,
+} from "./enums";
 import { studies } from "./studies";
 
 /**
@@ -19,6 +24,9 @@ export const participants = pgTable(
       .references(() => studies.id),
     code: text("code").notNull(),
     recruitmentStatus: recruitmentStatusEnum("recruitment_status").notNull().default("INTERESTED"),
+    eligibilityStatus: eligibilityStatusEnum("eligibility_status").notNull().default("PENDING"),
+    /** Null means "not yet in the enrollment pipeline" — not the same as CONSENT_PENDING. */
+    enrollmentStatus: enrollmentStatusEnum("enrollment_status"),
     locale: uiLocaleEnum("locale").notNull().default("es"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -27,6 +35,8 @@ export const participants = pgTable(
     unique("participants_code_unique").on(t.studyId, t.code),
     index("participants_study_idx").on(t.studyId, t.createdAt),
     index("participants_status_idx").on(t.studyId, t.recruitmentStatus),
+    index("participants_eligibility_idx").on(t.studyId, t.eligibilityStatus),
+    index("participants_enrollment_idx").on(t.studyId, t.enrollmentStatus),
   ],
 );
 

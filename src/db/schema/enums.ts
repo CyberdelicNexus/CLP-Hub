@@ -8,6 +8,9 @@ import {
   QUESTION_TYPES,
   RECRUITMENT_STATUSES,
 } from "@/domain/recruitment";
+import { CONSENT_STATUSES } from "@/domain/consent";
+import { ELIGIBILITY_STATUSES, ENROLLMENT_STATUSES } from "@/domain/participant-state";
+import { SCREENING_STATUSES } from "@/domain/screening";
 
 // Postgres enum names must match supabase/migrations/0001_foundation.sql
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
@@ -20,3 +23,9 @@ export const recruitmentStatusEnum = pgEnum("recruitment_status", RECRUITMENT_ST
 export const applicationStatusEnum = pgEnum("application_status", APPLICATION_STATUSES);
 export const applicationSourceEnum = pgEnum("application_source", APPLICATION_SOURCES);
 export const questionTypeEnum = pgEnum("question_type", QUESTION_TYPES);
+
+// Participant operations (Phase 2, migration 0003)
+export const eligibilityStatusEnum = pgEnum("eligibility_status", ELIGIBILITY_STATUSES);
+export const enrollmentStatusEnum = pgEnum("enrollment_status", ENROLLMENT_STATUSES);
+export const screeningStatusEnum = pgEnum("screening_status", SCREENING_STATUSES);
+export const consentStatusEnum = pgEnum("consent_status", CONSENT_STATUSES);

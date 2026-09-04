@@ -149,6 +149,7 @@ const DEMO_APPLICANTS = [
     referral: "web",
     notes: "Registro sintético de demostración.",
     status: "SUBMITTED" as const,
+    ops: null,
   },
   {
     fullName: "Persona Sintética Dos (DEMO)",
@@ -159,6 +160,7 @@ const DEMO_APPLICANTS = [
     referral: "friend",
     notes: "Registro sintético de demostración.",
     status: "IN_REVIEW" as const,
+    ops: null,
   },
   {
     fullName: "Persona Sintética Tres (DEMO)",
@@ -169,6 +171,21 @@ const DEMO_APPLICANTS = [
     referral: "social",
     notes: null,
     status: "ACCEPTED_FOR_SCREENING" as const,
+    // A screening booked but not yet held.
+    ops: { screening: "SCHEDULED" as const, result: null, consent: null },
+  },
+  {
+    fullName: "Persona Sintética Cuatro (DEMO)",
+    email: "demo.aplicante4@example.com",
+    phone: "+34 600 000 004",
+    city: "Aldea Simulada",
+    availability: ["mornings"],
+    referral: "professional",
+    notes: null,
+    status: "ACCEPTED_FOR_SCREENING" as const,
+    // Screened and consented, so the enrolled path has an example too.
+    // The external references are obviously fake and carry no clinical content.
+    ops: { screening: "COMPLETED" as const, result: "ELIGIBLE" as const, consent: "CONSENTED" as const },
   },
 ];
 
@@ -339,6 +356,56 @@ async function main() {
         push("notes", applicant.notes);
         push("contact_consent", true);
         if (answers.length > 0) await tx.insert(schema.applicationAnswers).values(answers);
+
+        // Synthetic participant operations (Phase 2).
+        // Screening rows carry no clinical content: an appointment, a recorded
+        // result, and an obviously fake reference to an external system.
+        const ops = applicant.ops;
+        if (ops) {
+          const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+          if (ops.screening === "SCHEDULED") {
+            await tx.insert(schema.screenings).values({
+              studyId: study.id,
+              participantId: participant.id,
+              status: "SCHEDULED",
+              scheduledAt,
+            });
+            await tx
+              .update(schema.participants)
+              .set({ recruitmentStatus: "SCREENING_SCHEDULED" })
+              .where(eq(schema.participants.id, participant.id));
+          } else if (ops.screening === "COMPLETED" && ops.result) {
+            await tx.insert(schema.screenings).values({
+              studyId: study.id,
+              participantId: participant.id,
+              status: "COMPLETED",
+              scheduledAt,
+              completedAt: new Date(),
+              result: ops.result,
+              externalRecordId: "DEMO-EXT-0004",
+            });
+            await tx
+              .update(schema.participants)
+              .set({ recruitmentStatus: "SCREENING_SCHEDULED", eligibilityStatus: ops.result })
+              .where(eq(schema.participants.id, participant.id));
+          }
+
+          if (ops.consent === "CONSENTED") {
+            await tx.insert(schema.consents).values({
+              studyId: study.id,
+              participantId: participant.id,
+              status: "CONSENTED",
+              versionLabel: "HIP DEMO v1.0",
+              decidedAt: new Date(),
+              externalRecordId: "DEMO-CONSENT-0004",
+            });
+            await tx
+              .update(schema.participants)
+              .set({ enrollmentStatus: "ENROLLED" })
+              .where(eq(schema.participants.id, participant.id));
+          }
+        }
 
         await recordAuditEvent(tx, {
           studyId: study.id,

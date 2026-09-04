@@ -1,0 +1,288 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { assertPermission, AuthorizationError } from "@/auth/authorize";
+import { getStudyContext } from "@/auth/study-context";
+import { CONSENT_VERSION_MAX_LENGTH } from "@/domain/consent";
+import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
+import { logger } from "@/lib/logger";
+import {
+  closeScreening,
+  completeScreening,
+  InvalidTransitionError,
+  NotFoundError,
+  recordConsentDecision,
+  scheduleScreening,
+  setEnrollmentStatus,
+  startConsent,
+} from "@/services/participant-ops";
+
+/**
+ * Phase 2 staff actions.
+ *
+ * Every one of these resolves the study from the server-side context rather than
+ * the form, asserts its own permission, and delegates to a service that writes
+ * the change and its audit row in one transaction.
+ *
+ * None of them accept screening content: the only free-ish text permitted is an
+ * external record identifier, length-capped, pointing at the approved system.
+ */
+
+export type OpState = {
+  error: "forbidden" | "invalid" | "badReference" | "notFound" | "failed" | null;
+  ok?: boolean;
+};
+
+const uuid = z.string().uuid();
+
+// An identifier, not prose. Rejects anything with whitespace runs or newlines so
+// it cannot quietly become a notes field.
+const externalRecordId = z
+  .string()
+  .trim()
+  .max(EXTERNAL_RECORD_ID_MAX_LENGTH)
+  .regex(/^[\w.:/-]*$/, "identifier only")
+  .optional()
+  .transform((v) => (v ? v : null));
+
+/**
+ * Distinguishes a rejected external reference from other validation failures, so
+ * staff who typed a note into that field are told what is actually wrong rather
+ * than getting a generic "not allowed".
+ */
+function validationError(issues: readonly { path: PropertyKey[] }[]): "badReference" | "invalid" {
+  return issues.some((i) => i.path.includes("externalRecordId")) ? "badReference" : "invalid";
+}
+
+function fail(err: unknown, event: string): OpState {
+  if (err instanceof AuthorizationError) {
+    logger.warn({ event: `${event}.forbidden` }, "action refused");
+    return { error: "forbidden" };
+  }
+  if (err instanceof NotFoundError) return { error: "notFound" };
+  if (err instanceof InvalidTransitionError) return { error: "invalid" };
+  logger.error(
+    { event: `${event}.failed`, err: err instanceof Error ? err.message : String(err) },
+    "action failed",
+  );
+  return { error: "failed" };
+}
+
+function revalidate(participantId?: string) {
+  revalidatePath(`${TEAM_BASE_PATH}/participantes`);
+  revalidatePath(`${TEAM_BASE_PATH}/evaluacion`);
+  revalidatePath(TEAM_BASE_PATH);
+  if (participantId) revalidatePath(`${TEAM_BASE_PATH}/participantes/${participantId}`);
+}
+
+// --- Screening --------------------------------------------------------------
+
+const scheduleSchema = z.object({
+  participantId: uuid,
+  // datetime-local gives "YYYY-MM-DDTHH:mm" with no zone; interpreted as the
+  // server's zone and stored as UTC, which is what the schema expects.
+  scheduledAt: z.string().min(1),
+});
+
+export async function scheduleScreeningAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = scheduleSchema.safeParse({
+    participantId: formData.get("participantId"),
+    scheduledAt: formData.get("scheduledAt"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  const when = new Date(parsed.data.scheduledAt);
+  if (Number.isNaN(when.getTime())) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "screening.manage");
+    await scheduleScreening({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      scheduledAt: when,
+    });
+  } catch (err) {
+    return fail(err, "screening.schedule");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const completeSchema = z.object({
+  participantId: uuid,
+  screeningId: uuid,
+  // PENDING is deliberately absent: "not determined" is an incomplete screening.
+  result: z.enum(["ELIGIBLE", "INELIGIBLE", "REVIEW_REQUIRED", "WAITLIST"]),
+  externalRecordId,
+});
+
+export async function completeScreeningAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = completeSchema.safeParse({
+    participantId: formData.get("participantId"),
+    screeningId: formData.get("screeningId"),
+    result: formData.get("result"),
+    externalRecordId: formData.get("externalRecordId") ?? undefined,
+  });
+  if (!parsed.success) return { error: validationError(parsed.error.issues) };
+
+  try {
+    assertPermission(ctx, "screening.manage");
+    await completeScreening({
+      studyId: ctx.study.id,
+      screeningId: parsed.data.screeningId,
+      actorId: ctx.session.userId,
+      result: parsed.data.result,
+      externalRecordId: parsed.data.externalRecordId,
+    });
+  } catch (err) {
+    return fail(err, "screening.complete");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const closeSchema = z.object({
+  participantId: uuid,
+  screeningId: uuid,
+  status: z.enum(["NO_SHOW", "CANCELLED"]),
+});
+
+export async function closeScreeningAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = closeSchema.safeParse({
+    participantId: formData.get("participantId"),
+    screeningId: formData.get("screeningId"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "screening.manage");
+    await closeScreening({
+      studyId: ctx.study.id,
+      screeningId: parsed.data.screeningId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+    });
+  } catch (err) {
+    return fail(err, "screening.close");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+// --- Consent ----------------------------------------------------------------
+
+const startConsentSchema = z.object({
+  participantId: uuid,
+  versionLabel: z.string().trim().min(1).max(CONSENT_VERSION_MAX_LENGTH),
+});
+
+export async function startConsentAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = startConsentSchema.safeParse({
+    participantId: formData.get("participantId"),
+    versionLabel: formData.get("versionLabel"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "consent.manage");
+    await startConsent({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      versionLabel: parsed.data.versionLabel,
+    });
+  } catch (err) {
+    return fail(err, "consent.start");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const decisionSchema = z.object({
+  participantId: uuid,
+  consentId: uuid,
+  status: z.enum(["CONSENTED", "DECLINED", "WITHDRAWN"]),
+  externalRecordId,
+});
+
+export async function recordConsentAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = decisionSchema.safeParse({
+    participantId: formData.get("participantId"),
+    consentId: formData.get("consentId"),
+    status: formData.get("status"),
+    externalRecordId: formData.get("externalRecordId") ?? undefined,
+  });
+  if (!parsed.success) return { error: validationError(parsed.error.issues) };
+
+  try {
+    assertPermission(ctx, "consent.manage");
+    await recordConsentDecision({
+      studyId: ctx.study.id,
+      consentId: parsed.data.consentId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+      externalRecordId: parsed.data.externalRecordId,
+    });
+  } catch (err) {
+    return fail(err, "consent.decision");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+// --- Enrollment -------------------------------------------------------------
+
+const enrollmentSchema = z.object({
+  participantId: uuid,
+  status: z.enum(["WITHDRAWN", "COMPLETED"]),
+});
+
+export async function setEnrollmentAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = enrollmentSchema.safeParse({
+    participantId: formData.get("participantId"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "participants.manage");
+    await setEnrollmentStatus({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+    });
+  } catch (err) {
+    return fail(err, "participant.enrollment");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}

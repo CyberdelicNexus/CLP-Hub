@@ -26,12 +26,26 @@ Enums: `staff_role`, `study_status`, `ui_locale`, `audit_actor_type`. Every enum
 
 Added enums: `recruitment_status`, `application_status`, `application_source`, `question_type` — mirrored in `src/domain/recruitment.ts`.
 
+## Implemented (Phase 2 · migration 0003)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `screenings` | Appointment plus recorded result | **No free-text column.** `result` is a staff-recorded determination; `external_record_id` is an opaque pointer to the approved system (D-019) |
+| `consents` | Consent status and form version | Historical: superseded, never rewritten; one active row per participant (D-020) |
+
+Also adds `participants.eligibility_status` (default PENDING) and
+`participants.enrollment_status` (nullable — null means the participant is not in
+the enrollment pipeline at all, which is a different statement from CONSENT_PENDING).
+
+Added enums: `eligibility_status`, `enrollment_status`, `screening_status`,
+`consent_status`. RANDOMIZED and COHORT_ASSIGNED exist in the vocabulary but no
+Phase 2 code path can set them (D-017).
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 2 Participant ops | `screenings`, `consents`, `randomizations` (table + interface only, no algorithm) |
-| 3 Cohorts | `study_arms`, `cohorts`, `cohort_staff`, `participant_cohort_assignments`, `session_templates`, `cohort_sessions`, `session_attendance` |
+| 3 Cohorts | `randomizations` (manual recording only, no algorithm — D-017/D-018), `study_arms`, `cohorts`, `cohort_staff`, `participant_cohort_assignments`, `session_templates`, `cohort_sessions`, `session_attendance` |
 | 5 Content | `contents`, `content_versions`, `content_assignments` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |

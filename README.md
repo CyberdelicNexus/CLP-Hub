@@ -2,7 +2,7 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 1 — recruitment.** The public application form and staff triage exist. No screening, randomization, messaging or participant content yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phase 2 — participant operations.** Public application form, staff triage, screening appointments and consent records exist. No randomization, cohorts, messaging or participant content yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 

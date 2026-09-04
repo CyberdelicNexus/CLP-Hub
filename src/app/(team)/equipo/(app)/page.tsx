@@ -6,6 +6,7 @@ import { getStudyContext } from "@/auth/study-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { countParticipantOps } from "@/services/participant-ops";
 import { countApplicationsByStatus } from "@/services/recruitment";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -34,13 +35,26 @@ export default async function OverviewPage() {
   const tStatus = await getTranslations("status.study");
   const tRoles = await getTranslations("roles");
 
-  // Phase 1 owns applications; the other three tiles wait for Phase 2.
+  // Each tile is gated by the permission that owns its data, so a viewer sees a
+  // number only where they are entitled to the underlying rows.
   const canReadApplications = ctx.permissions.has("applications.read");
-  const counts = canReadApplications ? await countApplicationsByStatus(ctx.study.id) : null;
-  const totalApplications = counts
-    ? Object.values(counts).reduce((a, b) => a + b, 0)
-    : null;
+  const canReadScreening = ctx.permissions.has("screening.read");
+  const canReadParticipants = ctx.permissions.has("participants.read");
+
+  const [counts, ops] = await Promise.all([
+    canReadApplications ? countApplicationsByStatus(ctx.study.id) : null,
+    canReadParticipants ? countParticipantOps(ctx.study.id) : null,
+  ]);
+
+  const totalApplications = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : null;
   const awaitingReview = counts?.SUBMITTED ?? 0;
+
+  const tileValues: Record<string, number | null> = {
+    applications: totalApplications,
+    screeningPending: canReadScreening ? (ops?.screeningPending ?? null) : null,
+    eligible: ops?.eligible ?? null,
+    enrolled: ops?.enrolled ?? null,
+  };
 
   return (
     <div className="space-y-8">
@@ -56,7 +70,7 @@ export default async function OverviewPage() {
 
       <section aria-label={t("title")} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map(({ key, surface }) => {
-          const value = key === "applications" ? totalApplications : null;
+          const value = tileValues[key] ?? null;
           return (
             <Card key={key} className="transition-shadow duration-200 hover:shadow-lift">
               <CardHeader className="pb-2">

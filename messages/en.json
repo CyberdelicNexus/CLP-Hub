@@ -234,5 +234,96 @@
       "invalid": "That status change is not allowed.",
       "failed": "The change could not be saved. Please try again."
     }
+  },
+  "participants": {
+    "subtitle": "People registered in this study.",
+    "filterLabel": "Filter by eligibility",
+    "all": "All",
+    "backToList": "Back to participants",
+    "detailTitle": "Participant",
+    "contactHidden": "You do not have permission to view contact details.",
+    "emptyTitle": "No participants",
+    "emptyDescription": "Nobody is registered with this filter yet.",
+    "screening": "Screening",
+    "screeningHidden": "You do not have permission to view screening.",
+    "screeningBoundary": "Only the appointment and its result are recorded here. Answers and clinical notes live in the institution's approved system, never in this application.",
+    "noScreenings": "No screenings recorded.",
+    "scheduleScreening": "Schedule screening",
+    "recordResult": "Record result",
+    "when": "Date and time",
+    "result": "Result",
+    "externalRef": "External reference (optional)",
+    "externalRefHelp": "Identifier of the record in the approved system. An identifier only: do not type clinical information here.",
+    "consent": "Consent",
+    "consentHidden": "You do not have permission to view consent.",
+    "consentBoundary": "The consent status and document version are recorded here. The signed document is kept in the institution's approved system.",
+    "noConsents": "No consent recorded.",
+    "startConsent": "Start consent",
+    "startNewConsent": "Start a new version",
+    "consentVersion": "Document version",
+    "consentVersionHelp": "For example, “PIS v2.1”. A label, not the document.",
+    "enrollmentTitle": "Participation",
+    "eligibility": {
+      "PENDING": "Not determined",
+      "ELIGIBLE": "Eligible",
+      "INELIGIBLE": "Not eligible",
+      "REVIEW_REQUIRED": "Needs review",
+      "WAITLIST": "Waitlist"
+    },
+    "enrollment": {
+      "CONSENT_PENDING": "Consent pending",
+      "ENROLLED": "Enrolled",
+      "RANDOMIZED": "Randomized",
+      "COHORT_ASSIGNED": "Cohort assigned",
+      "WITHDRAWN": "Withdrawn",
+      "COMPLETED": "Completed"
+    },
+    "enrollmentAction": {
+      "WITHDRAWN": "Mark as withdrawn",
+      "COMPLETED": "Mark as completed"
+    },
+    "screeningStatus": {
+      "SCHEDULED": "Scheduled",
+      "COMPLETED": "Completed",
+      "NO_SHOW": "Did not attend",
+      "CANCELLED": "Cancelled"
+    },
+    "screeningAction": {
+      "NO_SHOW": "Did not attend",
+      "CANCELLED": "Cancel"
+    },
+    "consentStatus": {
+      "PENDING": "Pending",
+      "CONSENTED": "Consented",
+      "DECLINED": "Declined",
+      "WITHDRAWN": "Withdrawn",
+      "SUPERSEDED": "Superseded"
+    },
+    "consentAction": {
+      "CONSENTED": "Record consent",
+      "DECLINED": "Record decline",
+      "WITHDRAWN": "Record withdrawal"
+    },
+    "table": {
+      "code": "Code",
+      "name": "Name",
+      "eligibility": "Eligibility",
+      "enrollment": "Participation",
+      "status": "Status",
+      "open": "Open participant"
+    },
+    "error": {
+      "invalid": "That change is not allowed.",
+      "notFound": "The record was not found.",
+      "failed": "The change could not be saved. Please try again.",
+      "badReference": "The external reference accepts an identifier only (letters, numbers, . : / -). Do not type clinical information here."
+    }
+  },
+  "screening": {
+    "subtitle": "Scheduled screenings still to happen.",
+    "boundary": "This application records only the appointment and its result. Screening answers are kept in the institution's approved system.",
+    "when": "Scheduled for",
+    "emptyTitle": "No screenings pending",
+    "emptyDescription": "There is no screening scheduled at the moment."
   }
 }
