@@ -14,6 +14,12 @@
     "es": "Español",
     "en": "English"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "nav": {
     "overview": "Overview",
     "applications": "Applications",
@@ -47,7 +53,8 @@
       "invalid": "Incorrect email or password.",
       "inactive": "Your account is not active. Contact the study administration.",
       "noStudies": "Your account has no study access yet.",
-      "unavailable": "Could not reach the sign-in service. Try again in a few minutes."
+      "unavailable": "Could not reach the sign-in service. Try again in a few minutes.",
+      "backToSite": "Back to the public site"
     },
     "logout": "Sign out"
   },
@@ -74,6 +81,7 @@
         "eligible": "Eligible",
         "enrolled": "Enrolled"
       },
+      "noData": "No data",
       "foundationNote": "Phase 0: foundation shell. Operational data will appear in later phases."
     },
     "yourRoles": "Your roles"
@@ -89,9 +97,60 @@
   },
   "public": {
     "landing": {
-      "title": "Research study",
+      "brand": "Study",
+      "badge": "Site in preparation",
+      "title": "Everything about the study, in one place",
       "subtitle": "This page is being prepared. Information about the study and how to take part will appear here soon.",
-      "teamAccess": "Team access"
+      "primaryCta": "See what is coming",
+      "teamAccess": "Team access",
+      "nav": {
+        "study": "The study",
+        "process": "How it works",
+        "privacy": "Privacy"
+      },
+      "study": {
+        "title": "What you will find here",
+        "description": "The sections are ready. Their content will be published before participation begins.",
+        "about": {
+          "title": "About the study",
+          "description": "What it involves, who runs it and for what purpose."
+        },
+        "sessions": {
+          "title": "Sessions and calendar",
+          "description": "Dates, places and what to expect at each meeting."
+        },
+        "participation": {
+          "title": "How to take part",
+          "description": "The steps to request participation and what happens next."
+        },
+        "contact": {
+          "title": "Contact",
+          "description": "Who to write to if any question comes up."
+        }
+      },
+      "process": {
+        "title": "How it works",
+        "description": "A general outline of the journey. The specifics will be published on this same page.",
+        "first": {
+          "title": "Information",
+          "description": "Read what the study involves and clear up your questions before deciding."
+        },
+        "second": {
+          "title": "Get in touch",
+          "description": "If you are interested, you contact the study team."
+        },
+        "third": {
+          "title": "Follow-up",
+          "description": "The team explains the next steps and answers your questions."
+        }
+      },
+      "privacy": {
+        "title": "Your data",
+        "description": "This page is informational and collects no personal data. Information about how study data is handled will be published here alongside the rest of the study documentation."
+      },
+      "footer": {
+        "note": "Provisional content. The final information will be published before participation begins."
+      }
     }
   }
 }

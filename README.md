@@ -48,6 +48,7 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 - `docs/permissions.md` — roles → permissions matrix
 - `docs/automations.md` — events, rules, scheduled actions (design, Phase 8)
 - `docs/content-model.md` — versioned study content (design, Phase 5)
+- `docs/design-system.md` — tokens, type, motion, theming, accessibility rules
 - `docs/research-data-boundaries.md` — what this app must never store
 - `docs/development.md` — environments, migrations, seeding, testing
 - `docs/decisions.md` — append-only decision log

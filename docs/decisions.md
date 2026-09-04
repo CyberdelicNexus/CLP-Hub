@@ -46,6 +46,31 @@ Every template must have a Spanish version; English is optional and only for sta
 
 Repository "CLP Hub" (`clp-hub`). The trial's name is not referenced in code; the seed study is `DEMO`. Team dashboard lives under `/equipo`.
 
+## D-011 · 2026-09-03 · Design system: "soft modern", light and dark
+
+Founder direction, from reference dashboards. A bento-grid surface system: rounded
+cards, pastel accent surfaces, soft diffuse elevation, Plus Jakarta Sans display
+over Geist body. Full token layer in `src/app/globals.css` with complete `:root`
+and `.dark` palettes; see `docs/design-system.md`.
+
+Considered and rejected: an industrial-brutalist direction (zero radius, hazard
+red, monospace, scanlines). It conflicts with the reference material and reads as
+a strong personality for a tool clinical staff use daily. Its defensible parts were
+kept — deterministic grid, tabular numerals for metrics, semantic markup.
+
+Consequences: pastel tokens are backgrounds only and always paired with an `-ink`
+foreground, so no accent ever carries meaning by itself; contrast stays ≥ 4.5:1 in
+both modes. Also fixed a latent bug where `--font-sans` resolved to nothing and the
+UI fell back to the browser default font.
+
+## D-012 · 2026-09-03 · Theme preference is device-local and not audited
+
+`next-themes` stores light/dark/system in `localStorage`. Deliberately unlike the
+locale (D-007), which lives on the staff profile and is audited: the theme is a
+rendering preference, not user state or a research-relevant setting, so it gets no
+database column, no cookie and no audit row. Revisit only if staff ask for the
+choice to follow them across devices.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.

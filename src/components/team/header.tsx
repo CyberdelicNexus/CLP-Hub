@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { LogOut, Menu } from "lucide-react";
 import { setActiveStudy, setLocale, signOut } from "@/app/(team)/equipo/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +31,10 @@ interface HeaderLabels {
   yourRoles: string;
 }
 
+/** Shared classes for the two inline selects, so they read as one control set. */
+const SELECT_CLASS =
+  "h-8 rounded-lg border border-border bg-card px-2 text-sm shadow-soft transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50";
+
 export function Header({
   items,
   studies,
@@ -52,7 +57,7 @@ export function Header({
   const active = studies.find((s) => s.id === activeStudyId);
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b bg-background px-4 sm:px-6">
+    <header className="flex h-16 items-center gap-2 px-4 sm:px-6 lg:pl-3">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label={labels.openMenu} />}
@@ -60,7 +65,10 @@ export function Header({
           <Menu />
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <SheetTitle className="flex h-14 items-center border-b px-5 text-sm font-semibold">{labels.appName}</SheetTitle>
+          <SheetTitle className="flex h-14 items-center gap-2 px-5 text-sm font-semibold">
+            <span aria-hidden className="size-6 rounded-[7px] bg-primary ring-1 ring-foreground/10" />
+            {labels.appName}
+          </SheetTitle>
           <SidebarNav items={items} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -70,7 +78,7 @@ export function Header({
         {studies.length > 1 ? (
           <select
             aria-label={labels.switchStudy}
-            className="h-8 max-w-64 truncate rounded-md border bg-background px-2 text-sm"
+            className={`${SELECT_CLASS} max-w-64 truncate`}
             value={activeStudyId}
             disabled={pending}
             onChange={(e) => startTransition(() => setActiveStudy(e.target.value))}
@@ -81,14 +89,18 @@ export function Header({
               </option>
             ))}
           </select>
-        ) : (
-          <span className="truncate text-sm font-medium">{active ? `${active.code} · ${active.title}` : null}</span>
-        )}
+        ) : active ? (
+          <span className="truncate rounded-lg bg-card px-2.5 py-1 text-sm font-medium ring-1 ring-foreground/10">
+            {active.code} · {active.title}
+          </span>
+        ) : null}
       </div>
+
+      <ThemeToggle />
 
       <select
         aria-label={labels.language}
-        className="h-8 rounded-md border bg-background px-2 text-sm"
+        className={SELECT_CLASS}
         value={locale}
         disabled={pending}
         onChange={(e) => startTransition(() => setLocale(e.target.value))}
@@ -101,8 +113,18 @@ export function Header({
       </select>
 
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label={labels.account} />}>
-          <span className="max-w-32 truncate">{user.name}</span>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="outline" size="sm" className="gap-2 rounded-lg pl-1" aria-label={labels.account} />
+          }
+        >
+          <span
+            aria-hidden
+            className="flex size-6 items-center justify-center rounded-md bg-surface-lilac text-[0.65rem] font-semibold text-surface-lilac-ink"
+          >
+            {initials(user.name)}
+          </span>
+          <span className="hidden max-w-32 truncate sm:inline">{user.name}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="space-y-1">
@@ -121,4 +143,14 @@ export function Header({
       </DropdownMenu>
     </header>
   );
+}
+
+/** First letters of the first two words, e.g. "Demo ADMIN" -> "DA". */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
 }

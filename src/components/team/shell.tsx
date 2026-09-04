@@ -5,9 +5,9 @@ import { SidebarNav, type NavItem } from "./sidebar-nav";
 import { Header } from "./header";
 
 /**
- * Dashboard frame: fixed sidebar on desktop, sheet on smaller screens.
- * Navigation items are filtered by permission on the server so the client
- * never sees sections the user cannot open.
+ * Dashboard frame: a floating sidebar panel on desktop, a sheet on smaller
+ * screens. Navigation items are filtered by permission on the server so the
+ * client never sees sections the user cannot open.
  */
 export async function TeamShell({ ctx, children }: { ctx: StudyContext; children: React.ReactNode }) {
   const t = await getTranslations();
@@ -23,19 +23,29 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
   const studies = uniqueStudies(ctx);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen">
+      <div
+        aria-hidden
+        className="bg-aurora pointer-events-none fixed inset-x-0 top-0 -z-10 h-96 opacity-40 dark:opacity-25"
+      />
+
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:shadow-lift"
       >
         {t("common.skipToContent")}
       </a>
 
-      <aside className="hidden w-60 shrink-0 border-r bg-sidebar lg:block">
-        <div className="flex h-14 items-center border-b px-5">
-          <span className="text-sm font-semibold tracking-tight">{t("common.appName")}</span>
+      <aside className="hidden w-64 shrink-0 p-3 lg:block">
+        <div className="sticky top-3 flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-2xl bg-sidebar ring-1 ring-foreground/10">
+          <div className="flex h-14 items-center gap-2 px-5">
+            <span aria-hidden className="size-6 rounded-[7px] bg-primary ring-1 ring-foreground/10" />
+            <span className="text-sm font-semibold tracking-tight">{t("common.appName")}</span>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <SidebarNav items={items} />
+          </div>
         </div>
-        <SidebarNav items={items} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -58,7 +68,7 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
             yourRoles: t("team.yourRoles"),
           }}
         />
-        <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main" className="flex-1 px-4 pt-2 pb-8 sm:px-6 lg:pr-6 lg:pl-0">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>
