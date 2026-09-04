@@ -14,11 +14,22 @@ Core model: **Study → Study Arm → Cohort → Participant → State → Event
 
 Enums: `staff_role`, `study_status`, `ui_locale`, `audit_actor_type`. Every enum has a TypeScript mirror in `src/domain`.
 
+## Implemented (Phase 1 · migration 0002)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `participants` | People in the intake funnel | `code` from `participant_code_seq` (D-016); `recruitment_status` only — eligibility/enrollment are Phase 2 |
+| `participant_contacts` | Category A identity, 1:1 with participant | Gated by `participants.contact.read`; unique `(study_id, email_normalized)` enforces duplicate linking (D-013) |
+| `application_questions` | Per-study form configuration | Operational questions only (D-014); Spanish label required |
+| `applications` | One submission | `status` is operational triage, **not** an eligibility decision |
+| `application_answers` | Answers, one per question | `value` is jsonb (scalar, or array for MULTI_SELECT) |
+
+Added enums: `recruitment_status`, `application_status`, `application_source`, `question_type` — mirrored in `src/domain/recruitment.ts`.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 1 Recruitment | `participants`, `participant_contacts`, `applications`, `application_questions`, `application_answers` |
 | 2 Participant ops | `screenings`, `consents`, `randomizations` (table + interface only, no algorithm) |
 | 3 Cohorts | `study_arms`, `cohorts`, `cohort_staff`, `participant_cohort_assignments`, `session_templates`, `cohort_sessions`, `session_attendance` |
 | 5 Content | `contents`, `content_versions`, `content_assignments` |

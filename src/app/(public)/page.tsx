@@ -5,6 +5,7 @@ import { LandingNav } from "@/components/public/landing-nav";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { getOpenRecruitmentStudy } from "@/services/recruitment";
 
 /**
  * Public landing shell. Phase 0 delivers the *design foundation* only: layout,
@@ -27,6 +28,9 @@ const STEPS = ["first", "second", "third"] as const;
 export default async function PublicHomePage() {
   const t = await getTranslations("public.landing");
   const teamHref = `${TEAM_BASE_PATH}/login`;
+  // The apply CTA appears only when a study is actually open for recruitment,
+  // so the page never invites an application it cannot accept.
+  const recruiting = (await getOpenRecruitmentStudy()) !== null;
 
   const navLinks = [
     { href: "#estudio", label: t("nav.study") },
@@ -70,9 +74,20 @@ export default async function PublicHomePage() {
             <Reveal delay={200}>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                 {/* nativeButton={false}: these render anchors, not <button>. */}
+                {recruiting ? (
+                  <Button
+                    render={<Link href="/participar" />}
+                    nativeButton={false}
+                    size="lg"
+                    className="rounded-xl px-5"
+                  >
+                    {t("applyCta")}
+                  </Button>
+                ) : null}
                 <Button
                   render={<a href="#estudio" />}
                   nativeButton={false}
+                  variant={recruiting ? "outline" : "default"}
                   size="lg"
                   className="rounded-xl px-5"
                 >

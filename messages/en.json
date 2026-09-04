@@ -7,7 +7,9 @@
     "comingSoon": "Coming soon",
     "comingSoonDescription": "This section will be built in a later phase.",
     "noAccess": "You do not have access to this section.",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "yes": "Yes",
+    "no": "No"
   },
   "locale": {
     "label": "Language",
@@ -82,7 +84,8 @@
         "enrolled": "Enrolled"
       },
       "noData": "No data",
-      "foundationNote": "Phase 0: foundation shell. Operational data will appear in later phases."
+      "foundationNote": "Phase 1: recruitment. Screening, cohorts and communications arrive in later phases.",
+      "attentionApplications": "{count, plural, one {# application awaiting review} other {# applications awaiting review}}"
     },
     "yourRoles": "Your roles"
   },
@@ -150,7 +153,86 @@
       },
       "footer": {
         "note": "Provisional content. The final information will be published before participation begins."
-      }
+      },
+      "applyCta": "Apply to take part"
+    },
+    "apply": {
+      "title": "Application to take part",
+      "intro": "Fill in this form if you are interested in taking part. The study team will review your application and get in touch.",
+      "back": "Back",
+      "submit": "Send application",
+      "submitting": "Sending…",
+      "optional": " (optional)",
+      "requiredNote": "Fields marked with * are required.",
+      "successTitle": "Application sent",
+      "successBody": "Thank you. We have received your application and the study team will be in touch.",
+      "closedTitle": "Applications closed",
+      "closed": "No study is currently open to new applications.",
+      "failed": "The application could not be sent. Please try again in a few minutes.",
+      "privacyNote": "We use these details only to contact you about the study. Please do not include medical or health information in this form.",
+      "error": {
+        "required": "This field is required.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidOption": "Choose one of the available options.",
+        "tooLong": "This text is too long.",
+        "invalidDate": "Enter a valid date."
+      },
+      "tooFast": "Please wait a moment and submit the form again."
+    }
+  },
+  "applications": {
+    "subtitle": "Applications received for this study.",
+    "filterLabel": "Filter by status",
+    "all": "All",
+    "backToList": "Back to applications",
+    "detailTitle": "Application",
+    "submittedOn": "Submitted on {date}",
+    "answers": "Answers",
+    "noAnswers": "This application has no recorded answers.",
+    "contact": "Contact details",
+    "contactHidden": "You do not have permission to view contact details.",
+    "triage": "Triage",
+    "terminal": "This application is in a final state.",
+    "readOnly": "Read only: you cannot change this application's status.",
+    "emptyTitle": "No applications",
+    "emptyDescription": "No application has been received with this filter yet.",
+    "status": {
+      "SUBMITTED": "Received",
+      "IN_REVIEW": "In review",
+      "ACCEPTED_FOR_SCREENING": "Moved to screening",
+      "NOT_PURSUED": "Not pursued",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "action": {
+      "SUBMITTED": "Mark as received",
+      "IN_REVIEW": "Mark in review",
+      "ACCEPTED_FOR_SCREENING": "Move to screening",
+      "NOT_PURSUED": "Do not pursue",
+      "WITHDRAWN": "Mark as withdrawn"
+    },
+    "recruitment": {
+      "INTERESTED": "Interested",
+      "APPLICATION_STARTED": "Application started",
+      "APPLICATION_SUBMITTED": "Application submitted",
+      "PRESCREEN": "Pre-screen",
+      "SCREENING_PENDING": "Screening pending",
+      "SCREENING_SCHEDULED": "Screening scheduled"
+    },
+    "table": {
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "submitted": "Submitted",
+      "open": "Open application"
+    },
+    "field": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "error": {
+      "invalid": "That status change is not allowed.",
+      "failed": "The change could not be saved. Please try again."
     }
   }
 }

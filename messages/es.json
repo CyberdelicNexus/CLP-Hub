@@ -7,7 +7,9 @@
     "comingSoon": "Próximamente",
     "comingSoonDescription": "Esta sección se construirá en una fase posterior.",
     "noAccess": "No tienes acceso a esta sección.",
-    "skipToContent": "Ir al contenido"
+    "skipToContent": "Ir al contenido",
+    "yes": "Sí",
+    "no": "No"
   },
   "locale": {
     "label": "Idioma",
@@ -82,7 +84,8 @@
         "enrolled": "Inscritos"
       },
       "noData": "Sin datos",
-      "foundationNote": "Fase 0: estructura base. Los datos operativos aparecerán en las fases siguientes."
+      "foundationNote": "Fase 1: reclutamiento. Las evaluaciones, cohortes y comunicaciones llegarán en fases posteriores.",
+      "attentionApplications": "{count, plural, one {# solicitud sin revisar} other {# solicitudes sin revisar}}"
     },
     "yourRoles": "Tus roles"
   },
@@ -150,7 +153,86 @@
       },
       "footer": {
         "note": "Contenido provisional. La información definitiva se publicará antes del inicio de la participación."
-      }
+      },
+      "applyCta": "Solicitar participación"
+    },
+    "apply": {
+      "title": "Solicitud de participación",
+      "intro": "Rellena este formulario si te interesa participar. El equipo del estudio revisará tu solicitud y se pondrá en contacto contigo.",
+      "back": "Volver",
+      "submit": "Enviar solicitud",
+      "submitting": "Enviando…",
+      "optional": " (opcional)",
+      "requiredNote": "Los campos marcados con * son obligatorios.",
+      "successTitle": "Solicitud enviada",
+      "successBody": "Gracias. Hemos recibido tu solicitud y el equipo del estudio se pondrá en contacto contigo.",
+      "closedTitle": "Solicitudes cerradas",
+      "closed": "En este momento no hay ningún estudio abierto a nuevas solicitudes.",
+      "failed": "No se pudo enviar la solicitud. Inténtalo de nuevo en unos minutos.",
+      "privacyNote": "Usamos estos datos únicamente para ponernos en contacto contigo sobre el estudio. Por favor, no incluyas información médica o de salud en este formulario.",
+      "error": {
+        "required": "Este campo es obligatorio.",
+        "invalidEmail": "Introduce un correo electrónico válido.",
+        "invalidOption": "Selecciona una de las opciones disponibles.",
+        "tooLong": "El texto es demasiado largo.",
+        "invalidDate": "Introduce una fecha válida."
+      },
+      "tooFast": "Espera un momento y vuelve a enviar el formulario."
+    }
+  },
+  "applications": {
+    "subtitle": "Solicitudes recibidas para este estudio.",
+    "filterLabel": "Filtrar por estado",
+    "all": "Todas",
+    "backToList": "Volver a solicitudes",
+    "detailTitle": "Solicitud",
+    "submittedOn": "Enviada el {date}",
+    "answers": "Respuestas",
+    "noAnswers": "Esta solicitud no tiene respuestas registradas.",
+    "contact": "Datos de contacto",
+    "contactHidden": "No tienes permiso para ver los datos de contacto.",
+    "triage": "Gestión",
+    "terminal": "Esta solicitud está en un estado final.",
+    "readOnly": "Solo lectura: no puedes cambiar el estado de esta solicitud.",
+    "emptyTitle": "Sin solicitudes",
+    "emptyDescription": "Todavía no se ha recibido ninguna solicitud con este filtro.",
+    "status": {
+      "SUBMITTED": "Recibida",
+      "IN_REVIEW": "En revisión",
+      "ACCEPTED_FOR_SCREENING": "Pasa a evaluación",
+      "NOT_PURSUED": "No continúa",
+      "WITHDRAWN": "Retirada"
+    },
+    "action": {
+      "SUBMITTED": "Marcar como recibida",
+      "IN_REVIEW": "Marcar en revisión",
+      "ACCEPTED_FOR_SCREENING": "Pasar a evaluación",
+      "NOT_PURSUED": "No continuar",
+      "WITHDRAWN": "Marcar como retirada"
+    },
+    "recruitment": {
+      "INTERESTED": "Interesada",
+      "APPLICATION_STARTED": "Solicitud iniciada",
+      "APPLICATION_SUBMITTED": "Solicitud enviada",
+      "PRESCREEN": "Revisión previa",
+      "SCREENING_PENDING": "Evaluación pendiente",
+      "SCREENING_SCHEDULED": "Evaluación agendada"
+    },
+    "table": {
+      "code": "Código",
+      "name": "Nombre",
+      "status": "Estado",
+      "submitted": "Enviada",
+      "open": "Abrir solicitud"
+    },
+    "field": {
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono"
+    },
+    "error": {
+      "invalid": "Ese cambio de estado no es posible.",
+      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
     }
   }
 }

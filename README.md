@@ -2,7 +2,7 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 0 — foundation shell.** No recruitment, screening, randomization, messaging or participant content exists yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phase 1 — recruitment.** The public application form and staff triage exist. No screening, randomization, messaging or participant content yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 
@@ -27,6 +27,8 @@ npm run db:migrate              # applies supabase/migrations/*.sql
 npm run db:seed                 # DEMO study + synthetic staff (needs ALLOW_DEMO_DATA=true)
 npm run dev                     # http://localhost:3000/equipo/login
 ```
+
+The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/participar` and `/equipo/solicitudes` are usable immediately.
 
 Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example.com`, `demo.facilitator@example.com`, `demo.researcher@example.com`, `demo.logistics@example.com`, password = `SEED_STAFF_PASSWORD`.
 

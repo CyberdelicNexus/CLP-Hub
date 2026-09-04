@@ -22,6 +22,8 @@ Environment variables are validated with Zod in `src/config/env.ts`; the app fai
 
 `npm run db:seed` creates the `DEMO` study and five staff accounts (`demo.<role>@example.com`) with `SEED_STAFF_PASSWORD`. It uses the service-role key to create Supabase Auth users and is idempotent. Names and emails are deliberately fake.
 
+Since Phase 1 it also opens recruitment on the DEMO study, configures eight application questions and creates three synthetic applications (`P-000001`…). The questions are operational only — contact, availability, referral source, consent (D-014) — and the applicants are obviously fake. Re-running skips applicants whose email already exists, so it will not accumulate duplicates.
+
 ## Running
 
 ```bash

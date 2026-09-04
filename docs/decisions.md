@@ -2,7 +2,7 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 0 (Foundation) — awaiting founder review before Phase 1.**
+**Current phase: 1 (Recruitment) — started 2026-09-04 on founder approval. Phase 0 shipped.**
 
 ---
 
@@ -71,9 +71,68 @@ rendering preference, not user state or a research-relevant setting, so it gets 
 database column, no cookie and no audit row. Revisit only if staff ask for the
 choice to follow them across devices.
 
+## D-013 · 2026-09-04 · Repeat applications link to the existing participant
+
+Founder decision. Within one study, a submission whose email matches an existing
+participant (trimmed + lowercased) attaches a new application to that participant
+instead of creating a second person. Enforced by a unique index on
+`participant_contacts (study_id, email_normalized)`, so the rule holds under
+concurrent submissions rather than only in application code.
+
+Normalisation is trim + lowercase only. Provider-specific tricks (stripping dots,
+removing `+` tags) are deliberately not applied: they would merge two people who
+are genuinely distinct.
+
+This is an identity-resolution claim — "same email means same person" — recorded
+here because it is an assumption, not a fact. Repeat submissions inside a
+two-minute window return the existing application rather than creating another, so
+a double-click does not produce duplicates.
+
+## D-014 · 2026-09-04 · Application questions are operational only, by convention
+
+Founder decision (convention, not a database constraint). `application_questions`
+may ask only operational things: contact details, availability, location, referral
+source, and consent to be contacted. Health, symptom, diagnosis, medication and
+psychometric questions are Category C research data and must not be configured
+here (`docs/research-data-boundaries.md`).
+
+The boundary is documented in `src/domain/recruitment.ts`, in migration 0002, in
+the seed, and on the form itself, which tells applicants not to include health
+information and caps free text at 1000 characters.
+
+Accepted risk: nothing in the database prevents a future admin UI from adding a
+health question. A check constraint or an allow-list of question keys was
+considered and deferred. Revisit before question configuration is exposed to
+staff in the UI.
+
+## D-015 · 2026-09-04 · Public form anti-abuse is deliberately minimal
+
+The public form has a honeypot field and a fill-time floor only. The honeypot
+reports success so a bot learns nothing; the fill-time floor reports a real error
+asking the person to retry, because it is timed from server render and could
+otherwise silently discard a fast human's application.
+
+This is **not** sufficient protection for public exposure. A captcha or WAF plus
+IP-based rate limiting is a prerequisite before the form accepts real traffic,
+alongside the hosting approval already tracked below. IP addresses are
+deliberately not stored today, since that would add a data category with no
+approved purpose.
+
+## D-016 · 2026-09-04 · Participant codes come from a database sequence
+
+`participants.code` (e.g. `P-000042`) is generated from `participant_code_seq`
+rather than counted per study, so concurrent submissions cannot collide. The code
+is the pseudonymous handle that operational history and audit rows are keyed by,
+which is what makes the proposed erasure approach — clear contact data, keep
+history — possible. Audit snapshots reference the code, not the person's name or
+email.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
+- Captcha / WAF and rate limiting for the public application form (D-015).
+- Whether the permitted application question vocabulary should be enforced in the
+  database rather than by convention (D-014).
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Whether email reminders may be AUTOMATIC or should also be manual.
