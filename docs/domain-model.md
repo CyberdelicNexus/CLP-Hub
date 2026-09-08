@@ -54,11 +54,20 @@ Phase 2 code path can set them (D-017).
 Added enums: `cohort_status`, `allocation_method`. RANDOMIZED and COHORT_ASSIGNED
 become reachable in this phase.
 
+## Implemented (Phase 3b · migration 0005)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `session_templates` | Programme definition | Session names are configuration rows; `arm_id` nullable = applies to every arm (D-026) |
+| `cohort_sessions` | Scheduled instance for a cohort | `template_id` nullable so ad-hoc sessions are possible; no notes column |
+| `session_attendance` | One row per participant per session | Opens as EXPECTED when scheduled (D-025); TECHNICAL_FAILURE is never an absence (D-024) |
+
+Added enums: `session_modality`, `session_status`, `attendance_status`.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 3b Sessions | `session_templates`, `cohort_sessions`, `session_attendance` |
 | 5 Content | `contents`, `content_versions`, `content_assignments` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |

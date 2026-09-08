@@ -399,5 +399,80 @@
       "cohortClosed": "This cohort no longer accepts new assignments.",
       "failed": "The change could not be saved. Please try again."
     }
+  },
+  "sessions": {
+    "subtitle": "Scheduled cohort sessions.",
+    "scopedNotice": "You see only the sessions of cohorts you facilitate.",
+    "backToList": "Back to sessions",
+    "detailTitle": "Session",
+    "scheduleTitle": "Schedule a session",
+    "schedule": "Schedule",
+    "emptyTitle": "No sessions",
+    "emptyDescription": "No session has been scheduled yet.",
+    "noCohorts": "No cohort is available to schedule sessions for.",
+    "register": "Attendance register",
+    "emptyRegister": "The register is empty: the cohort had no participants when the session was scheduled.",
+    "refreshRegister": "Refresh register",
+    "refreshRegisterHelp": "Adds anyone who joined the cohort after the session was scheduled. It never removes anyone.",
+    "manage": "Manage",
+    "readOnly": "Read only: you cannot modify this session.",
+    "terminal": "This session is already closed.",
+    "tallyNote": "Shown separately on purpose. A technical failure is not an absence: it does not count as the person failing to attend.",
+    "tally": {
+      "present": "Attended",
+      "absent": "Absent",
+      "technicalFailure": "Technical failure",
+      "excused": "Excused",
+      "withdrawn": "Withdrawn",
+      "expected": "Not recorded"
+    },
+    "modality": {
+      "ZOOM": "Zoom",
+      "VR": "Virtual reality",
+      "IN_PERSON": "In person",
+      "ASYNCHRONOUS": "Asynchronous",
+      "OTHER": "Other"
+    },
+    "status": {
+      "SCHEDULED": "Scheduled",
+      "HELD": "Held",
+      "CANCELLED": "Cancelled"
+    },
+    "action": {
+      "HELD": "Mark as held",
+      "CANCELLED": "Cancel session"
+    },
+    "attendance": {
+      "EXPECTED": "Not recorded",
+      "ATTENDED": "Attended",
+      "LATE": "Attended late",
+      "ABSENT": "Did not attend",
+      "EXCUSED": "Excused absence",
+      "TECHNICAL_FAILURE": "Technical failure",
+      "WITHDRAWN": "Withdrawn from study"
+    },
+    "table": {
+      "when": "Date",
+      "name": "Session",
+      "cohort": "Cohort",
+      "modality": "Modality",
+      "status": "Status",
+      "expected": "People",
+      "open": "Open session"
+    },
+    "field": {
+      "name": "Session name",
+      "modality": "Modality",
+      "when": "Date and time",
+      "duration": "Duration (min)",
+      "location": "Place or link",
+      "template": "Template",
+      "templateHelp": "Optional. Templates define the study programme."
+    },
+    "error": {
+      "invalid": "That change is not allowed.",
+      "notFound": "The session was not found.",
+      "failed": "The change could not be saved. Please try again."
+    }
   }
 }

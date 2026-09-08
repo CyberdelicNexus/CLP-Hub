@@ -2,7 +2,7 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 3a — cohorts and allocation.** Public application form, staff triage, screening, consent, cohorts and recorded allocations exist. Sessions, attendance, messaging and participant content are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phase 3 complete — cohorts, sessions and attendance.** Public application form, staff triage, screening, consent, cohorts, recorded allocations, session scheduling and attendance exist. Content, VR logistics, messaging and automation are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 

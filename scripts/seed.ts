@@ -153,6 +153,41 @@ const DEMO_COHORT = {
   capacity: 12,
 } as const;
 
+/**
+ * Synthetic programme definition. Session names are configuration rows — this
+ * is exactly where a real trial's session names would live, never in code
+ * (non-negotiable 6). `armId` is left null: these apply to every arm.
+ */
+const DEMO_SESSION_TEMPLATES = [
+  {
+    code: "demo_intro",
+    nameEs: "Sesión 1 · Introducción (SINTÉTICA)",
+    nameEn: "Session 1 · Introduction (SYNTHETIC)",
+    position: 10,
+    modality: "IN_PERSON" as const,
+    durationMinutes: 90,
+    dayOffset: 0,
+  },
+  {
+    code: "demo_vr",
+    nameEs: "Sesión 2 · Práctica en RV (SINTÉTICA)",
+    nameEn: "Session 2 · VR practice (SYNTHETIC)",
+    position: 20,
+    modality: "VR" as const,
+    durationMinutes: 60,
+    dayOffset: 7,
+  },
+  {
+    code: "demo_followup",
+    nameEs: "Sesión 3 · Seguimiento (SINTÉTICA)",
+    nameEn: "Session 3 · Follow-up (SYNTHETIC)",
+    position: 30,
+    modality: "ZOOM" as const,
+    durationMinutes: 45,
+    dayOffset: 21,
+  },
+] as const;
+
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
   {
@@ -338,6 +373,26 @@ async function main() {
         console.log(`staff   FACILITATOR -> cohort ${cohort.code}`);
       }
     }
+
+    // Programme definition (Phase 3b). Session names live here, not in code.
+    for (const tpl of DEMO_SESSION_TEMPLATES) {
+      await db
+        .insert(schema.sessionTemplates)
+        .values({ ...tpl, studyId: study.id })
+        .onConflictDoUpdate({
+          target: [schema.sessionTemplates.studyId, schema.sessionTemplates.code],
+          set: {
+            nameEs: tpl.nameEs,
+            nameEn: tpl.nameEn,
+            position: tpl.position,
+            modality: tpl.modality,
+            durationMinutes: tpl.durationMinutes,
+            dayOffset: tpl.dayOffset,
+            active: true,
+          },
+        });
+    }
+    console.log(`program ${DEMO_SESSION_TEMPLATES.length} session templates`);
 
     // Application form configuration
     for (const q of DEMO_QUESTIONS) {

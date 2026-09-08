@@ -2,7 +2,7 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 3a (Cohorts and allocation) — started 2026-09-08 on founder approval. Phases 0–2 shipped.**
+**Current phase: 3b (Sessions and attendance) — started 2026-09-08 on founder approval. Phases 0–3a shipped.**
 
 ---
 
@@ -237,6 +237,58 @@ Cohorts accept new participants only while PLANNING, RECRUITING or PREPARATION.
 Capacity is informational and does not block assignment — over-filling a cohort
 is an operational judgement, not something the app should refuse.
 
+## D-024 · 2026-09-08 · TECHNICAL_FAILURE is never an absence
+
+The brief states TECHNICAL_FAILURE ≠ ABSENT. This is implemented as a property of
+the domain rather than a convention:
+
+- `countsAsAbsent` returns true for ABSENT and nothing else. TECHNICAL_FAILURE is
+  neither present nor absent — it is excluded from adherence figures entirely,
+  alongside EXPECTED, EXCUSED and WITHDRAWN.
+- `tallyAttendance` returns separate counts and deliberately does **not** return a
+  single attendance percentage. A "70% attendance" figure that quietly swallowed
+  three headset failures would be a false statement about those participants.
+- The session page shows the counts side by side with a note explaining why.
+  TECHNICAL_FAILURE is styled as a warning, not as an error and not as the same
+  neutral as an excused absence: it is an equipment problem to fix, and it must
+  never look like ABSENT.
+- `tests/sessions.test.ts` asserts every status falls in exactly one bucket, that
+  adding failures never changes the absence count, and that ABSENT is the only
+  status attributable as a real absence.
+
+Recording TECHNICAL_FAILURE is offered as directly as any other status, because
+if it were harder to reach staff would reach for ABSENT when a headset failed.
+
+## D-025 · 2026-09-08 · Registers open when a session is scheduled
+
+Scheduling a session immediately creates an EXPECTED attendance row for every
+current cohort member, so the register is complete before the session happens
+rather than being reconstructed afterwards from whoever someone remembered to
+write down. "Not recorded" is therefore visible and countable.
+
+Refreshing a register adds members who joined the cohort later; it never removes
+anyone, because a record of who was expected is history. Attendance stays
+editable after a session is HELD — corrections are ordinary, and every change
+writes an audit row carrying the previous value.
+
+Session status vocabulary (SCHEDULED / HELD / CANCELLED) is an **assumption**:
+the brief supplies modality and attendance vocabularies but not one for the
+session itself. Recorded as an open question.
+
+## D-026 · 2026-09-08 · Session templates are configuration, arm-agnostic by default
+
+`session_templates` holds the programme: names, order, modality, duration and a
+day offset. This is where a real trial's session names live — a session called
+"Vida" is a row, never a value in code.
+
+`arm_id` is nullable and null by default, meaning a template applies to every
+arm. Making templates arm-specific would assert a trial design this application
+has no business encoding; the column exists so an approved design can say so
+explicitly, without the schema presuming it.
+
+`cohort_sessions.template_id` is likewise nullable, so an ad-hoc session can be
+scheduled without inventing a template for it.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -255,6 +307,12 @@ is an operational judgement, not something the app should refuse.
   allocation for the same participant is refused outright (D-021).
 - Should recording an allocation for a participant without active consent raise
   an alert? It is captured in the audit today but nothing surfaces it (Phase 8).
+- Confirm the session status vocabulary (SCHEDULED / HELD / CANCELLED) — it is an
+  assumption, not from the brief (D-025).
+- Should attendance become locked once a session is HELD, or stay correctable as
+  it is now? Every change is audited either way.
+- Are session templates ever genuinely arm-specific? The column exists but is
+  unused (D-026).
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Whether email reminders may be AUTOMATIC or should also be manual.

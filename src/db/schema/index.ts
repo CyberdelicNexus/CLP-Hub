@@ -7,3 +7,4 @@ export * from "./participants";
 export * from "./applications";
 export * from "./participant-ops";
 export * from "./cohorts";
+export * from "./sessions";

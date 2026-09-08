@@ -399,5 +399,80 @@
       "cohortClosed": "Esta cohorte ya no admite nuevas asignaciones.",
       "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
     }
+  },
+  "sessions": {
+    "subtitle": "Sesiones programadas de las cohortes.",
+    "scopedNotice": "Ves únicamente las sesiones de las cohortes que facilitas.",
+    "backToList": "Volver a sesiones",
+    "detailTitle": "Sesión",
+    "scheduleTitle": "Programar sesión",
+    "schedule": "Programar",
+    "emptyTitle": "Sin sesiones",
+    "emptyDescription": "Todavía no hay ninguna sesión programada.",
+    "noCohorts": "No hay cohortes disponibles para programar sesiones.",
+    "register": "Lista de asistencia",
+    "emptyRegister": "La lista está vacía: la cohorte no tenía participantes al programar la sesión.",
+    "refreshRegister": "Actualizar lista",
+    "refreshRegisterHelp": "Añade a quienes se hayan incorporado a la cohorte después de programar la sesión. Nunca elimina a nadie.",
+    "manage": "Gestión",
+    "readOnly": "Solo lectura: no puedes modificar esta sesión.",
+    "terminal": "Esta sesión ya está cerrada.",
+    "tallyNote": "Se muestran por separado a propósito. Un fallo técnico no es una ausencia: no cuenta como que la persona no asistió.",
+    "tally": {
+      "present": "Asistieron",
+      "absent": "Ausentes",
+      "technicalFailure": "Fallo técnico",
+      "excused": "Justificadas",
+      "withdrawn": "Retiradas",
+      "expected": "Sin registrar"
+    },
+    "modality": {
+      "ZOOM": "Zoom",
+      "VR": "Realidad virtual",
+      "IN_PERSON": "Presencial",
+      "ASYNCHRONOUS": "Asíncrona",
+      "OTHER": "Otra"
+    },
+    "status": {
+      "SCHEDULED": "Programada",
+      "HELD": "Realizada",
+      "CANCELLED": "Cancelada"
+    },
+    "action": {
+      "HELD": "Marcar como realizada",
+      "CANCELLED": "Cancelar sesión"
+    },
+    "attendance": {
+      "EXPECTED": "Sin registrar",
+      "ATTENDED": "Asistió",
+      "LATE": "Asistió con retraso",
+      "ABSENT": "No asistió",
+      "EXCUSED": "Ausencia justificada",
+      "TECHNICAL_FAILURE": "Fallo técnico",
+      "WITHDRAWN": "Retirada del estudio"
+    },
+    "table": {
+      "when": "Fecha",
+      "name": "Sesión",
+      "cohort": "Cohorte",
+      "modality": "Modalidad",
+      "status": "Estado",
+      "expected": "Personas",
+      "open": "Abrir sesión"
+    },
+    "field": {
+      "name": "Nombre de la sesión",
+      "modality": "Modalidad",
+      "when": "Fecha y hora",
+      "duration": "Duración (min)",
+      "location": "Lugar o enlace",
+      "template": "Plantilla",
+      "templateHelp": "Opcional. Las plantillas definen el programa del estudio."
+    },
+    "error": {
+      "invalid": "Ese cambio no es posible.",
+      "notFound": "No se ha encontrado la sesión.",
+      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
+    }
   }
 }
