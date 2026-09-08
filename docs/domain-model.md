@@ -41,11 +41,24 @@ Added enums: `eligibility_status`, `enrollment_status`, `screening_status`,
 `consent_status`. RANDOMIZED and COHORT_ASSIGNED exist in the vocabulary but no
 Phase 2 code path can set them (D-017).
 
+## Implemented (Phase 3a · migration 0004)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `study_arms` | Arm configuration | Labels only. **No allocation ratio column** — this system does not allocate |
+| `cohorts` | Group lifecycle | Forward-only status (D-023); capacity is informational |
+| `cohort_staff` | Who runs which cohort | Historical; also the narrowing behind `cohorts.read.all` (D-022) |
+| `participant_cohort_assignments` | Membership | Historical; one active cohort per participant |
+| `randomizations` | Recorded allocation outcome | Manual entry only; one per participant; never generated (D-018/D-021) |
+
+Added enums: `cohort_status`, `allocation_method`. RANDOMIZED and COHORT_ASSIGNED
+become reachable in this phase.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 3 Cohorts | `randomizations` (manual recording only, no algorithm — D-017/D-018), `study_arms`, `cohorts`, `cohort_staff`, `participant_cohort_assignments`, `session_templates`, `cohort_sessions`, `session_attendance` |
+| 3b Sessions | `session_templates`, `cohort_sessions`, `session_attendance` |
 | 5 Content | `contents`, `content_versions`, `content_assignments` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |

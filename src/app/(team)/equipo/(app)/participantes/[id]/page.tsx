@@ -18,6 +18,16 @@ import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { ENROLLMENT_TRANSITIONS } from "@/domain/participant-state";
 import { getParticipantDetail } from "@/services/participant-ops";
 import {
+  getParticipantPlacement,
+  listAssignableCohorts,
+  listStudyArms,
+} from "@/services/cohorts";
+import {
+  AssignCohortForm,
+  RecordRandomizationForm,
+  RemoveFromCohortForm,
+} from "../../cohortes/cohort-forms";
+import {
   CloseScreeningForm,
   CompleteScreeningForm,
   ConsentDecisionForm,
@@ -66,6 +76,18 @@ export default async function ParticipantDetailPage({
   const canManageScreening = ctx.permissions.has("screening.manage");
   const canManageConsent = ctx.permissions.has("consent.manage");
   const canManageParticipant = ctx.permissions.has("participants.manage");
+  const canReadRandomization = ctx.permissions.has("randomization.read");
+  const canManageRandomization = ctx.permissions.has("randomization.manage");
+  const canManageCohorts = ctx.permissions.has("cohorts.manage");
+
+  const placement = canReadRandomization || ctx.permissions.has("cohorts.read")
+    ? await getParticipantPlacement(ctx.study.id, id)
+    : null;
+  const arms = canManageRandomization && !placement?.randomization ? await listStudyArms(ctx.study.id) : [];
+  const assignableCohorts =
+    canManageCohorts && !placement?.cohort
+      ? await listAssignableCohorts(ctx.study.id, { scope: ctx.cohortScope })
+      : [];
 
   const { participant, contact, screenings, consents } = detail;
   const openScreening = screenings.find((s) => s.status === "SCHEDULED");
@@ -75,6 +97,10 @@ export default async function ParticipantDetailPage({
     forbidden: t("common.noAccess"),
     invalid: t("participants.error.invalid"),
     badReference: t("participants.error.badReference"),
+    duplicateCode: t("cohorts.error.duplicateCode"),
+    alreadyRandomized: t("cohorts.error.alreadyRandomized"),
+    alreadyAssigned: t("cohorts.error.alreadyAssigned"),
+    cohortClosed: t("cohorts.error.cohortClosed"),
     notFound: t("participants.error.notFound"),
     failed: t("participants.error.failed"),
   };
@@ -312,6 +338,85 @@ export default async function ParticipantDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {/* Allocation and cohort placement (Phase 3a) ------------------- */}
+          {placement ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("cohorts.placement")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {canReadRandomization ? (
+                  placement.randomization ? (
+                    <dl className="space-y-1 text-sm">
+                      <dt className="text-xs text-muted-foreground">{t("cohorts.arm")}</dt>
+                      <dd className="font-medium">
+                        {placement.randomization.armCode} · {placement.randomization.armName}
+                      </dd>
+                      <dd data-numeric className="text-xs text-muted-foreground">
+                        {formatDate(placement.randomization.allocatedAt, ctx.study.timezone)}
+                      </dd>
+                      {placement.randomization.externalRecordId ? (
+                        <dd className="font-mono text-xs text-muted-foreground">
+                          {placement.randomization.externalRecordId}
+                        </dd>
+                      ) : null}
+                    </dl>
+                  ) : canManageRandomization && arms.length > 0 ? (
+                    <RecordRandomizationForm
+                      participantId={participant.id}
+                      arms={arms.map((a) => ({ id: a.id, label: `${a.code} · ${a.nameEs}` }))}
+                      labels={{
+                        ...formBase,
+                        submit: t("cohorts.recordAllocation"),
+                        arm: t("cohorts.arm"),
+                        when: t("cohorts.allocatedAt"),
+                        reference: t("participants.externalRef"),
+                        boundary: t("cohorts.allocationBoundary"),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("cohorts.noAllocation")}</p>
+                  )
+                ) : null}
+
+                <div className="border-t border-border pt-4">
+                  {placement.cohort ? (
+                    <div className="space-y-2">
+                      <Link
+                        href={`${TEAM_BASE_PATH}/cohortes/${placement.cohort.id}`}
+                        className="rounded text-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      >
+                        {placement.cohort.code} · {placement.cohort.name}
+                      </Link>
+                      {canManageCohorts ? (
+                        <RemoveFromCohortForm
+                          participantId={participant.id}
+                          labels={{ ...formBase, submit: t("cohorts.removeFromCohort") }}
+                        />
+                      ) : null}
+                    </div>
+                  ) : canManageCohorts ? (
+                    <AssignCohortForm
+                      participantId={participant.id}
+                      cohorts={assignableCohorts.map((c) => ({
+                        id: c.id,
+                        label: `${c.code} · ${c.name}`,
+                      }))}
+                      labels={{
+                        ...formBase,
+                        submit: t("cohorts.assignToCohort"),
+                        cohort: t("nav.cohorts"),
+                        none: t("cohorts.noneAssignable"),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("cohorts.noCohort")}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {canManageParticipant && enrollmentOptions.length > 0 ? (
             <Card>

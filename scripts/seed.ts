@@ -138,6 +138,21 @@ const DEMO_QUESTIONS: ReadonlyArray<typeof schema.applicationQuestions.$inferIns
   },
 ];
 
+/**
+ * Synthetic study arms. Labels only — this repository contains no code that
+ * allocates anyone to an arm (D-018).
+ */
+const DEMO_ARMS = [
+  { code: "DEMO-A", nameEs: "Rama A (SINTÉTICA)", nameEn: "Arm A (SYNTHETIC)", position: 10 },
+  { code: "DEMO-B", nameEs: "Rama B (SINTÉTICA)", nameEn: "Arm B (SYNTHETIC)", position: 20 },
+] as const;
+
+const DEMO_COHORT = {
+  code: "DEMO-C1",
+  name: "Cohorte de demostración (SINTÉTICA)",
+  capacity: 12,
+} as const;
+
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
   {
@@ -214,8 +229,10 @@ async function main() {
     console.log(`study   ${study.code} (${study.id})`);
 
     // Staff
+    const staffIds = new Map<StaffRole, string>();
     for (const staff of DEMO_STAFF) {
       const authUserId = await ensureAuthUser(admin, staff.email, env.SEED_STAFF_PASSWORD);
+      staffIds.set(staff.role, authUserId);
 
       await db
         .insert(schema.users)
@@ -256,6 +273,70 @@ async function main() {
         });
       }
       console.log(`staff   ${staff.role.padEnd(14)} ${staff.email}`);
+    }
+
+    // Study arms and one cohort (Phase 3a). Arms are configuration; nothing in
+    // this repository ever allocates anyone to one.
+    for (const arm of DEMO_ARMS) {
+      await db
+        .insert(schema.studyArms)
+        .values({ ...arm, studyId: study.id })
+        .onConflictDoUpdate({
+          target: [schema.studyArms.studyId, schema.studyArms.code],
+          set: { nameEs: arm.nameEs, nameEn: arm.nameEn, position: arm.position, active: true },
+        });
+    }
+    console.log(`arms    ${DEMO_ARMS.length} synthetic arms`);
+
+    const [cohort] = await db
+      .insert(schema.cohorts)
+      .values({
+        studyId: study.id,
+        code: DEMO_COHORT.code,
+        name: DEMO_COHORT.name,
+        status: "RECRUITING",
+        capacity: DEMO_COHORT.capacity,
+      })
+      .onConflictDoUpdate({
+        target: [schema.cohorts.studyId, schema.cohorts.code],
+        set: { name: DEMO_COHORT.name },
+      })
+      .returning();
+    console.log(`cohort  ${cohort.code} (${cohort.status})`);
+
+    // The facilitator staffs this cohort, which is also what narrows their
+    // visibility: without cohorts.read.all they see only cohorts listed here.
+    const facilitatorId = staffIds.get("FACILITATOR");
+    if (facilitatorId) {
+      const [alreadyStaffed] = await db
+        .select({ id: schema.cohortStaff.id })
+        .from(schema.cohortStaff)
+        .where(
+          and(
+            eq(schema.cohortStaff.cohortId, cohort.id),
+            eq(schema.cohortStaff.userId, facilitatorId),
+            isNull(schema.cohortStaff.revokedAt),
+          ),
+        )
+        .limit(1);
+      if (!alreadyStaffed) {
+        await db.transaction(async (tx) => {
+          const [row] = await tx
+            .insert(schema.cohortStaff)
+            .values({ cohortId: cohort.id, userId: facilitatorId })
+            .returning();
+          await recordAuditEvent(tx, {
+            studyId: study.id,
+            actor: { type: "SYSTEM" },
+            action: "cohort_staff.assigned",
+            entityType: "cohort_staff",
+            entityId: row.id,
+            after: { cohortCode: cohort.code, userId: facilitatorId },
+            metadata: { source: "seed", demo: true, grantsCohortVisibility: true },
+          });
+        });
+        console.log(`staff   FACILITATOR -> cohort ${cohort.code}`);
+      }
     }
 
     // Application form configuration

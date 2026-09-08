@@ -325,5 +325,79 @@
     "when": "Fecha prevista",
     "emptyTitle": "Sin evaluaciones pendientes",
     "emptyDescription": "No hay ninguna evaluación programada en este momento."
+  },
+  "cohorts": {
+    "subtitle": "Grupos de participantes que realizan el programa juntos.",
+    "scopedNotice": "Ves únicamente las cohortes que facilitas.",
+    "backToList": "Volver a cohortes",
+    "detailTitle": "Cohorte",
+    "createTitle": "Nueva cohorte",
+    "create": "Crear cohorte",
+    "emptyTitle": "Sin cohortes",
+    "emptyDescription": "Todavía no se ha creado ninguna cohorte en este estudio.",
+    "emptyScoped": "No tienes ninguna cohorte asignada.",
+    "members": "Participantes",
+    "noMembers": "Esta cohorte todavía no tiene participantes.",
+    "staff": "Equipo de la cohorte",
+    "noStaff": "Nadie asignado todavía.",
+    "assignStaff": "Asignar al equipo",
+    "revokeStaff": "Quitar",
+    "staffVisibilityNote": "Asignar a alguien a esta cohorte también le permite verla, aunque su rol no le dé acceso a todas las cohortes.",
+    "lifecycle": "Estado",
+    "lifecycleEnd": "La cohorte ha llegado al final de su ciclo.",
+    "readOnly": "Solo lectura: no puedes modificar esta cohorte.",
+    "placement": "Asignación",
+    "arm": "Rama",
+    "allocatedAt": "Fecha de asignación",
+    "recordAllocation": "Registrar asignación",
+    "allocationBoundary": "Esta aplicación no aleatoriza. Registra aquí la rama que ya asignó el sistema autorizado y su referencia.",
+    "noAllocation": "Sin asignación de rama registrada.",
+    "assignToCohort": "Asignar a cohorte",
+    "removeFromCohort": "Quitar de la cohorte",
+    "noCohort": "Sin cohorte asignada.",
+    "noneAssignable": "No hay cohortes abiertas a nuevas asignaciones.",
+    "status": {
+      "PLANNING": "Planificación",
+      "RECRUITING": "Reclutamiento",
+      "PREPARATION": "Preparación",
+      "ACTIVE": "En curso",
+      "INTEGRATION": "Integración",
+      "FOLLOW_UP": "Seguimiento",
+      "COMPLETED": "Finalizada"
+    },
+    "advanceTo": {
+      "PLANNING": "Pasar a planificación",
+      "RECRUITING": "Pasar a reclutamiento",
+      "PREPARATION": "Pasar a preparación",
+      "ACTIVE": "Pasar a en curso",
+      "INTEGRATION": "Pasar a integración",
+      "FOLLOW_UP": "Pasar a seguimiento",
+      "COMPLETED": "Marcar como finalizada"
+    },
+    "table": {
+      "code": "Código",
+      "name": "Nombre",
+      "status": "Estado",
+      "members": "Participantes",
+      "open": "Abrir cohorte"
+    },
+    "field": {
+      "code": "Código",
+      "name": "Nombre",
+      "start": "Inicio previsto",
+      "end": "Fin previsto",
+      "capacity": "Plazas",
+      "capacityHelp": "Opcional. Solo informativo: no impide asignar más personas.",
+      "person": "Persona"
+    },
+    "error": {
+      "invalid": "Ese cambio no es posible.",
+      "notFound": "No se ha encontrado el registro.",
+      "duplicateCode": "Ya existe una cohorte con ese código.",
+      "alreadyRandomized": "Esta persona ya tiene una asignación de rama registrada.",
+      "alreadyAssigned": "Esta persona ya pertenece a una cohorte.",
+      "cohortClosed": "Esta cohorte ya no admite nuevas asignaciones.",
+      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
+    }
   }
 }

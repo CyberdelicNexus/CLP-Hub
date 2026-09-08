@@ -29,9 +29,17 @@ export const PERMISSIONS = [
   "consent.read",
   "consent.manage",
   "randomization.read",
+  "randomization.manage",
 
   // Cohorts and program (Phase 3)
   "cohorts.read",
+  /**
+   * Unrestricted cohort visibility. Holders see every cohort in the study;
+   * a caller WITHOUT this key is narrowed to the cohorts they staff
+   * (cohort_staff). Expressed as a permission rather than a role check so that
+   * feature code never branches on role names.
+   */
+  "cohorts.read.all",
   "cohorts.manage",
   "sessions.read",
   "sessions.manage",
@@ -84,7 +92,9 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "consent.read",
     "consent.manage",
     "randomization.read",
+    "randomization.manage",
     "cohorts.read",
+    "cohorts.read.all",
     "cohorts.manage",
     "sessions.read",
     "sessions.manage",
@@ -106,6 +116,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
   // participant data. Cohort-level scoping (cohort_staff) arrives in Phase 3.
   FACILITATOR: [
     "participants.read",
+    // No cohorts.read.all: facilitators are narrowed to the cohorts they staff.
     "cohorts.read",
     "sessions.read",
     "sessions.manage",
@@ -124,6 +135,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "consent.read",
     "randomization.read",
     "cohorts.read",
+    "cohorts.read.all",
     "sessions.read",
     "content.read",
     "exports.research",
@@ -134,6 +146,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "participants.read",
     "participants.contact.read",
     "cohorts.read",
+    "cohorts.read.all",
     "logistics.read",
     "logistics.manage",
     "tasks.read",

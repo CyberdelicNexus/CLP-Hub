@@ -46,7 +46,13 @@ Today that boundary is a documented convention, not a database constraint. The f
 
 ## Explicit non-features
 
-- No randomization algorithm. A `RandomizationProvider` interface will exist (Phase 2) so an approved mechanism can be plugged in; the app records the outcome and reference only. Demo fixtures are labelled DEMO and never usable in production.
+- No randomization algorithm. The `RandomizationProvider` interface exists in
+  `src/domain/randomization.ts`; its only implementation is manual entry, which
+  passes through exactly what staff read from the approved system. A demo or
+  fixture provider was considered and **rejected** (D-018): no allocation-producing
+  code belongs in this repository at all, because an absolute guarantee is easier
+  to audit than a guarded one. `tests/cohorts.test.ts` asserts the module contains
+  no source of randomness.
 - No eligibility logic. Staff record results produced elsewhere.
 - No AI decisions, no AI participant chat, no therapeutic advice.
 - No inferred readiness or behavioural analytics.

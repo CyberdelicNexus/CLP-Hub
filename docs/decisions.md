@@ -2,7 +2,7 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 2 (Participant operations) — started 2026-09-05 on founder approval. Phases 0–1 shipped.**
+**Current phase: 3a (Cohorts and allocation) — started 2026-09-08 on founder approval. Phases 0–2 shipped.**
 
 ---
 
@@ -187,6 +187,56 @@ Consenting enrols the participant in the same transaction. Declining or
 withdrawing consent does **not** automatically un-enrol anyone: that is a
 separate, deliberate decision, recorded on its own.
 
+## D-021 · 2026-09-08 · Recording an allocation is never refused
+
+Founder decision. The application does **not** check consent or eligibility
+before recording a randomization: staff record what the approved mechanism
+actually produced, which is the most faithful reading of "results are determined
+elsewhere".
+
+Because nothing is refused, the audit row carries the participant's state at the
+moment of recording — the latest consent status of any kind,
+`hadActiveConsentAtRecording`, and the eligibility status. This makes an anomaly
+visible afterwards instead of silently lost. It does not block anything.
+
+This behaved exactly as intended on first use: an allocation was recorded for a
+synthetic participant whose consent had been withdrawn, and the audit row shows
+it. Whether such a case should raise an alert is a Phase 8 question.
+
+A duplicate allocation for the same participant **is** refused, by a unique
+constraint. That is data integrity, not a clinical rule. How a genuine correction
+should be recorded is an open question.
+
+## D-022 · 2026-09-08 · Cohort scoping is a permission, not a role check
+
+Facilitators see only the cohorts they staff. Rather than checking for the
+FACILITATOR role — which non-negotiable 8 forbids in feature code — this is
+expressed as a new permission, `cohorts.read.all`. A caller holding it sees every
+cohort in the study; a caller without it is narrowed to their `cohort_staff` rows.
+
+The narrowing is applied in service queries via `ctx.cohortScope`, resolved once
+per request. `authorize.ts` and the shape of the permission model are unchanged.
+An out-of-scope cohort returns 404 rather than a permission error, because for
+that caller it genuinely does not exist.
+
+Consequence worth noting: assigning someone to `cohort_staff` also widens what
+they can see. That write is therefore gated on `cohorts.manage` and its audit row
+is flagged `grantsCohortVisibility`.
+
+`randomization.manage` was also added, closing the gap recorded in D-017.
+
+## D-023 · 2026-09-08 · Cohort lifecycle runs forward only
+
+PLANNING → RECRUITING → PREPARATION → ACTIVE → INTEGRATION → FOLLOW_UP →
+COMPLETED, with no way back. The brief supplies the vocabulary but not the
+permitted moves, so this is an **assumption**: sessions and attendance will hang
+off the stage, and silently reversing it would rewrite history they depend on.
+Recorded as an open question.
+
+Cohorts accept new participants only while PLANNING, RECRUITING or PREPARATION.
+Capacity is informational and does not block assignment — over-filling a cohort
+is an operational judgement, not something the app should refuse.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -199,6 +249,12 @@ separate, deliberate decision, recorded on its own.
   whom. The app currently permits it and audits every change.
 - Consent form versions are free-text labels today. Should they become study
   configuration rows so the set of valid versions is controlled?
+- Confirm the cohort lifecycle is strictly forward-only (D-023) — it is an
+  assumption, not from the brief.
+- How should a genuine randomization correction be recorded? Today a second
+  allocation for the same participant is refused outright (D-021).
+- Should recording an allocation for a participant without active consent raise
+  an alert? It is captured in the audit today but nothing surfaces it (Phase 8).
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Whether email reminders may be AUTOMATIC or should also be manual.

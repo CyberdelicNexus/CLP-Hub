@@ -11,6 +11,8 @@ import {
 import { CONSENT_STATUSES } from "@/domain/consent";
 import { ELIGIBILITY_STATUSES, ENROLLMENT_STATUSES } from "@/domain/participant-state";
 import { SCREENING_STATUSES } from "@/domain/screening";
+import { COHORT_STATUSES } from "@/domain/cohort";
+import { ALLOCATION_METHODS } from "@/domain/randomization";
 
 // Postgres enum names must match supabase/migrations/0001_foundation.sql
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
@@ -29,3 +31,7 @@ export const eligibilityStatusEnum = pgEnum("eligibility_status", ELIGIBILITY_ST
 export const enrollmentStatusEnum = pgEnum("enrollment_status", ENROLLMENT_STATUSES);
 export const screeningStatusEnum = pgEnum("screening_status", SCREENING_STATUSES);
 export const consentStatusEnum = pgEnum("consent_status", CONSENT_STATUSES);
+
+// Cohorts and allocation (Phase 3a, migration 0004)
+export const cohortStatusEnum = pgEnum("cohort_status", COHORT_STATUSES);
+export const allocationMethodEnum = pgEnum("allocation_method", ALLOCATION_METHODS);

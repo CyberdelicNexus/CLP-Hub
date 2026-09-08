@@ -2,7 +2,7 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 2 — participant operations.** Public application form, staff triage, screening appointments and consent records exist. No randomization, cohorts, messaging or participant content yet. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phase 3a — cohorts and allocation.** Public application form, staff triage, screening, consent, cohorts and recorded allocations exist. Sessions, attendance, messaging and participant content are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 
@@ -57,4 +57,4 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 
 ## Non-negotiables
 
-No randomization algorithm. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.
+No randomization algorithm — `src/domain/randomization.ts` records allocations made elsewhere and is guarded by a test asserting it contains no source of randomness. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.

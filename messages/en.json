@@ -325,5 +325,79 @@
     "when": "Scheduled for",
     "emptyTitle": "No screenings pending",
     "emptyDescription": "There is no screening scheduled at the moment."
+  },
+  "cohorts": {
+    "subtitle": "Groups of participants who go through the programme together.",
+    "scopedNotice": "You see only the cohorts you facilitate.",
+    "backToList": "Back to cohorts",
+    "detailTitle": "Cohort",
+    "createTitle": "New cohort",
+    "create": "Create cohort",
+    "emptyTitle": "No cohorts",
+    "emptyDescription": "No cohort has been created in this study yet.",
+    "emptyScoped": "You have no cohorts assigned.",
+    "members": "Participants",
+    "noMembers": "This cohort has no participants yet.",
+    "staff": "Cohort team",
+    "noStaff": "Nobody assigned yet.",
+    "assignStaff": "Assign to team",
+    "revokeStaff": "Remove",
+    "staffVisibilityNote": "Assigning someone to this cohort also lets them see it, even if their role does not grant access to all cohorts.",
+    "lifecycle": "Status",
+    "lifecycleEnd": "This cohort has reached the end of its lifecycle.",
+    "readOnly": "Read only: you cannot modify this cohort.",
+    "placement": "Placement",
+    "arm": "Arm",
+    "allocatedAt": "Allocation date",
+    "recordAllocation": "Record allocation",
+    "allocationBoundary": "This application does not randomize. Record the arm the approved system already allocated, and its reference.",
+    "noAllocation": "No arm allocation recorded.",
+    "assignToCohort": "Assign to cohort",
+    "removeFromCohort": "Remove from cohort",
+    "noCohort": "No cohort assigned.",
+    "noneAssignable": "No cohort is open to new assignments.",
+    "status": {
+      "PLANNING": "Planning",
+      "RECRUITING": "Recruiting",
+      "PREPARATION": "Preparation",
+      "ACTIVE": "Active",
+      "INTEGRATION": "Integration",
+      "FOLLOW_UP": "Follow-up",
+      "COMPLETED": "Completed"
+    },
+    "advanceTo": {
+      "PLANNING": "Move to planning",
+      "RECRUITING": "Move to recruiting",
+      "PREPARATION": "Move to preparation",
+      "ACTIVE": "Move to active",
+      "INTEGRATION": "Move to integration",
+      "FOLLOW_UP": "Move to follow-up",
+      "COMPLETED": "Mark as completed"
+    },
+    "table": {
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "members": "Participants",
+      "open": "Open cohort"
+    },
+    "field": {
+      "code": "Code",
+      "name": "Name",
+      "start": "Planned start",
+      "end": "Planned end",
+      "capacity": "Places",
+      "capacityHelp": "Optional. Informational only: it does not prevent further assignments.",
+      "person": "Person"
+    },
+    "error": {
+      "invalid": "That change is not allowed.",
+      "notFound": "The record was not found.",
+      "duplicateCode": "A cohort with that code already exists.",
+      "alreadyRandomized": "This person already has a recorded arm allocation.",
+      "alreadyAssigned": "This person already belongs to a cohort.",
+      "cohortClosed": "This cohort no longer accepts new assignments.",
+      "failed": "The change could not be saved. Please try again."
+    }
   }
 }
