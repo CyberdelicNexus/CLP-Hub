@@ -64,11 +64,21 @@ become reachable in this phase.
 
 Added enums: `session_modality`, `session_status`, `attendance_status`.
 
+## Implemented (Phase 5 · migration 0006)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `contents` | Identity of a page | `key` is the public URL slug; `session_template_id` links session material by FK (D-029) |
+| `content_versions` | Explicit version per locale | Publishing never mutates a published row; one PUBLISHED per (content, locale) |
+| `content_assignments` | Which version a session was pinned to | Pinned at scheduling (D-028); superseding inserts a row rather than editing one |
+
+Added enums: `content_type`, `content_status`. Bodies are typed blocks in jsonb,
+validated on save and on read — never HTML (D-027).
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 5 Content | `contents`, `content_versions`, `content_assignments` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |

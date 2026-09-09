@@ -18,6 +18,7 @@ import { recordAuditEvent } from "@/audit/record";
 import { isDemoDataAllowed, scriptEnvSchema } from "@/config/env-schema";
 import * as schema from "@/db/schema";
 import { formatParticipantCode, normalizeEmail } from "@/domain/recruitment";
+import type { ContentBody } from "@/domain/content";
 import { STAFF_ROLES, type StaffRole } from "@/domain/roles";
 
 loadEnv({ path: ".env.local" });
@@ -187,6 +188,91 @@ const DEMO_SESSION_TEMPLATES = [
     dayOffset: 21,
   },
 ] as const;
+
+/**
+ * Synthetic study content, published in Spanish so /estudio has real pages.
+ * Exercises most block types. Deliberately contains no clinical instruction —
+ * it is operational guidance of the kind the real pages will carry.
+ */
+const DEMO_CONTENT: ReadonlyArray<{
+  type: "VR_GUIDE" | "FAQ" | "SESSION_PREPARATION";
+  key: string;
+  sessionCode: string | null;
+  title: string;
+  body: ContentBody;
+}> = [
+  {
+    type: "VR_GUIDE",
+    key: "preparacion-vr",
+    sessionCode: null,
+    title: "Preparar tu equipo de realidad virtual (DEMO)",
+    body: [
+      {
+        type: "TEXT",
+        md: "Esta guía **sintética** explica cómo dejar el equipo listo antes de una sesión. Si algo no funciona, no pasa nada: puedes escribirnos y lo resolvemos juntos.",
+      },
+      {
+        type: "CHECKLIST",
+        title: "Antes de empezar",
+        items: [
+          "Carga el visor por completo",
+          "Busca un espacio despejado de unos dos metros",
+          "Ten el móvil cerca por si necesitas escribirnos",
+        ],
+      },
+      { type: "TECHNICAL_STEP", step: 1, title: "Enciende el visor", md: "Mantén pulsado el botón lateral hasta que aparezca el logotipo." },
+      { type: "TECHNICAL_STEP", step: 2, title: "Conecta a tu wifi", md: "Elige tu red en la lista y escribe la contraseña con el mando." },
+      {
+        type: "CALLOUT",
+        tone: "WARNING",
+        title: "Si te mareas",
+        md: "Párate. Quítate el visor y siéntate un momento. No es un fallo tuyo y no afecta a tu participación.",
+      },
+      {
+        type: "SUPPORT_BOX",
+        title: "¿Necesitas ayuda?",
+        md: "El equipo del estudio puede acompañarte por teléfono mientras lo configuras.",
+        contactLabel: "Escribir al equipo",
+        contactUrl: "mailto:demo.equipo@example.com",
+      },
+    ],
+  },
+  {
+    type: "FAQ",
+    key: "ayuda",
+    sessionCode: null,
+    title: "Preguntas frecuentes (DEMO)",
+    body: [
+      { type: "TEXT", md: "Respuestas sintéticas a las dudas más habituales. Puedes escribirnos siempre que quieras." },
+      { type: "TEXT", md: "**¿Puedo dejarlo cuando quiera?**\n\nSí. Participar es voluntario y puedes retirarte en cualquier momento sin dar explicaciones." },
+      { type: "TEXT", md: "**¿Quién ve mis datos?**\n\nSolo el equipo del estudio, y cada persona ve únicamente lo que necesita para su trabajo." },
+      { type: "BUTTON", label: "Volver al inicio", url: "/" },
+    ],
+  },
+  {
+    type: "SESSION_PREPARATION",
+    key: "demo-intro-preparacion",
+    sessionCode: "demo_intro",
+    title: "Cómo prepararte para la primera sesión (DEMO)",
+    body: [
+      { type: "TEXT", md: "Contenido sintético de demostración. La sesión dura unos 90 minutos." },
+      {
+        type: "CONTEMPLATION",
+        md: "Antes de venir, tómate un momento para pensar qué te gustaría llevarte de esta experiencia.",
+      },
+      {
+        type: "CHECKLIST",
+        title: "Trae contigo",
+        items: ["Ropa cómoda", "Una botella de agua", "Tus preguntas, si tienes alguna"],
+      },
+      {
+        type: "CALLOUT",
+        tone: "INFO",
+        md: "Si vas a llegar tarde, avísanos: la sesión empieza a la hora prevista pero podemos ayudarte a incorporarte.",
+      },
+    ],
+  },
+];
 
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
@@ -393,6 +479,61 @@ async function main() {
         });
     }
     console.log(`program ${DEMO_SESSION_TEMPLATES.length} session templates`);
+
+    // Study content (Phase 5). Published Spanish pages so /estudio works.
+    // Content lives in the database, never in the message files (D-009).
+    const templateRows = await db
+      .select({ id: schema.sessionTemplates.id, code: schema.sessionTemplates.code })
+      .from(schema.sessionTemplates)
+      .where(eq(schema.sessionTemplates.studyId, study.id));
+    const templateId = new Map(templateRows.map((r) => [r.code, r.id]));
+
+    for (const item of DEMO_CONTENT) {
+      const sessionTemplateId = item.sessionCode ? (templateId.get(item.sessionCode) ?? null) : null;
+      if (item.sessionCode && !sessionTemplateId) continue;
+
+      const [content] = await db
+        .insert(schema.contents)
+        .values({ studyId: study.id, type: item.type, key: item.key, sessionTemplateId })
+        .onConflictDoUpdate({
+          target: [schema.contents.studyId, schema.contents.key],
+          set: { type: item.type },
+        })
+        .returning({ id: schema.contents.id });
+
+      const [existingVersion] = await db
+        .select({ id: schema.contentVersions.id })
+        .from(schema.contentVersions)
+        .where(eq(schema.contentVersions.contentId, content.id))
+        .limit(1);
+      if (existingVersion) continue;
+
+      await db.transaction(async (tx) => {
+        const [version] = await tx
+          .insert(schema.contentVersions)
+          .values({
+            contentId: content.id,
+            locale: "es",
+            versionNumber: 1,
+            title: item.title,
+            body: item.body,
+            status: "PUBLISHED",
+            publishedAt: new Date(),
+          })
+          .returning({ id: schema.contentVersions.id });
+
+        await recordAuditEvent(tx, {
+          studyId: study.id,
+          actor: { type: "SYSTEM" },
+          action: "content_version.published",
+          entityType: "content_version",
+          entityId: version.id,
+          after: { status: "PUBLISHED", versionNumber: 1, key: item.key },
+          metadata: { source: "seed", demo: true },
+        });
+      });
+      console.log(`page    /estudio/${item.sessionCode ? `sesiones/${item.sessionCode}/preparacion` : item.key}`);
+    }
 
     // Application form configuration
     for (const q of DEMO_QUESTIONS) {

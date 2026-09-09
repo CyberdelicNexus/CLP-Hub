@@ -178,6 +178,15 @@
         "invalidDate": "Introduce una fecha válida."
       },
       "tooFast": "Espera un momento y vuelve a enviar el formulario."
+    },
+    "study": {
+      "backHome": "Inicio",
+      "updated": "Actualizado el {date}",
+      "footerNote": "Esta página es informativa y es igual para todas las personas. No contiene datos personales ni requiere iniciar sesión.",
+      "part": {
+        "preparacion": "Preparación",
+        "integracion": "Integración"
+      }
     }
   },
   "applications": {
@@ -472,6 +481,76 @@
     "error": {
       "invalid": "Ese cambio no es posible.",
       "notFound": "No se ha encontrado la sesión.",
+      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
+    }
+  },
+  "content": {
+    "subtitle": "Páginas del estudio que leen las personas participantes.",
+    "boundary": "El contenido del estudio vive aquí, no en el código. Las páginas publicadas son idénticas para todo el mundo y no contienen ningún dato de participantes.",
+    "backToList": "Volver a contenido",
+    "detailTitle": "Contenido",
+    "createTitle": "Nuevo contenido",
+    "create": "Crear",
+    "emptyTitle": "Sin contenido",
+    "emptyDescription": "Todavía no se ha creado ninguna página del estudio.",
+    "working": "Versión en preparación",
+    "live": "Versión publicada",
+    "history": "Historial de versiones",
+    "preview": "Vista previa",
+    "previewEmpty": "Añade bloques para ver la vista previa.",
+    "bodyValid": "Formato correcto.",
+    "saveDraft": "Guardar borrador",
+    "publish": "Publicar",
+    "publishFirst": "Se publicará como la primera versión visible.",
+    "publishReplaces": "Sustituirá a la versión v{version}, que quedará archivada.",
+    "newDraft": "Crear nueva versión",
+    "newDraftNote": "Copia la versión publicada en un borrador nuevo. La versión publicada no se modifica nunca.",
+    "publishedOn": "Publicada el {date}",
+    "notLive": "sin publicar",
+    "notPublic": "No es una página pública",
+    "type": {
+      "SESSION_PREPARATION": "Preparación de sesión",
+      "SESSION_INTEGRATION": "Integración de sesión",
+      "VR_GUIDE": "Guía de realidad virtual",
+      "TROUBLESHOOTING": "Resolución de problemas",
+      "FAQ": "Preguntas frecuentes",
+      "EMAIL_TEMPLATE": "Plantilla de correo",
+      "WHATSAPP_TEMPLATE": "Plantilla de WhatsApp"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "REVIEW": "En revisión",
+      "PUBLISHED": "Publicada",
+      "ARCHIVED": "Archivada"
+    },
+    "action": {
+      "DRAFT": "Volver a borrador",
+      "REVIEW": "Enviar a revisión"
+    },
+    "table": {
+      "title": "Título",
+      "type": "Tipo",
+      "live": "Publicada",
+      "working": "En preparación",
+      "page": "Página pública",
+      "open": "Abrir contenido"
+    },
+    "field": {
+      "type": "Tipo",
+      "key": "Clave",
+      "keyHelp": "Se usa en la dirección pública, por ejemplo /estudio/preparacion-vr.",
+      "title": "Título",
+      "session": "Sesión del programa",
+      "body": "Bloques",
+      "bodyHelp": "Lista de bloques en formato JSON. Los bloques de texto admiten **negrita**, *cursiva*, `código` y enlaces."
+    },
+    "error": {
+      "invalid": "Ese cambio no es posible.",
+      "invalidBody": "Los bloques no son válidos.",
+      "notEditable": "Una versión publicada o archivada no se puede editar.",
+      "duplicateKey": "Ya existe contenido con esa clave.",
+      "noSession": "Este tipo de contenido debe asociarse a una sesión.",
+      "notFound": "No se ha encontrado el contenido.",
       "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
     }
   }

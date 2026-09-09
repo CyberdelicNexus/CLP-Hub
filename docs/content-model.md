@@ -1,4 +1,4 @@
-# Content model (design — implemented in Phase 5)
+# Content model (implemented in Phase 5 · migration 0006)
 
 Two separate systems:
 
@@ -15,10 +15,14 @@ Participants do not log in (D-003). Study content is published as blog-style Spa
 
 ## Tables
 
-- `contents` — `study_id`, `type` (SESSION_PREPARATION, SESSION_INTEGRATION, VR_GUIDE, TROUBLESHOOTING, FAQ, EMAIL_TEMPLATE, WHATSAPP_TEMPLATE, …), `key`.
+- `contents` — `study_id`, `type` (SESSION_PREPARATION, SESSION_INTEGRATION, VR_GUIDE, TROUBLESHOOTING, FAQ, EMAIL_TEMPLATE, WHATSAPP_TEMPLATE), `key`, and a nullable `session_template_id` foreign key for session material (D-029).
 - `content_versions` — `content_id`, `locale`, `version_number`, `title`, `body`, `status` (DRAFT, REVIEW, PUBLISHED, ARCHIVED), `created_by`, `approved_by`, `published_at`.
 
-Body format: Markdown plus a small set of typed blocks (TEXT, VIDEO, IMAGE, CHECKLIST, CALLOUT, CONTEMPLATION, BUTTON, TECHNICAL_STEP, SUPPORT_BOX). Not a page builder.
+Body format: a JSON array of typed blocks (TEXT, VIDEO, IMAGE, CHECKLIST, CALLOUT, CONTEMPLATION, BUTTON, TECHNICAL_STEP, SUPPORT_BOX). Not a page builder.
+
+Text-bearing blocks carry a small Markdown subset — bold, italic, inline code, links, paragraphs, lists. It is parsed to a typed token tree and rendered as React elements: **no HTML string is ever produced**, so there is no sanitiser in the path and raw HTML an author types appears as literal text (D-027). Link and media URLs are scheme-checked on save and on render.
+
+Authors currently edit the block JSON with live validation and a preview; a block-by-block editor is a follow-up (D-029).
 
 ## Rules
 

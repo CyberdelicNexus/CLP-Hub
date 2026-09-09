@@ -2,14 +2,14 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 3 complete — cohorts, sessions and attendance.** Public application form, staff triage, screening, consent, cohorts, recorded allocations, session scheduling and attendance exist. Content, VR logistics, messaging and automation are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phase 5 — study content.** Public application form, staff triage, screening, consent, cohorts, recorded allocations, sessions, attendance and versioned public study pages exist. VR logistics, messaging and automation are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 
 | Surface | Path | Who | Phase |
 |---|---|---|---|
 | Public recruitment site | `/` | Anyone | 1 |
-| Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 4–5 |
+| Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
 
 Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles.

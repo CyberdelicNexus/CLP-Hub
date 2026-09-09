@@ -23,6 +23,7 @@ import {
   type SessionModality,
   type SessionStatus,
 } from "@/domain/session";
+import { pinSessionContent } from "./content";
 
 /**
  * Sessions and attendance (Phase 3b).
@@ -222,6 +223,16 @@ export async function scheduleSession(params: {
 
     const expected = await openRegister(tx, created.id, cohortId);
 
+    // Pin the content that is published right now, so "which version did this
+    // cohort receive?" is answerable later (D-027). Pins nothing when the
+    // session has no template or nothing is published yet.
+    const pinned = await pinSessionContent(tx, {
+      studyId,
+      cohortSessionId: created.id,
+      templateId: params.templateId || null,
+      actorId,
+    });
+
     await recordAuditEvent(tx, {
       studyId,
       actor: { type: "STAFF", id: actorId },
@@ -234,6 +245,7 @@ export async function scheduleSession(params: {
         modality: params.modality,
         scheduledStart: params.scheduledStart.toISOString(),
         expectedParticipants: expected,
+        pinnedContentVersions: pinned,
       },
     });
 

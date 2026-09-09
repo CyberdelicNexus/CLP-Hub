@@ -178,6 +178,15 @@
         "invalidDate": "Enter a valid date."
       },
       "tooFast": "Please wait a moment and submit the form again."
+    },
+    "study": {
+      "backHome": "Home",
+      "updated": "Updated {date}",
+      "footerNote": "This page is informational and identical for everyone. It contains no personal data and requires no sign-in.",
+      "part": {
+        "preparacion": "Preparation",
+        "integracion": "Integration"
+      }
     }
   },
   "applications": {
@@ -472,6 +481,76 @@
     "error": {
       "invalid": "That change is not allowed.",
       "notFound": "The session was not found.",
+      "failed": "The change could not be saved. Please try again."
+    }
+  },
+  "content": {
+    "subtitle": "Study pages that participants read.",
+    "boundary": "Study content lives here, not in the code. Published pages are identical for everyone and contain no participant data.",
+    "backToList": "Back to content",
+    "detailTitle": "Content",
+    "createTitle": "New content",
+    "create": "Create",
+    "emptyTitle": "No content",
+    "emptyDescription": "No study page has been created yet.",
+    "working": "Version in progress",
+    "live": "Published version",
+    "history": "Version history",
+    "preview": "Preview",
+    "previewEmpty": "Add blocks to see the preview.",
+    "bodyValid": "Format is valid.",
+    "saveDraft": "Save draft",
+    "publish": "Publish",
+    "publishFirst": "This will go live as the first visible version.",
+    "publishReplaces": "This replaces v{version}, which will be archived.",
+    "newDraft": "Create a new version",
+    "newDraftNote": "Copies the published version into a new draft. The published version is never modified.",
+    "publishedOn": "Published {date}",
+    "notLive": "not published",
+    "notPublic": "Not a public page",
+    "type": {
+      "SESSION_PREPARATION": "Session preparation",
+      "SESSION_INTEGRATION": "Session integration",
+      "VR_GUIDE": "VR guide",
+      "TROUBLESHOOTING": "Troubleshooting",
+      "FAQ": "FAQ",
+      "EMAIL_TEMPLATE": "Email template",
+      "WHATSAPP_TEMPLATE": "WhatsApp template"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "REVIEW": "In review",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "action": {
+      "DRAFT": "Back to draft",
+      "REVIEW": "Send to review"
+    },
+    "table": {
+      "title": "Title",
+      "type": "Type",
+      "live": "Published",
+      "working": "In progress",
+      "page": "Public page",
+      "open": "Open content"
+    },
+    "field": {
+      "type": "Type",
+      "key": "Key",
+      "keyHelp": "Used in the public address, for example /estudio/preparacion-vr.",
+      "title": "Title",
+      "session": "Programme session",
+      "body": "Blocks",
+      "bodyHelp": "A JSON list of blocks. Text blocks accept **bold**, *italic*, `code` and links."
+    },
+    "error": {
+      "invalid": "That change is not allowed.",
+      "invalidBody": "The blocks are not valid.",
+      "notEditable": "A published or archived version cannot be edited.",
+      "duplicateKey": "Content with that key already exists.",
+      "noSession": "This content type must be attached to a session.",
+      "notFound": "The content was not found.",
       "failed": "The change could not be saved. Please try again."
     }
   }

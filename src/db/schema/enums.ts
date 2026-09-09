@@ -18,6 +18,7 @@ import {
   SESSION_MODALITIES,
   SESSION_STATUSES,
 } from "@/domain/session";
+import { CONTENT_STATUSES, CONTENT_TYPES } from "@/domain/content";
 
 // Postgres enum names must match supabase/migrations/0001_foundation.sql
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
@@ -45,3 +46,7 @@ export const allocationMethodEnum = pgEnum("allocation_method", ALLOCATION_METHO
 export const sessionModalityEnum = pgEnum("session_modality", SESSION_MODALITIES);
 export const sessionStatusEnum = pgEnum("session_status", SESSION_STATUSES);
 export const attendanceStatusEnum = pgEnum("attendance_status", ATTENDANCE_STATUSES);
+
+// Study content (Phase 5, migration 0006)
+export const contentTypeEnum = pgEnum("content_type", CONTENT_TYPES);
+export const contentStatusEnum = pgEnum("content_status", CONTENT_STATUSES);

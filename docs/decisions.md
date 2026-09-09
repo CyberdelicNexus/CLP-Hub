@@ -2,7 +2,7 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 3b (Sessions and attendance) — started 2026-09-08 on founder approval. Phases 0–3a shipped.**
+**Current phase: 5 (Study content) — started 2026-09-09 on founder approval. Phases 0–3 shipped.**
 
 ---
 
@@ -289,6 +289,65 @@ explicitly, without the schema presuming it.
 `cohort_sessions.template_id` is likewise nullable, so an ad-hoc session can be
 scheduled without inventing a template for it.
 
+## D-027 · 2026-09-09 · Content bodies are typed blocks, and no HTML is ever produced
+
+Founder decision. A content body is a JSON array of nine typed blocks (TEXT,
+VIDEO, IMAGE, CHECKLIST, CALLOUT, CONTEMPLATION, BUTTON, TECHNICAL_STEP,
+SUPPORT_BOX). Text-bearing blocks accept a deliberately tiny Markdown subset —
+bold, italic, inline code, links, paragraphs and lists — and nothing else.
+
+The reason is that study content is authored by staff and rendered on **public**
+pages. Rather than parse Markdown to HTML and then try to sanitise it, the parser
+in `src/domain/markdown.ts` produces a typed token tree that the renderer turns
+into React elements. No HTML string is ever constructed, `dangerouslySetInnerHTML`
+is never used, and there is no sanitiser to get wrong.
+
+Consequences:
+- Raw HTML an author types is rendered as literal text, not markup.
+- Link and media URLs are scheme-checked; `javascript:` and `data:` are refused
+  both by the Zod schema on save and by the parser on render. An unsafe link is
+  shown as plain text rather than silently deleted.
+- Bodies are validated on save AND on read: a row hand-edited in the database
+  drops its malformed blocks rather than taking a public page down.
+- `tests/content.test.ts` covers each of these.
+
+Message templates (EMAIL_TEMPLATE, WHATSAPP_TEMPLATE) are excluded from public
+routing entirely — they are drafted here for Phase 7 and must never be reachable
+as a web page.
+
+## D-028 · 2026-09-09 · Content versions are pinned when a session is scheduled
+
+Founder decision. When a session is scheduled, the currently published version of
+its session content is pinned in `content_assignments`, so "which version did
+Cohort 04 receive?" is answerable.
+
+**Known consequence, accepted deliberately:** if content is republished between
+scheduling and the session actually happening, the pinned version is not what
+participants saw on the day. The alternative — pinning when the session is marked
+HELD — would record what was actually delivered but would not let staff see in
+advance what a cohort is going to get.
+
+Mitigation in place: `countStaleAssignments` finds scheduled sessions pinned to a
+version that is no longer published, so the drift is detectable rather than
+silent. Re-pinning is deliberately not automatic; how it should work is an open
+question.
+
+## D-029 · 2026-09-09 · The block editor is a validated JSON editor, for now
+
+Authors edit the block array as JSON, with live validation and a preview rendered
+by the very same component the public page uses — so what an author sees is what
+a participant gets, and an invalid body cannot be saved.
+
+This is an honest interim, recorded as a limitation rather than presented as
+finished: study staff writing preparation material should not be editing JSON. A
+block-by-block editor is a follow-up. The data model does not change when it
+arrives, because the blocks are already typed and validated.
+
+Also deviating slightly from `docs/content-model.md`: `contents` gained a nullable
+`session_template_id` foreign key. The design said content keys reference session
+templates; a real foreign key does the same job while making it impossible to
+orphan a preparation page by renaming a session.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -313,6 +372,12 @@ scheduled without inventing a template for it.
   it is now? Every change is audited either way.
 - Are session templates ever genuinely arm-specific? The column exists but is
   unused (D-026).
+- How should a session be re-pinned when its content is republished before the
+  session happens? Drift is detectable today but nothing acts on it (D-028).
+- Do participants need an index of the study pages, or are the links only ever
+  handed out in messages? There is no /estudio landing page today.
+- Should EN translations of study content be required, or is Spanish enough with
+  EN only for staff preview (as D-009 implies)?
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Whether email reminders may be AUTOMATIC or should also be manual.

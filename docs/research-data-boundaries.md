@@ -63,7 +63,7 @@ Today that boundary is a documented convention, not a database constraint. The f
 2. **Public form abuse protection.** The application form has only a honeypot and a fill-time floor (D-015). A captcha or WAF plus IP rate limiting is required before it accepts real traffic. IP addresses are deliberately not stored, as that would add a data category with no approved purpose.
 3. **Right to erasure vs. append-only audit.** Proposed approach: pseudonymize contact data on request while keeping operational history keyed by participant code. Needs researcher / DPO sign-off.
 4. **Audit snapshots may contain PII.** `before_json`/`after_json` can include contact fields. Access requires `audit.read`; retention policy to be defined. Phase 1 deliberately keeps them out: recruitment audit rows identify the person by `participants.code` and record answer *counts*, never names, emails or answer text. Later phases should follow the same rule.
-5. **Public content pages** must never embed participant data or unguessable-but-personal state; they are the same for everyone.
+5. **Public content pages** must never embed participant data or unguessable-but-personal state; they are the same for everyone. Implemented in Phase 5: `/estudio/…` pages take no session, read only PUBLISHED content, and render identically for every reader. The URL names a study session, never a cohort or a person — which version a cohort was pinned to is internal (D-028).
 6. **Staff MFA** before production.
 7. **Dedicated database role** with least privilege instead of the Supabase `postgres` role before production.
 8. **Logs** redact identity fields (see `src/lib/logger.ts`); never log message bodies or screening results.
