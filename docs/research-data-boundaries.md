@@ -44,6 +44,28 @@ timestamp, and 'PENDING' is rejected as a result.
 
 Today that boundary is a documented convention, not a database constraint. The form warns applicants not to include health information and caps free text at 1000 characters, but nothing prevents a future admin UI from configuring a prohibited question. Enforcing it in the database is an open question.
 
+### How Phase 4a holds the line
+
+The initial screening lives in Qualtrics, and so does its identifiable half. CLP
+Hub holds `participants.external_ref` — an opaque response ID, pattern-checked in
+SQL so it cannot become a place to write a name — and nothing else about the
+person until staff deliberately add contact details to arrange a visit (D-031).
+
+`/participar` collects nothing. It renders no form, no input and no server
+action; a test asserts this, because the digital consent is accepted in Qualtrics
+*before* any datum is collected and a form here would invert that order.
+
+`qualtrics_field_mappings` configures a read-only integration that **does not
+exist yet**. Its value is the check constraint: a mapping whose `source_class` is
+IDENTIFIABLE or RESEARCH cannot be inserted. Identifiable screening data
+therefore cannot be transferred by misconfiguration, only by a migration and a
+recorded decision.
+
+Eligibility reasons (D-030) carry a CONSORT category and a study-configured
+label that says *that* a criterion was not met, never which. The one free-text
+field, the 280-character single-line note, is the narrow exception — never copied
+into audit snapshots, so it exists in one place and can be erased.
+
 ## Explicit non-features
 
 - No randomization algorithm. The `RandomizationProvider` interface exists in
@@ -56,6 +78,12 @@ Today that boundary is a documented convention, not a database constraint. The f
 - No eligibility logic. Staff record results produced elsewhere.
 - No AI decisions, no AI participant chat, no therapeutic advice.
 - No inferred readiness or behavioural analytics.
+- **No Qualtrics data transfer.** No HTTP client, credential, webhook or
+  scheduled pull exists in this repository. `tests/intake.test.ts` asserts that
+  `src/domain/intake.ts` contains none, the same absolute-guarantee argument
+  D-018 makes about randomization.
+- No flow-diagram percentages or retention rates. `getStudyFlowCounts` returns
+  categories, never a single folded figure (the argument of D-024).
 
 ## Privacy and governance items (open)
 

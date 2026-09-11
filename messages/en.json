@@ -157,27 +157,21 @@
       "applyCta": "Apply to take part"
     },
     "apply": {
-      "title": "Application to take part",
-      "intro": "Fill in this form if you are interested in taking part. The study team will review your application and get in touch.",
+      "title": "Take part in the study",
+      "intro": "If you are interested in taking part, the first step is a short initial questionnaire completed outside this site.",
       "back": "Back",
-      "submit": "Send application",
-      "submitting": "Sending…",
-      "optional": " (optional)",
-      "requiredNote": "Fields marked with * are required.",
-      "successTitle": "Application sent",
-      "successBody": "Thank you. We have received your application and the study team will be in touch.",
-      "closedTitle": "Applications closed",
-      "closed": "No study is currently open to new applications.",
-      "failed": "The application could not be sent. Please try again in a few minutes.",
-      "privacyNote": "We use these details only to contact you about the study. Please do not include medical or health information in this form.",
-      "error": {
-        "required": "This field is required.",
-        "invalidEmail": "Enter a valid email address.",
-        "invalidOption": "Choose one of the available options.",
-        "tooLong": "This text is too long.",
-        "invalidDate": "Enter a valid date."
+      "handoffTitle": "How to start",
+      "handoffBody": "The initial questionnaire runs on the study's external platform. This page collects no data about you.",
+      "handoffStep": {
+        "consent": "First you will read the study information and give your consent. Nothing about you is asked until then, not even your name.",
+        "questions": "Then you will answer a few questions so we can see whether the study is a fit for you.",
+        "contact": "If you continue in the process, the study team will get in touch with you."
       },
-      "tooFast": "Please wait a moment and submit the form again."
+      "handoffCta": "Go to the initial questionnaire",
+      "handoffConsentNote": "Consent is given before any personal data is collected. You can stop at any point.",
+      "closedTitle": "Enrolment closed",
+      "closed": "No study is currently open to new participants.",
+      "privacyNote": "This page does not collect, store or send any personal data. Your answers to the initial questionnaire stay on the study platform, not on this site."
     },
     "study": {
       "backHome": "Home",
@@ -242,6 +236,17 @@
     "error": {
       "invalid": "That status change is not allowed.",
       "failed": "The change could not be saved. Please try again."
+    },
+    "intakeTitle": "Record a Qualtrics screening",
+    "intakeBoundary": "Enter only the anonymized response reference. Name, email and phone stay in Qualtrics — they are not copied here.",
+    "intakeReference": "Response reference",
+    "intakeReferenceHelp": "The Qualtrics response identifier, e.g. R_1a2B3c4D5e6F7g8. No spaces, no names.",
+    "intakeSubmit": "Record participant",
+    "intakeCreated": "Participant created with code",
+    "intakeError": {
+      "invalid": "The reference must be an identifier, not free text.",
+      "duplicate": "A participant with that reference already exists in this study.",
+      "failed": "Could not record it. Please try again."
     }
   },
   "participants": {
@@ -325,8 +330,17 @@
       "invalid": "That change is not allowed.",
       "notFound": "The record was not found.",
       "failed": "The change could not be saved. Please try again.",
-      "badReference": "The external reference accepts an identifier only (letters, numbers, . : / -). Do not type clinical information here."
-    }
+      "badReference": "The external reference accepts an identifier only (letters, numbers, . : / -). Do not type clinical information here.",
+      "reasonRequired": "Choose a reason for this outcome.",
+      "reasonNotAllowed": "This outcome does not take a reason.",
+      "reasonNotApplicable": "That reason cannot be used with this outcome.",
+      "noteTooLong": "The note is too long or contains line breaks."
+    },
+    "reason": "Reason",
+    "reasonRequiredHint": "Required for “Not eligible” and “Needs review”.",
+    "reasonNote": "Operational note (optional)",
+    "reasonNoteHelp": "One line of operational context, 280 characters maximum. Do not include clinical or health information.",
+    "reasonNoneConfigured": "No reasons are configured for this outcome. Configure them before recording it."
   },
   "screening": {
     "subtitle": "Scheduled screenings still to happen.",
@@ -552,6 +566,44 @@
       "noSession": "This content type must be attached to a session.",
       "notFound": "The content was not found.",
       "failed": "The change could not be saved. Please try again."
+    }
+  },
+  "flow": {
+    "title": "Study flow",
+    "note": "Aggregate counts for the flow diagram. No percentages and no individual records: the figures are read alongside the study's approved system.",
+    "unreasoned": "{count, plural, one {# exclusion has no recorded reason} other {# exclusions have no recorded reason}}. Complete them so they appear in the diagram.",
+    "stages": "Stages",
+    "notAssessed": "Screenings with no outcome",
+    "exclusions": "Exclusion reasons",
+    "allocation": "Allocation by arm",
+    "noExclusions": "No exclusions recorded yet.",
+    "noArms": "No arms are configured for this study.",
+    "inCohort": "{count} in a cohort",
+    "stage": {
+      "applicationsReceived": "Applications received",
+      "peopleApplied": "Distinct people",
+      "assessed": "People assessed",
+      "eligible": "Eligible",
+      "ineligible": "Not eligible",
+      "reviewRequired": "Need review",
+      "waitlist": "Waitlisted",
+      "pending": "Awaiting assessment",
+      "eligibleNotAllocated": "Eligible with no allocation recorded"
+    },
+    "notAssessedReason": {
+      "noShow": "Did not attend",
+      "cancelled": "Cancelled",
+      "stillScheduled": "Still scheduled"
+    },
+    "category": {
+      "DID_NOT_MEET_CRITERIA": "Did not meet criteria",
+      "DECLINED": "Declined to participate",
+      "UNREACHABLE": "Unreachable",
+      "LOGISTICS": "Logistics",
+      "WITHDREW_BEFORE_ALLOCATION": "Withdrew before allocation",
+      "DUPLICATE": "Duplicate",
+      "STUDY_CAPACITY": "Study capacity",
+      "OTHER": "Other reasons"
     }
   }
 }

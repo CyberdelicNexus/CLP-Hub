@@ -9,3 +9,4 @@ export * from "./participant-ops";
 export * from "./cohorts";
 export * from "./sessions";
 export * from "./content";
+export * from "./intake";

@@ -2,7 +2,11 @@
 
 Append-only. Newest at the bottom. Record assumptions here rather than silently deciding.
 
-**Current phase: 5 (Study content) — started 2026-09-09 on founder approval. Phases 0–3 shipped.**
+**Current phase: 4 (Operational refinement) — started 2026-09-11 on founder approval. Phases 0–3 and 5 shipped.**
+
+Phase 4 was skipped when content was brought forward; it is now the number for the
+refinement pass agreed at the 2026-09-11 meeting. Phases 6 (VR logistics) and 7
+(communications) were also approved in the same meeting and keep their numbers.
 
 ---
 
@@ -348,6 +352,84 @@ Also deviating slightly from `docs/content-model.md`: `contents` gained a nullab
 templates; a real foreign key does the same job while making it impossible to
 orphan a preparation page by renaming a session.
 
+
+## D-030 · 2026-09-11 · A determination carries a standardized reason, and one line of context
+
+Founder decision, from the 2026-09-11 meeting. An exclusion with no recorded
+reason cannot be reported in a flow diagram, and "requires review" with no
+statement of what needs reviewing is a dead end rather than a handover. So
+INELIGIBLE and REVIEW_REQUIRED now require a reason, enforced by a check
+constraint on `screenings` rather than by application code.
+
+The reason's **wording** is configuration (`eligibility_reasons`, per study); the
+**category** it reports under is a fixed enum in
+`src/domain/eligibility-reason.ts`. Those categories are the CONSORT groupings —
+did not meet criteria, declined, unreachable, logistics, withdrew before
+allocation, duplicate, study capacity, other. A reporting standard, not a
+clinical rule, which is why it is code.
+
+**The Category C line:** a reason says *that* a criterion was not met and never
+*which*. "No cumple un criterio de inclusión" is the whole statement. The
+criterion, the score and the reasoning stay in the approved system.
+`tests/intake.test.ts` asserts no category name encodes a clinical concept.
+
+ELIGIBLE accepts no reason at all — a reason beside an inclusion would be a
+clinical justification. WAITLIST may carry one but is not forced.
+
+**Accepted risk, stated plainly:** the optional note is free text next to a
+determination, which D-019 deliberately refused for screenings. It was added
+because staff asked for context a fixed category cannot carry ("reagendar en
+septiembre"). Mitigations: 280 characters, newlines rejected in the domain, the
+server action and SQL; the form warns in Spanish that clinical information does
+not go there; and the note's **content is never copied into an audit snapshot** —
+only whether one exists — so it lives in exactly one place and can be erased.
+That makes it small, not safe. Revisit if notes start carrying narrative.
+
+## D-031 · 2026-09-11 · Qualtrics is the intake, and identifiable screening data stays there
+
+Founder decision, from the 2026-09-11 meeting, and a real change of direction:
+**the public application form is retired.**
+
+Initial screening happens in Qualtrics, and the digital consent is accepted there
+*before* any datum about the person — their name included — is collected. A form
+in CLP Hub would necessarily collect a name before that consent existed, which is
+the exact order the study must not work in. `/participar` is now a hand-off: an
+explanation and one outbound link to `studies.screening_url`. It renders no
+`<form>`, no `<input>` and no server action, and `tests/intake.test.ts` asserts
+that it stays that way.
+
+Consequences:
+
+- **Identity is the external reference, not the email.** `participants.external_ref`
+  holds the opaque Qualtrics response ID, unique per study. `recordQualtricsIntake`
+  creates a participant and an application row and writes **no**
+  `participant_contacts` row at all. Contact details are added later, by someone
+  who needs them to arrange the initial visit — an explicit, audited act rather
+  than a side effect of intake.
+- **D-013 is narrowed, not revoked.** The email-based duplicate rule still governs
+  staff-entered contacts and the IMPORT route; it is simply no longer the entry
+  point. A repeat external reference is refused outright rather than merged, since
+  two rows for one response would double-count the person in a flow diagram.
+- **PUBLIC_FORM survives in the enum.** Postgres cannot drop an enum value safely,
+  and rewriting historical rows to hide where they came from would be falsifying
+  the record. `ACTIVE_APPLICATION_SOURCES` is what code may create; the seed was
+  changed to IMPORT so even it stops producing PUBLIC_FORM rows.
+
+**On the future integration:** no transfer is implemented. There is no HTTP
+client, credential, webhook or scheduled pull in this repository, and
+`tests/intake.test.ts` asserts it. `qualtrics_field_mappings` configures which
+fields *would* move, per field, off by default — and a check constraint refuses
+any mapping whose source class is IDENTIFIABLE or RESEARCH. That refusal is a
+database constraint, not a promise made by application code: a mapping for a
+name, an email or a screening answer cannot be stored, not merely ignored.
+
+`studies.qualtrics_mode` is DISABLED or TEST_ANONYMIZED. There is deliberately no
+live mode to switch to; adding one is a migration plus a recorded decision.
+
+**Open:** moving identifiable data would need explicit authorization and would
+change `FIELD_CLASSES_NEVER_TRANSFERABLE`, the check constraint and this entry
+together. None of that is done here.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -380,5 +462,15 @@ orphan a preparation page by renaming a session.
   EN only for staff preview (as D-009 implies)?
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
+- Should the flow-diagram figures suppress small counts before they can be
+  exported or screenshotted? Nothing is suppressed today (D-030); disclosure
+  control is a researcher decision, not one the app should make silently.
+- Who may add or retire an eligibility reason? They are configuration rows today
+  with no admin UI, so only a seed or a direct database change creates one.
+- Should the reason note be visible to every role that can read screening, or
+  gated separately? It is the one free-text field near a determination (D-030).
+- Confirm that contact details for a Qualtrics-route participant are only ever
+  entered when the initial visit is being arranged (D-031). Nothing enforces the
+  timing today.
 - Whether email reminders may be AUTOMATIC or should also be manual.
 - MFA requirement for staff.

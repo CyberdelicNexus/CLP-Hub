@@ -75,10 +75,32 @@ Added enums: `session_modality`, `session_status`, `attendance_status`.
 Added enums: `content_type`, `content_status`. Bodies are typed blocks in jsonb,
 validated on save and on read — never HTML (D-027).
 
+## Implemented (Phase 4a · migration 0007)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `eligibility_reasons` | Why a determination came out as it did | Wording is configuration; the CONSORT category is a fixed enum (D-030). A reason states *that* a criterion was not met, never which |
+| `qualtrics_field_mappings` | Configuration for a future READ-ONLY integration | **No transfer is implemented.** A check constraint refuses IDENTIFIABLE and RESEARCH source classes outright (D-031) |
+
+Also adds `studies.screening_url` and `studies.qualtrics_mode`,
+`participants.external_ref` (unique per study, the Qualtrics response handle),
+and `screenings.reason_id` / `screenings.reason_note`.
+
+Added enums: `eligibility_reason_category`, `qualtrics_field_class`,
+`intake_target`, `integration_mode`. `application_source` gains `QUALTRICS`;
+`PUBLIC_FORM` is retired but kept so historical rows stay readable.
+
+Check constraints doing real work here: an INELIGIBLE or REVIEW_REQUIRED result
+requires a reason; ELIGIBLE accepts none; a note exists only beside a reason, is
+one line and at most 280 characters; and a Qualtrics mapping cannot name an
+identifiable or research field at all.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
+| 4b Consent types | `consents.consent_type` and per-type scopes |
+| 4c Cohort rules and responsibles | cohort arm and size bounds, participant responsibles |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |

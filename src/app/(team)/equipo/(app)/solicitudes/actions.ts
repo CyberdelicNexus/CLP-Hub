@@ -7,7 +7,14 @@ import { getStudyContext } from "@/auth/study-context";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { APPLICATION_STATUSES } from "@/domain/recruitment";
 import { logger } from "@/lib/logger";
-import { InvalidTransitionError, setApplicationStatus } from "@/services/recruitment";
+import {
+  DuplicateExternalRefError,
+  InvalidExternalRefError,
+  InvalidTransitionError,
+  recordQualtricsIntake,
+  setApplicationStatus,
+} from "@/services/recruitment";
+import { EXTERNAL_REF_MAX_LENGTH, isValidExternalRef } from "@/domain/intake";
 
 export type StatusActionState = { error: "forbidden" | "invalid" | "failed" | null; ok?: boolean };
 
@@ -63,4 +70,69 @@ export async function changeApplicationStatus(
   revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
   revalidatePath(`${TEAM_BASE_PATH}/solicitudes/${parsed.data.applicationId}`);
   return { error: null, ok: true };
+}
+
+// --- Qualtrics intake -------------------------------------------------------
+
+export type IntakeActionState = {
+  error: "forbidden" | "invalid" | "duplicate" | "failed" | null;
+  /** Echoed back so staff can find the person they just created. */
+  participantCode?: string;
+};
+
+const intakeSchema = z.object({
+  // An identifier, never free text. The same check the domain and SQL apply, so
+  // a name typed into this box is refused in three places rather than stored.
+  externalRef: z.string().trim().max(EXTERNAL_REF_MAX_LENGTH).refine(isValidExternalRef),
+});
+
+/**
+ * Create a participant from a completed Qualtrics screening (D-031).
+ *
+ * The ONLY input is the anonymized response reference. There is deliberately no
+ * name, email or phone field: the person gave those in Qualtrics after accepting
+ * the digital consent, and there is no authorization to copy them here. Contact
+ * details are added later, deliberately and audited, by someone who needs them
+ * to arrange the initial visit.
+ */
+export async function recordQualtricsIntakeAction(
+  _prev: IntakeActionState,
+  formData: FormData,
+): Promise<IntakeActionState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = intakeSchema.safeParse({ externalRef: formData.get("externalRef") });
+  if (!parsed.success) return { error: "invalid" };
+
+  let participantCode: string;
+  try {
+    assertPermission(ctx, "participants.manage");
+    const result = await recordQualtricsIntake({
+      studyId: ctx.study.id,
+      actorId: ctx.session.userId,
+      externalRef: parsed.data.externalRef,
+    });
+    participantCode = result.participantCode;
+  } catch (err) {
+    if (err instanceof AuthorizationError) {
+      logger.warn({ event: "intake.qualtrics_forbidden", studyId: ctx.study.id }, "intake refused");
+      return { error: "forbidden" };
+    }
+    if (err instanceof DuplicateExternalRefError) return { error: "duplicate" };
+    if (err instanceof InvalidExternalRefError) return { error: "invalid" };
+    logger.error(
+      // The reference itself is not logged: it is the key that ties this record
+      // to an identifiable Qualtrics response, and logs are read more widely
+      // than the database is.
+      { event: "intake.qualtrics_failed", err: err instanceof Error ? err.message : String(err) },
+      "intake failed",
+    );
+    return { error: "failed" };
+  }
+
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
+  revalidatePath(`${TEAM_BASE_PATH}/participantes`);
+  revalidatePath(TEAM_BASE_PATH);
+  return { error: null, participantCode };
 }

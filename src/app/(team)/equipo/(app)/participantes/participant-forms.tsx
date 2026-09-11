@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { REASON_NOTE_MAX_LENGTH } from "@/domain/eligibility-reason";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import {
   closeScreeningAction,
@@ -57,24 +58,56 @@ export function ScheduleScreeningForm({
   );
 }
 
+/** A reason as the form needs it: which results it may be attached to. */
+export interface ReasonOption {
+  id: string;
+  label: string;
+  /** Eligibility statuses this reason applies to. */
+  appliesTo: string[];
+}
+
 /**
  * Record a screening outcome.
  *
- * The only text input is an external record identifier. There is deliberately no
- * notes field: screening content belongs in the approved system, not here.
+ * Two text inputs, both deliberately narrow: an external record identifier, and
+ * a one-line reason note. There is still no general notes field — screening
+ * content belongs in the approved system, not here (D-019).
+ *
+ * The reason select is driven by the chosen result rather than always shown:
+ * INELIGIBLE and REVIEW_REQUIRED require one, WAITLIST may carry one, and
+ * ELIGIBLE accepts none at all, because a reason recorded beside an inclusion
+ * would be a clinical justification (D-030). The server re-checks all of this;
+ * the client behaviour exists so staff are not offered an invalid combination.
  */
 export function CompleteScreeningForm({
   participantId,
   screeningId,
   results,
+  reasons,
   labels,
 }: {
   participantId: string;
   screeningId: string;
   results: { value: string; label: string }[];
-  labels: FormLabels & { result: string; reference: string; referenceHelp: string };
+  reasons: ReasonOption[];
+  labels: FormLabels & {
+    result: string;
+    reference: string;
+    referenceHelp: string;
+    reason: string;
+    reasonRequiredHint: string;
+    reasonNote: string;
+    reasonNoteHelp: string;
+    reasonNoneConfigured: string;
+  };
 }) {
   const [state, action, pending] = useActionState(completeScreeningAction, initial);
+  const [result, setResult] = useState("");
+
+  const applicable = reasons.filter((r) => r.appliesTo.includes(result));
+  const required = result === "INELIGIBLE" || result === "REVIEW_REQUIRED";
+  const showReason = applicable.length > 0 || required;
+
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="participantId" value={participantId} />
@@ -86,7 +119,8 @@ export function CompleteScreeningForm({
           id={`result-${screeningId}`}
           name="result"
           required
-          defaultValue=""
+          value={result}
+          onChange={(e) => setResult(e.target.value)}
           className="h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="" disabled />
@@ -97,6 +131,61 @@ export function CompleteScreeningForm({
           ))}
         </select>
       </div>
+
+      {showReason ? (
+        <div className="space-y-1.5">
+          <Label htmlFor={`reason-${screeningId}`}>
+            {labels.reason}
+            {required ? <span aria-hidden> *</span> : null}
+          </Label>
+          {applicable.length > 0 ? (
+            <select
+              id={`reason-${screeningId}`}
+              name="reasonId"
+              required={required}
+              defaultValue=""
+              aria-describedby={required ? `reasonhint-${screeningId}` : undefined}
+              className="h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="" disabled={required} />
+              {applicable.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            /*
+              Required but nothing configured. Saying so is better than an empty
+              select: the fix is a configuration change, not a retry, and the
+              server would refuse the submission anyway.
+            */
+            <p role="alert" className="text-sm text-destructive">
+              {labels.reasonNoneConfigured}
+            </p>
+          )}
+          {required ? (
+            <p id={`reasonhint-${screeningId}`} className="text-xs text-muted-foreground">
+              {labels.reasonRequiredHint}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {showReason && applicable.length > 0 ? (
+        <div className="space-y-1.5">
+          <Label htmlFor={`note-${screeningId}`}>{labels.reasonNote}</Label>
+          <Input
+            id={`note-${screeningId}`}
+            name="reasonNote"
+            maxLength={REASON_NOTE_MAX_LENGTH}
+            aria-describedby={`notehelp-${screeningId}`}
+          />
+          <p id={`notehelp-${screeningId}`} className="text-xs text-muted-foreground">
+            {labels.reasonNoteHelp}
+          </p>
+        </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <Label htmlFor={`ref-${screeningId}`}>{labels.reference}</Label>

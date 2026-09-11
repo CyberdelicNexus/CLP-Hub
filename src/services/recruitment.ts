@@ -14,6 +14,7 @@ import {
   type QuestionOption,
 } from "@/db/schema";
 import { extractContact, type AnswerValue, type FormQuestion } from "@/domain/application-form";
+import { isValidExternalRef } from "@/domain/intake";
 import type { Locale } from "@/domain/locale";
 import {
   canTransitionApplication,
@@ -51,6 +52,8 @@ export async function getOpenRecruitmentStudy(): Promise<{
   code: string;
   title: string;
   defaultLocale: Locale;
+  /** Where the public page sends people to screen and consent (D-031). */
+  screeningUrl: string | null;
 } | null> {
   const rows = await getDb()
     .select({
@@ -58,6 +61,7 @@ export async function getOpenRecruitmentStudy(): Promise<{
       code: studies.code,
       title: studies.title,
       defaultLocale: studies.defaultLocale,
+      screeningUrl: studies.screeningUrl,
     })
     .from(studies)
     .where(
@@ -238,7 +242,14 @@ export interface SubmitApplicationResult {
 }
 
 /**
- * Record a public application.
+ * Record an application that carries answers and contact details.
+ *
+ * RETIRED AS A PUBLIC ROUTE (D-031). The public form that called this is gone:
+ * initial screening, and the digital consent that must precede any data
+ * collection, now happen in Qualtrics. This function survives for the IMPORT
+ * route — a bulk load of records that genuinely do carry answers — and is the
+ * only remaining path that writes `participant_contacts` from a submission.
+ * Nothing reachable without authentication calls it.
  *
  * The actor is the participant, not a staff member, so the audit row carries
  * actor_type PARTICIPANT. Duplicate handling follows D-013: within one study a
@@ -367,6 +378,132 @@ export async function submitApplication(
     });
 
     return { applicationId: application.id, participantCode, deduplicated: false };
+  });
+}
+
+export class DuplicateExternalRefError extends Error {
+  constructor(externalRef: string) {
+    super(`A participant with external reference ${externalRef} already exists in this study`);
+    this.name = "DuplicateExternalRefError";
+  }
+}
+
+export class InvalidExternalRefError extends Error {
+  constructor() {
+    super("External reference must be an identifier, not free text");
+    this.name = "InvalidExternalRefError";
+  }
+}
+
+export interface QualtricsIntakeResult {
+  participantId: string;
+  participantCode: string;
+  applicationId: string;
+}
+
+/**
+ * Record the anonymized outcome of a Qualtrics screening (D-031).
+ *
+ * THIS IS THE PRIMARY INTAKE ROUTE, and it is deliberately austere. It creates
+ * a participant, an application row so the person is counted in the funnel, and
+ * nothing else. In particular it writes **no** `participant_contacts` row: the
+ * name, email and phone stay in Qualtrics, where the person gave them after
+ * accepting the digital consent, and there is no authorization to move them
+ * here (docs/research-data-boundaries.md).
+ *
+ * Identity is the external reference — the Qualtrics response ID — not an
+ * email. That is what makes the record operable without being identifiable.
+ * A repeat reference is refused rather than merged: two rows for one response
+ * would double-count the person in a flow diagram.
+ *
+ * Contact details can still be added later, by a staff member with
+ * `participants.contact.read`, when the person reaches the stage that needs
+ * them (scheduling the initial visit). That is an explicit, audited act rather
+ * than a side effect of intake.
+ */
+export async function recordQualtricsIntake(params: {
+  studyId: string;
+  actorId: string;
+  externalRef: string;
+  locale?: Locale;
+}): Promise<QualtricsIntakeResult> {
+  const { studyId, actorId } = params;
+  const externalRef = params.externalRef.trim();
+  const locale = params.locale ?? "es";
+
+  if (!isValidExternalRef(externalRef)) throw new InvalidExternalRefError();
+
+  return getDb().transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.studyId, studyId), eq(participants.externalRef, externalRef)))
+      .limit(1);
+    if (existing) throw new DuplicateExternalRefError(externalRef);
+
+    const [{ nextval }] = await tx.execute<{ nextval: string }>(
+      sql`select nextval('participant_code_seq') as nextval`,
+    );
+    const participantCode = formatParticipantCode(Number(nextval));
+
+    const [participant] = await tx
+      .insert(participants)
+      .values({
+        studyId,
+        code: participantCode,
+        externalRef,
+        locale,
+        recruitmentStatus: "INTERESTED",
+      })
+      .returning({ id: participants.id });
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "participant.created",
+      entityType: "participant",
+      entityId: participant.id,
+      // The external reference IS recorded here: it is an opaque identifier,
+      // it is the only handle the record has, and an intake with no trace of
+      // which response it came from would be unauditable.
+      after: {
+        code: participantCode,
+        recruitmentStatus: "INTERESTED",
+        source: "QUALTRICS",
+        externalRef,
+      },
+      metadata: { contactStored: false },
+    });
+
+    const [application] = await tx
+      .insert(applications)
+      .values({ studyId, participantId: participant.id, locale, status: "SUBMITTED", source: "QUALTRICS" })
+      .returning({ id: applications.id });
+
+    const nextStatus = recruitmentStatusForApplication("SUBMITTED");
+    if (nextStatus) {
+      await tx
+        .update(participants)
+        .set({ recruitmentStatus: nextStatus })
+        .where(eq(participants.id, participant.id));
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "application.submitted",
+      entityType: "application",
+      entityId: application.id,
+      after: {
+        status: "SUBMITTED",
+        source: "QUALTRICS",
+        participantCode,
+        // No answers are imported, so there is nothing to count.
+        answerCount: 0,
+      },
+    });
+
+    return { participantId: participant.id, participantCode, applicationId: application.id };
   });
 }
 

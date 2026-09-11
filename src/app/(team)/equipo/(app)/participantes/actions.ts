@@ -5,6 +5,7 @@ import { z } from "zod";
 import { assertPermission, AuthorizationError } from "@/auth/authorize";
 import { getStudyContext } from "@/auth/study-context";
 import { CONSENT_VERSION_MAX_LENGTH } from "@/domain/consent";
+import { isValidReasonNote } from "@/domain/eligibility-reason";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import { logger } from "@/lib/logger";
@@ -13,6 +14,7 @@ import {
   completeScreening,
   InvalidTransitionError,
   NotFoundError,
+  ReasonError,
   recordConsentDecision,
   scheduleScreening,
   setEnrollmentStatus,
@@ -31,7 +33,19 @@ import {
  */
 
 export type OpState = {
-  error: "forbidden" | "invalid" | "badReference" | "notFound" | "failed" | null;
+  error:
+    | "forbidden"
+    | "invalid"
+    | "badReference"
+    | "notFound"
+    | "failed"
+    // Reason problems are their own errors because the fix is different: the
+    // staff member has to choose a reason, not a different outcome (D-030).
+    | "reasonRequired"
+    | "reasonNotAllowed"
+    | "reasonNotApplicable"
+    | "noteTooLong"
+    | null;
   ok?: boolean;
 };
 
@@ -63,6 +77,9 @@ function fail(err: unknown, event: string): OpState {
   }
   if (err instanceof NotFoundError) return { error: "notFound" };
   if (err instanceof InvalidTransitionError) return { error: "invalid" };
+  // Surfaced verbatim so the form can say which of the four reason problems it
+  // was; none of them carry participant data.
+  if (err instanceof ReasonError) return { error: err.problem };
   logger.error(
     { event: `${event}.failed`, err: err instanceof Error ? err.message : String(err) },
     "action failed",
@@ -121,6 +138,19 @@ const completeSchema = z.object({
   // PENDING is deliberately absent: "not determined" is an incomplete screening.
   result: z.enum(["ELIGIBLE", "INELIGIBLE", "REVIEW_REQUIRED", "WAITLIST"]),
   externalRecordId,
+  reasonId: uuid.optional(),
+  /**
+   * One line of operational context. Newlines are rejected here as well as in
+   * SQL so it cannot become a notes field; the length cap matches the domain.
+   */
+  reasonNote: z
+    .string()
+    .trim()
+    // Length and the single-line rule both come from the domain, so the form,
+    // the service and the SQL constraint cannot drift apart.
+    .refine(isValidReasonNote)
+    .optional()
+    .transform((v) => (v ? v : null)),
 });
 
 export async function completeScreeningAction(_prev: OpState, formData: FormData): Promise<OpState> {
@@ -132,6 +162,8 @@ export async function completeScreeningAction(_prev: OpState, formData: FormData
     screeningId: formData.get("screeningId"),
     result: formData.get("result"),
     externalRecordId: formData.get("externalRecordId") ?? undefined,
+    reasonId: (formData.get("reasonId") as string | null) || undefined,
+    reasonNote: (formData.get("reasonNote") as string | null) || undefined,
   });
   if (!parsed.success) return { error: validationError(parsed.error.issues) };
 
@@ -143,6 +175,8 @@ export async function completeScreeningAction(_prev: OpState, formData: FormData
       actorId: ctx.session.userId,
       result: parsed.data.result,
       externalRecordId: parsed.data.externalRecordId,
+      reasonId: parsed.data.reasonId ?? null,
+      reasonNote: parsed.data.reasonNote,
     });
   } catch (err) {
     return fail(err, "screening.complete");

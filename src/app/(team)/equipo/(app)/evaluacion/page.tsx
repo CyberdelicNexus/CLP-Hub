@@ -8,6 +8,7 @@ import { ScreeningBadge } from "@/components/team/participant-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { listOpenScreenings } from "@/services/participant-ops";
+import { StudyFlowSummary } from "./flow-summary";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -41,6 +42,8 @@ export default async function ScreeningQueuePage() {
       <p className="rounded-xl bg-muted px-4 py-3 text-xs text-muted-foreground">
         {t("screening.boundary")}
       </p>
+
+      <StudyFlowSummary studyId={ctx.study.id} />
 
       {rows.length === 0 ? (
         <Card>

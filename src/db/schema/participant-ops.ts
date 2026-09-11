@@ -1,5 +1,6 @@
 import { index, pgTable, text, timestamp, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { consentStatusEnum, eligibilityStatusEnum, screeningStatusEnum } from "./enums";
+import { eligibilityReasons } from "./intake";
 import { participants } from "./participants";
 import { studies } from "./studies";
 import { users } from "./users";
@@ -29,12 +30,27 @@ export const screenings = pgTable(
     /** Null until a result exists. Never 'PENDING' — that is expressed by null. */
     result: eligibilityStatusEnum("result"),
     externalRecordId: text("external_record_id"),
+    /**
+     * Why the determination came out as it did. Required in SQL whenever
+     * `result` is INELIGIBLE or REVIEW_REQUIRED, so an exclusion can always be
+     * reported in a flow diagram and a review always says what needs reviewing.
+     * Points at a configured reason whose CONSORT category is fixed in code.
+     */
+    reasonId: uuid("reason_id").references(() => eligibilityReasons.id),
+    /**
+     * Optional one-line context, 280 characters, no newlines (D-030). A narrow
+     * exception to "no free text beside a determination": it is for operational
+     * context such as "reagendar en septiembre", never for clinical detail, and
+     * it is deliberately never copied into audit snapshots.
+     */
+    reasonNote: text("reason_note"),
     recordedBy: uuid("recorded_by").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("screenings_study_idx").on(t.studyId, t.status, t.scheduledAt),
+    index("screenings_reason_idx").on(t.reasonId),
     index("screenings_participant_idx").on(t.participantId, t.createdAt),
   ],
 );

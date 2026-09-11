@@ -20,6 +20,9 @@ import * as schema from "@/db/schema";
 import { formatParticipantCode, normalizeEmail } from "@/domain/recruitment";
 import type { ContentBody } from "@/domain/content";
 import { STAFF_ROLES, type StaffRole } from "@/domain/roles";
+import type { EligibilityReasonCategory } from "@/domain/eligibility-reason";
+import type { IntakeTarget } from "@/domain/intake";
+import type { EligibilityStatus } from "@/domain/participant-state";
 
 loadEnv({ path: ".env.local" });
 loadEnv();
@@ -28,6 +31,9 @@ const DEMO_STUDY = {
   code: "DEMO",
   title: "Estudio de demostración (DATOS SINTÉTICOS)",
   timezone: "Europe/Madrid",
+  // Where /participar hands people off to screen and consent (D-031). Obviously
+  // fake, and example.com is reserved by RFC 2606 so it can never resolve.
+  screeningUrl: "https://example.com/demo-screening-sintetico",
 } as const;
 
 const DEMO_STAFF: ReadonlyArray<{ email: string; displayName: string; role: StaffRole }> = STAFF_ROLES.map(
@@ -274,6 +280,148 @@ const DEMO_CONTENT: ReadonlyArray<{
   },
 ];
 
+/**
+ * Synthetic exclusion / review reasons (Phase 4a).
+ *
+ * This is exactly where a real trial's reason wording belongs — a configuration
+ * row, never a value in code (non-negotiable 6). Note what each one does NOT
+ * say: "no cumple un criterio de inclusión" states that a criterion was not met
+ * and never which, so no Category C fact enters the database
+ * (docs/research-data-boundaries.md).
+ */
+const DEMO_REASONS: ReadonlyArray<{
+  code: string;
+  category: EligibilityReasonCategory;
+  labelEs: string;
+  labelEn: string;
+  appliesTo: EligibilityStatus[];
+  position: number;
+}> = [
+  {
+    code: "NO_CUMPLE_CRITERIOS",
+    category: "DID_NOT_MEET_CRITERIA",
+    labelEs: "No cumple un criterio de inclusión (SINTÉTICO)",
+    labelEn: "Does not meet an inclusion criterion (SYNTHETIC)",
+    appliesTo: ["INELIGIBLE"],
+    position: 10,
+  },
+  {
+    code: "DECLINA_PARTICIPAR",
+    category: "DECLINED",
+    labelEs: "Prefiere no participar (SINTÉTICO)",
+    labelEn: "Prefers not to take part (SYNTHETIC)",
+    appliesTo: ["INELIGIBLE"],
+    position: 20,
+  },
+  {
+    code: "SIN_CONTACTO",
+    category: "UNREACHABLE",
+    labelEs: "No se ha podido contactar (SINTÉTICO)",
+    labelEn: "Could not be reached (SYNTHETIC)",
+    appliesTo: ["INELIGIBLE", "REVIEW_REQUIRED"],
+    position: 30,
+  },
+  {
+    code: "DISPONIBILIDAD",
+    category: "LOGISTICS",
+    labelEs: "Disponibilidad incompatible con el calendario (SINTÉTICO)",
+    labelEn: "Availability does not fit the schedule (SYNTHETIC)",
+    appliesTo: ["INELIGIBLE", "WAITLIST"],
+    position: 40,
+  },
+  {
+    code: "FALTA_INFORMACION",
+    category: "OTHER",
+    labelEs: "Falta información para decidir (SINTÉTICO)",
+    labelEn: "Missing information to decide (SYNTHETIC)",
+    appliesTo: ["REVIEW_REQUIRED"],
+    position: 50,
+  },
+  {
+    code: "SIN_PLAZA",
+    category: "STUDY_CAPACITY",
+    labelEs: "Sin plaza en la cohorte actual (SINTÉTICO)",
+    labelEn: "No place in the current cohort (SYNTHETIC)",
+    appliesTo: ["WAITLIST"],
+    position: 60,
+  },
+];
+
+/**
+ * Synthetic Qualtrics field mappings, ALL DISABLED.
+ *
+ * They exist so the shape of a future read-only integration is visible and
+ * testable against anonymized data. Only ANONYMOUS_ID and OPERATIONAL classes
+ * appear, because a check constraint refuses anything else outright — an
+ * IDENTIFIABLE mapping cannot be inserted here even deliberately.
+ */
+const DEMO_QUALTRICS_MAPPINGS: ReadonlyArray<{
+  sourceField: string;
+  sourceClass: "ANONYMOUS_ID" | "OPERATIONAL";
+  target: IntakeTarget;
+  notes: string;
+}> = [
+  {
+    sourceField: "ResponseId",
+    sourceClass: "ANONYMOUS_ID",
+    target: "participant.externalRef",
+    notes: "Referencia anónima de la respuesta (SINTÉTICO). Desactivado.",
+  },
+  {
+    sourceField: "consentAccepted",
+    sourceClass: "OPERATIONAL",
+    target: "consent.digitalStatus",
+    notes: "Solo el estado del consentimiento, nunca su contenido (SINTÉTICO). Desactivado.",
+  },
+  {
+    sourceField: "finishedAt",
+    sourceClass: "OPERATIONAL",
+    target: "screening.completedAt",
+    notes: "Marca temporal de finalización (SINTÉTICO). Desactivado.",
+  },
+];
+
+/**
+ * People who entered through the Qualtrics route (D-031).
+ *
+ * NOTE WHAT IS MISSING: no name, no email, no phone. That is the whole point —
+ * these records are operable without being identifiable, and the identifiable
+ * half stays in Qualtrics. They also give the flow diagram real exclusions to
+ * count.
+ */
+const DEMO_QUALTRICS_INTAKE: ReadonlyArray<{
+  externalRef: string;
+  result: "ELIGIBLE" | "INELIGIBLE" | "REVIEW_REQUIRED" | "WAITLIST";
+  reasonCode: string | null;
+  reasonNote: string | null;
+}> = [
+  { externalRef: "R_demo0000000001", result: "ELIGIBLE", reasonCode: null, reasonNote: null },
+  {
+    externalRef: "R_demo0000000002",
+    result: "INELIGIBLE",
+    reasonCode: "NO_CUMPLE_CRITERIOS",
+    reasonNote: null,
+  },
+  {
+    externalRef: "R_demo0000000003",
+    result: "INELIGIBLE",
+    reasonCode: "DISPONIBILIDAD",
+    reasonNote: "Solo puede en agosto (nota sintética).",
+  },
+  {
+    externalRef: "R_demo0000000004",
+    result: "REVIEW_REQUIRED",
+    reasonCode: "FALTA_INFORMACION",
+    reasonNote: "Pendiente de confirmar la franja horaria (nota sintética).",
+  },
+  {
+    externalRef: "R_demo0000000005",
+    result: "WAITLIST",
+    reasonCode: "SIN_PLAZA",
+    reasonNote: null,
+  },
+];
+
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
   {
@@ -338,13 +486,22 @@ async function main() {
   const db = drizzle(sqlClient, { schema });
 
   try {
-    // Study. Recruitment is opened so the public application form renders.
+    // Study. Recruitment is opened so /participar renders its hand-off to the
+    // (synthetic) Qualtrics screening rather than the closed state.
     const [study] = await db
       .insert(schema.studies)
       .values({ ...DEMO_STUDY, status: "ACTIVE", recruitmentOpen: true })
       .onConflictDoUpdate({
         target: schema.studies.code,
-        set: { title: DEMO_STUDY.title, recruitmentOpen: true, status: "ACTIVE" },
+        set: {
+          title: DEMO_STUDY.title,
+          recruitmentOpen: true,
+          status: "ACTIVE",
+          screeningUrl: DEMO_STUDY.screeningUrl,
+          // Explicitly off. There is no live mode, and the seed must not be the
+          // thing that arms an integration.
+          qualtricsMode: "DISABLED",
+        },
       })
       .returning();
     console.log(`study   ${study.code} (${study.id})`);
@@ -612,7 +769,9 @@ async function main() {
             studyId: study.id,
             participantId: participant.id,
             status: applicant.status,
-            source: "PUBLIC_FORM",
+            // IMPORT, not PUBLIC_FORM: that route is retired (D-031) and no
+            // code path — the seed included — creates one any more.
+            source: "IMPORT",
             locale: "es",
           })
           .returning({ id: schema.applications.id });
@@ -695,6 +854,139 @@ async function main() {
         });
 
         console.log(`apply   ${code}  ${applicant.status.padEnd(22)} ${applicant.email}`);
+      });
+    }
+
+    // Eligibility reasons (Phase 4a). Configuration: the wording is a row, the
+    // CONSORT category it reports under is a fixed enum in the domain.
+    for (const r of DEMO_REASONS) {
+      await db
+        .insert(schema.eligibilityReasons)
+        .values({ ...r, studyId: study.id })
+        .onConflictDoUpdate({
+          target: [schema.eligibilityReasons.studyId, schema.eligibilityReasons.code],
+          set: {
+            category: r.category,
+            labelEs: r.labelEs,
+            labelEn: r.labelEn,
+            appliesTo: r.appliesTo,
+            position: r.position,
+            active: true,
+          },
+        });
+    }
+    console.log(`reasons ${DEMO_REASONS.length} exclusion / review reasons`);
+
+    // Qualtrics field mappings, all disabled. No transfer is implemented; these
+    // rows only make the intended shape of one explicit and reviewable.
+    for (const m of DEMO_QUALTRICS_MAPPINGS) {
+      await db
+        .insert(schema.qualtricsFieldMappings)
+        .values({ ...m, studyId: study.id, enabled: false })
+        .onConflictDoUpdate({
+          target: [schema.qualtricsFieldMappings.studyId, schema.qualtricsFieldMappings.target],
+          set: {
+            sourceField: m.sourceField,
+            sourceClass: m.sourceClass,
+            notes: m.notes,
+            // Never re-enabled by a re-seed. Arming an integration is a person's
+            // decision, not a side effect of running a script.
+            enabled: false,
+          },
+        });
+    }
+    console.log(`qual    ${DEMO_QUALTRICS_MAPPINGS.length} Qualtrics field mappings (all disabled)`);
+
+    // Participants who entered through Qualtrics. No contact row is written for
+    // any of them: that is the boundary this route exists to hold (D-031).
+    const reasonRows = await db
+      .select({ id: schema.eligibilityReasons.id, code: schema.eligibilityReasons.code })
+      .from(schema.eligibilityReasons)
+      .where(eq(schema.eligibilityReasons.studyId, study.id));
+    const reasonId = new Map(reasonRows.map((r) => [r.code, r.id]));
+
+    for (const intake of DEMO_QUALTRICS_INTAKE) {
+      const [already] = await db
+        .select({ id: schema.participants.id })
+        .from(schema.participants)
+        .where(
+          and(
+            eq(schema.participants.studyId, study.id),
+            eq(schema.participants.externalRef, intake.externalRef),
+          ),
+        )
+        .limit(1);
+      if (already) {
+        console.log(`intake  skip (exists)  ${intake.externalRef}`);
+        continue;
+      }
+
+      await db.transaction(async (tx) => {
+        const [{ nextval }] = await tx.execute<{ nextval: string }>(
+          sql`select nextval('participant_code_seq') as nextval`,
+        );
+        const code = formatParticipantCode(Number(nextval));
+
+        const [participant] = await tx
+          .insert(schema.participants)
+          .values({
+            studyId: study.id,
+            code,
+            externalRef: intake.externalRef,
+            locale: "es",
+            recruitmentStatus: "APPLICATION_SUBMITTED",
+            eligibilityStatus: intake.result,
+          })
+          .returning({ id: schema.participants.id });
+
+        const [application] = await tx
+          .insert(schema.applications)
+          .values({
+            studyId: study.id,
+            participantId: participant.id,
+            status: intake.result === "ELIGIBLE" ? "ACCEPTED_FOR_SCREENING" : "IN_REVIEW",
+            source: "QUALTRICS",
+            locale: "es",
+          })
+          .returning({ id: schema.applications.id });
+
+        await tx.insert(schema.screenings).values({
+          studyId: study.id,
+          participantId: participant.id,
+          status: "COMPLETED",
+          completedAt: new Date(),
+          result: intake.result,
+          externalRecordId: intake.externalRef,
+          reasonId: intake.reasonCode ? (reasonId.get(intake.reasonCode) ?? null) : null,
+          reasonNote: intake.reasonNote,
+        });
+
+        await recordAuditEvent(tx, {
+          studyId: study.id,
+          actor: { type: "SYSTEM" },
+          action: "participant.created",
+          entityType: "participant",
+          entityId: participant.id,
+          after: {
+            code,
+            source: "QUALTRICS",
+            externalRef: intake.externalRef,
+            eligibilityStatus: intake.result,
+          },
+          metadata: { source: "seed", demo: true, contactStored: false },
+        });
+
+        await recordAuditEvent(tx, {
+          studyId: study.id,
+          actor: { type: "SYSTEM" },
+          action: "application.submitted",
+          entityType: "application",
+          entityId: application.id,
+          after: { source: "QUALTRICS", participantCode: code, answerCount: 0 },
+          metadata: { source: "seed", demo: true },
+        });
+
+        console.log(`intake  ${code}  ${intake.result.padEnd(16)} ${intake.externalRef}`);
       });
     }
 

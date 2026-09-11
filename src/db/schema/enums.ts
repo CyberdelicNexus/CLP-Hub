@@ -19,6 +19,12 @@ import {
   SESSION_STATUSES,
 } from "@/domain/session";
 import { CONTENT_STATUSES, CONTENT_TYPES } from "@/domain/content";
+import { ELIGIBILITY_REASON_CATEGORIES } from "@/domain/eligibility-reason";
+import {
+  INTAKE_TARGETS,
+  INTEGRATION_MODES,
+  QUALTRICS_FIELD_CLASSES,
+} from "@/domain/intake";
 
 // Postgres enum names must match supabase/migrations/0001_foundation.sql
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
@@ -50,3 +56,12 @@ export const attendanceStatusEnum = pgEnum("attendance_status", ATTENDANCE_STATU
 // Study content (Phase 5, migration 0006)
 export const contentTypeEnum = pgEnum("content_type", CONTENT_TYPES);
 export const contentStatusEnum = pgEnum("content_status", CONTENT_STATUSES);
+
+// Intake boundary and eligibility reasons (Phase 4a, migration 0007)
+export const eligibilityReasonCategoryEnum = pgEnum(
+  "eligibility_reason_category",
+  ELIGIBILITY_REASON_CATEGORIES,
+);
+export const qualtricsFieldClassEnum = pgEnum("qualtrics_field_class", QUALTRICS_FIELD_CLASSES);
+export const intakeTargetEnum = pgEnum("intake_target", INTAKE_TARGETS);
+export const integrationModeEnum = pgEnum("integration_mode", INTEGRATION_MODES);

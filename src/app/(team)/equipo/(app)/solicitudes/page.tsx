@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { APPLICATION_STATUSES, isApplicationStatus } from "@/domain/recruitment";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { countApplicationsByStatus, listApplications } from "@/services/recruitment";
+import { QualtricsIntakeForm } from "./intake-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -44,6 +45,7 @@ export default async function ApplicationsPage({
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const base = `${TEAM_BASE_PATH}/solicitudes`;
+  const canCreate = ctx.permissions.has("participants.manage");
 
   return (
     <div className="space-y-6">
@@ -70,6 +72,34 @@ export default async function ApplicationsPage({
         <p className="rounded-xl bg-muted px-4 py-3 text-xs text-muted-foreground">
           {t("applications.contactHidden")}
         </p>
+      ) : null}
+
+      {canCreate ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("applications.intakeTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t("applications.intakeBoundary")}
+            </p>
+            <QualtricsIntakeForm
+              labels={{
+                reference: t("applications.intakeReference"),
+                referenceHelp: t("applications.intakeReferenceHelp"),
+                submit: t("applications.intakeSubmit"),
+                submitting: t("common.loading"),
+                created: t("applications.intakeCreated"),
+                errors: {
+                  forbidden: t("common.noAccess"),
+                  invalid: t("applications.intakeError.invalid"),
+                  duplicate: t("applications.intakeError.duplicate"),
+                  failed: t("applications.intakeError.failed"),
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
       ) : null}
 
       {rows.length === 0 ? (

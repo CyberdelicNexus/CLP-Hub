@@ -23,6 +23,13 @@ export const participants = pgTable(
       .notNull()
       .references(() => studies.id),
     code: text("code").notNull(),
+    /**
+     * Opaque handle for the same person in Qualtrics, e.g. a response ID. This
+     * is how a CLP Hub participant is tied to their screening WITHOUT copying
+     * anything identifiable out of Qualtrics (D-031). Pattern-checked in SQL so
+     * it cannot become somewhere to write a name.
+     */
+    externalRef: text("external_ref"),
     recruitmentStatus: recruitmentStatusEnum("recruitment_status").notNull().default("INTERESTED"),
     eligibilityStatus: eligibilityStatusEnum("eligibility_status").notNull().default("PENDING"),
     /** Null means "not yet in the enrollment pipeline" — not the same as CONSENT_PENDING. */
@@ -37,6 +44,10 @@ export const participants = pgTable(
     index("participants_status_idx").on(t.studyId, t.recruitmentStatus),
     index("participants_eligibility_idx").on(t.studyId, t.eligibilityStatus),
     index("participants_enrollment_idx").on(t.studyId, t.enrollmentStatus),
+    // Partial unique index in SQL (`where external_ref is not null`), declared
+    // here as a plain index — the same convention participant_contacts uses for
+    // its partial unique email index.
+    index("participants_external_ref_unique").on(t.studyId, t.externalRef),
   ],
 );
 

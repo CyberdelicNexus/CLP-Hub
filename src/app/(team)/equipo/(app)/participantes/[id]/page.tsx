@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isActiveConsent, type ConsentStatus } from "@/domain/consent";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { ENROLLMENT_TRANSITIONS } from "@/domain/participant-state";
-import { getParticipantDetail } from "@/services/participant-ops";
+import { getParticipantDetail, listEligibilityReasons } from "@/services/participant-ops";
 import {
   getParticipantPlacement,
   listAssignableCohorts,
@@ -74,6 +74,10 @@ export default async function ParticipantDetailPage({
   if (!detail) notFound();
 
   const canManageScreening = ctx.permissions.has("screening.manage");
+  // Loaded for anyone who may see screening at all, not only for someone who can
+  // record one: the list is configuration, and a viewer needs it to read the
+  // reason on a determination that was already made.
+  const reasons = includeScreening ? await listEligibilityReasons(ctx.study.id) : [];
   const canManageConsent = ctx.permissions.has("consent.manage");
   const canManageParticipant = ctx.permissions.has("participants.manage");
   const canReadRandomization = ctx.permissions.has("randomization.read");
@@ -184,6 +188,16 @@ export default async function ParticipantDetailPage({
                               label={t(`participants.eligibility.${s.result}`)}
                             />
                           ) : null}
+                          {s.reasonId ? (
+                            <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              {reasonLabel(reasons, s.reasonId)}
+                            </span>
+                          ) : null}
+                          {s.reasonNote ? (
+                            <span className="text-xs text-muted-foreground italic">
+                              {s.reasonNote}
+                            </span>
+                          ) : null}
                           {s.externalRecordId ? (
                             <span className="font-mono text-xs text-muted-foreground">
                               {s.externalRecordId}
@@ -204,12 +218,24 @@ export default async function ParticipantDetailPage({
                             value: r,
                             label: t(`participants.eligibility.${r}`),
                           }))}
+                          reasons={reasons
+                            .filter((r) => r.active)
+                            .map((r) => ({
+                              id: r.id,
+                              label: r.labelEs,
+                              appliesTo: [...r.appliesTo],
+                            }))}
                           labels={{
                             ...formBase,
                             submit: t("participants.recordResult"),
                             result: t("participants.result"),
                             reference: t("participants.externalRef"),
                             referenceHelp: t("participants.externalRefHelp"),
+                            reason: t("participants.reason"),
+                            reasonRequiredHint: t("participants.reasonRequiredHint"),
+                            reasonNote: t("participants.reasonNote"),
+                            reasonNoteHelp: t("participants.reasonNoteHelp"),
+                            reasonNoneConfigured: t("participants.reasonNoneConfigured"),
                           }}
                         />
                         <CloseScreeningForm
@@ -451,4 +477,16 @@ function formatDate(value: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short", timeZone }).format(
     value,
   );
+}
+
+/**
+ * Wording for an already-recorded reason. Inactive reasons are included in the
+ * list precisely so a historical determination still reads properly instead of
+ * degrading to an opaque id once the reason is retired.
+ */
+function reasonLabel(
+  reasons: readonly { id: string; labelEs: string }[],
+  reasonId: string,
+): string {
+  return reasons.find((r) => r.id === reasonId)?.labelEs ?? "—";
 }

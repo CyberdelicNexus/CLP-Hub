@@ -37,9 +37,36 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
-/** How the application reached the study. */
-export const APPLICATION_SOURCES = ["PUBLIC_FORM", "STAFF_ENTRY", "IMPORT"] as const;
+/**
+ * How the application reached the study.
+ *
+ * QUALTRICS is the live route (D-031): initial screening — and the digital
+ * consent that must precede any data collection, including the name — happens in
+ * Qualtrics, and staff record the anonymized outcome here.
+ *
+ * PUBLIC_FORM is RETIRED and kept only so historical rows remain readable. No
+ * code path creates one: `/participar` is now a landing page that hands the
+ * person to Qualtrics. Postgres enum values cannot be dropped safely, and
+ * rewriting old rows would be falsifying history, so the value stays.
+ */
+export const APPLICATION_SOURCES = [
+  "PUBLIC_FORM",
+  "STAFF_ENTRY",
+  "IMPORT",
+  "QUALTRICS",
+] as const;
 export type ApplicationSource = (typeof APPLICATION_SOURCES)[number];
+
+/** Sources a new application may be created with today. */
+export const ACTIVE_APPLICATION_SOURCES: readonly ApplicationSource[] = [
+  "QUALTRICS",
+  "STAFF_ENTRY",
+  "IMPORT",
+];
+
+export function isActiveApplicationSource(v: unknown): v is ApplicationSource {
+  return typeof v === "string" && (ACTIVE_APPLICATION_SOURCES as readonly string[]).includes(v);
+}
 
 /**
  * Question types the public application form can render.

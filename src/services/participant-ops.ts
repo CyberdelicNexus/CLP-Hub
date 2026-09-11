@@ -1,9 +1,10 @@
 import "server-only";
 import { and, count, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
-import { getDb } from "@/db/client";
+import { getDb, type DbExecutor } from "@/db/client";
 import {
   consents,
+  eligibilityReasons,
   participantContacts,
   participants,
   screenings,
@@ -15,6 +16,11 @@ import {
   enrollmentStatusForConsent,
   type ConsentStatus,
 } from "@/domain/consent";
+import {
+  validateReason,
+  type EligibilityReason,
+  type ReasonProblem,
+} from "@/domain/eligibility-reason";
 import {
   canTransitionEligibility,
   canTransitionEnrollment,
@@ -49,6 +55,20 @@ export class NotFoundError extends Error {
   constructor(entity: string, id: string) {
     super(`${entity} ${id} not found in this study`);
     this.name = "NotFoundError";
+  }
+}
+
+/**
+ * A determination was recorded without the reason it needs, or with one that
+ * does not apply to it. Separate from InvalidTransitionError because the fix is
+ * different: the staff member has to choose a reason, not a different outcome.
+ */
+export class ReasonError extends Error {
+  readonly problem: ReasonProblem;
+  constructor(problem: ReasonProblem) {
+    super(problem);
+    this.name = "ReasonError";
+    this.problem = problem;
   }
 }
 
@@ -245,6 +265,66 @@ export async function countParticipantOps(studyId: string): Promise<ParticipantO
 }
 
 // ---------------------------------------------------------------------------
+// Eligibility reasons (configuration)
+// ---------------------------------------------------------------------------
+
+/**
+ * The study's configured reasons, active ones first in display order.
+ *
+ * Inactive reasons are still returned so an already-recorded determination can
+ * render its reason's wording; `reasonsFor` in the domain filters them out of
+ * the choices offered for a new one.
+ */
+export async function listEligibilityReasons(studyId: string): Promise<EligibilityReason[]> {
+  const rows = await getDb()
+    .select({
+      id: eligibilityReasons.id,
+      code: eligibilityReasons.code,
+      category: eligibilityReasons.category,
+      labelEs: eligibilityReasons.labelEs,
+      labelEn: eligibilityReasons.labelEn,
+      appliesTo: eligibilityReasons.appliesTo,
+      position: eligibilityReasons.position,
+      active: eligibilityReasons.active,
+    })
+    .from(eligibilityReasons)
+    .where(eq(eligibilityReasons.studyId, studyId))
+    .orderBy(eligibilityReasons.position, eligibilityReasons.code);
+
+  return rows as EligibilityReason[];
+}
+
+/** One reason, scoped to the study and required to be active to be attachable. */
+async function loadReason(
+  executor: DbExecutor,
+  studyId: string,
+  reasonId: string,
+): Promise<EligibilityReason | null> {
+  const [row] = await executor
+    .select({
+      id: eligibilityReasons.id,
+      code: eligibilityReasons.code,
+      category: eligibilityReasons.category,
+      labelEs: eligibilityReasons.labelEs,
+      labelEn: eligibilityReasons.labelEn,
+      appliesTo: eligibilityReasons.appliesTo,
+      position: eligibilityReasons.position,
+      active: eligibilityReasons.active,
+    })
+    .from(eligibilityReasons)
+    .where(
+      and(
+        eq(eligibilityReasons.id, reasonId),
+        eq(eligibilityReasons.studyId, studyId),
+        eq(eligibilityReasons.active, true),
+      ),
+    )
+    .limit(1);
+
+  return (row as EligibilityReason) ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Screening writes
 // ---------------------------------------------------------------------------
 
@@ -324,8 +404,14 @@ export async function completeScreening(params: {
   result: Exclude<EligibilityStatus, "PENDING">;
   externalRecordId?: string | null;
   completedAt?: Date;
+  /** Required for INELIGIBLE and REVIEW_REQUIRED; refused for ELIGIBLE. */
+  reasonId?: string | null;
+  /** One line of operational context, at most 280 characters (D-030). */
+  reasonNote?: string | null;
 }): Promise<void> {
   const { studyId, screeningId, actorId, result, externalRecordId, completedAt } = params;
+  const reasonId = params.reasonId?.trim() || null;
+  const reasonNote = params.reasonNote?.trim() || null;
 
   await getDb().transaction(async (tx) => {
     const [current] = await tx
@@ -349,6 +435,15 @@ export async function completeScreening(params: {
       throw new InvalidTransitionError("eligibility", current.eligibilityStatus, result);
     }
 
+    // Resolve the reason inside the transaction so a reason deactivated a
+    // moment ago cannot be attached, and so a reason belonging to another study
+    // is a not-found rather than a silent cross-study write.
+    const reason = reasonId ? await loadReason(tx, studyId, reasonId) : null;
+    if (reasonId && !reason) throw new NotFoundError("eligibility reason", reasonId);
+
+    const problem = validateReason({ status: result, reason, note: reasonNote });
+    if (problem) throw new ReasonError(problem);
+
     const when = completedAt ?? new Date();
 
     await tx
@@ -358,6 +453,8 @@ export async function completeScreening(params: {
         completedAt: when,
         result,
         externalRecordId: externalRecordId?.trim() || null,
+        reasonId: reason?.id ?? null,
+        reasonNote: reason ? reasonNote : null,
         recordedBy: actorId,
       })
       .where(eq(screenings.id, screeningId));
@@ -375,6 +472,14 @@ export async function completeScreening(params: {
         result,
         completedAt: when.toISOString(),
         externalRecordId: externalRecordId?.trim() || null,
+        // The reason's code and CONSORT category, which are configuration, are
+        // safe to snapshot. The note's CONTENT deliberately is not: it is the
+        // one free-text field near a determination (D-030), and copying it into
+        // an append-only log would make it impossible to erase. Whether a note
+        // exists is recorded, so its presence is still auditable.
+        reasonCode: reason?.code ?? null,
+        reasonCategory: reason?.category ?? null,
+        hasReasonNote: Boolean(reason && reasonNote),
       },
     });
 
@@ -391,7 +496,12 @@ export async function completeScreening(params: {
       entityId: current.participantId,
       before: { eligibilityStatus: current.eligibilityStatus },
       after: { eligibilityStatus: result, participantCode: current.participantCode },
-      metadata: { via: "screening", screeningId },
+      metadata: {
+        via: "screening",
+        screeningId,
+        reasonCode: reason?.code ?? null,
+        reasonCategory: reason?.category ?? null,
+      },
     });
   });
 }
