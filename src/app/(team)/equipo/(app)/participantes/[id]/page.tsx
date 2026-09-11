@@ -36,6 +36,7 @@ import {
   AssignCohortForm,
   RecordRandomizationForm,
   RemoveFromCohortForm,
+  TransferCohortForm,
 } from "../../cohortes/cohort-forms";
 import {
   CloseScreeningForm,
@@ -101,10 +102,11 @@ export default async function ParticipantDetailPage({
     ? await getParticipantPlacement(ctx.study.id, id)
     : null;
   const arms = canManageRandomization && !placement?.randomization ? await listStudyArms(ctx.study.id) : [];
-  const assignableCohorts =
-    canManageCohorts && !placement?.cohort
-      ? await listAssignableCohorts(ctx.study.id, { scope: ctx.cohortScope })
-      : [];
+  // Loaded whether or not the participant is already in a cohort: an existing
+  // member needs the list to be moved to another one.
+  const assignableCohorts = canManageCohorts
+    ? await listAssignableCohorts(ctx.study.id, { scope: ctx.cohortScope })
+    : [];
 
   const { participant, contact, screenings, consents } = detail;
   const openScreening = screenings.find((s) => s.status === "SCHEDULED");
@@ -501,10 +503,30 @@ export default async function ParticipantDetailPage({
                         {placement.cohort.code} · {placement.cohort.name}
                       </Link>
                       {canManageCohorts ? (
-                        <RemoveFromCohortForm
-                          participantId={participant.id}
-                          labels={{ ...formBase, submit: t("cohorts.removeFromCohort") }}
-                        />
+                        <>
+                          {/*
+                            Moving is offered before removing: a change of cohort
+                            is the ordinary case, and doing it as one action
+                            avoids the gap where the person belongs nowhere.
+                          */}
+                          <TransferCohortForm
+                            participantId={participant.id}
+                            cohorts={assignableCohorts
+                              .filter((c) => c.id !== placement.cohort?.id)
+                              .map((c) => ({ id: c.id, label: `${c.code} · ${c.name}` }))}
+                            labels={{
+                              ...formBase,
+                              submit: t("cohorts.transfer"),
+                              target: t("cohorts.transferTarget"),
+                              reason: t("cohorts.transferReason"),
+                              reasonHelp: t("cohorts.transferReasonHelp"),
+                            }}
+                          />
+                          <RemoveFromCohortForm
+                            participantId={participant.id}
+                            labels={{ ...formBase, submit: t("cohorts.removeFromCohort") }}
+                          />
+                        </>
                       ) : null}
                     </div>
                   ) : canManageCohorts ? (

@@ -6,8 +6,9 @@ import { getStudyContext } from "@/auth/study-context";
 import { NoAccess } from "@/components/team/no-access";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CohortOccupancy } from "@/components/team/cohort-occupancy";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
-import { listCohorts } from "@/services/cohorts";
+import { listCohorts, listStudyArms } from "@/services/cohorts";
 import { CreateCohortForm } from "./cohort-forms";
 import { cohortTone } from "./tone";
 
@@ -32,7 +33,20 @@ export default async function CohortsPage() {
 
   const canManage = ctx.permissions.has("cohorts.manage");
   const narrowed = ctx.cohortScope !== null;
-  const rows = await listCohorts(ctx.study.id, { scope: ctx.cohortScope });
+  const [rows, arms] = await Promise.all([
+    listCohorts(ctx.study.id, { scope: ctx.cohortScope }),
+    canManage ? listStudyArms(ctx.study.id) : Promise.resolve([]),
+  ]);
+
+  // Table rows are dense, so the warning badge is suppressed there: the
+  // "members / bounds" figure already reads wrong at a glance, and a column of
+  // amber badges on cohorts that are simply still filling up teaches people to
+  // stop looking.
+  const occupancyLabels = {
+    under: t("cohorts.size.underShort"),
+    over: t("cohorts.size.over"),
+    remaining: "",
+  };
 
   return (
     <div className="space-y-6">
@@ -92,8 +106,8 @@ export default async function CohortsPage() {
                           {t(`cohorts.status.${row.status}`)}
                         </StatusBadge>
                       </td>
-                      <td data-numeric className="px-4 py-3 text-muted-foreground">
-                        {row.capacity ? `${row.memberCount} / ${row.capacity}` : row.memberCount}
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <CohortOccupancy size={row.size} labels={occupancyLabels} showWarning={row.size.verdict === "OVER"} />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
@@ -120,6 +134,7 @@ export default async function CohortsPage() {
           </CardHeader>
           <CardContent>
             <CreateCohortForm
+              arms={arms.map((a) => ({ id: a.id, label: `${a.code} · ${a.nameEs}` }))}
               labels={{
                 submit: t("cohorts.create"),
                 submitting: t("common.loading"),
@@ -127,8 +142,12 @@ export default async function CohortsPage() {
                 name: t("cohorts.field.name"),
                 start: t("cohorts.field.start"),
                 end: t("cohorts.field.end"),
-                capacity: t("cohorts.field.capacity"),
-                capacityHelp: t("cohorts.field.capacityHelp"),
+                minSize: t("cohorts.field.minSize"),
+                maxSize: t("cohorts.field.maxSize"),
+                sizeHelp: t("cohorts.field.sizeHelp"),
+                arm: t("cohorts.field.arm"),
+                armHelp: t("cohorts.field.armHelp"),
+                armAny: t("cohorts.field.armAny"),
                 errors: {
                   forbidden: t("common.noAccess"),
                   invalid: t("cohorts.error.invalid"),

@@ -189,10 +189,18 @@ const DEMO_CONSENT_SCOPES = [
   },
 ] as const;
 
+/**
+ * Synthetic cohort. The size bounds are CONFIGURATION — this is exactly where a
+ * real trial's "between 6 and 8" lives, never as a constant in code
+ * (non-negotiable 6). The arm is set so the arm-compatibility check has
+ * something to check against.
+ */
 const DEMO_COHORT = {
   code: "DEMO-C1",
   name: "Cohorte de demostración (SINTÉTICA)",
-  capacity: 12,
+  armCode: "DEMO-A",
+  minSize: 6,
+  maxSize: 8,
 } as const;
 
 /**
@@ -607,6 +615,12 @@ async function main() {
     }
     console.log(`arms    ${DEMO_ARMS.length} synthetic arms`);
 
+    const armRows = await db
+      .select({ id: schema.studyArms.id, code: schema.studyArms.code })
+      .from(schema.studyArms)
+      .where(eq(schema.studyArms.studyId, study.id));
+    const armIdByCode = new Map(armRows.map((a) => [a.code, a.id]));
+
     // Consent scopes (Phase 4b). Configuration, PHYSICAL only.
     for (const sc of DEMO_CONSENT_SCOPES) {
       await db
@@ -626,11 +640,18 @@ async function main() {
         code: DEMO_COHORT.code,
         name: DEMO_COHORT.name,
         status: "RECRUITING",
-        capacity: DEMO_COHORT.capacity,
+        armId: armIdByCode.get(DEMO_COHORT.armCode) ?? null,
+        minSize: DEMO_COHORT.minSize,
+        maxSize: DEMO_COHORT.maxSize,
       })
       .onConflictDoUpdate({
         target: [schema.cohorts.studyId, schema.cohorts.code],
-        set: { name: DEMO_COHORT.name },
+        set: {
+          name: DEMO_COHORT.name,
+          armId: armIdByCode.get(DEMO_COHORT.armCode) ?? null,
+          minSize: DEMO_COHORT.minSize,
+          maxSize: DEMO_COHORT.maxSize,
+        },
       })
       .returning();
     console.log(`cohort  ${cohort.code} (${cohort.status})`);

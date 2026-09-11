@@ -59,3 +59,108 @@ export function acceptsAssignments(status: CohortStatus): boolean {
 /** Cohort code, e.g. "C-2026-A". Configuration, not derived from anything. */
 export const COHORT_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,31}$/;
 export const COHORT_NAME_MAX_LENGTH = 120;
+
+// ---------------------------------------------------------------------------
+// Size bounds (Phase 4c)
+// ---------------------------------------------------------------------------
+
+/**
+ * How full a cohort is against its configured bounds.
+ *
+ * THE BOUNDS ARE CONFIGURATION. "Between 6 and 8" is this trial's group size,
+ * so it lives in `cohorts.min_size` / `cohorts.max_size` as data, never as a
+ * number in this file (non-negotiable 6). A cohort with no bounds configured is
+ * simply unbounded, not implicitly 6–8.
+ */
+export type SizeVerdict = "UNBOUNDED" | "UNDER" | "WITHIN" | "OVER";
+
+export interface CohortSize {
+  members: number;
+  minSize: number | null;
+  maxSize: number | null;
+  verdict: SizeVerdict;
+  /** Places left before the maximum. Null when there is no maximum. */
+  remaining: number | null;
+  /** How many more are needed to reach the minimum. Zero once it is met. */
+  needed: number;
+}
+
+export function assessCohortSize(input: {
+  members: number;
+  minSize: number | null;
+  maxSize: number | null;
+}): CohortSize {
+  const { members, minSize, maxSize } = input;
+
+  let verdict: SizeVerdict = "WITHIN";
+  if (minSize === null && maxSize === null) verdict = "UNBOUNDED";
+  else if (minSize !== null && members < minSize) verdict = "UNDER";
+  else if (maxSize !== null && members > maxSize) verdict = "OVER";
+
+  return {
+    members,
+    minSize,
+    maxSize,
+    verdict,
+    remaining: maxSize === null ? null : maxSize - members,
+    needed: minSize === null ? 0 : Math.max(0, minSize - members),
+  };
+}
+
+/**
+ * Statuses at which the size rule bites.
+ *
+ * Deliberately only ACTIVE. Assignment itself is never refused on size — that
+ * remains the operational judgement D-023 describes, and a cohort has to be
+ * allowed to pass through being too small on its way to being the right size.
+ * The question "is this cohort ready to run" is asked once, when someone says it
+ * is running.
+ */
+export const SIZE_CHECKED_STATUSES: readonly CohortStatus[] = ["ACTIVE"];
+
+export function sizeIsCheckedAt(status: CohortStatus): boolean {
+  return SIZE_CHECKED_STATUSES.includes(status);
+}
+
+/**
+ * Whether moving to `to` should be questioned on size grounds.
+ *
+ * Returns the verdict rather than a boolean so the caller can say *which* way it
+ * is wrong. An UNBOUNDED cohort is never questioned: no bounds were configured,
+ * so there is nothing to be outside of.
+ */
+export function sizeBlocksTransition(to: CohortStatus, size: CohortSize): SizeVerdict | null {
+  if (!sizeIsCheckedAt(to)) return null;
+  if (size.verdict === "WITHIN" || size.verdict === "UNBOUNDED") return null;
+  return size.verdict;
+}
+
+// ---------------------------------------------------------------------------
+// Arm compatibility
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether a participant may join a cohort, on arm grounds alone.
+ *
+ * A cohort with `armId === null` takes anyone — that is the existing behaviour
+ * and every cohort created before this phase is in that state. Once a cohort
+ * names an arm, putting someone from a different arm in it is a data error, not
+ * an operational judgement: the allocation and the group they actually attend
+ * would disagree, and every attendance figure built on the cohort would be
+ * wrong.
+ *
+ * An unallocated participant is refused too, and this is the case worth being
+ * deliberate about: they are not "compatible by default". Assigning someone to
+ * an arm-specific cohort before anyone knows their arm is exactly the accident
+ * this check exists to prevent.
+ */
+export type ArmCompatibility = "OK" | "MISMATCH" | "ARM_NOT_RECORDED";
+
+export function checkArmCompatibility(input: {
+  cohortArmId: string | null;
+  participantArmId: string | null;
+}): ArmCompatibility {
+  if (input.cohortArmId === null) return "OK";
+  if (input.participantArmId === null) return "ARM_NOT_RECORDED";
+  return input.cohortArmId === input.participantArmId ? "OK" : "MISMATCH";
+}

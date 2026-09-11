@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import type { CohortScope } from "@/auth/cohort-scope";
-import { getDb } from "@/db/client";
+import { getDb, type DbExecutor } from "@/db/client";
 import {
   cohortStaff,
   cohorts,
@@ -17,7 +17,16 @@ import {
   type Cohort,
   type StudyArm,
 } from "@/db/schema";
-import { acceptsAssignments, canTransitionCohort, type CohortStatus } from "@/domain/cohort";
+import {
+  acceptsAssignments,
+  assessCohortSize,
+  canTransitionCohort,
+  checkArmCompatibility,
+  sizeBlocksTransition,
+  sizeIsCheckedAt,
+  type CohortSize,
+  type CohortStatus,
+} from "@/domain/cohort";
 import { canTransitionEnrollment } from "@/domain/participant-state";
 import { manualEntryProvider } from "@/domain/randomization";
 
@@ -39,6 +48,25 @@ export class InvalidTransitionError extends Error {
   }
 }
 
+/**
+ * A cohort was marked ACTIVE while outside its configured size.
+ *
+ * Deliberately NOT a ConflictError. It is not a data-integrity failure — the
+ * write would be perfectly consistent — it is the application asking a person to
+ * confirm that they mean it. The caller can repeat the request with
+ * `overrideReason` and the override is recorded in the audit row.
+ */
+export class CohortSizeError extends Error {
+  readonly verdict: "UNDER" | "OVER";
+  readonly size: CohortSize;
+  constructor(verdict: "UNDER" | "OVER", size: CohortSize) {
+    super(`Cohort is ${verdict} its configured size`);
+    this.name = "CohortSizeError";
+    this.verdict = verdict;
+    this.size = size;
+  }
+}
+
 export class NotFoundError extends Error {
   constructor(entity: string, id: string) {
     super(`${entity} ${id} not found in this study`);
@@ -47,7 +75,17 @@ export class NotFoundError extends Error {
 }
 
 export class ConflictError extends Error {
-  readonly reason: "alreadyRandomized" | "alreadyAssigned" | "cohortClosed" | "duplicateCode";
+  readonly reason:
+    | "alreadyRandomized"
+    | "alreadyAssigned"
+    | "cohortClosed"
+    | "duplicateCode"
+    /** The participant's recorded arm is not the arm this cohort runs. */
+    | "armMismatch"
+    /** The cohort runs one arm and no allocation has been recorded yet. */
+    | "armNotRecorded"
+    /** Already in the cohort being moved to; nothing to do. */
+    | "sameCohort";
   constructor(reason: ConflictError["reason"]) {
     super(reason);
     this.name = "ConflictError";
@@ -68,6 +106,9 @@ function scopeFilter(scope: CohortScope) {
 
 export interface CohortListRow extends Cohort {
   memberCount: number;
+  /** Members against configured bounds. Never a judgement, just arithmetic. */
+  size: CohortSize;
+  armCode: string | null;
 }
 
 export async function listCohorts(
@@ -80,6 +121,7 @@ export async function listCohorts(
     .select({
       cohort: cohorts,
       memberCount: count(participantCohortAssignments.id),
+      armCode: studyArms.code,
     })
     .from(cohorts)
     .leftJoin(
@@ -89,11 +131,21 @@ export async function listCohorts(
         isNull(participantCohortAssignments.removedAt),
       ),
     )
+    .leftJoin(studyArms, eq(studyArms.id, cohorts.armId))
     .where(narrowing ? and(eq(cohorts.studyId, studyId), narrowing) : eq(cohorts.studyId, studyId))
-    .groupBy(cohorts.id)
+    .groupBy(cohorts.id, studyArms.code)
     .orderBy(asc(cohorts.code));
 
-  return rows.map((r) => ({ ...r.cohort, memberCount: Number(r.memberCount) }));
+  return rows.map((r) => ({
+    ...r.cohort,
+    memberCount: Number(r.memberCount),
+    armCode: r.armCode,
+    size: assessCohortSize({
+      members: Number(r.memberCount),
+      minSize: r.cohort.minSize,
+      maxSize: r.cohort.maxSize,
+    }),
+  }));
 }
 
 export interface CohortDetail {
@@ -240,7 +292,9 @@ export async function createCohort(params: {
   name: string;
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
-  capacity?: number | null;
+  armId?: string | null;
+  minSize?: number | null;
+  maxSize?: number | null;
 }): Promise<string> {
   const { studyId, actorId } = params;
   const code = params.code.trim().toUpperCase();
@@ -263,7 +317,9 @@ export async function createCohort(params: {
         status: "PLANNING",
         plannedStartDate: params.plannedStartDate || null,
         plannedEndDate: params.plannedEndDate || null,
-        capacity: params.capacity ?? null,
+        armId: params.armId || null,
+        minSize: params.minSize ?? null,
+        maxSize: params.maxSize ?? null,
       })
       .returning({ id: cohorts.id });
 
@@ -273,7 +329,14 @@ export async function createCohort(params: {
       action: "cohort.created",
       entityType: "cohort",
       entityId: created.id,
-      after: { code, name, status: "PLANNING" },
+      after: {
+        code,
+        name,
+        status: "PLANNING",
+        armId: params.armId || null,
+        minSize: params.minSize ?? null,
+        maxSize: params.maxSize ?? null,
+      },
     });
 
     return created.id;
@@ -285,18 +348,55 @@ export async function advanceCohortStatus(params: {
   cohortId: string;
   actorId: string;
   status: CohortStatus;
+  /**
+   * Set to proceed despite the cohort being outside its configured size. The
+   * reason is recorded on the audit row, so an under-sized cohort that ran
+   * anyway is answerable afterwards rather than invisible.
+   */
+  overrideReason?: string | null;
 }): Promise<void> {
   const { studyId, cohortId, actorId, status } = params;
+  const overrideReason = params.overrideReason?.trim() || null;
 
   await getDb().transaction(async (tx) => {
     const [current] = await tx
-      .select({ id: cohorts.id, status: cohorts.status, code: cohorts.code })
+      .select({
+        id: cohorts.id,
+        status: cohorts.status,
+        code: cohorts.code,
+        minSize: cohorts.minSize,
+        maxSize: cohorts.maxSize,
+      })
       .from(cohorts)
       .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
       .limit(1);
     if (!current) throw new NotFoundError("cohort", cohortId);
     if (!canTransitionCohort(current.status, status)) {
       throw new InvalidTransitionError("cohort", current.status, status);
+    }
+
+    // The size rule bites HERE and nowhere else (D-033). Assignment is never
+    // refused on size; the question "is this cohort ready to run" is asked once,
+    // at the moment someone says it is running.
+    const [memberRow] = await tx
+      .select({ n: count() })
+      .from(participantCohortAssignments)
+      .where(
+        and(
+          eq(participantCohortAssignments.cohortId, cohortId),
+          isNull(participantCohortAssignments.removedAt),
+        ),
+      );
+
+    const size = assessCohortSize({
+      members: Number(memberRow?.n ?? 0),
+      minSize: current.minSize,
+      maxSize: current.maxSize,
+    });
+
+    const blocked = sizeBlocksTransition(status, size);
+    if (blocked && blocked !== "UNBOUNDED" && blocked !== "WITHIN" && !overrideReason) {
+      throw new CohortSizeError(blocked, size);
     }
 
     await tx.update(cohorts).set({ status }).where(eq(cohorts.id, cohortId));
@@ -309,6 +409,18 @@ export async function advanceCohortStatus(params: {
       entityId: cohortId,
       before: { status: current.status },
       after: { status, code: current.code },
+      // Always recorded at a size-checked status, override or not, so the state
+      // the cohort actually started in is on the record either way.
+      metadata: sizeIsCheckedAt(status)
+        ? {
+            memberCount: size.members,
+            minSize: size.minSize,
+            maxSize: size.maxSize,
+            sizeVerdict: size.verdict,
+            sizeOverridden: Boolean(blocked && overrideReason),
+            sizeOverrideReason: blocked && overrideReason ? overrideReason : null,
+          }
+        : null,
     });
   });
 }
@@ -449,6 +561,42 @@ export async function recordRandomization(params: {
   });
 }
 
+/**
+ * Check that a participant may join a cohort on arm grounds, inside the caller's
+ * transaction.
+ *
+ * A cohort with no arm takes anyone — the pre-Phase-4c behaviour, and still the
+ * default. Once a cohort names an arm, a participant from another arm is a data
+ * error rather than an operational judgement: their recorded allocation and the
+ * group they actually attend would disagree, and every attendance figure built
+ * on the cohort would then be wrong.
+ *
+ * An unallocated participant is refused too. That is the deliberate part: they
+ * are not compatible by default, and assigning someone to an arm-specific cohort
+ * before anyone knows their arm is exactly the accident this prevents.
+ */
+async function assertArmCompatible(
+  tx: DbExecutor,
+  cohortArmId: string | null,
+  participantId: string,
+): Promise<string | null> {
+  if (cohortArmId === null) return null;
+
+  const [allocation] = await tx
+    .select({ armId: randomizations.armId })
+    .from(randomizations)
+    .where(eq(randomizations.participantId, participantId))
+    .limit(1);
+
+  const verdict = checkArmCompatibility({
+    cohortArmId,
+    participantArmId: allocation?.armId ?? null,
+  });
+  if (verdict === "MISMATCH") throw new ConflictError("armMismatch");
+  if (verdict === "ARM_NOT_RECORDED") throw new ConflictError("armNotRecorded");
+  return allocation?.armId ?? null;
+}
+
 /** Put a participant into a cohort. One active cohort per participant. */
 export async function assignToCohort(params: {
   studyId: string;
@@ -460,7 +608,12 @@ export async function assignToCohort(params: {
 
   await getDb().transaction(async (tx) => {
     const [cohort] = await tx
-      .select({ id: cohorts.id, code: cohorts.code, status: cohorts.status })
+      .select({
+        id: cohorts.id,
+        code: cohorts.code,
+        status: cohorts.status,
+        armId: cohorts.armId,
+      })
       .from(cohorts)
       .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
       .limit(1);
@@ -489,6 +642,8 @@ export async function assignToCohort(params: {
       )
       .limit(1);
     if (existing) throw new ConflictError("alreadyAssigned");
+
+    await assertArmCompatible(tx, cohort.armId, participantId);
 
     const [created] = await tx
       .insert(participantCohortAssignments)
@@ -521,6 +676,95 @@ export async function assignToCohort(params: {
         metadata: { via: "cohort_assignment", cohortCode: cohort.code },
       });
     }
+  });
+}
+
+/**
+ * Move a participant from one cohort to another, in ONE transaction.
+ *
+ * Why this exists rather than "remove, then assign": done as two actions there
+ * is a moment where the person belongs to no cohort, and if the second fails
+ * they simply stay there. Both records are historical either way — the old
+ * assignment gets `removedAt`, a new row is inserted — but as one transaction
+ * the move either happens or does not, and the audit rows carry `movedFrom` /
+ * `movedTo` so the change reads as a transfer instead of as an unexplained
+ * departure followed by an unexplained arrival.
+ *
+ * The destination is checked exactly as a fresh assignment would be: it must be
+ * open, and the arm must match.
+ */
+export async function transferToCohort(params: {
+  studyId: string;
+  participantId: string;
+  toCohortId: string;
+  actorId: string;
+  reason?: string | null;
+}): Promise<void> {
+  const { studyId, participantId, toCohortId, actorId } = params;
+  const reason = params.reason?.trim() || null;
+
+  await getDb().transaction(async (tx) => {
+    const [to] = await tx
+      .select({ id: cohorts.id, code: cohorts.code, status: cohorts.status, armId: cohorts.armId })
+      .from(cohorts)
+      .where(and(eq(cohorts.id, toCohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!to) throw new NotFoundError("cohort", toCohortId);
+    if (!acceptsAssignments(to.status)) throw new ConflictError("cohortClosed");
+
+    const [participant] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    const [current] = await tx
+      .select({
+        id: participantCohortAssignments.id,
+        cohortId: participantCohortAssignments.cohortId,
+        cohortCode: cohorts.code,
+      })
+      .from(participantCohortAssignments)
+      .innerJoin(cohorts, eq(cohorts.id, participantCohortAssignments.cohortId))
+      .where(
+        and(
+          eq(participantCohortAssignments.participantId, participantId),
+          eq(participantCohortAssignments.studyId, studyId),
+          isNull(participantCohortAssignments.removedAt),
+        ),
+      )
+      .limit(1);
+    if (!current) throw new NotFoundError("cohort assignment", participantId);
+    if (current.cohortId === toCohortId) throw new ConflictError("sameCohort");
+
+    await assertArmCompatible(tx, to.armId, participantId);
+
+    await tx
+      .update(participantCohortAssignments)
+      .set({ removedAt: new Date(), removedBy: actorId })
+      .where(eq(participantCohortAssignments.id, current.id));
+
+    const [created] = await tx
+      .insert(participantCohortAssignments)
+      .values({ studyId, cohortId: toCohortId, participantId, assignedBy: actorId })
+      .returning({ id: participantCohortAssignments.id });
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort_assignment.moved",
+      entityType: "participant_cohort_assignment",
+      entityId: created.id,
+      before: { cohortCode: current.cohortCode },
+      after: { cohortCode: to.code, participantCode: participant.code },
+      metadata: {
+        movedFrom: current.cohortId,
+        movedTo: toCohortId,
+        previousAssignmentId: current.id,
+        reason,
+      },
+    });
   });
 }
 

@@ -12,6 +12,7 @@ import {
   advanceCohortStatus,
   assignCohortStaff,
   assignToCohort,
+  CohortSizeError,
   ConflictError,
   createCohort,
   InvalidTransitionError,
@@ -19,6 +20,7 @@ import {
   recordRandomization,
   removeFromCohort,
   revokeCohortStaff,
+  transferToCohort,
 } from "@/services/cohorts";
 
 /**
@@ -40,9 +42,19 @@ export type CohortState = {
     | "alreadyRandomized"
     | "alreadyAssigned"
     | "cohortClosed"
+    | "armMismatch"
+    | "armNotRecorded"
+    | "sameCohort"
+    | "sizeUnder"
+    | "sizeOver"
     | "failed"
     | null;
   ok?: boolean;
+  /**
+   * Set when a size check refused the transition, so the form can ask for a
+   * confirmation instead of just reporting a failure (D-033).
+   */
+  size?: { members: number; minSize: number | null; maxSize: number | null };
 };
 
 const uuid = z.string().uuid();
@@ -67,6 +79,16 @@ function fail(err: unknown, event: string): CohortState {
   if (err instanceof NotFoundError) return { error: "notFound" };
   if (err instanceof InvalidTransitionError) return { error: "invalid" };
   if (err instanceof ConflictError) return { error: err.reason };
+  if (err instanceof CohortSizeError) {
+    return {
+      error: err.verdict === "UNDER" ? "sizeUnder" : "sizeOver",
+      size: {
+        members: err.size.members,
+        minSize: err.size.minSize,
+        maxSize: err.size.maxSize,
+      },
+    };
+  }
   logger.error(
     { event: `${event}.failed`, err: err instanceof Error ? err.message : String(err) },
     "action failed",
@@ -83,6 +105,14 @@ function revalidate(extra?: string) {
 
 // --- Cohorts ----------------------------------------------------------------
 
+/** An optional positive whole number from a text input. */
+const positiveIntOrNull = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v ? Number(v) : null))
+  .refine((v) => v === null || (Number.isInteger(v) && v > 0));
+
 const createSchema = z.object({
   code: z
     .string()
@@ -92,12 +122,9 @@ const createSchema = z.object({
   name: z.string().trim().min(1).max(COHORT_NAME_MAX_LENGTH),
   plannedStartDate: z.string().trim().optional(),
   plannedEndDate: z.string().trim().optional(),
-  capacity: z
-    .string()
-    .trim()
-    .optional()
-    .transform((v) => (v ? Number(v) : null))
-    .refine((v) => v === null || (Number.isInteger(v) && v > 0)),
+  armId: z.union([uuid, z.literal("")]).optional(),
+  minSize: positiveIntOrNull,
+  maxSize: positiveIntOrNull,
 });
 
 export async function createCohortAction(
@@ -112,7 +139,9 @@ export async function createCohortAction(
     name: formData.get("name"),
     plannedStartDate: formData.get("plannedStartDate") ?? undefined,
     plannedEndDate: formData.get("plannedEndDate") ?? undefined,
-    capacity: formData.get("capacity") ?? undefined,
+    armId: formData.get("armId") ?? undefined,
+    minSize: formData.get("minSize") ?? undefined,
+    maxSize: formData.get("maxSize") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -125,7 +154,9 @@ export async function createCohortAction(
       name: parsed.data.name,
       plannedStartDate: parsed.data.plannedStartDate || null,
       plannedEndDate: parsed.data.plannedEndDate || null,
-      capacity: parsed.data.capacity,
+      armId: parsed.data.armId || null,
+      minSize: parsed.data.minSize,
+      maxSize: parsed.data.maxSize,
     });
   } catch (err) {
     return fail(err, "cohort.create");
@@ -135,7 +166,20 @@ export async function createCohortAction(
   return { error: null, ok: true };
 }
 
-const advanceSchema = z.object({ cohortId: uuid, status: z.enum(COHORT_STATUSES) });
+const advanceSchema = z.object({
+  cohortId: uuid,
+  status: z.enum(COHORT_STATUSES),
+  /**
+   * Present only on a second, deliberate attempt. Kept short and stored on the
+   * audit row, so a cohort that ran outside its configured size is answerable.
+   */
+  overrideReason: z
+    .string()
+    .trim()
+    .max(280)
+    .optional()
+    .transform((v) => (v ? v : null)),
+});
 
 export async function advanceCohortAction(
   _prev: CohortState,
@@ -147,6 +191,7 @@ export async function advanceCohortAction(
   const parsed = advanceSchema.safeParse({
     cohortId: formData.get("cohortId"),
     status: formData.get("status"),
+    overrideReason: formData.get("overrideReason") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -157,6 +202,7 @@ export async function advanceCohortAction(
       cohortId: parsed.data.cohortId,
       actorId: ctx.session.userId,
       status: parsed.data.status,
+      overrideReason: parsed.data.overrideReason,
     });
   } catch (err) {
     return fail(err, "cohort.advance");
@@ -331,6 +377,55 @@ export async function removeFromCohortAction(
     });
   } catch (err) {
     return fail(err, "cohort_assignment.remove");
+  }
+
+  revalidate(`${TEAM_BASE_PATH}/participantes/${parsed.data.participantId}`);
+  return { error: null, ok: true };
+}
+
+const transferSchema = z.object({
+  participantId: uuid,
+  toCohortId: uuid,
+  reason: z
+    .string()
+    .trim()
+    .max(280)
+    .optional()
+    .transform((v) => (v ? v : null)),
+});
+
+/**
+ * Move a participant between cohorts as one action.
+ *
+ * Deliberately not "remove, then assign from the other screen": that leaves a
+ * moment with no cohort and, if the second step fails, an unexplained departure.
+ * The service does both in one transaction (D-033).
+ */
+export async function transferCohortAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = transferSchema.safeParse({
+    participantId: formData.get("participantId"),
+    toCohortId: formData.get("toCohortId"),
+    reason: formData.get("reason") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await transferToCohort({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      toCohortId: parsed.data.toCohortId,
+      actorId: ctx.session.userId,
+      reason: parsed.data.reason,
+    });
+  } catch (err) {
+    return fail(err, "cohort.transfer");
   }
 
   revalidate(`${TEAM_BASE_PATH}/participantes/${parsed.data.participantId}`);

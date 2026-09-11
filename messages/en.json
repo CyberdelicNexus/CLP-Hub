@@ -419,9 +419,13 @@
       "name": "Name",
       "start": "Planned start",
       "end": "Planned end",
-      "capacity": "Places",
-      "capacityHelp": "Optional. Informational only: it does not prevent further assignments.",
-      "person": "Person"
+      "person": "Person",
+      "minSize": "Minimum participants",
+      "maxSize": "Maximum participants",
+      "sizeHelp": "Configuration for this cohort. It never refuses an assignment: it is checked when the cohort is activated.",
+      "arm": "Study arm",
+      "armHelp": "If you pick an arm, only participants with that allocation recorded can be assigned.",
+      "armAny": "Any arm"
     },
     "error": {
       "invalid": "That change is not allowed.",
@@ -430,8 +434,29 @@
       "alreadyRandomized": "This person already has a recorded arm allocation.",
       "alreadyAssigned": "This person already belongs to a cohort.",
       "cohortClosed": "This cohort no longer accepts new assignments.",
-      "failed": "The change could not be saved. Please try again."
-    }
+      "failed": "The change could not be saved. Please try again.",
+      "armMismatch": "This person's allocated arm is not the arm this cohort runs.",
+      "armNotRecorded": "This cohort runs one arm and no allocation has been recorded for this person yet.",
+      "sameCohort": "They are already in that cohort.",
+      "sizeUnder": "The cohort is below its configured minimum.",
+      "sizeOver": "The cohort is above its configured maximum."
+    },
+    "size": {
+      "under": "{needed} short",
+      "underShort": "Under",
+      "over": "Over",
+      "remaining": "{remaining} places left",
+      "warnUnder": "It has {members} participants and the configured minimum is {min}.",
+      "warnOver": "It has {members} participants and the configured maximum is {max}.",
+      "confirmUnder": "This cohort has {members} participants, below the minimum of {min}. You can activate it anyway, but say why — it will be recorded.",
+      "confirmOver": "This cohort has {members} participants, above the maximum of {max}. You can activate it anyway, but say why — it will be recorded.",
+      "overrideReason": "Reason for activating anyway",
+      "confirmSubmit": "Activate anyway"
+    },
+    "transfer": "Move to another cohort",
+    "transferTarget": "New cohort",
+    "transferReason": "Reason for the move (optional)",
+    "transferReasonHelp": "Recorded alongside the change. Operational information, not clinical."
   },
   "sessions": {
     "subtitle": "Scheduled cohort sessions.",

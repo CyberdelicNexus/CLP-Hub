@@ -7,7 +7,8 @@ import { getStudyContext } from "@/auth/study-context";
 import { NoAccess } from "@/components/team/no-access";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { nextCohortStatus } from "@/domain/cohort";
+import { CohortOccupancy } from "@/components/team/cohort-occupancy";
+import { assessCohortSize, nextCohortStatus, sizeIsCheckedAt } from "@/domain/cohort";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { getCohortDetail, listAssignableStaff } from "@/services/cohorts";
 import { AdvanceCohortForm, AssignStaffForm, RevokeStaffForm } from "../cohort-forms";
@@ -41,6 +42,11 @@ export default async function CohortDetailPage({ params }: { params: Promise<{ i
 
   const canManage = ctx.permissions.has("cohorts.manage");
   const { cohort, staff, members } = detail;
+  const size = assessCohortSize({
+    members: members.length,
+    minSize: cohort.minSize,
+    maxSize: cohort.maxSize,
+  });
   const next = nextCohortStatus(cohort.status);
 
   const errors = {
@@ -89,8 +95,15 @@ export default async function CohortDetailPage({ params }: { params: Promise<{ i
           <CardHeader>
             <CardTitle>
               {t("cohorts.members")}{" "}
-              <span data-numeric className="text-muted-foreground">
-                {cohort.capacity ? `${members.length} / ${cohort.capacity}` : members.length}
+              <span className="font-normal text-muted-foreground">
+                <CohortOccupancy
+                  size={size}
+                  labels={{
+                    under: t("cohorts.size.under", { needed: size.needed }),
+                    over: t("cohorts.size.over"),
+                    remaining: t("cohorts.size.remaining", { remaining: size.remaining ?? 0 }),
+                  }}
+                />
               </span>
             </CardTitle>
           </CardHeader>
@@ -126,12 +139,37 @@ export default async function CohortDetailPage({ params }: { params: Promise<{ i
             <CardHeader>
               <CardTitle>{t("cohorts.lifecycle")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {/*
+                Said before the button is pressed, not only after the server
+                refuses: someone about to activate a cohort should know it is
+                short before they try, so they can go and fill it.
+              */}
+              {next && sizeIsCheckedAt(next) && (size.verdict === "UNDER" || size.verdict === "OVER") ? (
+                <p className="rounded-xl bg-surface-peach px-3 py-2 text-xs leading-relaxed text-surface-peach-ink">
+                  {size.verdict === "UNDER"
+                    ? t("cohorts.size.warnUnder", { members: size.members, min: size.minSize ?? 0 })
+                    : t("cohorts.size.warnOver", { members: size.members, max: size.maxSize ?? 0 })}
+                </p>
+              ) : null}
               {canManage ? (
                 <AdvanceCohortForm
                   cohortId={cohort.id}
                   next={next ? { value: next, label: t(`cohorts.advanceTo.${next}`) } : null}
-                  labels={{ ...base, terminal: t("cohorts.lifecycleEnd") }}
+                  labels={{
+                    ...base,
+                    terminal: t("cohorts.lifecycleEnd"),
+                    confirmUnder: t("cohorts.size.confirmUnder", {
+                      members: size.members,
+                      min: size.minSize ?? 0,
+                    }),
+                    confirmOver: t("cohorts.size.confirmOver", {
+                      members: size.members,
+                      max: size.maxSize ?? 0,
+                    }),
+                    overrideReason: t("cohorts.size.overrideReason"),
+                    confirmSubmit: t("cohorts.size.confirmSubmit"),
+                  }}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground">{t("cohorts.readOnly")}</p>

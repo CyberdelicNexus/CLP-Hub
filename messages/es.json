@@ -419,9 +419,13 @@
       "name": "Nombre",
       "start": "Inicio previsto",
       "end": "Fin previsto",
-      "capacity": "Plazas",
-      "capacityHelp": "Opcional. Solo informativo: no impide asignar más personas.",
-      "person": "Persona"
+      "person": "Persona",
+      "minSize": "Mínimo de participantes",
+      "maxSize": "Máximo de participantes",
+      "sizeHelp": "Configuración de esta cohorte. No impide asignar participantes: solo se comprueba al activarla.",
+      "arm": "Grupo del estudio",
+      "armHelp": "Si eliges un grupo, solo podrán asignarse participantes con esa asignación registrada.",
+      "armAny": "Cualquier grupo"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",
@@ -430,8 +434,29 @@
       "alreadyRandomized": "Esta persona ya tiene una asignación de rama registrada.",
       "alreadyAssigned": "Esta persona ya pertenece a una cohorte.",
       "cohortClosed": "Esta cohorte ya no admite nuevas asignaciones.",
-      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
-    }
+      "failed": "No se pudo guardar el cambio. Inténtalo de nuevo.",
+      "armMismatch": "El grupo asignado a esta persona no coincide con el grupo de la cohorte.",
+      "armNotRecorded": "Esta cohorte es de un grupo concreto y aún no hay asignación registrada para esta persona.",
+      "sameCohort": "Ya pertenece a esa cohorte.",
+      "sizeUnder": "La cohorte está por debajo del mínimo configurado.",
+      "sizeOver": "La cohorte está por encima del máximo configurado."
+    },
+    "size": {
+      "under": "Faltan {needed}",
+      "underShort": "Incompleta",
+      "over": "Excedida",
+      "remaining": "{remaining} plazas libres",
+      "warnUnder": "Tiene {members} participantes y el mínimo configurado es {min}.",
+      "warnOver": "Tiene {members} participantes y el máximo configurado es {max}.",
+      "confirmUnder": "Esta cohorte tiene {members} participantes, por debajo del mínimo de {min}. Puedes activarla igualmente, pero explica por qué: quedará registrado.",
+      "confirmOver": "Esta cohorte tiene {members} participantes, por encima del máximo de {max}. Puedes activarla igualmente, pero explica por qué: quedará registrado.",
+      "overrideReason": "Motivo para activarla igualmente",
+      "confirmSubmit": "Activar igualmente"
+    },
+    "transfer": "Cambiar de cohorte",
+    "transferTarget": "Nueva cohorte",
+    "transferReason": "Motivo del cambio (opcional)",
+    "transferReasonHelp": "Queda registrado junto al cambio. Información operativa, no clínica."
   },
   "sessions": {
     "subtitle": "Sesiones programadas de las cohortes.",

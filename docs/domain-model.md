@@ -110,11 +110,26 @@ consent *per type*. Reversible; see the migration header for the impact.
 
 Added enum: `consent_type`.
 
+## Implemented (Phase 4c · migration 0009)
+
+Alters `cohorts` only — no new table.
+
+| Column | Purpose | Notes |
+|---|---|---|
+| `arm_id` | The arm this cohort runs | Nullable; null takes anyone, which is every pre-existing cohort. Once set, arm compatibility is enforced on assignment (D-034) |
+| `min_size` / `max_size` | Configured group size | "Between 6 and 8" is data, never code. Checked only when a cohort is marked ACTIVE, and overridable with a recorded reason (D-033) |
+
+`capacity` is **renamed** to `max_size` — reversible, no value lost. See the
+migration header for the impact.
+
+New service: `transferToCohort`, which moves a participant between cohorts in one
+transaction and audits it as `cohort_assignment.moved`.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 4c Cohort rules and responsibles | cohort arm and size bounds, participant responsibles |
+| 4d Responsibles and initial visit | `participant_responsibilities`, `initial_visits` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |

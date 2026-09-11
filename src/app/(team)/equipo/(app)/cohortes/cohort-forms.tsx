@@ -13,6 +13,7 @@ import {
   recordRandomizationAction,
   removeFromCohortAction,
   revokeStaffAction,
+  transferCohortAction,
   type CohortState,
 } from "./actions";
 
@@ -38,15 +39,22 @@ const SELECT_CLASS =
   "h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function CreateCohortForm({
+  arms,
   labels,
 }: {
+  /** Empty when the study has no arms configured; the field is then hidden. */
+  arms: { id: string; label: string }[];
   labels: Labels & {
     code: string;
     name: string;
     start: string;
     end: string;
-    capacity: string;
-    capacityHelp: string;
+    minSize: string;
+    maxSize: string;
+    sizeHelp: string;
+    arm: string;
+    armHelp: string;
+    armAny: string;
   };
 }) {
   const [state, action, pending] = useActionState(createCohortAction, initial);
@@ -68,11 +76,36 @@ export function CreateCohortForm({
         <Label htmlFor="plannedEndDate">{labels.end}</Label>
         <Input id="plannedEndDate" name="plannedEndDate" type="date" />
       </div>
+
+      {arms.length > 0 ? (
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="armId">{labels.arm}</Label>
+          {/*
+            Defaults to "any arm", which is what every cohort created before this
+            phase is. Naming an arm is an added restriction, so it is opt-in.
+          */}
+          <select id="armId" name="armId" defaultValue="" className={SELECT_CLASS}>
+            <option value="">{labels.armAny}</option>
+            {arms.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.armHelp}</p>
+        </div>
+      ) : null}
+
       <div className="space-y-1.5">
-        <Label htmlFor="capacity">{labels.capacity}</Label>
-        <Input id="capacity" name="capacity" type="number" min={1} />
-        <p className="text-xs text-muted-foreground">{labels.capacityHelp}</p>
+        <Label htmlFor="minSize">{labels.minSize}</Label>
+        <Input id="minSize" name="minSize" type="number" min={1} inputMode="numeric" />
       </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="maxSize">{labels.maxSize}</Label>
+        <Input id="maxSize" name="maxSize" type="number" min={1} inputMode="numeric" />
+      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">{labels.sizeHelp}</p>
+
       <div className="flex items-end sm:col-span-2">
         <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
           {pending ? labels.submitting : labels.submit}
@@ -85,6 +118,15 @@ export function CreateCohortForm({
   );
 }
 
+/**
+ * Advance a cohort's lifecycle.
+ *
+ * The size rule bites here (D-033). When the server refuses, it hands back the
+ * counts and this form turns into a confirmation: the same button, plus a
+ * required one-line reason that lands on the audit row. It is a speed bump, not
+ * a wall — the humans decide whether a cohort of five runs, and the record then
+ * says they decided it.
+ */
 export function AdvanceCohortForm({
   cohortId,
   next,
@@ -92,25 +134,103 @@ export function AdvanceCohortForm({
 }: {
   cohortId: string;
   next: { value: string; label: string } | null;
-  labels: Labels & { terminal: string };
+  labels: Labels & {
+    terminal: string;
+    confirmUnder: string;
+    confirmOver: string;
+    overrideReason: string;
+    confirmSubmit: string;
+  };
 }) {
   const [state, action, pending] = useActionState(advanceCohortAction, initial);
   if (!next) return <p className="text-sm text-muted-foreground">{labels.terminal}</p>;
+
+  const blocked = state.error === "sizeUnder" || state.error === "sizeOver";
+
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="cohortId" value={cohortId} />
+
+      {blocked ? (
+        <div className="space-y-2 rounded-xl bg-surface-peach p-3 text-surface-peach-ink">
+          <p role="alert" className="text-xs leading-relaxed">
+            {state.error === "sizeUnder" ? labels.confirmUnder : labels.confirmOver}
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor={`override-${cohortId}`} className="text-xs">
+              {labels.overrideReason}
+            </Label>
+            <Input
+              id={`override-${cohortId}`}
+              name="overrideReason"
+              required
+              maxLength={280}
+              className="bg-card"
+            />
+          </div>
+        </div>
+      ) : null}
+
       <Button
         type="submit"
         name="status"
         value={next.value}
-        variant="outline"
+        variant={blocked ? "default" : "outline"}
         size="sm"
         className="rounded-lg"
         disabled={pending}
       >
-        {pending ? labels.submitting : next.label}
+        {pending ? labels.submitting : blocked ? labels.confirmSubmit : next.label}
       </Button>
+
+      {/* The size refusal is rendered above with its own form, not as a plain error. */}
+      {blocked ? null : <ErrorLine state={state} errors={labels.errors} />}
+    </form>
+  );
+}
+
+/**
+ * Move a participant to a different cohort as one action.
+ *
+ * Not "remove, then assign": that leaves a moment with no cohort and, if the
+ * second step fails, an unexplained departure. The reason is optional but goes
+ * on the audit row when given.
+ */
+export function TransferCohortForm({
+  participantId,
+  cohorts,
+  labels,
+}: {
+  participantId: string;
+  cohorts: { id: string; label: string }[];
+  labels: Labels & { target: string; reason: string; reasonHelp: string };
+}) {
+  const [state, action, pending] = useActionState(transferCohortAction, initial);
+  if (cohorts.length === 0) return null;
+
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="participantId" value={participantId} />
+      <div className="space-y-1.5">
+        <Label htmlFor="toCohortId">{labels.target}</Label>
+        <select id="toCohortId" name="toCohortId" required defaultValue="" className={SELECT_CLASS}>
+          <option value="" disabled />
+          {cohorts.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="transferReason">{labels.reason}</Label>
+        <Input id="transferReason" name="reason" maxLength={280} />
+        <p className="text-xs text-muted-foreground">{labels.reasonHelp}</p>
+      </div>
       <ErrorLine state={state} errors={labels.errors} />
+      <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
     </form>
   );
 }

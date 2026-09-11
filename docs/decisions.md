@@ -476,6 +476,61 @@ is reported as missing nothing, because nobody yet knows which arm they are in.
 the same reasoning as D-021. A visible gap gets fixed; a blocked screen gets
 worked around.
 
+## D-033 · 2026-09-11 · Cohort size is configuration, checked once, and overridable
+
+Founder decision, from the 2026-09-11 meeting: an experimental cohort forms with
+between 6 and 8 participants.
+
+**Those numbers are data, not code.** `cohorts.min_size` / `cohorts.max_size` are
+configured per cohort (non-negotiable 6), and `tests/cohort-rules.test.ts`
+asserts that neither 6 nor 8 appears as a constant in `src/domain/cohort.ts`. A
+cohort with no bounds configured is unbounded, not implicitly 6–8.
+
+**Where the rule bites.** Only when a cohort is marked ACTIVE. Assignment is
+still never refused on size — that remains the operational judgement D-023
+describes, and a cohort has to be allowed to pass through being too small on its
+way to being the right size. The question "is this cohort ready to run" is asked
+once, at the moment someone says it is running.
+
+**And it is a speed bump, not a wall.** A refused activation hands the counts
+back to the form, which turns into a confirmation with a required one-line
+reason. The reason lands on the audit row, together with the member count and the
+bounds — so a cohort of five that ran anyway is answerable, rather than either
+impossible or invisible. `sizeIsCheckedAt` statuses always record those numbers,
+override or not.
+
+The detail page also warns *before* the button is pressed. Someone about to
+activate a short cohort should find that out in time to go and fill it.
+
+**`capacity` was renamed to `max_size`, not duplicated.** Two columns meaning
+"how many fit" would drift apart. A rename preserves every value and is
+reversible with one statement; `capacity` was already informational (D-023), so
+nothing that read it was enforcing anything. Readers outside this repository
+would break — inside it, all of them are updated in the same commit.
+
+## D-034 · 2026-09-11 · A cohort can name its arm, and then the arm is enforced
+
+`cohorts.arm_id` is nullable and null by default, so every cohort that existed
+before this phase keeps taking anyone. Once a cohort names an arm:
+
+- A participant allocated to a different arm is **refused**. This is data
+  integrity, not a clinical rule — their recorded allocation and the group they
+  actually attend would disagree, and every attendance figure built on the cohort
+  would then be wrong. It is the same category of refusal as the duplicate
+  allocation in D-021.
+- A participant with **no allocation recorded** is also refused, and this is the
+  deliberate half: they are not compatible by default. Assigning someone to an
+  arm-specific cohort before anyone knows their arm is exactly the accident this
+  exists to prevent.
+
+**Moving between cohorts is one action.** `transferToCohort` removes and
+re-inserts inside a single transaction and writes a `cohort_assignment.moved`
+audit row carrying `movedFrom` / `movedTo`. Done as "remove, then assign" there
+is a moment where the person belongs to no cohort, and if the second step fails
+they simply stay there — the history then reads as an unexplained departure
+followed by an unexplained arrival. Both assignment rows remain historical, as
+before.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -515,6 +570,12 @@ worked around.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Is ACTIVE the right moment to check cohort size, or should PREPARATION also be
+  checked? (D-033)
+- Should an under-sized cohort that was activated with an override raise an
+  alert in Phase 8, as the consent anomaly question does?
+- Should a cohort whose arm is null be allowed at all once arms exist, or should
+  naming an arm become mandatory for new cohorts? (D-034)
 - Who may add or retire a consent scope, and what happens to a consent that
   already granted a scope later withdrawn from the study? (D-032)
 - Should withdrawing the physical consent also withdraw the authorizations it

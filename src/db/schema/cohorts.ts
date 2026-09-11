@@ -64,9 +64,29 @@ export const cohorts = pgTable(
     code: text("code").notNull(),
     name: text("name").notNull(),
     status: cohortStatusEnum("status").notNull().default("PLANNING"),
+    /**
+     * The arm this cohort runs. Null means "takes anyone", which is how every
+     * cohort created before Phase 4c behaves and stays the default.
+     *
+     * Once set, a participant allocated to a different arm cannot be assigned
+     * here — that is data integrity, not a clinical rule: the recorded
+     * allocation and the group actually attended would disagree, and every
+     * attendance figure built on the cohort would be wrong.
+     */
+    armId: uuid("arm_id").references(() => studyArms.id),
     plannedStartDate: date("planned_start_date"),
     plannedEndDate: date("planned_end_date"),
-    capacity: integer("capacity"),
+    /**
+     * Configured group size. "Between 6 and 8" is this trial's number, so it is
+     * data, never a constant in code (non-negotiable 6). Both nullable: a cohort
+     * with no bounds is unbounded, not implicitly 6-8.
+     *
+     * Neither bound refuses an assignment (D-023). They are checked once, when
+     * someone marks the cohort ACTIVE, and even then a person can override with
+     * a recorded reason (D-033).
+     */
+    minSize: integer("min_size"),
+    maxSize: integer("max_size"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
