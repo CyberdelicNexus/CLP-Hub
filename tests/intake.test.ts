@@ -321,6 +321,20 @@ describe("migration 0007", () => {
     expect(sql).toMatch(/screenings_reason_required/);
   });
 
+  /**
+   * Added NOT VALID on purpose. Determinations recorded before the column
+   * existed have no reason and are not wrong — nobody was asked for one.
+   * Backfilling an invented reason would falsify a researcher's decision, so the
+   * rule binds new writes only, and `countExclusionsWithoutReason` surfaces the
+   * historical gap instead of hiding it.
+   */
+  it("does not retroactively invent reasons for older determinations", () => {
+    expect(sql).toMatch(/screenings_reason_required[\s\S]{0,400}?not valid/);
+    // And nothing anywhere in the migration writes a reason into an old row.
+    expect(sql).not.toMatch(/insert into eligibility_reasons/i);
+    expect(sql).not.toMatch(/set\s+reason_id/i);
+  });
+
   it("is additive only", () => {
     // Nothing in this migration may drop or rewrite existing data. A `drop
     // table`, `drop column` or bare `update` here would be a destructive change

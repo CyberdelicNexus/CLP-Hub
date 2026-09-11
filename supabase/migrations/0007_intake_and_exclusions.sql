@@ -28,6 +28,11 @@
 -- new tables, one new enum value. No row is rewritten, nothing is dropped, and
 -- the retired PUBLIC_FORM source value is deliberately kept so historical
 -- applications stay readable (D-031).
+--
+-- The "a determination must carry a reason" constraint is added NOT VALID, so
+-- determinations recorded before the column existed are left alone rather than
+-- backfilled with an invented reason. See the constraint itself for the full
+-- argument.
 -- =============================================================================
 
 -- New enums --------------------------------------------------------------------
@@ -157,11 +162,35 @@ create index if not exists screenings_reason_idx on screenings (reason_id);
 -- The obligation, in the database. An exclusion with no recorded reason cannot
 -- be reported in a flow diagram, and "requires review" with no statement of what
 -- needs reviewing is a dead end rather than a handover.
+--
+-- ⚠ DECLARED **NOT VALID**, deliberately.
+--
+-- Determinations recorded before this column existed have no reason, and they
+-- are not wrong — nobody was asked for one. The two ways to make them satisfy a
+-- validated constraint would both be worse than leaving them:
+--
+--   * Backfilling an "OTHER / not recorded" reason invents a justification for a
+--     decision a researcher made. That is falsifying a record.
+--   * Deleting or blanking the result destroys the determination itself.
+--
+-- NOT VALID means: enforced on every INSERT and on every UPDATE from now on,
+-- never checked against the rows that predate it. So the rule bites immediately
+-- for new work, historical rows stay honest, and touching one of them forces the
+-- record to be completed.
+--
+-- They are not hidden either: `countExclusionsWithoutReason` in
+-- src/services/study-flow.ts counts them and the evaluation page shows the
+-- figure, so the gap is visible and fixable rather than silent.
+--
+-- Once staff have completed them, `alter table screenings validate constraint
+-- screenings_reason_required;` promotes it to fully validated. That is a
+-- one-line follow-up migration, not something to force now.
 do $$ begin
   alter table screenings add constraint screenings_reason_required
     check (result is null
            or result not in ('INELIGIBLE','REVIEW_REQUIRED')
-           or reason_id is not null);
+           or reason_id is not null)
+    not valid;
 exception when duplicate_object then null; end $$;
 
 -- ELIGIBLE accepts no reason at all, for the same argument as above.
