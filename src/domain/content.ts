@@ -14,7 +14,18 @@
 import { z } from "zod";
 import { isSafeHref } from "./markdown";
 
-/** Content kinds, from docs/content-model.md. */
+/**
+ * Content kinds, from docs/content-model.md.
+ *
+ * EMAIL_TEMPLATE and WHATSAPP_TEMPLATE are RETIRED (D-039). Message templates
+ * now live in `communication_templates`, which is the right shape for them: a
+ * message is plain text with placeholders, not a page of typed blocks, and it is
+ * organised by the stage it belongs to rather than by a URL key.
+ *
+ * The enum values stay because Postgres cannot drop one safely and any content
+ * row already using them must remain readable. `AUTHORABLE_CONTENT_TYPES` is
+ * what the UI offers.
+ */
 export const CONTENT_TYPES = [
   "SESSION_PREPARATION",
   "SESSION_INTEGRATION",
@@ -38,6 +49,23 @@ export const PUBLIC_CONTENT_TYPES: readonly ContentType[] = [
   "TROUBLESHOOTING",
   "FAQ",
 ];
+
+/**
+ * Types a person may create today. Message templates are excluded: they moved to
+ * `communication_templates` in Phase 7 (D-039), and offering both would be two
+ * places to write the same message.
+ */
+export const AUTHORABLE_CONTENT_TYPES: readonly ContentType[] = [
+  "SESSION_PREPARATION",
+  "SESSION_INTEGRATION",
+  "VR_GUIDE",
+  "TROUBLESHOOTING",
+  "FAQ",
+];
+
+export function isAuthorableContentType(type: ContentType): boolean {
+  return AUTHORABLE_CONTENT_TYPES.includes(type);
+}
 
 /** Types attached to a session in the programme rather than standing alone. */
 export const SESSION_CONTENT_TYPES: readonly ContentType[] = [

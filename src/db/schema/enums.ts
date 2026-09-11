@@ -23,6 +23,11 @@ import { ELIGIBILITY_REASON_CATEGORIES } from "@/domain/eligibility-reason";
 import { RESPONSIBILITY_ROLES, VISIT_STATUSES } from "@/domain/responsibility";
 import { DEVICE_STATUSES, INCIDENT_KINDS, VR_READINESS_STATES } from "@/domain/logistics";
 import {
+  COMMUNICATION_CHANNELS,
+  COMMUNICATION_STAGES,
+  COMMUNICATION_STATUSES,
+} from "@/domain/communication";
+import {
   INTAKE_TARGETS,
   INTEGRATION_MODES,
   QUALTRICS_FIELD_CLASSES,
@@ -79,3 +84,8 @@ export const visitStatusEnum = pgEnum("visit_status", VISIT_STATUSES);
 export const deviceStatusEnum = pgEnum("device_status", DEVICE_STATUSES);
 export const vrReadinessEnum = pgEnum("vr_readiness", VR_READINESS_STATES);
 export const incidentKindEnum = pgEnum("incident_kind", INCIDENT_KINDS);
+
+// Communications (Phase 7, migration 0012)
+export const communicationStageEnum = pgEnum("communication_stage", COMMUNICATION_STAGES);
+export const communicationChannelEnum = pgEnum("communication_channel", COMMUNICATION_CHANNELS);
+export const communicationStatusEnum = pgEnum("communication_status", COMMUNICATION_STATUSES);

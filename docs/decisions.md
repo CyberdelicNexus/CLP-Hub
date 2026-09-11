@@ -678,6 +678,69 @@ LOGISTICS role holds `participants.contact.read`. An address is needed on a
 shipping label, not on a dashboard, and an operations screen listing everyone's
 name is a re-identification surface for anyone walking past it.
 
+## D-039 · 2026-09-11 · Message templates, and what a send record is allowed to hold
+
+Phase 7, approved at the 2026-09-11 meeting. `communication_templates` holds
+reusable messages organised by the stage they belong to; `communications` records
+that one was sent.
+
+**Nothing sends anything**, and nothing in the schema could (D-004). No API
+token column, no queue, no scheduled-send table, no webhook.
+`tests/communication.test.ts` asserts the absence across the domain module, the
+service and the server actions, rather than trusting it — the same
+absolute-guarantee argument D-018 makes about randomization. A system that
+*could* send an unapproved message to a participant would eventually send one.
+
+**The variable allow-list is the safety model.** A template may contain only
+`codigo`, `nombre`, `fecha`, `hora`, `lugar`, `responsable`, `cohorte`, `enlace`
+and `instrucciones`. Nothing clinical, no eligibility, no consent status, no
+allocation, no email address, no phone number. A body using anything else is
+refused on save, and the placeholder pattern is deliberately permissive about
+what it *captures* (any `{{word}}`) so that an unrecognised placeholder is caught
+rather than silently passed through and sent as literal text.
+
+`nombre` needs `participants.contact.read` to render. Without it the placeholder
+falls back to the participant code rather than being blanked: "Hola P-000042," is
+honest about what the sender could see; "Hola ," just looks broken.
+
+`renderTemplate` is not a template engine — one pass of literal replacement, no
+conditionals, no loops, and a value containing `{{nombre}}` is inserted as those
+characters because the scan runs over the original body, never over its own
+output. Unsupplied values render as `⟨fecha⟩` rather than as nothing, because a
+message reading "nos vemos el  a las " gets sent and one reading "nos vemos el
+⟨fecha⟩" gets fixed.
+
+**THE RENDERED MESSAGE IS NEVER STORED.** `communications.template_body` holds
+the template *with its placeholders intact*. That answers "what did we send
+P-000042 on the 4th" without copying their name, date and location into a second
+table. The composer builds the rendered text in the browser, shows it, copies it
+to the clipboard — and the form that marks it as sent submits the template id and
+nothing else. A hidden field would be exactly how a rendered message ends up in
+the database.
+
+There is **no inbound path and no reply column**: this application never holds a
+WhatsApp conversation, which is what "no almacenar conversaciones" asks for.
+
+**Statuses are SENT and SKIPPED only.** No DELIVERED, no FAILED. Nothing here
+observes delivery, and a status the application cannot verify would be a claim
+rather than a record.
+
+**Recording a send needs `communications.read`, not `.manage`.** The facilitator
+who pasted the message is the person who should be able to say they did;
+authoring a template is the privileged act.
+
+**Message templates moved out of the content system.** `CONTENT_TYPES` keeps
+EMAIL_TEMPLATE and WHATSAPP_TEMPLATE so existing rows stay readable, but
+`AUTHORABLE_CONTENT_TYPES` no longer offers them and the server action refuses
+them. A message is plain text with placeholders organised by stage, not a page of
+typed blocks with a URL key — and two places to write the same message is exactly
+the duplication the brief asked to avoid.
+
+**Operational account.** Which WhatsApp account staff paste into is outside this
+application's reach; it is recorded here as a standing instruction on the
+communications screen and as an open item below, not as a setting this app can
+enforce.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -717,6 +780,10 @@ name is a re-identification surface for anyone walking past it.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Which WhatsApp account is the project's operational one, and who has access to
+  it? CLP Hub cannot enforce this (D-039).
+- Should message templates require an approval step before staff may use them,
+  as `communications.approve` anticipates? Nothing uses that permission yet.
 - Should a participant be able to report VR readiness themselves through a
   public form, as D-003 anticipated? Only staff can record it today (D-038).
 - What happens to an assignment when a participant withdraws with the headset

@@ -7,7 +7,7 @@ import { getStudyContext } from "@/auth/study-context";
 import {
   CONTENT_KEY_PATTERN,
   CONTENT_TITLE_MAX_LENGTH,
-  CONTENT_TYPES,
+  AUTHORABLE_CONTENT_TYPES,
   bodySchema,
 } from "@/domain/content";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
@@ -73,7 +73,9 @@ function revalidate(contentId?: string) {
 
 const createSchema = z
   .object({
-    type: z.enum(CONTENT_TYPES),
+    // Only the types a person may still create. The retired message-template
+    // types are refused here as well as hidden in the form (D-039).
+    type: z.enum(AUTHORABLE_CONTENT_TYPES),
     key: z
       .string()
       .trim()

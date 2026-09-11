@@ -829,5 +829,80 @@
       "descriptionTooLong": "El texto supera el máximo permitido.",
       "failed": "No se pudo completar la operación."
     }
+  },
+  "communications": {
+    "subtitle": "Plantillas de mensajes por etapa. Se copian y se envían a mano.",
+    "manualNote": "CLP Hub no envía mensajes. Aquí se prepara el texto, se copia y se pega en WhatsApp desde la cuenta operativa del proyecto. Después se marca como enviado. No se guardan conversaciones ni respuestas.",
+    "compose": "Preparar un mensaje",
+    "participant": "Participante",
+    "pickParticipant": "Elige un participante para preparar su mensaje.",
+    "template": "Plantilla",
+    "values": "Datos del mensaje",
+    "preview": "Vista previa",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "markSent": "Marcar como enviado",
+    "markSkipped": "Marcar como omitido",
+    "skipReason": "Motivo si se omite (opcional)",
+    "missing": "Faltan datos",
+    "redacted": "Se usa el código en lugar del nombre",
+    "templates": "Plantillas",
+    "noTemplates": "Todavía no hay plantillas configuradas.",
+    "newTemplate": "Nueva plantilla",
+    "saveTemplate": "Guardar plantilla",
+    "edit": "Editar",
+    "inactive": "Inactiva",
+    "activeLabel": "Activa",
+    "variables": "Variables disponibles",
+    "field": {
+      "key": "Clave",
+      "name": "Nombre",
+      "stage": "Etapa",
+      "channel": "Canal",
+      "body": "Mensaje",
+      "bodyHelp": "Usa solo las variables de la lista. Cualquier otra se rechaza al guardar. Máximo 2000 caracteres."
+    },
+    "stage": {
+      "APPLICATION_RECEIVED": "Confirmación de solicitud",
+      "SCREENING_SCHEDULING": "Programación de evaluación",
+      "INFO_REQUEST": "Solicitud de información pendiente",
+      "ELIGIBILITY_CONFIRMED": "Confirmación de elegibilidad",
+      "WAITLIST": "Lista de espera",
+      "INITIAL_SESSION_SCHEDULING": "Programación de sesión inicial",
+      "SESSION_REMINDER": "Recordatorio de sesión",
+      "VR_INSTRUCTIONS": "Instrucciones sobre las gafas",
+      "FOLLOW_UP": "Seguimiento",
+      "CLOSING": "Cierre o devolución"
+    },
+    "channel": {
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "Correo"
+    },
+    "status": {
+      "SENT": "Enviado",
+      "SKIPPED": "Omitido"
+    },
+    "variable": {
+      "codigo": "Código del participante",
+      "nombre": "Nombre",
+      "fecha": "Fecha",
+      "hora": "Hora",
+      "lugar": "Lugar",
+      "responsable": "Responsable",
+      "cohorte": "Cohorte",
+      "enlace": "Enlace",
+      "instrucciones": "Instrucciones"
+    },
+    "history": "Mensajes registrados",
+    "noHistory": "Todavía no se ha registrado ningún mensaje.",
+    "error": {
+      "invalid": "Los datos no son válidos.",
+      "notFound": "No se ha encontrado el registro.",
+      "duplicateKey": "Ya existe una plantilla con esa clave.",
+      "unknownVariable": "El mensaje usa una variable que no está permitida.",
+      "tooLong": "El mensaje supera el máximo permitido.",
+      "empty": "El mensaje no puede estar vacío.",
+      "failed": "No se pudo completar la operación."
+    }
   }
 }

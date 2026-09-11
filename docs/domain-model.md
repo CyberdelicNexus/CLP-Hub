@@ -155,11 +155,23 @@ Added enums: `device_status`, `vr_readiness`, `incident_kind`.
 The device lifecycle permits the reversals logistics actually has, unlike the
 strictly-forward cohort lifecycle (D-038).
 
+## Implemented (Phase 7 · migration 0012)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `communication_templates` | Reusable messages, by stage | Spanish mandatory; body limited to the closed variable allow-list; `version` bumps on edit |
+| `communications` | That a message was sent, or deliberately skipped | Holds the TEMPLATE body with placeholders intact — **never the rendered message**. No reply column, no delivery status (D-039) |
+
+Added enums: `communication_stage`, `communication_channel`,
+`communication_status` (SENT, SKIPPED only).
+
+`CONTENT_TYPES` keeps EMAIL_TEMPLATE and WHATSAPP_TEMPLATE for readability, but
+`AUTHORABLE_CONTENT_TYPES` no longer offers them: message templates live here now.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |
 
 Dropped from the original brief by decision D-003: `participant_progress` (no participant accounts, no per-participant page tracking).
@@ -185,7 +197,7 @@ Transitions of eligibility, consent, randomization and withdrawal are explicit s
 - Visit status: SCHEDULED, COMPLETED, NO_SHOW, CANCELLED (D-035)
 - Device status: AVAILABLE, RESERVED, PREPARING, SHIPPED, DELIVERED, ACTIVE, RETURN_REQUESTED, RETURN_IN_TRANSIT, RETURNED, CLEANING, MAINTENANCE (D-038)
 - VR readiness: UNKNOWN, READY, NOT_READY, NEEDS_SUPPORT — reported, never inferred (D-003, D-038). UNKNOWN is the default: "nobody has told us" is not "it does not work"
-- Communication status: QUEUED, SENT, DELIVERED, FAILED, CANCELLED, SKIPPED
+- Communication status: SENT, SKIPPED only (D-039). QUEUED/DELIVERED/FAILED/CANCELLED were dropped: nothing here queues or observes delivery, so they would be claims rather than records
 - Delivery mode: AUTOMATIC, APPROVAL_REQUIRED, MANUAL (WhatsApp is always MANUAL, D-004)
 
 ## Conventions

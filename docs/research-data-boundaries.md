@@ -79,6 +79,18 @@ The logistics screen shows participant codes rather than names, even for the
 LOGISTICS role which may read contact data: an address is needed on a shipping
 label, not on a dashboard.
 
+### How Phase 7 holds the line
+
+A message template may contain only the nine placeholders in
+`src/domain/communication.ts` — nothing clinical, no eligibility, no consent
+status, no allocation, no email or phone. A body using anything else is refused
+on save, and `nombre` needs `participants.contact.read` to render at all.
+
+The rendered message is never stored. `communications.template_body` keeps the
+template with placeholders intact, so "what did we send on the 4th" is answerable
+without a second copy of the person's name and location. There is no inbound path
+and no reply column: this application never holds a WhatsApp conversation.
+
 ## Explicit non-features
 
 - No randomization algorithm. The `RandomizationProvider` interface exists in
@@ -97,6 +109,9 @@ label, not on a dashboard.
   scheduled pull exists in this repository. `tests/intake.test.ts` asserts that
   `src/domain/intake.ts` contains none, the same absolute-guarantee argument
   D-018 makes about randomization.
+- **No message sending.** No API token, queue, webhook or scheduled send exists
+  (D-004, D-039). `tests/communication.test.ts` asserts the absence across the
+  domain module, the service and the server actions.
 - No flow-diagram percentages or retention rates. `getStudyFlowCounts` returns
   categories, never a single folded figure (the argument of D-024).
 

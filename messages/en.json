@@ -829,5 +829,80 @@
       "descriptionTooLong": "The text exceeds the maximum length.",
       "failed": "The operation could not be completed."
     }
+  },
+  "communications": {
+    "subtitle": "Message templates by stage. Copied and sent by hand.",
+    "manualNote": "CLP Hub does not send messages. The text is prepared here, copied, and pasted into WhatsApp from the project's operational account. Then it is marked as sent. No conversations or replies are stored.",
+    "compose": "Prepare a message",
+    "participant": "Participant",
+    "pickParticipant": "Choose a participant to prepare their message.",
+    "template": "Template",
+    "values": "Message details",
+    "preview": "Preview",
+    "copy": "Copy",
+    "copied": "Copied",
+    "markSent": "Mark as sent",
+    "markSkipped": "Mark as skipped",
+    "skipReason": "Reason if skipped (optional)",
+    "missing": "Missing details",
+    "redacted": "The code is used instead of the name",
+    "templates": "Templates",
+    "noTemplates": "No templates configured yet.",
+    "newTemplate": "New template",
+    "saveTemplate": "Save template",
+    "edit": "Edit",
+    "inactive": "Inactive",
+    "activeLabel": "Active",
+    "variables": "Available variables",
+    "field": {
+      "key": "Key",
+      "name": "Name",
+      "stage": "Stage",
+      "channel": "Channel",
+      "body": "Message",
+      "bodyHelp": "Use only the variables listed. Anything else is refused on save. 2000 characters maximum."
+    },
+    "stage": {
+      "APPLICATION_RECEIVED": "Application confirmation",
+      "SCREENING_SCHEDULING": "Screening scheduling",
+      "INFO_REQUEST": "Request for missing information",
+      "ELIGIBILITY_CONFIRMED": "Eligibility confirmation",
+      "WAITLIST": "Waiting list",
+      "INITIAL_SESSION_SCHEDULING": "Initial session scheduling",
+      "SESSION_REMINDER": "Session reminder",
+      "VR_INSTRUCTIONS": "Headset instructions",
+      "FOLLOW_UP": "Follow-up",
+      "CLOSING": "Closing or return"
+    },
+    "channel": {
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "Email"
+    },
+    "status": {
+      "SENT": "Sent",
+      "SKIPPED": "Skipped"
+    },
+    "variable": {
+      "codigo": "Participant code",
+      "nombre": "First name",
+      "fecha": "Date",
+      "hora": "Time",
+      "lugar": "Location",
+      "responsable": "Responsible",
+      "cohorte": "Cohort",
+      "enlace": "Link",
+      "instrucciones": "Instructions"
+    },
+    "history": "Recorded messages",
+    "noHistory": "No message has been recorded yet.",
+    "error": {
+      "invalid": "The data is not valid.",
+      "notFound": "Record not found.",
+      "duplicateKey": "A template with that key already exists.",
+      "unknownVariable": "The message uses a variable that is not allowed.",
+      "tooLong": "The message exceeds the maximum length.",
+      "empty": "The message cannot be empty.",
+      "failed": "The operation could not be completed."
+    }
   }
 }

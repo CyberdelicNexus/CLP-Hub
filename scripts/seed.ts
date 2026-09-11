@@ -475,6 +475,76 @@ const DEMO_DEVICES = [
   { code: "VR-DEMO-03", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0003" },
 ] as const;
 
+/**
+ * Synthetic WhatsApp templates, one per stage (Phase 7).
+ *
+ * This is where a real study's wording lives — rows, never code. Every
+ * placeholder is from the closed allow-list in src/domain/communication.ts, so
+ * none of them can interpolate a screening result or an email address.
+ */
+const DEMO_TEMPLATES = [
+  {
+    key: "confirmacion-solicitud",
+    stage: "APPLICATION_RECEIVED" as const,
+    nameEs: "Confirmación de solicitud (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nHemos recibido tu solicitud para el estudio. Tu referencia es {{codigo}}.\n\nTe escribiremos en los próximos días. Gracias por tu interés.\n\n(Mensaje sintético de demostración.)",
+  },
+  {
+    key: "programar-evaluacion",
+    stage: "SCREENING_SCHEDULING" as const,
+    nameEs: "Programación de evaluación (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nQueremos concertar tu entrevista de evaluación. Te proponemos el {{fecha}} a las {{hora}}.\n\nDinos si te viene bien. (Mensaje sintético.)",
+  },
+  {
+    key: "informacion-pendiente",
+    stage: "INFO_REQUEST" as const,
+    nameEs: "Solicitud de información pendiente (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nNos falta un dato para seguir adelante: {{instrucciones}}\n\nGracias. (Mensaje sintético.)",
+  },
+  {
+    key: "confirmacion-elegibilidad",
+    stage: "ELIGIBILITY_CONFIRMED" as const,
+    nameEs: "Confirmación de elegibilidad (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nYa tenemos el resultado de tu evaluación y puedes continuar en el estudio. Te contactará {{responsable}} para los siguientes pasos.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "lista-de-espera",
+    stage: "WAITLIST" as const,
+    nameEs: "Lista de espera (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nDe momento no tenemos plaza disponible, así que quedas en lista de espera. Te avisaremos en cuanto se abra un hueco.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "programar-sesion-inicial",
+    stage: "INITIAL_SESSION_SCHEDULING" as const,
+    nameEs: "Programación de sesión inicial (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nTu primera sesión sería el {{fecha}} a las {{hora}} en {{lugar}}. Te acompañará {{responsable}}.\n\nConfírmanos si te encaja. (Mensaje sintético.)",
+  },
+  {
+    key: "recordatorio-sesion",
+    stage: "SESSION_REMINDER" as const,
+    nameEs: "Recordatorio de sesión (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nTe recordamos la sesión del {{fecha}} a las {{hora}} en {{lugar}}.\n\nSi no puedes venir, avísanos. (Mensaje sintético.)",
+  },
+  {
+    key: "instrucciones-gafas",
+    stage: "VR_INSTRUCTIONS" as const,
+    nameEs: "Instrucciones sobre las gafas (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nAquí tienes la guía para preparar las gafas: {{enlace}}\n\nSi algo no funciona, escríbenos y lo vemos juntos. No es un fallo tuyo.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "seguimiento",
+    stage: "FOLLOW_UP" as const,
+    nameEs: "Seguimiento (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nQueríamos saber cómo te va tras la sesión. Cuando puedas, cuéntanos.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "cierre-devolucion",
+    stage: "CLOSING" as const,
+    nameEs: "Cierre y devolución (SINTÉTICA)",
+    bodyEs: "Hola {{nombre}}:\n\nHemos llegado al final de tu participación. Para devolver el equipo, {{instrucciones}}\n\nGracias por participar. (Mensaje sintético.)",
+  },
+] as const;
+
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
   {
@@ -1167,6 +1237,27 @@ async function main() {
         });
     }
     console.log(`devices ${DEMO_DEVICES.length} synthetic headsets`);
+
+    // WhatsApp templates (Phase 7). Wording is a row, never code. Nothing in
+    // this repository can send any of them.
+    for (const [i, tpl] of DEMO_TEMPLATES.entries()) {
+      await db
+        .insert(schema.communicationTemplates)
+        .values({
+          studyId: study.id,
+          key: tpl.key,
+          stage: tpl.stage,
+          channel: "WHATSAPP",
+          nameEs: tpl.nameEs,
+          bodyEs: tpl.bodyEs,
+          position: (i + 1) * 10,
+        })
+        .onConflictDoUpdate({
+          target: [schema.communicationTemplates.studyId, schema.communicationTemplates.key],
+          set: { nameEs: tpl.nameEs, bodyEs: tpl.bodyEs, active: true },
+        });
+    }
+    console.log(`msgs    ${DEMO_TEMPLATES.length} WhatsApp templates (manual only)`);
 
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {

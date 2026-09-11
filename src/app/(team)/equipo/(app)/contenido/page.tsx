@@ -6,7 +6,7 @@ import { getStudyContext } from "@/auth/study-context";
 import { NoAccess } from "@/components/team/no-access";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CONTENT_TYPES, isSessionContentType, publicPathFor } from "@/domain/content";
+import { AUTHORABLE_CONTENT_TYPES, isSessionContentType, publicPathFor } from "@/domain/content";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { listContents } from "@/services/content";
 import { listSessionTemplates } from "@/services/sessions";
@@ -167,7 +167,7 @@ export default async function ContentPage() {
           </CardHeader>
           <CardContent>
             <CreateContentForm
-              types={CONTENT_TYPES.map((type) => ({
+              types={AUTHORABLE_CONTENT_TYPES.map((type) => ({
                 value: type,
                 label: t(`content.type.${type}`),
                 needsSession: isSessionContentType(type),
