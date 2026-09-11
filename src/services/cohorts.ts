@@ -186,7 +186,15 @@ export async function getParticipantPlacement(
   studyId: string,
   participantId: string,
 ): Promise<{
-  randomization: { armId: string; armCode: string; armName: string; allocatedAt: Date; externalRecordId: string | null } | null;
+  randomization: {
+    armId: string;
+    armCode: string;
+    armName: string;
+    allocatedAt: Date;
+    externalRecordId: string | null;
+    /** Configured on the arm, never decided here (D-032). */
+    requiresPhysicalConsent: boolean;
+  } | null;
   cohort: { id: string; code: string; name: string } | null;
 }> {
   const db = getDb();
@@ -199,6 +207,7 @@ export async function getParticipantPlacement(
         armName: studyArms.nameEs,
         allocatedAt: randomizations.allocatedAt,
         externalRecordId: randomizations.externalRecordId,
+        requiresPhysicalConsent: studyArms.requiresPhysicalConsent,
       })
       .from(randomizations)
       .innerJoin(studyArms, eq(studyArms.id, randomizations.armId))

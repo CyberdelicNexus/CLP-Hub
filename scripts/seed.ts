@@ -150,8 +150,43 @@ const DEMO_QUESTIONS: ReadonlyArray<typeof schema.applicationQuestions.$inferIns
  * allocates anyone to an arm (D-018).
  */
 const DEMO_ARMS = [
-  { code: "DEMO-A", nameEs: "Rama A (SINTÉTICA)", nameEn: "Arm A (SYNTHETIC)", position: 10 },
-  { code: "DEMO-B", nameEs: "Rama B (SINTÉTICA)", nameEn: "Arm B (SYNTHETIC)", position: 20 },
+  {
+    code: "DEMO-A",
+    nameEs: "Rama A (SINTÉTICA)",
+    nameEn: "Arm A (SYNTHETIC)",
+    position: 10,
+    // Configuration, not a rule in code: this arm's participants also sign in
+    // person at the initial visit (D-032). The app never decides this.
+    requiresPhysicalConsent: true,
+  },
+  {
+    code: "DEMO-B",
+    nameEs: "Rama B (SINTÉTICA)",
+    nameEn: "Arm B (SYNTHETIC)",
+    position: 20,
+    requiresPhysicalConsent: false,
+  },
+] as const;
+
+/**
+ * Synthetic authorizations the in-person consent may grant (Phase 4b).
+ *
+ * Rows, not columns. "Entrevista" and "documental" are one trial's plan; as
+ * boolean columns they would be in every study's schema (non-negotiable 6).
+ */
+const DEMO_CONSENT_SCOPES = [
+  {
+    code: "ENTREVISTA",
+    labelEs: "Autoriza una entrevista grabada (SINTÉTICO)",
+    labelEn: "Authorizes a recorded interview (SYNTHETIC)",
+    position: 10,
+  },
+  {
+    code: "DOCUMENTAL",
+    labelEs: "Autoriza aparecer en el documental (SINTÉTICO)",
+    labelEn: "Authorizes appearing in the documentary (SYNTHETIC)",
+    position: 20,
+  },
 ] as const;
 
 const DEMO_COHORT = {
@@ -561,10 +596,28 @@ async function main() {
         .values({ ...arm, studyId: study.id })
         .onConflictDoUpdate({
           target: [schema.studyArms.studyId, schema.studyArms.code],
-          set: { nameEs: arm.nameEs, nameEn: arm.nameEn, position: arm.position, active: true },
+          set: {
+            nameEs: arm.nameEs,
+            nameEn: arm.nameEn,
+            position: arm.position,
+            active: true,
+            requiresPhysicalConsent: arm.requiresPhysicalConsent,
+          },
         });
     }
     console.log(`arms    ${DEMO_ARMS.length} synthetic arms`);
+
+    // Consent scopes (Phase 4b). Configuration, PHYSICAL only.
+    for (const sc of DEMO_CONSENT_SCOPES) {
+      await db
+        .insert(schema.consentScopes)
+        .values({ ...sc, studyId: study.id, consentType: "PHYSICAL" })
+        .onConflictDoUpdate({
+          target: [schema.consentScopes.studyId, schema.consentScopes.code],
+          set: { labelEs: sc.labelEs, labelEn: sc.labelEn, position: sc.position, active: true },
+        });
+    }
+    console.log(`scopes  ${DEMO_CONSENT_SCOPES.length} consent authorizations`);
 
     const [cohort] = await db
       .insert(schema.cohorts)
@@ -832,6 +885,7 @@ async function main() {
               studyId: study.id,
               participantId: participant.id,
               status: "CONSENTED",
+              consentType: "DIGITAL",
               versionLabel: "HIP DEMO v1.0",
               decidedAt: new Date(),
               externalRecordId: "DEMO-CONSENT-0004",

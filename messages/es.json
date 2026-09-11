@@ -334,13 +334,23 @@
       "reasonRequired": "Selecciona un motivo para este resultado.",
       "reasonNotAllowed": "Este resultado no admite un motivo.",
       "reasonNotApplicable": "Ese motivo no se puede usar con este resultado.",
-      "noteTooLong": "La nota es demasiado larga o contiene saltos de línea."
+      "noteTooLong": "La nota es demasiado larga o contiene saltos de línea.",
+      "scopesNotAllowed": "El consentimiento digital no admite autorizaciones adicionales.",
+      "unknownScope": "Alguna autorización no está configurada en este estudio."
     },
     "reason": "Motivo",
     "reasonRequiredHint": "Obligatorio para «No elegible» y «Requiere revisión».",
     "reasonNote": "Nota operativa (opcional)",
     "reasonNoteHelp": "Una línea de contexto operativo, máximo 280 caracteres. No incluyas información clínica ni de salud.",
-    "reasonNoneConfigured": "No hay motivos configurados para este resultado. Configúralos antes de registrarlo."
+    "reasonNoneConfigured": "No hay motivos configurados para este resultado. Configúralos antes de registrarlo.",
+    "consentTypeLabel": "Tipo de consentimiento",
+    "consentType": {
+      "DIGITAL": "Digital (plataforma de screening)",
+      "PHYSICAL": "Presencial (firmado en la visita inicial)"
+    },
+    "consentScopes": "Autorizaciones adicionales",
+    "consentScopesHelp": "Marca solo lo que la persona ha autorizado expresamente al firmar. Nada viene marcado por defecto.",
+    "consentMissing": "Falta registrar el consentimiento: {types}."
   },
   "screening": {
     "subtitle": "Evaluaciones programadas pendientes de realizar.",

@@ -32,6 +32,16 @@ export const studyArms = pgTable(
     nameEn: text("name_en"),
     position: integer("position").notNull().default(0),
     active: boolean("active").notNull().default(true),
+    /**
+     * Whether this arm's participants also sign a consent in person at the
+     * initial visit (D-032).
+     *
+     * CONFIGURATION, NOT A RULE IN CODE. The application never decides that a
+     * control arm needs less than an experimental one — researchers set this per
+     * arm, and the app only subtracts what is recorded from what is configured
+     * so a gap is visible. It never blocks anything on it (non-negotiable 3).
+     */
+    requiresPhysicalConsent: boolean("requires_physical_consent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

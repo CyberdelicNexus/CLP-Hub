@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertPermission, AuthorizationError } from "@/auth/authorize";
 import { getStudyContext } from "@/auth/study-context";
-import { CONSENT_VERSION_MAX_LENGTH } from "@/domain/consent";
+import {
+  CONSENT_TYPES,
+  CONSENT_VERSION_MAX_LENGTH,
+  SCOPE_CODE_PATTERN,
+} from "@/domain/consent";
 import { isValidReasonNote } from "@/domain/eligibility-reason";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
@@ -15,6 +19,7 @@ import {
   InvalidTransitionError,
   NotFoundError,
   ReasonError,
+  ScopeError,
   recordConsentDecision,
   scheduleScreening,
   setEnrollmentStatus,
@@ -45,6 +50,8 @@ export type OpState = {
     | "reasonNotAllowed"
     | "reasonNotApplicable"
     | "noteTooLong"
+    | "scopesNotAllowed"
+    | "unknownScope"
     | null;
   ok?: boolean;
 };
@@ -80,6 +87,7 @@ function fail(err: unknown, event: string): OpState {
   // Surfaced verbatim so the form can say which of the four reason problems it
   // was; none of them carry participant data.
   if (err instanceof ReasonError) return { error: err.problem };
+  if (err instanceof ScopeError) return { error: err.problem };
   logger.error(
     { event: `${event}.failed`, err: err instanceof Error ? err.message : String(err) },
     "action failed",
@@ -224,6 +232,12 @@ export async function closeScreeningAction(_prev: OpState, formData: FormData): 
 const startConsentSchema = z.object({
   participantId: uuid,
   versionLabel: z.string().trim().min(1).max(CONSENT_VERSION_MAX_LENGTH),
+  consentType: z.enum(CONSENT_TYPES).default("DIGITAL"),
+  /**
+   * Configured scope codes. Shape-checked here; membership is verified by the
+   * service inside the transaction, against the scopes active at that moment.
+   */
+  grantedScopes: z.array(z.string().regex(SCOPE_CODE_PATTERN)).max(20).default([]),
 });
 
 export async function startConsentAction(_prev: OpState, formData: FormData): Promise<OpState> {
@@ -233,6 +247,8 @@ export async function startConsentAction(_prev: OpState, formData: FormData): Pr
   const parsed = startConsentSchema.safeParse({
     participantId: formData.get("participantId"),
     versionLabel: formData.get("versionLabel"),
+    consentType: formData.get("consentType") ?? undefined,
+    grantedScopes: formData.getAll("grantedScopes"),
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -243,6 +259,8 @@ export async function startConsentAction(_prev: OpState, formData: FormData): Pr
       participantId: parsed.data.participantId,
       actorId: ctx.session.userId,
       versionLabel: parsed.data.versionLabel,
+      consentType: parsed.data.consentType,
+      grantedScopes: parsed.data.grantedScopes,
     });
   } catch (err) {
     return fail(err, "consent.start");

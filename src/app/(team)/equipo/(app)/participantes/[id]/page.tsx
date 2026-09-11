@@ -13,10 +13,20 @@ import {
 } from "@/components/team/participant-status-badge";
 import { RecruitmentStatusBadge } from "@/components/team/application-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isActiveConsent, type ConsentStatus } from "@/domain/consent";
+import {
+  CONSENT_TYPES,
+  isActiveConsent,
+  missingConsentTypes,
+  type ConsentStatus,
+} from "@/domain/consent";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { ENROLLMENT_TRANSITIONS } from "@/domain/participant-state";
-import { getParticipantDetail, listEligibilityReasons } from "@/services/participant-ops";
+import {
+  describeScopes,
+  getParticipantDetail,
+  listConsentScopes,
+  listEligibilityReasons,
+} from "@/services/participant-ops";
 import {
   getParticipantPlacement,
   listAssignableCohorts,
@@ -78,6 +88,9 @@ export default async function ParticipantDetailPage({
   // record one: the list is configuration, and a viewer needs it to read the
   // reason on a determination that was already made.
   const reasons = includeScreening ? await listEligibilityReasons(ctx.study.id) : [];
+  // Loaded for any consent viewer: a recorded authorization must still read as
+  // words once the scope that named it has been retired.
+  const scopes = includeConsent ? await listConsentScopes(ctx.study.id) : [];
   const canManageConsent = ctx.permissions.has("consent.manage");
   const canManageParticipant = ctx.permissions.has("participants.manage");
   const canReadRandomization = ctx.permissions.has("randomization.read");
@@ -95,7 +108,27 @@ export default async function ParticipantDetailPage({
 
   const { participant, contact, screenings, consents } = detail;
   const openScreening = screenings.find((s) => s.status === "SCHEDULED");
-  const activeConsent = consents.find((c) => isActiveConsent(c.status as ConsentStatus));
+  /**
+   * One active consent PER TYPE now (D-032): digital and physical are two
+   * decisions made at two moments, and both can be in force at once.
+   */
+  const activeConsents = CONSENT_TYPES.map((type) => ({
+    type,
+    consent: consents.find(
+      (c) => c.consentType === type && isActiveConsent(c.status as ConsentStatus),
+    ),
+  })).filter((e) => e.consent);
+
+  // What the study configured as required, minus what is recorded. Advisory
+  // only: nothing here refuses an action because a consent is missing.
+  const missingConsents = includeConsent
+    ? missingConsentTypes({
+        requiresPhysical: placement?.randomization?.requiresPhysicalConsent ?? null,
+        activeTypes: activeConsents
+          .filter((e) => e.consent?.status === "CONSENTED")
+          .map((e) => e.type),
+      })
+    : [];
 
   const errorLabels = {
     forbidden: t("common.noAccess"),
@@ -278,6 +311,19 @@ export default async function ParticipantDetailPage({
                 <>
                   <p className="text-xs text-muted-foreground">{t("participants.consentBoundary")}</p>
 
+                  {missingConsents.length > 0 ? (
+                    <p
+                      role="status"
+                      className="rounded-xl bg-surface-peach px-4 py-3 text-xs leading-relaxed text-surface-peach-ink"
+                    >
+                      {t("participants.consentMissing", {
+                        types: missingConsents
+                          .map((ty) => t(`participants.consentType.${ty}`))
+                          .join(", "),
+                      })}
+                    </p>
+                  ) : null}
+
                   {consents.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t("participants.noConsents")}</p>
                   ) : (
@@ -288,12 +334,20 @@ export default async function ParticipantDetailPage({
                             status={c.status}
                             label={t(`participants.consentStatus.${c.status}`)}
                           />
+                          <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
+                            {t(`participants.consentType.${c.consentType}`)}
+                          </span>
                           <span className="text-sm font-medium">{c.versionLabel}</span>
                           <span data-numeric className="text-sm text-muted-foreground">
                             {c.decidedAt
                               ? formatDate(c.decidedAt, ctx.study.timezone)
                               : formatDate(c.createdAt, ctx.study.timezone)}
                           </span>
+                          {c.grantedScopes.length > 0 ? (
+                            <span className="text-xs text-muted-foreground">
+                              {describeScopes(scopes, c.grantedScopes).join(" · ")}
+                            </span>
+                          ) : null}
                           {c.externalRecordId ? (
                             <span className="font-mono text-xs text-muted-foreground">
                               {c.externalRecordId}
@@ -306,36 +360,67 @@ export default async function ParticipantDetailPage({
 
                   {canManageConsent ? (
                     <div className="space-y-4 rounded-xl bg-muted/50 p-4">
-                      {activeConsent && activeConsent.status === "PENDING" ? (
-                        <ConsentDecisionForm
-                          participantId={participant.id}
-                          consentId={activeConsent.id}
-                          options={["CONSENTED", "DECLINED"].map((s) => ({
-                            value: s,
-                            label: t(`participants.consentAction.${s}`),
-                          }))}
-                          labels={{ ...formBase, reference: t("participants.externalRef") }}
-                        />
-                      ) : null}
-                      {activeConsent && activeConsent.status === "CONSENTED" ? (
-                        <ConsentDecisionForm
-                          participantId={participant.id}
-                          consentId={activeConsent.id}
-                          options={[
-                            { value: "WITHDRAWN", label: t("participants.consentAction.WITHDRAWN") },
-                          ]}
-                          labels={{ ...formBase, reference: t("participants.externalRef") }}
-                        />
-                      ) : null}
+                      {/*
+                        One decision form per consent in force, labelled by type,
+                        so recording the physical signature cannot be mistaken for
+                        acting on the digital one.
+                      */}
+                      {activeConsents.map(({ type, consent }) =>
+                        consent && consent.status === "PENDING" ? (
+                          <div key={consent.id} className="space-y-2">
+                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                              {t(`participants.consentType.${type}`)}
+                            </p>
+                            <ConsentDecisionForm
+                              participantId={participant.id}
+                              consentId={consent.id}
+                              options={["CONSENTED", "DECLINED"].map((st) => ({
+                                value: st,
+                                label: t(`participants.consentAction.${st}`),
+                              }))}
+                              labels={{ ...formBase, reference: t("participants.externalRef") }}
+                            />
+                          </div>
+                        ) : consent && consent.status === "CONSENTED" ? (
+                          <div key={consent.id} className="space-y-2">
+                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                              {t(`participants.consentType.${type}`)}
+                            </p>
+                            <ConsentDecisionForm
+                              participantId={participant.id}
+                              consentId={consent.id}
+                              options={[
+                                {
+                                  value: "WITHDRAWN",
+                                  label: t("participants.consentAction.WITHDRAWN"),
+                                },
+                              ]}
+                              labels={{ ...formBase, reference: t("participants.externalRef") }}
+                            />
+                          </div>
+                        ) : null,
+                      )}
+
                       <StartConsentForm
                         participantId={participant.id}
+                        types={CONSENT_TYPES.map((ty) => ({
+                          value: ty,
+                          label: t(`participants.consentType.${ty}`),
+                        }))}
+                        scopes={scopes
+                          .filter((sc) => sc.active)
+                          .map((sc) => ({ code: sc.code, label: sc.labelEs }))}
                         labels={{
                           ...formBase,
-                          submit: activeConsent
-                            ? t("participants.startNewConsent")
-                            : t("participants.startConsent"),
+                          submit:
+                            activeConsents.length > 0
+                              ? t("participants.startNewConsent")
+                              : t("participants.startConsent"),
                           version: t("participants.consentVersion"),
                           versionHelp: t("participants.consentVersionHelp"),
+                          type: t("participants.consentTypeLabel"),
+                          scopes: t("participants.consentScopes"),
+                          scopesHelp: t("participants.consentScopesHelp"),
                         }}
                       />
                     </div>

@@ -248,17 +248,66 @@ export function CloseScreeningForm({
 }
 
 /** Open a consent process against a named form version. */
+/** A configured authorization the physical consent may grant. */
+export interface ScopeOption {
+  code: string;
+  label: string;
+}
+
+/**
+ * Open a consent process.
+ *
+ * The type is chosen explicitly because the two are genuinely different events
+ * (D-032): DIGITAL was accepted remotely before any data existed, PHYSICAL is
+ * signed at the initial visit. Starting one never retires the other.
+ *
+ * The authorization checkboxes appear only for PHYSICAL, and only when the study
+ * has configured any. They are unchecked by default and stay that way — a
+ * pre-ticked consent box is not consent, and the labels come from configuration
+ * so no trial's media plan is written into this component.
+ */
 export function StartConsentForm({
   participantId,
+  types,
+  scopes,
   labels,
 }: {
   participantId: string;
-  labels: FormLabels & { version: string; versionHelp: string };
+  types: { value: string; label: string }[];
+  scopes: ScopeOption[];
+  labels: FormLabels & {
+    version: string;
+    versionHelp: string;
+    type: string;
+    scopes: string;
+    scopesHelp: string;
+  };
 }) {
   const [state, action, pending] = useActionState(startConsentAction, initial);
+  const [type, setType] = useState(types[0]?.value ?? "DIGITAL");
+  const showScopes = type === "PHYSICAL" && scopes.length > 0;
+
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="participantId" value={participantId} />
+
+      <div className="space-y-1.5">
+        <Label htmlFor="consentType">{labels.type}</Label>
+        <select
+          id="consentType"
+          name="consentType"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {types.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="versionLabel">{labels.version}</Label>
         <Input id="versionLabel" name="versionLabel" maxLength={60} required aria-describedby="versionHelp" />
@@ -266,6 +315,26 @@ export function StartConsentForm({
           {labels.versionHelp}
         </p>
       </div>
+
+      {showScopes ? (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">{labels.scopes}</legend>
+          <p className="text-xs text-muted-foreground">{labels.scopesHelp}</p>
+          {scopes.map((sc) => (
+            <label key={sc.code} className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="grantedScopes"
+                value={sc.code}
+                // Never defaultChecked. A pre-ticked box is not consent.
+                className="mt-0.5 size-4 rounded border-input accent-primary"
+              />
+              <span className="leading-relaxed">{sc.label}</span>
+            </label>
+          ))}
+        </fieldset>
+      ) : null}
+
       <ErrorLine state={state} errors={labels.errors} />
       <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
         {pending ? labels.submitting : labels.submit}

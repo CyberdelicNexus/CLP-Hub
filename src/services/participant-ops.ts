@@ -3,6 +3,7 @@ import { and, count, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
+  consentScopes,
   consents,
   eligibilityReasons,
   participantContacts,
@@ -12,9 +13,15 @@ import {
   type Screening,
 } from "@/db/schema";
 import {
+  canCarryScopes,
   canTransitionConsent,
   enrollmentStatusForConsent,
+  scopesFor,
+  validateScopes,
+  type ConsentScope,
   type ConsentStatus,
+  type ConsentType,
+  type ScopeProblem,
 } from "@/domain/consent";
 import {
   validateReason,
@@ -63,6 +70,16 @@ export class NotFoundError extends Error {
  * does not apply to it. Separate from InvalidTransitionError because the fix is
  * different: the staff member has to choose a reason, not a different outcome.
  */
+/** A consent was asked to grant an authorization it cannot carry. */
+export class ScopeError extends Error {
+  readonly problem: ScopeProblem;
+  constructor(problem: ScopeProblem) {
+    super(problem);
+    this.name = "ScopeError";
+    this.problem = problem;
+  }
+}
+
 export class ReasonError extends Error {
   readonly problem: ReasonProblem;
   constructor(problem: ReasonProblem) {
@@ -324,6 +341,66 @@ async function loadReason(
   return (row as EligibilityReason) ?? null;
 }
 
+/** The study's configured consent scopes, active ones plus retired ones. */
+export async function listConsentScopes(studyId: string): Promise<ConsentScope[]> {
+  const rows = await getDb()
+    .select({
+      id: consentScopes.id,
+      code: consentScopes.code,
+      labelEs: consentScopes.labelEs,
+      labelEn: consentScopes.labelEn,
+      consentType: consentScopes.consentType,
+      position: consentScopes.position,
+      active: consentScopes.active,
+    })
+    .from(consentScopes)
+    .where(eq(consentScopes.studyId, studyId))
+    .orderBy(consentScopes.position, consentScopes.code);
+
+  return rows as ConsentScope[];
+}
+
+async function loadConsentScopes(
+  executor: DbExecutor,
+  studyId: string,
+): Promise<ConsentScope[]> {
+  const rows = await executor
+    .select({
+      id: consentScopes.id,
+      code: consentScopes.code,
+      labelEs: consentScopes.labelEs,
+      labelEn: consentScopes.labelEn,
+      consentType: consentScopes.consentType,
+      position: consentScopes.position,
+      active: consentScopes.active,
+    })
+    .from(consentScopes)
+    .where(and(eq(consentScopes.studyId, studyId), eq(consentScopes.active, true)));
+
+  return rows as ConsentScope[];
+}
+
+/** Wording for scope codes recorded on a consent, in configured order. */
+export function describeScopes(
+  scopes: readonly ConsentScope[],
+  codes: readonly string[],
+): string[] {
+  const byCode = new Map(scopes.map((s) => [s.code, s]));
+  return codes
+    .map((c) => byCode.get(c))
+    .filter((s): s is ConsentScope => Boolean(s))
+    .sort((a, b) => a.position - b.position)
+    .map((s) => s.labelEs);
+}
+
+/** Scopes offered when starting a consent of a given type. */
+export function offeredScopes(
+  scopes: readonly ConsentScope[],
+  type: ConsentType,
+): ConsentScope[] {
+  return scopesFor(scopes, type);
+}
+
 // ---------------------------------------------------------------------------
 // Screening writes
 // ---------------------------------------------------------------------------
@@ -557,9 +634,15 @@ export async function startConsent(params: {
   participantId: string;
   actorId: string;
   versionLabel: string;
+  /** Defaults to DIGITAL, the consent everyone gives before any data exists. */
+  consentType?: ConsentType;
+  /** Configured scope codes; only a PHYSICAL consent may carry any. */
+  grantedScopes?: readonly string[];
 }): Promise<string> {
   const { studyId, participantId, actorId } = params;
   const versionLabel = params.versionLabel.trim();
+  const consentType: ConsentType = params.consentType ?? "DIGITAL";
+  const grantedScopes = [...new Set(params.grantedScopes ?? [])];
 
   return getDb().transaction(async (tx) => {
     const [participant] = await tx
@@ -569,12 +652,34 @@ export async function startConsent(params: {
       .limit(1);
     if (!participant) throw new NotFoundError("participant", participantId);
 
+    // Scope membership is verified here rather than by a constraint: a CHECK
+    // may not contain a subquery, so the database can only guarantee the SHAPE
+    // of the array. Reading the configuration inside the transaction also means
+    // a scope deactivated a moment ago cannot still be granted.
+    if (grantedScopes.length > 0) {
+      const configured = await loadConsentScopes(tx, studyId);
+      const problem = validateScopes({
+        type: consentType,
+        granted: grantedScopes,
+        configured,
+      });
+      if (problem) throw new ScopeError(problem);
+    } else if (!canCarryScopes(consentType) && grantedScopes.length > 0) {
+      throw new ScopeError("scopesNotAllowed");
+    }
+
+    // Superseding is scoped TO THE SAME TYPE (D-032). Starting a physical
+    // consent must not quietly retire the digital one: they are two different
+    // decisions the person made at two different moments, and both stay in
+    // force. The partial unique index is per (participant, type) for the same
+    // reason.
     const [existing] = await tx
       .select({ id: consents.id, status: consents.status })
       .from(consents)
       .where(
         and(
           eq(consents.participantId, participantId),
+          eq(consents.consentType, consentType),
           inArray(consents.status, ["PENDING", "CONSENTED"]),
         ),
       )
@@ -582,7 +687,15 @@ export async function startConsent(params: {
 
     const [created] = await tx
       .insert(consents)
-      .values({ studyId, participantId, status: "PENDING", versionLabel, recordedBy: actorId })
+      .values({
+        studyId,
+        participantId,
+        status: "PENDING",
+        consentType,
+        versionLabel,
+        grantedScopes,
+        recordedBy: actorId,
+      })
       .returning({ id: consents.id });
 
     if (existing) {
@@ -608,7 +721,15 @@ export async function startConsent(params: {
       action: "consent.started",
       entityType: "consent",
       entityId: created.id,
-      after: { status: "PENDING", versionLabel, participantCode: participant.code },
+      after: {
+        status: "PENDING",
+        consentType,
+        versionLabel,
+        participantCode: participant.code,
+        // Scope CODES are configuration, so snapshotting them is safe and makes
+        // "what did this person agree to, and when" answerable from the log.
+        grantedScopes,
+      },
     });
 
     if (participant.enrollmentStatus === null) {

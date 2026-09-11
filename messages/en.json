@@ -334,13 +334,23 @@
       "reasonRequired": "Choose a reason for this outcome.",
       "reasonNotAllowed": "This outcome does not take a reason.",
       "reasonNotApplicable": "That reason cannot be used with this outcome.",
-      "noteTooLong": "The note is too long or contains line breaks."
+      "noteTooLong": "The note is too long or contains line breaks.",
+      "scopesNotAllowed": "A digital consent cannot carry additional authorizations.",
+      "unknownScope": "One of the authorizations is not configured for this study."
     },
     "reason": "Reason",
     "reasonRequiredHint": "Required for “Not eligible” and “Needs review”.",
     "reasonNote": "Operational note (optional)",
     "reasonNoteHelp": "One line of operational context, 280 characters maximum. Do not include clinical or health information.",
-    "reasonNoneConfigured": "No reasons are configured for this outcome. Configure them before recording it."
+    "reasonNoneConfigured": "No reasons are configured for this outcome. Configure them before recording it.",
+    "consentTypeLabel": "Consent type",
+    "consentType": {
+      "DIGITAL": "Digital (screening platform)",
+      "PHYSICAL": "In person (signed at the initial visit)"
+    },
+    "consentScopes": "Additional authorizations",
+    "consentScopesHelp": "Tick only what the person expressly authorized when signing. Nothing is ticked by default.",
+    "consentMissing": "Consent still to be recorded: {types}."
   },
   "screening": {
     "subtitle": "Scheduled screenings still to happen.",

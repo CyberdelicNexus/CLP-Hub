@@ -430,6 +430,52 @@ live mode to switch to; adding one is a migration plus a recorded decision.
 change `FIELD_CLASSES_NEVER_TRANSFERABLE`, the check constraint and this entry
 together. None of that is done here.
 
+## D-032 · 2026-09-11 · Consent is two decisions, and the physical one can carry authorizations
+
+Founder decision, from the 2026-09-11 meeting.
+
+The study has two consent moments, not two wordings of one:
+
+- **DIGITAL** — accepted remotely in the screening platform, before any datum
+  about the person is collected, their name included (D-031).
+- **PHYSICAL** — signed in person at the initial visit, and the only one that can
+  carry extra authorizations such as an interview or appearing in a documentary.
+
+The enum values are deliberately generic. The platform's name is configuration,
+so screening somewhere other than Qualtrics is not a migration.
+
+**What had to be relaxed, stated plainly.** Migration 0003 enforced *one* active
+consent per participant via a partial unique index, which makes holding both
+impossible. Migration 0008 replaces it with one scoped per `(participant, type)`.
+The old invariant no longer holds — that is the point of the change, not a side
+effect. It is reversible: drop the new index, recreate the old one, no row is
+deleted. Existing rows are backfilled to DIGITAL; under non-negotiable 9 all of
+them are synthetic, so no real decision is relabelled. **If that ever stops being
+true, the backfill must be revisited before this migration runs** — retyping a
+real consent falsifies a record of what a person agreed to.
+
+`startConsent` supersedes only within the same type. Starting the physical
+consent must not quietly retire the digital one.
+
+**Authorizations are rows, not columns.** `consent_scopes` is configuration per
+study; a consent stores the granted codes in `granted_scopes`. Boolean columns
+named `allows_interview` / `allows_documentary` were considered and rejected:
+that is one trial's media plan, and as columns it would sit in every study's
+schema (non-negotiable 6). A check constraint keeps the array empty for a DIGITAL
+consent, and the checkboxes are never pre-ticked — a pre-ticked box is not
+consent. `tests/consent-types.test.ts` asserts no identifier in the schema or the
+domain names a specific authorization.
+
+**Which arms sign in person is configuration, not a rule in code.**
+`study_arms.requires_physical_consent`. The application never decides that a
+control arm needs less than an experimental one; `missingConsentTypes` subtracts
+what is recorded from what researchers configured, and an unallocated participant
+is reported as missing nothing, because nobody yet knows which arm they are in.
+
+**It is advisory only.** Nothing refuses an action because a consent is missing —
+the same reasoning as D-021. A visible gap gets fixed; a blocked screen gets
+worked around.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -469,6 +515,10 @@ together. None of that is done here.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Who may add or retire a consent scope, and what happens to a consent that
+  already granted a scope later withdrawn from the study? (D-032)
+- Should withdrawing the physical consent also withdraw the authorizations it
+  granted, or are those separately revocable? Today they travel with the row.
 - Confirm that contact details for a Qualtrics-route participant are only ever
   entered when the initial visit is being arranged (D-031). Nothing enforces the
   timing today.

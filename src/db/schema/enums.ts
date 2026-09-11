@@ -8,7 +8,7 @@ import {
   QUESTION_TYPES,
   RECRUITMENT_STATUSES,
 } from "@/domain/recruitment";
-import { CONSENT_STATUSES } from "@/domain/consent";
+import { CONSENT_STATUSES, CONSENT_TYPES } from "@/domain/consent";
 import { ELIGIBILITY_STATUSES, ENROLLMENT_STATUSES } from "@/domain/participant-state";
 import { SCREENING_STATUSES } from "@/domain/screening";
 import { COHORT_STATUSES } from "@/domain/cohort";
@@ -65,3 +65,6 @@ export const eligibilityReasonCategoryEnum = pgEnum(
 export const qualtricsFieldClassEnum = pgEnum("qualtrics_field_class", QUALTRICS_FIELD_CLASSES);
 export const intakeTargetEnum = pgEnum("intake_target", INTAKE_TARGETS);
 export const integrationModeEnum = pgEnum("integration_mode", INTEGRATION_MODES);
+
+// Consent types and scopes (Phase 4b, migration 0008)
+export const consentTypeEnum = pgEnum("consent_type", CONSENT_TYPES);

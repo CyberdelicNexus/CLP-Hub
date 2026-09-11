@@ -1,5 +1,10 @@
 import { index, pgTable, text, timestamp, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
-import { consentStatusEnum, eligibilityStatusEnum, screeningStatusEnum } from "./enums";
+import {
+  consentStatusEnum,
+  consentTypeEnum,
+  eligibilityStatusEnum,
+  screeningStatusEnum,
+} from "./enums";
 import { eligibilityReasons } from "./intake";
 import { participants } from "./participants";
 import { studies } from "./studies";
@@ -77,6 +82,23 @@ export const consents = pgTable(
       .notNull()
       .references(() => participants.id),
     status: consentStatusEnum("status").notNull().default("PENDING"),
+    /**
+     * HOW this consent was given (D-032). DIGITAL is accepted remotely before
+     * any data collection; PHYSICAL is signed at the initial visit. A
+     * participant may hold one active consent OF EACH TYPE at the same time,
+     * which is what the partial unique index in SQL now allows.
+     */
+    consentType: consentTypeEnum("consent_type").notNull().default("DIGITAL"),
+    /**
+     * Extra authorizations this consent grants, as configured scope codes from
+     * `consent_scopes` (e.g. an interview, or appearing in a documentary).
+     *
+     * Codes rather than columns so one trial's media plan does not become every
+     * study's schema (non-negotiable 6). A check constraint keeps the array
+     * empty for a DIGITAL consent: a remote tick-box accepted before the person
+     * has met anyone is not where you agree to being filmed.
+     */
+    grantedScopes: text("granted_scopes").array().notNull().default([]),
     /** Which form version, e.g. "PIS v2.1". A label, not a document. */
     versionLabel: text("version_label").notNull(),
     decidedAt: timestamp("decided_at", { withTimezone: true }),

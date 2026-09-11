@@ -95,11 +95,25 @@ requires a reason; ELIGIBLE accepts none; a note exists only beside a reason, is
 one line and at most 280 characters; and a Qualtrics mapping cannot name an
 identifiable or research field at all.
 
+## Implemented (Phase 4b · migration 0008)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `consent_scopes` | Authorizations a physical consent may grant | Configuration rows, PHYSICAL only. Codes, never boolean columns (D-032) |
+
+Also adds `consents.consent_type` (DIGITAL / PHYSICAL) and
+`consents.granted_scopes`, plus `study_arms.requires_physical_consent`.
+
+**Replaces** the index `consents_one_active_per_participant` with
+`consents_one_active_per_participant_type`: a participant may now hold one active
+consent *per type*. Reversible; see the migration header for the impact.
+
+Added enum: `consent_type`.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 4b Consent types | `consents.consent_type` and per-type scopes |
 | 4c Cohort rules and responsibles | cohort arm and size bounds, participant responsibles |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
@@ -122,7 +136,8 @@ Transitions of eligibility, consent, randomization and withdrawal are explicit s
 - Cohort status: PLANNING, RECRUITING, PREPARATION, ACTIVE, INTEGRATION, FOLLOW_UP, COMPLETED
 - Session modality: ZOOM, VR, IN_PERSON, ASYNCHRONOUS, OTHER
 - Attendance: EXPECTED, ATTENDED, LATE, ABSENT, EXCUSED, TECHNICAL_FAILURE, WITHDRAWN (TECHNICAL_FAILURE ≠ ABSENT)
-- Consent: PENDING, CONSENTED, DECLINED, WITHDRAWN, SUPERSEDED
+- Consent status: PENDING, CONSENTED, DECLINED, WITHDRAWN, SUPERSEDED
+- Consent type: DIGITAL, PHYSICAL (D-032)
 - Device: AVAILABLE, RESERVED, PREPARING, SHIPPED, DELIVERED, ACTIVE, RETURN_REQUESTED, RETURN_IN_TRANSIT, RETURNED, CLEANING, MAINTENANCE
 - VR readiness: READY, NOT_READY, NEEDS_SUPPORT (explicit, reported by staff on the participant's behalf or via a public form — never inferred)
 - Communication status: QUEUED, SENT, DELIVERED, FAILED, CANCELLED, SKIPPED

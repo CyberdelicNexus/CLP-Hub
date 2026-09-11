@@ -1,5 +1,6 @@
 import { boolean, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import {
+  consentTypeEnum,
   eligibilityReasonCategoryEnum,
   eligibilityStatusEnum,
   intakeTargetEnum,
@@ -93,3 +94,44 @@ export const qualtricsFieldMappings = pgTable(
 
 export type QualtricsFieldMappingRow = typeof qualtricsFieldMappings.$inferSelect;
 export type NewQualtricsFieldMapping = typeof qualtricsFieldMappings.$inferInsert;
+
+/**
+ * Authorizations a physical consent may grant (Phase 4b, D-032).
+ *
+ * Configuration, for the same reason `eligibility_reasons` is: "entrevista" and
+ * "documental" are one trial's plan, and writing them as boolean columns would
+ * put that plan in every study's schema (non-negotiable 6). A consent row
+ * references these by `code` in its `granted_scopes` array.
+ *
+ * Scopes are deactivated, never deleted: a consent already granted against one
+ * must stay readable, and a record of what someone agreed to is not editable
+ * history.
+ */
+export const consentScopes = pgTable(
+  "consent_scopes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id),
+    code: text("code").notNull(),
+    labelEs: text("label_es").notNull(),
+    labelEn: text("label_en"),
+    /**
+     * Which consent may grant it. Constrained to PHYSICAL in SQL: only an
+     * in-person signature carries these.
+     */
+    consentType: consentTypeEnum("consent_type").notNull().default("PHYSICAL"),
+    position: integer("position").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("consent_scopes_code_unique").on(t.studyId, t.code),
+    index("consent_scopes_study_idx").on(t.studyId, t.position),
+  ],
+);
+
+export type ConsentScopeRow = typeof consentScopes.$inferSelect;
+export type NewConsentScope = typeof consentScopes.$inferInsert;
