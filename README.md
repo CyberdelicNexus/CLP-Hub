@@ -2,15 +2,19 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phase 5 — study content.** Public application form, staff triage, screening, consent, cohorts, recorded allocations, sessions, attendance and versioned public study pages exist. VR logistics, messaging and automation are still to come. Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+**Status: Phases 0–7 — operations, logistics and messaging.** Staff triage, screening with recorded exclusion reasons, digital and in-person consent, cohorts with configured size bounds, recorded allocations, sessions, attendance, versioned public study pages, per-participant responsibles and initial visits, VR device logistics, and WhatsApp message templates all exist. Automation (Phase 8) is still to come.
+
+Initial screening happens in Qualtrics: `/participar` collects nothing and hands people off, and identifiable screening data stays there (D-031). Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 
 | Surface | Path | Who | Phase |
 |---|---|---|---|
-| Public recruitment site | `/` | Anyone | 1 |
+| Public recruitment site (hand-off to Qualtrics, collects nothing) | `/` | Anyone | 1, 4a |
 | Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
+| VR logistics | `/equipo/logistica-vr` | `logistics.read` | 6 ✓ |
+| Message templates | `/equipo/comunicaciones` | `communications.read` | 7 ✓ |
 
 Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles.
 
