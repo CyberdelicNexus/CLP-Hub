@@ -476,11 +476,14 @@ const DEMO_DEVICES = [
 ] as const;
 
 /**
- * Synthetic WhatsApp templates, one per stage (Phase 7).
+ * Synthetic WhatsApp templates for ONE PERSON (Phase 7).
  *
  * This is where a real study's wording lives — rows, never code. Every
  * placeholder is from the closed allow-list in src/domain/communication.ts, so
  * none of them can interpolate a screening result or an email address.
+ *
+ * These greet the person by name, which is exactly why they are personal
+ * messages: a channel template may not (D-041). See DEMO_CHANNEL_TEMPLATES.
  */
 const DEMO_TEMPLATES = [
   {
@@ -542,6 +545,60 @@ const DEMO_TEMPLATES = [
     stage: "CLOSING" as const,
     nameEs: "Cierre y devolución (SINTÉTICA)",
     bodyEs: "Hola {{nombre}}:\n\nHemos llegado al final de tu participación. Para devolver el equipo, {{instrucciones}}\n\nGracias por participar. (Mensaje sintético.)",
+  },
+] as const;
+
+/**
+ * Synthetic templates for a COHORT CHANNEL (Phase 7b).
+ *
+ * Divided by stage and, where they are about one, by SESSION — the division
+ * the team actually works in. Note what none of them contain: {{nombre}} or
+ * {{codigo}}. A group channel is read by the whole cohort, so naming one
+ * person there tells everybody else who they are (D-041), and the save path
+ * refuses it.
+ */
+const DEMO_CHANNEL_TEMPLATES = [
+  {
+    key: "canal-bienvenida",
+    stage: "INITIAL_SESSION_SCHEDULING" as const,
+    sessionCode: null,
+    nameEs: "Bienvenida al canal de la cohorte (SINTÉTICA)",
+    bodyEs: "¡Hola a todas y todos!\n\nEste es el canal de la cohorte {{cohorte}}. Aquí iremos compartiendo fechas, recordatorios y material.\n\nCualquier duda, escribid a {{responsable}}. (Mensaje sintético.)",
+  },
+  {
+    key: "canal-recordatorio-intro",
+    stage: "SESSION_REMINDER" as const,
+    sessionCode: "demo_intro",
+    nameEs: "Recordatorio · Sesión 1 (SINTÉTICA)",
+    bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa primera sesión es el {{fecha}} a las {{hora}} en {{lugar}}.\n\nSi alguien no puede venir, que nos avise. (Mensaje sintético.)",
+  },
+  {
+    key: "canal-recordatorio-vr",
+    stage: "SESSION_REMINDER" as const,
+    sessionCode: "demo_vr",
+    nameEs: "Recordatorio · Sesión 2 (SINTÉTICA)",
+    bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa sesión de práctica en RV es el {{fecha}} a las {{hora}}.\n\nTraed el visor cargado. (Mensaje sintético.)",
+  },
+  {
+    key: "canal-recordatorio-seguimiento",
+    stage: "SESSION_REMINDER" as const,
+    sessionCode: "demo_followup",
+    nameEs: "Recordatorio · Sesión 3 (SINTÉTICA)",
+    bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa sesión de seguimiento es el {{fecha}} a las {{hora}}. Nos conectamos por videollamada.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "canal-instrucciones-gafas",
+    stage: "VR_INSTRUCTIONS" as const,
+    sessionCode: "demo_vr",
+    nameEs: "Instrucciones de las gafas · Sesión 2 (SINTÉTICA)",
+    bodyEs: "Antes de la sesión del {{fecha}}, dejad el visor listo siguiendo esta guía: {{enlace}}\n\nSi a alguien no le funciona, que escriba a {{responsable}}. No es un fallo vuestro y lo resolvemos.\n\n(Mensaje sintético.)",
+  },
+  {
+    key: "canal-cierre",
+    stage: "CLOSING" as const,
+    sessionCode: null,
+    nameEs: "Cierre de la cohorte (SINTÉTICA)",
+    bodyEs: "Hemos llegado al final del programa de la cohorte {{cohorte}}.\n\nPara devolver el equipo: {{instrucciones}}\n\nGracias por vuestra participación. (Mensaje sintético.)",
   },
 ] as const;
 
@@ -1248,16 +1305,49 @@ async function main() {
           key: tpl.key,
           stage: tpl.stage,
           channel: "WHATSAPP",
+          audience: "PARTICIPANT",
           nameEs: tpl.nameEs,
           bodyEs: tpl.bodyEs,
           position: (i + 1) * 10,
         })
         .onConflictDoUpdate({
           target: [schema.communicationTemplates.studyId, schema.communicationTemplates.key],
-          set: { nameEs: tpl.nameEs, bodyEs: tpl.bodyEs, active: true },
+          set: { nameEs: tpl.nameEs, bodyEs: tpl.bodyEs, audience: "PARTICIPANT", active: true },
         });
     }
-    console.log(`msgs    ${DEMO_TEMPLATES.length} WhatsApp templates (manual only)`);
+
+    // Channel templates, linked to the session they are about so the list
+    // divides by stage AND session rather than by stage alone.
+    for (const [i, tpl] of DEMO_CHANNEL_TEMPLATES.entries()) {
+      const sessionId = tpl.sessionCode ? (templateId.get(tpl.sessionCode) ?? null) : null;
+      await db
+        .insert(schema.communicationTemplates)
+        .values({
+          studyId: study.id,
+          key: tpl.key,
+          stage: tpl.stage,
+          channel: "WHATSAPP",
+          audience: "COHORT_CHANNEL",
+          sessionTemplateId: sessionId,
+          nameEs: tpl.nameEs,
+          bodyEs: tpl.bodyEs,
+          position: (i + 1) * 10,
+        })
+        .onConflictDoUpdate({
+          target: [schema.communicationTemplates.studyId, schema.communicationTemplates.key],
+          set: {
+            nameEs: tpl.nameEs,
+            bodyEs: tpl.bodyEs,
+            audience: "COHORT_CHANNEL",
+            sessionTemplateId: sessionId,
+            active: true,
+          },
+        });
+    }
+
+    console.log(
+      `msgs    ${DEMO_TEMPLATES.length} personal + ${DEMO_CHANNEL_TEMPLATES.length} channel templates (manual only)`,
+    );
 
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {

@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/status-badge";
 import {
   renderTemplate,
-  TEMPLATE_VARIABLES,
+  variablesFor,
+  type CommunicationAudience,
   type TemplateValues,
   type TemplateVariable,
 } from "@/domain/communication";
@@ -20,9 +21,9 @@ const initial: CommsState = { error: null };
 export interface ComposerTemplate {
   id: string;
   name: string;
-  stage: string;
   stageLabel: string;
-  channel: string;
+  /** Session this message belongs to, or null when it is not about one. */
+  sessionName: string | null;
   body: string;
 }
 
@@ -31,22 +32,25 @@ export interface ComposerTemplate {
  *
  * THE RENDERED MESSAGE NEVER LEAVES THE BROWSER. It is built here from the
  * template and the values, shown, and copied to the clipboard. The form that
- * marks it as sent submits the template id and nothing else — the text is not a
- * hidden field, because a hidden field is how a rendered message containing
- * someone's name ends up in the database (D-039).
+ * marks it as sent submits the template id and the subject id — never the text,
+ * because a hidden field is how a rendered message containing someone's name
+ * ends up in the database (D-039).
  *
- * Values arrive pre-filled from what the study already knows (the booked visit,
- * the cohort, the named responsible) and stay editable, because the person
- * sending the message knows things the database does not.
+ * The same component serves both audiences. For a cohort channel it simply
+ * offers fewer variables: `nombre` and `codigo` are not in `variablesFor`, so
+ * there is no input for them and nothing to accidentally paste into a group
+ * where everyone can read it (D-041).
  */
 export function MessageComposer({
-  participantId,
+  subject,
+  audience,
   templates,
   suggested,
   canReadContact,
   labels,
 }: {
-  participantId: string;
+  subject: { kind: "PARTICIPANT" | "COHORT_CHANNEL"; id: string };
+  audience: CommunicationAudience;
   templates: ComposerTemplate[];
   suggested: TemplateValues;
   canReadContact: boolean;
@@ -82,15 +86,13 @@ export function MessageComposer({
     [template, values, canReadContact],
   );
 
-  // Only the variables this template actually uses get an input. Showing all
+  // Only the variables this template uses AND this audience allows. Showing all
   // nine for a two-line reminder buries the two that matter.
-  const used = useMemo(
-    () =>
-      template
-        ? TEMPLATE_VARIABLES.filter((v) => template.body.includes(`{{${v}}}`))
-        : ([] as readonly TemplateVariable[]),
-    [template],
-  );
+  const used = useMemo(() => {
+    if (!template) return [] as TemplateVariable[];
+    const allowed = variablesFor(audience);
+    return allowed.filter((v) => template.body.includes(`{{${v}}}`));
+  }, [template, audience]);
 
   if (templates.length === 0) {
     return <p className="text-sm text-muted-foreground">{labels.noTemplates}</p>;
@@ -121,7 +123,9 @@ export function MessageComposer({
         >
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.stageLabel} · {t.name}
+              {t.sessionName
+                ? `${t.stageLabel} · ${t.sessionName} · ${t.name}`
+                : `${t.stageLabel} · ${t.name}`}
             </option>
           ))}
         </select>
@@ -192,10 +196,14 @@ export function MessageComposer({
 
       {/*
         Note what this form does NOT carry: the rendered text. Only the template
-        id and the participant id are submitted.
+        id and the one subject id are submitted.
       */}
       <form action={action} className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
-        <input type="hidden" name="participantId" value={participantId} />
+        {subject.kind === "PARTICIPANT" ? (
+          <input type="hidden" name="participantId" value={subject.id} />
+        ) : (
+          <input type="hidden" name="cohortId" value={subject.id} />
+        )}
         <input type="hidden" name="templateId" value={templateId} />
         <div className="min-w-48 flex-1 space-y-1.5">
           <Label htmlFor="skipReason" className="text-xs">

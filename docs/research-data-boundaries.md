@@ -86,6 +86,11 @@ A message template may contain only the nine placeholders in
 status, no allocation, no email or phone. A body using anything else is refused
 on save, and `nombre` needs `participants.contact.read` to render at all.
 
+A template addressed to a cohort channel may not use `{{nombre}}` or
+`{{codigo}}` (D-041): a group channel is read by every member, so naming one
+person there identifies them to the rest of the cohort. Refused on save, and the
+variable list shown to the author shrinks to match.
+
 The rendered message is never stored. `communications.template_body` keeps the
 template with placeholders intact, so "what did we send on the 4th" is answerable
 without a second copy of the person's name and location. There is no inbound path

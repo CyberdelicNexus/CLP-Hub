@@ -23,6 +23,7 @@ import { ELIGIBILITY_REASON_CATEGORIES } from "@/domain/eligibility-reason";
 import { RESPONSIBILITY_ROLES, VISIT_STATUSES } from "@/domain/responsibility";
 import { DEVICE_STATUSES, INCIDENT_KINDS, VR_READINESS_STATES } from "@/domain/logistics";
 import {
+  COMMUNICATION_AUDIENCES,
   COMMUNICATION_CHANNELS,
   COMMUNICATION_STAGES,
   COMMUNICATION_STATUSES,
@@ -89,3 +90,6 @@ export const incidentKindEnum = pgEnum("incident_kind", INCIDENT_KINDS);
 export const communicationStageEnum = pgEnum("communication_stage", COMMUNICATION_STAGES);
 export const communicationChannelEnum = pgEnum("communication_channel", COMMUNICATION_CHANNELS);
 export const communicationStatusEnum = pgEnum("communication_status", COMMUNICATION_STATUSES);
+
+// Audience (Phase 7b, migration 0014)
+export const communicationAudienceEnum = pgEnum("communication_audience", COMMUNICATION_AUDIENCES);

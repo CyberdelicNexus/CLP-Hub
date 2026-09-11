@@ -832,7 +832,7 @@
   },
   "communications": {
     "subtitle": "Message templates by stage. Copied and sent by hand.",
-    "manualNote": "CLP Hub does not send messages. The text is prepared here, copied, and pasted into WhatsApp from the project's operational account. Then it is marked as sent. No conversations or replies are stored.",
+    "manualNote": "CLP Hub does not send messages and is not connected to WhatsApp. The text is prepared here, copied, and pasted into the relevant channel from the project's operational account. Then it is marked as sent. No conversations or replies are stored.",
     "compose": "Prepare a message",
     "participant": "Participant",
     "pickParticipant": "Choose a participant to prepare their message.",
@@ -860,7 +860,12 @@
       "stage": "Stage",
       "channel": "Channel",
       "body": "Message",
-      "bodyHelp": "Use only the variables listed. Anything else is refused on save. 2000 characters maximum."
+      "bodyHelp": "Use only the variables listed. Anything else is refused on save. 2000 characters maximum.",
+      "audience": "Audience",
+      "audienceHelp": "A channel message is read by the whole cohort, so it cannot use variables that identify one person.",
+      "session": "Session",
+      "sessionHelp": "Optional. If the message is about a particular session, it is grouped with it.",
+      "sessionNone": "Not about a session"
     },
     "stage": {
       "APPLICATION_RECEIVED": "Application confirmation",
@@ -902,7 +907,18 @@
       "unknownVariable": "The message uses a variable that is not allowed.",
       "tooLong": "The message exceeds the maximum length.",
       "empty": "The message cannot be empty.",
-      "failed": "The operation could not be completed."
+      "failed": "The operation could not be completed.",
+      "participantVariableInChannel": "A channel message cannot use {{nombre}} or {{codigo}} — the whole cohort would read it.",
+      "audienceMismatch": "That template is for a different audience."
+    },
+    "cohort": "Cohort",
+    "pickCohort": "Choose a cohort to prepare its channel message.",
+    "noSession": "No session",
+    "noTemplatesForAudience": "No active templates for this audience.",
+    "channelVariablesNote": "A group channel cannot use {{nombre}} or {{codigo}} — the whole cohort would read it.",
+    "audience": {
+      "PARTICIPANT": "To one person",
+      "COHORT_CHANNEL": "To the cohort channel"
     }
   },
   "attention": {

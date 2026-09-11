@@ -762,6 +762,49 @@ Three rules it follows:
 It shows counts and codes, never a participant name, even for a viewer entitled
 to read one: this is the screen most likely to be left open on a shared monitor.
 
+## D-041 · 2026-09-11 · Messages divide by stage AND session, and a channel message never names a person
+
+Founder clarification after Phase 7 shipped: WhatsApp does not need to be
+connected to CLP Hub at all — what the team needs is every communication
+**divided by stage and by session**, ready to copy into the relevant channel.
+
+Three consequences.
+
+**Session is a foreign key, not a label.** `communication_templates.session_template_id`
+points at the programme row, for the reason D-029 gives about content: renaming a
+session must not orphan the messages about it, and a text field like "Sesión 1"
+drifts the moment two people spell it differently. Null means the message is not
+about a session — a waiting-list note, a closing message — and those sort last
+within their stage rather than first.
+
+**A message is addressed to a cohort channel or to one person.**
+`audience` is PARTICIPANT or COHORT_CHANNEL. The distinction is not cosmetic; it
+changes what the message may contain:
+
+> A COHORT_CHANNEL template may not use `{{nombre}}` or `{{codigo}}`.
+
+A group channel is read by every member of the cohort. "Hola María" pasted there
+tells six other people that María is in this study, and "Hola P-000042" is no
+better — inside a cohort of eight, a code addressed to one person is trivially
+matched to whoever replies next. Both are refused at save time, the variable hint
+list shrinks to match so the rule is visible before it bites, and
+`tests/communication.test.ts` locks it down along with the seeded templates.
+
+The audience is fixed once a template exists. Re-scoping one that staff already
+use would silently change what is legal inside it.
+
+**A channel message is recorded once, against the cohort.**
+`communications.participant_id` becomes nullable and `cohort_id` joins it, with a
+check constraint keeping exactly one of them set — the old guarantee "every send
+has a subject" widened rather than weakened. Expanding a channel message into a
+row per member was considered and rejected: the log would assert that each person
+was written to individually, and their own page would then show a personal
+message they never received.
+
+**Still nothing sends anything.** This changes who the copied text is addressed
+to, not who copies it. There is no client, credential or endpoint, and the tests
+that assert their absence are unchanged.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -801,6 +844,8 @@ to read one: this is the screen most likely to be left open on a shared monitor.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Should a channel message be recordable against something other than a cohort —
+  a study-wide announcement channel, say? Only cohorts today (D-041).
 - Which WhatsApp account is the project's operational one, and who has access to
   it? CLP Hub cannot enforce this (D-039).
 - Should message templates require an approval step before staff may use them,

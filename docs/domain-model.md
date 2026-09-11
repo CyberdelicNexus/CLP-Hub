@@ -165,6 +165,14 @@ strictly-forward cohort lifecycle (D-038).
 Added enums: `communication_stage`, `communication_channel`,
 `communication_status` (SENT, SKIPPED only).
 
+**Phase 7b · migration 0014** adds `communication_templates.session_template_id`
+(a foreign key, so renaming a session does not orphan its messages) and
+`audience` (PARTICIPANT / COHORT_CHANNEL), and lets `communications` point at a
+cohort instead of a participant — exactly one of the two, by check constraint. A
+COHORT_CHANNEL template may not use `{{nombre}}` or `{{codigo}}` (D-041).
+
+Added enum: `communication_audience`.
+
 `CONTENT_TYPES` keeps EMAIL_TEMPLATE and WHATSAPP_TEMPLATE for readability, but
 `AUTHORABLE_CONTENT_TYPES` no longer offers them: message templates live here now.
 

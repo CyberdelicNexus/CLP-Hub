@@ -2,8 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  COMMUNICATION_AUDIENCES,
   COMMUNICATION_STAGES,
   COMMUNICATION_STATUSES,
+  PARTICIPANT_ONLY_VARIABLES,
+  variablesFor,
   IDENTIFYING_VARIABLES,
   STORES_RENDERED_MESSAGE,
   TEMPLATE_BODY_MAX_LENGTH,
@@ -156,6 +159,52 @@ describe("rendering", () => {
   });
 });
 
+describe("a channel message never names one person", () => {
+  /**
+   * THE POINT (D-041). A cohort channel is read by every member. "Hola María"
+   * pasted there tells six other people that María is in this study, and "Hola
+   * P-000042" is no better — inside a cohort of eight, a code addressed to one
+   * person is trivially matched to whoever replies.
+   */
+  it("refuses a channel template that greets someone", () => {
+    expect(validateTemplateBody("Hola {{nombre}}.", "COHORT_CHANNEL")).toBe(
+      "participantVariableInChannel",
+    );
+    expect(validateTemplateBody("Referencia {{codigo}}.", "COHORT_CHANNEL")).toBe(
+      "participantVariableInChannel",
+    );
+  });
+
+  it("accepts the same body for a personal message", () => {
+    expect(validateTemplateBody("Hola {{nombre}}.", "PARTICIPANT")).toBeNull();
+    expect(validateTemplateBody("Referencia {{codigo}}.", "PARTICIPANT")).toBeNull();
+  });
+
+  it("still allows the group-level variables in a channel template", () => {
+    expect(
+      validateTemplateBody(
+        "Cohorte {{cohorte}}: el {{fecha}} a las {{hora}} en {{lugar}}, con {{responsable}}.",
+        "COHORT_CHANNEL",
+      ),
+    ).toBeNull();
+  });
+
+  it("offers exactly the variables each audience may use", () => {
+    const channel = variablesFor("COHORT_CHANNEL");
+    for (const v of PARTICIPANT_ONLY_VARIABLES) expect(channel).not.toContain(v);
+    expect(channel).toContain("cohorte");
+    expect(variablesFor("PARTICIPANT")).toHaveLength(9);
+  });
+
+  it("names both identifying variables, so neither is missed", () => {
+    expect([...PARTICIPANT_ONLY_VARIABLES].sort()).toEqual(["codigo", "nombre"]);
+  });
+
+  it("has exactly the two audiences the team works in", () => {
+    expect([...COMMUNICATION_AUDIENCES]).toEqual(["PARTICIPANT", "COHORT_CHANNEL"]);
+  });
+});
+
 describe("what a send record holds", () => {
   const schema = readFileSync(join(process.cwd(), "src/db/schema/communications.ts"), "utf8");
   const service = readFileSync(join(process.cwd(), "src/services/communications.ts"), "utf8");
@@ -183,6 +232,20 @@ describe("what a send record holds", () => {
 
   it("has no column for a reply or an inbound message", () => {
     expect(stripComments(schema)).not.toMatch(/reply|inbound|conversation|thread/i);
+  });
+
+  /**
+   * A message pasted into a cohort channel is ONE event. Expanding it to a row
+   * per member would make the log assert that each of them was written to
+   * individually, and their own page would then show a personal message they
+   * never received (D-041).
+   */
+  it("records a channel message once, against the cohort", () => {
+    expect(stripComments(schema)).toMatch(/cohortId/);
+    // No loop over members anywhere in the send path.
+    const fn = service.slice(service.indexOf("export async function recordSend"));
+    expect(fn).not.toMatch(/participantCohortAssignments/);
+    expect(fn).not.toMatch(/\.map\(|for \(const/);
   });
 
   /**
@@ -246,14 +309,60 @@ describe("migration 0012", () => {
 
 describe("the seeded templates obey the allow-list", () => {
   const seed = readFileSync(join(process.cwd(), "scripts/seed.ts"), "utf8");
+  const personal = seed.slice(
+    seed.indexOf("const DEMO_TEMPLATES = ["),
+    seed.indexOf("const DEMO_CHANNEL_TEMPLATES = ["),
+  );
+  const channel = seed.slice(
+    seed.indexOf("const DEMO_CHANNEL_TEMPLATES = ["),
+    seed.indexOf("/** Obviously fake applicants"),
+  );
 
   it("uses no placeholder outside the allow-list", () => {
-    const block = seed.slice(
-      seed.indexOf("const DEMO_TEMPLATES = ["),
-      seed.indexOf("/** Obviously fake applicants"),
-    );
-    expect(block.length).toBeGreaterThan(0);
-    expect(unknownVariables(block)).toEqual([]);
+    expect(personal.length).toBeGreaterThan(0);
+    expect(unknownVariables(personal)).toEqual([]);
+    expect(unknownVariables(channel)).toEqual([]);
+  });
+
+  it("never names a person in a channel template", () => {
+    expect(channel.length).toBeGreaterThan(0);
+    for (const v of PARTICIPANT_ONLY_VARIABLES) {
+      expect(channel).not.toContain(`{{${v}}}`);
+    }
+  });
+
+  it("links session reminders to the session they are about", () => {
+    // "Divididas por etapa y sesión" is the whole ask; a reminder with no
+    // session would land in an ungrouped bucket.
+    expect(channel).toMatch(/sessionCode: "demo_intro"/);
+    expect(channel).toMatch(/sessionCode: "demo_vr"/);
+    expect(channel).toMatch(/sessionCode: "demo_followup"/);
+  });
+});
+
+describe("migration 0014", () => {
+  const sql = readFileSync(
+    join(process.cwd(), "supabase/migrations/0014_communication_audience.sql"),
+    "utf8",
+  );
+
+  it("keeps every send pointing at exactly one subject", () => {
+    expect(sql).toMatch(/communications_one_subject/);
+    expect(sql).toMatch(/communications_audience_matches_subject/);
+  });
+
+  it("links templates to sessions by foreign key, not by label", () => {
+    expect(sql).toMatch(/session_template_id uuid references session_templates\(id\)/);
+  });
+
+  it("states the nullable participant_id impact in the file", () => {
+    expect(sql).toMatch(/IMPACT/);
+  });
+
+  it("deletes nothing", () => {
+    expect(sql).not.toMatch(/drop\s+table/i);
+    expect(sql).not.toMatch(/drop\s+column/i);
+    expect(sql).not.toMatch(/delete\s+from/i);
   });
 });
 

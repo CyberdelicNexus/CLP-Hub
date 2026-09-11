@@ -832,7 +832,7 @@
   },
   "communications": {
     "subtitle": "Plantillas de mensajes por etapa. Se copian y se envían a mano.",
-    "manualNote": "CLP Hub no envía mensajes. Aquí se prepara el texto, se copia y se pega en WhatsApp desde la cuenta operativa del proyecto. Después se marca como enviado. No se guardan conversaciones ni respuestas.",
+    "manualNote": "CLP Hub no envía mensajes ni se conecta a WhatsApp. Aquí se prepara el texto, se copia y se pega en el canal correspondiente desde la cuenta operativa del proyecto. Después se marca como enviado. No se guardan conversaciones ni respuestas.",
     "compose": "Preparar un mensaje",
     "participant": "Participante",
     "pickParticipant": "Elige un participante para preparar su mensaje.",
@@ -860,7 +860,12 @@
       "stage": "Etapa",
       "channel": "Canal",
       "body": "Mensaje",
-      "bodyHelp": "Usa solo las variables de la lista. Cualquier otra se rechaza al guardar. Máximo 2000 caracteres."
+      "bodyHelp": "Usa solo las variables de la lista. Cualquier otra se rechaza al guardar. Máximo 2000 caracteres.",
+      "audience": "Destinatario",
+      "audienceHelp": "Un mensaje de canal lo lee toda la cohorte, así que no admite variables que identifiquen a una persona.",
+      "session": "Sesión",
+      "sessionHelp": "Opcional. Si el mensaje va sobre una sesión concreta, aparecerá agrupado con ella.",
+      "sessionNone": "Sin sesión concreta"
     },
     "stage": {
       "APPLICATION_RECEIVED": "Confirmación de solicitud",
@@ -902,7 +907,18 @@
       "unknownVariable": "El mensaje usa una variable que no está permitida.",
       "tooLong": "El mensaje supera el máximo permitido.",
       "empty": "El mensaje no puede estar vacío.",
-      "failed": "No se pudo completar la operación."
+      "failed": "No se pudo completar la operación.",
+      "participantVariableInChannel": "Un mensaje de canal no puede usar {{nombre}} ni {{codigo}}: lo leería toda la cohorte.",
+      "audienceMismatch": "Esa plantilla es para otro tipo de destinatario."
+    },
+    "cohort": "Cohorte",
+    "pickCohort": "Elige una cohorte para preparar el mensaje de su canal.",
+    "noSession": "Sin sesión",
+    "noTemplatesForAudience": "No hay plantillas activas para este destinatario.",
+    "channelVariablesNote": "En un canal de grupo no se pueden usar {{nombre}} ni {{codigo}}: lo leería toda la cohorte.",
+    "audience": {
+      "PARTICIPANT": "A una persona",
+      "COHORT_CHANNEL": "Al canal de la cohorte"
     }
   },
   "attention": {

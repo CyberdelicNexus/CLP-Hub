@@ -1,10 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TEMPLATE_BODY_MAX_LENGTH, TEMPLATE_VARIABLES } from "@/domain/communication";
+import {
+  TEMPLATE_BODY_MAX_LENGTH,
+  variablesFor,
+  type CommunicationAudience,
+} from "@/domain/communication";
 import { createTemplateAction, updateTemplateAction, type CommsState } from "./actions";
 
 /** A "use server" module may only export functions, so initial state lives here. */
@@ -22,12 +26,20 @@ export interface TemplateLabels {
   name: string;
   stage: string;
   channel: string;
+  audience: string;
+  audienceHelp: string;
+  session: string;
+  sessionHelp: string;
+  sessionNone: string;
   body: string;
   bodyHelp: string;
   variablesTitle: string;
+  channelVariablesNote: string;
   errors: Record<string, string>;
   stages: { value: string; label: string }[];
   channels: { value: string; label: string }[];
+  audiences: { value: string; label: string }[];
+  sessions: { value: string; label: string }[];
 }
 
 function ErrorLine({ state, errors }: { state: CommsState; errors: Record<string, string> }) {
@@ -45,13 +57,25 @@ function ErrorLine({ state, errors }: { state: CommsState; errors: Record<string
  * Not decoration: the allow-list is enforced on save, so an author who types
  * `{{email}}` gets a refusal. Showing what exists turns that refusal into
  * something they can act on before it happens.
+ *
+ * The list SHRINKS for a channel template — `nombre` and `codigo` disappear —
+ * and a line explains why, because "the variable I used yesterday is gone" is
+ * otherwise a confusing way to learn a rule (D-041).
  */
-function VariableHints({ title }: { title: string }) {
+function VariableHints({
+  title,
+  audience,
+  channelNote,
+}: {
+  title: string;
+  audience: CommunicationAudience;
+  channelNote: string;
+}) {
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</p>
       <p className="flex flex-wrap gap-1.5">
-        {TEMPLATE_VARIABLES.map((v) => (
+        {variablesFor(audience).map((v) => (
           <code
             key={v}
             className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground"
@@ -60,12 +84,20 @@ function VariableHints({ title }: { title: string }) {
           </code>
         ))}
       </p>
+      {audience === "COHORT_CHANNEL" ? (
+        <p className="text-xs text-muted-foreground">{channelNote}</p>
+      ) : null}
     </div>
   );
 }
 
+const AUDIENCE_DEFAULT: CommunicationAudience = "PARTICIPANT";
+
 export function CreateTemplateForm({ labels }: { labels: TemplateLabels }) {
   const [state, action, pending] = useActionState(createTemplateAction, initial);
+  // Drives which variables are offered, live, so the hint list matches the rule
+  // that will be applied on save.
+  const [audience, setAudience] = useState<CommunicationAudience>(AUDIENCE_DEFAULT);
 
   return (
     <form key={state.ok ? "done" : "new"} action={action} className="space-y-3">
@@ -105,6 +137,36 @@ export function CreateTemplateForm({ labels }: { labels: TemplateLabels }) {
             ))}
           </select>
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="tplAudience">{labels.audience}</Label>
+          <select
+            id="tplAudience"
+            name="audience"
+            required
+            value={audience}
+            onChange={(e) => setAudience(e.target.value as CommunicationAudience)}
+            className={SELECT_CLASS}
+          >
+            {labels.audiences.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.audienceHelp}</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="tplSession">{labels.session}</Label>
+          <select id="tplSession" name="sessionTemplateId" defaultValue="" className={SELECT_CLASS}>
+            <option value="">{labels.sessionNone}</option>
+            {labels.sessions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.sessionHelp}</p>
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -123,7 +185,11 @@ export function CreateTemplateForm({ labels }: { labels: TemplateLabels }) {
         </p>
       </div>
 
-      <VariableHints title={labels.variablesTitle} />
+      <VariableHints
+        title={labels.variablesTitle}
+        audience={audience}
+        channelNote={labels.channelVariablesNote}
+      />
 
       <ErrorLine state={state} errors={labels.errors} />
       <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
@@ -139,7 +205,14 @@ export function EditTemplateForm({
   labels,
 }: {
   templateId: string;
-  current: { nameEs: string; bodyEs: string; active: boolean };
+  current: {
+    nameEs: string;
+    bodyEs: string;
+    active: boolean;
+    /** Not editable: re-scoping a template staff already use changes what is legal in it. */
+    audience: CommunicationAudience;
+    sessionTemplateId: string | null;
+  };
   labels: TemplateLabels & { active: string };
 }) {
   const [state, action, pending] = useActionState(updateTemplateAction, initial);
@@ -169,6 +242,23 @@ export function EditTemplateForm({
           className={TEXTAREA_CLASS}
         />
       </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`session-${templateId}`}>{labels.session}</Label>
+        <select
+          id={`session-${templateId}`}
+          name="sessionTemplateId"
+          defaultValue={current.sessionTemplateId ?? ""}
+          className={SELECT_CLASS}
+        >
+          <option value="">{labels.sessionNone}</option>
+          {labels.sessions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -179,7 +269,11 @@ export function EditTemplateForm({
         {labels.active}
       </label>
 
-      <VariableHints title={labels.variablesTitle} />
+      <VariableHints
+        title={labels.variablesTitle}
+        audience={current.audience}
+        channelNote={labels.channelVariablesNote}
+      />
 
       <ErrorLine state={state} errors={labels.errors} />
       <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>

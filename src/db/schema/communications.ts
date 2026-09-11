@@ -9,11 +9,14 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import {
+  communicationAudienceEnum,
   communicationChannelEnum,
   communicationStageEnum,
   communicationStatusEnum,
 } from "./enums";
+import { cohorts } from "./cohorts";
 import { participants } from "./participants";
+import { sessionTemplates } from "./sessions";
 import { studies } from "./studies";
 import { users } from "./users";
 
@@ -38,6 +41,20 @@ export const communicationTemplates = pgTable(
       .references(() => studies.id),
     key: text("key").notNull(),
     stage: communicationStageEnum("stage").notNull(),
+    /**
+     * The session this message belongs to, when it belongs to one.
+     *
+     * A real foreign key rather than a text label, for the reason D-029 gives
+     * about content: renaming a session must not orphan the messages about it.
+     * Null means the message is not about a particular session — a waiting-list
+     * note, a closing message.
+     */
+    sessionTemplateId: uuid("session_template_id").references(() => sessionTemplates.id),
+    /**
+     * Who the copied text is addressed to. A COHORT_CHANNEL template may not
+     * contain a variable that names one person (D-041) — checked on save.
+     */
+    audience: communicationAudienceEnum("audience").notNull().default("PARTICIPANT"),
     channel: communicationChannelEnum("channel").notNull().default("WHATSAPP"),
     nameEs: text("name_es").notNull(),
     nameEn: text("name_en"),
@@ -52,6 +69,7 @@ export const communicationTemplates = pgTable(
   (t) => [
     unique("communication_templates_key_unique").on(t.studyId, t.key),
     index("communication_templates_stage_idx").on(t.studyId, t.stage, t.position),
+    index("communication_templates_session_idx").on(t.sessionTemplateId),
   ],
 );
 
@@ -71,6 +89,9 @@ export type NewCommunicationTemplate = typeof communicationTemplates.$inferInser
  *   a WhatsApp conversation.
  * - There is no DELIVERED or FAILED status. Nothing here observes delivery, and
  *   a status this application cannot verify would be a claim, not a record.
+ * - A message pasted into a cohort channel is ONE row against the cohort, not
+ *   one per member (D-041). Expanding it would assert that each person was
+ *   written to individually, which is not what happened.
  *
  * Append-only by convention: a send is a historical fact, so rows are inserted
  * and never edited.
@@ -82,9 +103,14 @@ export const communications = pgTable(
     studyId: uuid("study_id")
       .notNull()
       .references(() => studies.id),
-    participantId: uuid("participant_id")
-      .notNull()
-      .references(() => participants.id),
+    /**
+     * Set for a message to one person; null for a message pasted into a group.
+     * Exactly one of `participantId` and `cohortId` is set, enforced in SQL.
+     */
+    participantId: uuid("participant_id").references(() => participants.id),
+    /** Set for a message pasted into a cohort's channel. */
+    cohortId: uuid("cohort_id").references(() => cohorts.id),
+    audience: communicationAudienceEnum("audience").notNull().default("PARTICIPANT"),
     templateId: uuid("template_id").references(() => communicationTemplates.id),
     /** The template's version at the moment it was used. */
     templateVersion: integer("template_version"),
@@ -100,6 +126,7 @@ export const communications = pgTable(
   },
   (t) => [
     index("communications_participant_idx").on(t.participantId, t.sentAt),
+    index("communications_cohort_idx").on(t.cohortId, t.sentAt),
     index("communications_study_idx").on(t.studyId, t.stage, t.sentAt),
   ],
 );

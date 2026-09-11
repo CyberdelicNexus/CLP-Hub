@@ -5,6 +5,7 @@ import { z } from "zod";
 import { assertPermission, AuthorizationError } from "@/auth/authorize";
 import { getStudyContext } from "@/auth/study-context";
 import {
+  COMMUNICATION_AUDIENCES,
   COMMUNICATION_CHANNELS,
   COMMUNICATION_STAGES,
   TEMPLATE_BODY_MAX_LENGTH,
@@ -43,6 +44,8 @@ export type CommsState = {
     | "unknownVariable"
     | "tooLong"
     | "empty"
+    | "participantVariableInChannel"
+    | "audienceMismatch"
     | "failed"
     | null;
   ok?: boolean;
@@ -82,6 +85,8 @@ const templateSchema = z.object({
     .refine((v) => TEMPLATE_KEY_PATTERN.test(v)),
   stage: z.enum(COMMUNICATION_STAGES),
   channel: z.enum(COMMUNICATION_CHANNELS),
+  audience: z.enum(COMMUNICATION_AUDIENCES).default("PARTICIPANT"),
+  sessionTemplateId: z.union([uuid, z.literal("")]).optional(),
   nameEs: z.string().trim().min(1).max(TEMPLATE_NAME_MAX_LENGTH),
   bodyEs: z.string().trim().min(1).max(TEMPLATE_BODY_MAX_LENGTH),
   bodyEn: z.string().trim().max(TEMPLATE_BODY_MAX_LENGTH).optional(),
@@ -98,6 +103,8 @@ export async function createTemplateAction(
     key: formData.get("key"),
     stage: formData.get("stage"),
     channel: formData.get("channel"),
+    audience: formData.get("audience") ?? undefined,
+    sessionTemplateId: formData.get("sessionTemplateId") ?? undefined,
     nameEs: formData.get("nameEs"),
     bodyEs: formData.get("bodyEs"),
     bodyEn: formData.get("bodyEn") ?? undefined,
@@ -112,6 +119,8 @@ export async function createTemplateAction(
       key: parsed.data.key,
       stage: parsed.data.stage,
       channel: parsed.data.channel,
+      audience: parsed.data.audience,
+      sessionTemplateId: parsed.data.sessionTemplateId || null,
       nameEs: parsed.data.nameEs,
       bodyEs: parsed.data.bodyEs,
       bodyEn: parsed.data.bodyEn,
@@ -129,6 +138,10 @@ const updateSchema = z.object({
   nameEs: z.string().trim().min(1).max(TEMPLATE_NAME_MAX_LENGTH),
   bodyEs: z.string().trim().min(1).max(TEMPLATE_BODY_MAX_LENGTH),
   bodyEn: z.string().trim().max(TEMPLATE_BODY_MAX_LENGTH).optional(),
+  // The session a message belongs to can change; who it is addressed to cannot.
+  // Re-scoping a template staff already use would silently change what is legal
+  // in it (D-041).
+  sessionTemplateId: z.union([uuid, z.literal("")]).optional(),
   active: z.union([z.literal("on"), z.literal("")]).optional(),
 });
 
@@ -144,6 +157,7 @@ export async function updateTemplateAction(
     nameEs: formData.get("nameEs"),
     bodyEs: formData.get("bodyEs"),
     bodyEn: formData.get("bodyEn") ?? undefined,
+    sessionTemplateId: formData.get("sessionTemplateId") ?? undefined,
     active: formData.get("active") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
@@ -157,6 +171,7 @@ export async function updateTemplateAction(
       nameEs: parsed.data.nameEs,
       bodyEs: parsed.data.bodyEs,
       bodyEn: parsed.data.bodyEn,
+      sessionTemplateId: parsed.data.sessionTemplateId || null,
       active: parsed.data.active === "on",
     });
   } catch (err) {
@@ -169,12 +184,17 @@ export async function updateTemplateAction(
 
 // --- Recording a send -------------------------------------------------------
 
-const sendSchema = z.object({
-  participantId: uuid,
-  templateId: uuid,
-  status: z.enum(["SENT", "SKIPPED"]).default("SENT"),
-  skipReason: z.string().trim().max(280).optional(),
-});
+const sendSchema = z
+  .object({
+    participantId: z.union([uuid, z.literal("")]).optional(),
+    cohortId: z.union([uuid, z.literal("")]).optional(),
+    templateId: uuid,
+    status: z.enum(["SENT", "SKIPPED"]).default("SENT"),
+    skipReason: z.string().trim().max(280).optional(),
+  })
+  // Exactly one subject, refused here as well as in SQL so the form gets a
+  // useful error rather than a constraint violation.
+  .refine((v) => Boolean(v.participantId) !== Boolean(v.cohortId));
 
 /**
  * Mark a message as sent — AFTER a person copied it and sent it themselves.
@@ -188,12 +208,17 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
   if (!ctx) return { error: "forbidden" };
 
   const parsed = sendSchema.safeParse({
-    participantId: formData.get("participantId"),
+    participantId: formData.get("participantId") ?? undefined,
+    cohortId: formData.get("cohortId") ?? undefined,
     templateId: formData.get("templateId"),
     status: formData.get("status") ?? undefined,
     skipReason: formData.get("skipReason") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
+
+  const target = parsed.data.participantId
+    ? ({ kind: "PARTICIPANT", participantId: parsed.data.participantId } as const)
+    : ({ kind: "COHORT_CHANNEL", cohortId: parsed.data.cohortId as string } as const);
 
   try {
     // Read, not manage: the facilitator who pasted the message is the person who
@@ -201,7 +226,7 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
     assertPermission(ctx, "communications.read");
     await recordSend({
       studyId: ctx.study.id,
-      participantId: parsed.data.participantId,
+      target,
       templateId: parsed.data.templateId,
       actorId: ctx.session.userId,
       status: parsed.data.status,
@@ -211,6 +236,6 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
     return fail(err, "communication.record");
   }
 
-  revalidate(parsed.data.participantId);
+  revalidate(parsed.data.participantId || undefined);
   return { error: null, ok: true };
 }

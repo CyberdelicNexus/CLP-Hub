@@ -42,6 +42,23 @@ export function isCommunicationChannel(v: unknown): v is CommunicationChannel {
   return typeof v === "string" && (COMMUNICATION_CHANNELS as readonly string[]).includes(v);
 }
 
+/**
+ * Who the copied text is addressed to (Phase 7b).
+ *
+ * PARTICIPANT is a message to one person. COHORT_CHANNEL is a message pasted
+ * into a group — the cohort's WhatsApp channel — where everyone in the cohort
+ * reads it.
+ *
+ * The distinction is not cosmetic; it changes what the message may contain. See
+ * `PARTICIPANT_ONLY_VARIABLES`.
+ */
+export const COMMUNICATION_AUDIENCES = ["PARTICIPANT", "COHORT_CHANNEL"] as const;
+export type CommunicationAudience = (typeof COMMUNICATION_AUDIENCES)[number];
+
+export function isCommunicationAudience(v: unknown): v is CommunicationAudience {
+  return typeof v === "string" && (COMMUNICATION_AUDIENCES as readonly string[]).includes(v);
+}
+
 /** Channels a person must copy and paste by hand. WhatsApp, always. */
 export const MANUAL_ONLY_CHANNELS: readonly CommunicationChannel[] = ["WHATSAPP"];
 
@@ -104,6 +121,31 @@ export function isIdentifying(v: TemplateVariable): boolean {
 }
 
 /**
+ * Variables a COHORT_CHANNEL template may NOT contain.
+ *
+ * THE POINT: a group channel is read by every member of the cohort. "Hola
+ * María" pasted there tells six other people that María is in this study, and
+ * "Hola P-000042" is no better — inside a cohort of eight, a code that appears
+ * in a message addressed to one person is trivially matched to whoever replies.
+ *
+ * Both are therefore refused at save time for channel templates. A message to a
+ * group addresses the group; if it needs to name someone, it is a message to
+ * that person and the audience is wrong.
+ */
+export const PARTICIPANT_ONLY_VARIABLES: readonly TemplateVariable[] = ["nombre", "codigo"];
+
+export function isParticipantOnly(v: TemplateVariable): boolean {
+  return PARTICIPANT_ONLY_VARIABLES.includes(v);
+}
+
+/** The variables a template may use, given who it is addressed to. */
+export function variablesFor(audience: CommunicationAudience): TemplateVariable[] {
+  return audience === "COHORT_CHANNEL"
+    ? TEMPLATE_VARIABLES.filter((v) => !isParticipantOnly(v))
+    : [...TEMPLATE_VARIABLES];
+}
+
+/**
  * `{{variable}}`: no spaces, no expressions, no nesting.
  *
  * The name part is deliberately permissive — letters, digits and underscores in
@@ -132,13 +174,36 @@ export const TEMPLATE_BODY_MAX_LENGTH = 2000;
 export const TEMPLATE_NAME_MAX_LENGTH = 120;
 export const TEMPLATE_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{1,47}$/;
 
-export type TemplateProblem = "unknownVariable" | "tooLong" | "empty";
+export type TemplateProblem =
+  | "unknownVariable"
+  | "tooLong"
+  | "empty"
+  /** A channel template named a participant. See PARTICIPANT_ONLY_VARIABLES. */
+  | "participantVariableInChannel";
 
-export function validateTemplateBody(body: string): TemplateProblem | null {
+/**
+ * Validate a template body.
+ *
+ * `audience` defaults to PARTICIPANT so existing callers keep their behaviour;
+ * passing COHORT_CHANNEL additionally refuses any variable that would name one
+ * person inside a group conversation.
+ */
+export function validateTemplateBody(
+  body: string,
+  audience: CommunicationAudience = "PARTICIPANT",
+): TemplateProblem | null {
   const trimmed = body.trim();
   if (trimmed.length === 0) return "empty";
   if (trimmed.length > TEMPLATE_BODY_MAX_LENGTH) return "tooLong";
   if (unknownVariables(trimmed).length > 0) return "unknownVariable";
+
+  if (audience === "COHORT_CHANNEL") {
+    const named = extractVariables(trimmed).filter(
+      (v) => isTemplateVariable(v) && isParticipantOnly(v),
+    );
+    if (named.length > 0) return "participantVariableInChannel";
+  }
+
   return null;
 }
 
@@ -227,6 +292,23 @@ export type CommunicationStatus = (typeof COMMUNICATION_STATUSES)[number];
 
 export function isCommunicationStatus(v: unknown): v is CommunicationStatus {
   return typeof v === "string" && (COMMUNICATION_STATUSES as readonly string[]).includes(v);
+}
+
+/**
+ * A send record points at exactly one of a participant or a cohort — never both
+ * and never neither.
+ *
+ * A message pasted into a cohort channel is ONE event. Expanding it into a row
+ * per member would make the log assert that each of them was written to
+ * individually, which is not what happened; the participant's own page would
+ * then show a personal message they never received.
+ */
+export type SendTarget =
+  | { kind: "PARTICIPANT"; participantId: string }
+  | { kind: "COHORT_CHANNEL"; cohortId: string };
+
+export function targetAudience(target: SendTarget): CommunicationAudience {
+  return target.kind === "PARTICIPANT" ? "PARTICIPANT" : "COHORT_CHANNEL";
 }
 
 /**
