@@ -324,7 +324,9 @@
       "eligibility": "Elegibilidad",
       "enrollment": "Participación",
       "status": "Estado",
-      "open": "Abrir participante"
+      "open": "Abrir participante",
+      "cohort": "Cohorte",
+      "nextStep": "Próximo paso"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",
@@ -350,7 +352,12 @@
     },
     "consentScopes": "Autorizaciones adicionales",
     "consentScopesHelp": "Marca solo lo que la persona ha autorizado expresamente al firmar. Nada viene marcado por defecto.",
-    "consentMissing": "Falta registrar el consentimiento: {types}."
+    "consentMissing": "Falta registrar el consentimiento: {types}.",
+    "filterEnrollment": "Filtrar por estado de inclusión",
+    "filterCohort": "Cohorte",
+    "filterArm": "Grupo",
+    "filterResponsible": "Responsable",
+    "filterAny": "Todos"
   },
   "screening": {
     "subtitle": "Evaluaciones programadas pendientes de realizar.",
@@ -639,6 +646,93 @@
       "DUPLICATE": "Duplicado",
       "STUDY_CAPACITY": "Capacidad del estudio",
       "OTHER": "Otros motivos"
+    }
+  },
+  "care": {
+    "title": "Visita inicial y responsables",
+    "responsibles": "Responsables",
+    "role": {
+      "INITIAL_SESSION": "Responsable de la sesión inicial",
+      "VR_EQUIPMENT": "Responsable de las gafas"
+    },
+    "unassigned": "Sin asignar",
+    "assign": "Asignar",
+    "replace": "Cambiar responsable",
+    "revoke": "Dejar sin responsable",
+    "person": "Persona",
+    "noCandidates": "No hay personal disponible en este estudio.",
+    "noVisibilityNote": "Ser responsable de una persona no amplía lo que se puede ver en la aplicación: es una asignación de trabajo.",
+    "visit": "Visita inicial",
+    "noVisits": "Todavía no hay ninguna visita registrada.",
+    "scheduleVisit": "Programar visita",
+    "recordVisit": "Registrar resultado",
+    "saveNotes": "Guardar notas",
+    "when": "Fecha y hora",
+    "location": "Lugar",
+    "outcome": "Resultado",
+    "notes": "Notas operativas",
+    "notesHelp": "Solo logística: lugar, accesos, material. No escribas información clínica ni de salud.",
+    "visitStatus": {
+      "SCHEDULED": "Programada",
+      "COMPLETED": "Realizada",
+      "NO_SHOW": "No se presentó",
+      "CANCELLED": "Cancelada"
+    },
+    "visitAction": {
+      "COMPLETED": "Se realizó",
+      "NO_SHOW": "No se presentó",
+      "CANCELLED": "Cancelada"
+    },
+    "error": {
+      "visitAlreadyOpen": "Ya hay una visita programada para esta persona.",
+      "notesTooLong": "Las notas superan el máximo permitido."
+    }
+  },
+  "nextStep": {
+    "outstandingTitle": "Pendiente de registrar",
+    "RECORD_SCREENING_RESULT": "Registrar resultado de la evaluación",
+    "SCHEDULE_SCREENING": "Programar evaluación",
+    "RECORD_DIGITAL_CONSENT": "Registrar consentimiento digital",
+    "RECORD_ALLOCATION": "Registrar asignación de grupo",
+    "ASSIGN_COHORT": "Asignar a una cohorte",
+    "RECORD_PHYSICAL_CONSENT": "Registrar consentimiento presencial",
+    "SCHEDULE_INITIAL_VISIT": "Programar visita inicial",
+    "ASSIGN_INITIAL_RESPONSIBLE": "Asignar responsable de la visita",
+    "COMPLETE_INITIAL_VISIT": "Registrar resultado de la visita",
+    "IN_FOLLOW_UP": "En seguimiento",
+    "NONE": "Sin pendientes"
+  },
+  "audit": {
+    "title": "Historial de cambios",
+    "note": "Registro de auditoría: qué cambió, cuándo y quién lo hizo. Se muestran los campos modificados, nunca sus valores.",
+    "empty": "Todavía no hay cambios registrados.",
+    "actor": {
+      "STAFF": "Equipo",
+      "SYSTEM": "Sistema",
+      "PARTICIPANT": "Participante"
+    },
+    "action": {
+      "participant.created": "Participante creado",
+      "participant.eligibility_changed": "Cambio de elegibilidad",
+      "participant.enrollment_changed": "Cambio de estado de inclusión",
+      "participant.recruitment_status_changed": "Cambio de estado de captación",
+      "application.submitted": "Solicitud registrada",
+      "application.status_changed": "Cambio de estado de la solicitud",
+      "screening.scheduled": "Evaluación programada",
+      "screening.completed": "Evaluación completada",
+      "screening.closed": "Evaluación cerrada sin resultado",
+      "consent.started": "Consentimiento iniciado",
+      "consent.decision_recorded": "Decisión de consentimiento",
+      "consent.superseded": "Consentimiento sustituido",
+      "randomization.recorded": "Asignación de grupo registrada",
+      "cohort_assignment.created": "Asignada a cohorte",
+      "cohort_assignment.removed": "Retirada de la cohorte",
+      "cohort_assignment.moved": "Cambio de cohorte",
+      "participant_responsibility.assigned": "Responsable asignado",
+      "participant_responsibility.revoked": "Responsable retirado",
+      "initial_visit.scheduled": "Visita inicial programada",
+      "initial_visit.closed": "Visita inicial cerrada",
+      "initial_visit.notes_updated": "Notas de la visita actualizadas"
     }
   }
 }

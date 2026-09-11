@@ -531,6 +531,101 @@ they simply stay there — the history then reads as an unexplained departure
 followed by an unexplained arrival. Both assignment rows remain historical, as
 before.
 
+## D-035 · 2026-09-11 · Per-participant responsibles, the initial visit, and one more free-text field
+
+Founder decision, from the 2026-09-11 meeting.
+
+**Responsibles.** `participant_responsibilities` answers "for this person, who
+runs the initial visit, and who takes or sets up the headset when that is someone
+else". Cohort-level staffing (`cohort_staff`, D-022) is not duplicated — this is
+the narrower question. Historical: revoked, never deleted.
+
+One active holder per role, enforced by a partial unique index. Two people
+simultaneously responsible for the headset is how a headset ends up with nobody
+carrying it, so a new assignment supersedes rather than joins.
+
+**Unlike `cohort_staff`, this grants no visibility.** D-022 flagged that a cohort
+staffing row widens what someone can see precisely because that is unusual; this
+one does not, the audit row says so explicitly (`grantsCohortVisibility: false`),
+and the UI says so in Spanish. Widening access stays a permission change.
+
+**The initial visit.** `initial_visits` is the in-person appointment where the
+physical consent is signed and the equipment is handed over — distinct from
+`screenings` (earlier, about eligibility) and from `cohort_sessions` (later, per
+cohort). Historical in the same way screenings are: a visit that happened is not
+edited into a different outcome, a repeat is a new row, at most one open at a
+time.
+
+**Accepted risk, stated plainly.** This adds the two most open free-text fields
+in the application: a location (200 chars) and operational notes (500). That is a
+real widening of the line D-019 drew for screenings, taken because "aparcar
+detrás, el portero abre a las 9" is logistics, and refusing to store it does not
+delete it — it moves it to WhatsApp where nobody but the sender can see it.
+
+Mitigations, none of which make it *safe*, only small:
+- Capped in the domain, in the server action and in a SQL check constraint.
+- The form says, in Spanish, that clinical information does not go there.
+- **Never copied into an audit snapshot.** The log records `hasNotes`, not the
+  note. The audit table is append-only, so anything written there could not
+  later be erased; this way the text lives in exactly one place.
+- Never logged.
+- Dropped from the audit history's changed-field list entirely.
+
+Revisit if notes start carrying narrative.
+
+## D-036 · 2026-09-11 · The next step names a missing record, never a judgement
+
+`src/domain/next-step.ts` answers "what is outstanding for this person". Every
+value is a statement about a MISSING RECORD: `RECORD_ALLOCATION` means the
+allocation field is empty, not that the participant should be randomized, is
+ready to be, or deserves to be.
+
+The distinction is the whole point. A function that said "ready for
+randomization" would be making a clinical judgement with a friendly label on it
+(non-negotiable 3). Three consequences are visible in the code and locked by
+`tests/next-step.test.ts`:
+
+- **It never reads eligibility.** An INELIGIBLE participant's next step is still
+  whatever record is missing; the eligibility badge beside it is what tells staff
+  not to proceed. The app does not quietly withhold a step because it has formed
+  an opinion. A test asserts the module's source mentions no eligibility value.
+- **It never invents a requirement.** A physical consent is "missing" only where
+  `requiresPhysicalConsent` says the arm signs one, and `null` (not yet
+  allocated) is never read as `false`.
+- **Only two steps get visual weight**, and neither ranks a participant: a booked
+  visit with no outcome, and a booked visit with nobody running it. Those fail
+  silently; everything else is simply work not yet done.
+
+It is computed only for a viewer holding both `screening.read` and
+`consent.read`. A step derived from a partial view would be a confident, wrong
+instruction.
+
+## D-037 · 2026-09-11 · The audit log becomes readable, in a redacted form
+
+The audit log has been written since Phase 0, but nothing in the product could
+read it back, which made "consultar el historial de cambios relevantes" a
+database task. `src/services/audit-trail.ts` is that read and only that read — it
+contains no insert, update or delete.
+
+Audit rows are keyed by the entity they changed, so "this participant's history"
+means the participant plus every screening, consent, randomization, cohort
+assignment, responsibility and visit belonging to them. Those ids are gathered
+and matched in one query.
+
+**What is shown: the action, when, who, and the NAMES of changed fields. Not
+their values.** `before_json` / `after_json` can carry contact fields on rows
+written by earlier phases (research-data-boundaries, open item 4). Sensitive
+names are dropped from the list entirely rather than shown redacted: "email ●●●"
+still tells the reader an email was touched, which in a study this small is
+itself informative.
+
+Snapshot values are reachable through `includeSnapshots`, which the participant
+panel deliberately does not pass. Exposing them carries its own retention
+question, and a panel that quietly showed them would settle that question by
+accident.
+
+Access requires `audit.read` — held by ADMIN and STUDY_MANAGER today.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -570,6 +665,10 @@ before.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Should the visit note be visible to every role that can read a participant, or
+  gated separately? It is the most open free-text field in the app (D-035).
+- Should audit snapshot VALUES ever be shown in the product, and under what
+  retention rule? Nothing shows them today (D-037).
 - Is ACTIVE the right moment to check cohort size, or should PREPARATION also be
   checked? (D-033)
 - Should an under-sized cohort that was activated with an override raise an

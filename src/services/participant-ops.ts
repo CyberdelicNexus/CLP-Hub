@@ -1,20 +1,27 @@
 import "server-only";
-import { and, count, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
+  cohorts,
   consentScopes,
   consents,
   eligibilityReasons,
+  participantCohortAssignments,
+  randomizations,
+  studyArms,
   participantContacts,
   participants,
   screenings,
   type Consent,
   type Screening,
 } from "@/db/schema";
+import type { ParticipantSnapshot } from "@/domain/next-step";
+import { isVisitStatus } from "@/domain/responsibility";
 import {
   canCarryScopes,
   canTransitionConsent,
+  isConsentType,
   enrollmentStatusForConsent,
   scopesFor,
   validateScopes,
@@ -102,21 +109,66 @@ export interface ParticipantListRow {
   createdAt: Date;
   /** Only populated when the caller holds participants.contact.read. */
   fullName: string | null;
+  /** Cohort and arm, for filtering and for the operational columns. */
+  cohortId: string | null;
+  cohortCode: string | null;
+  armId: string | null;
+  armCode: string | null;
+  /** Everything `nextStep` needs, gathered in the same query. */
+  snapshot: ParticipantSnapshot;
+}
+
+export interface ParticipantFilters {
+  eligibility?: EligibilityStatus;
+  enrollment?: EnrollmentStatus;
+  cohortId?: string;
+  armId?: string;
+  /** Narrow to participants this staff member is responsible for. */
+  responsibleUserId?: string;
 }
 
 /**
- * Participants in a study, newest first. As in Phase 1, contact columns are not
- * selected at all unless the caller may see them.
+ * Participants in a study, newest first.
+ *
+ * As in Phase 1, contact columns are not selected at all unless the caller may
+ * see them. Phase 4d adds the operational picture each row needs to show a next
+ * step, gathered here as correlated subqueries rather than as one query per row
+ * — a list of two hundred participants would otherwise issue two thousand.
+ *
+ * The subqueries read only STATUS, never content: which consent types are in
+ * force, whether an allocation exists, the latest visit's status. No note, no
+ * reason text and no contact field is touched by any of them.
  */
 export async function listParticipants(
   studyId: string,
-  options: {
+  options: ParticipantFilters & {
     includeContact: boolean;
-    eligibility?: EligibilityStatus;
     limit?: number;
   },
 ): Promise<ParticipantListRow[]> {
-  const { includeContact, eligibility, limit = 200 } = options;
+  const { includeContact, limit = 200 } = options;
+
+  const conditions = [eq(participants.studyId, studyId)];
+  if (options.eligibility) {
+    conditions.push(eq(participants.eligibilityStatus, options.eligibility));
+  }
+  if (options.enrollment) {
+    conditions.push(eq(participants.enrollmentStatus, options.enrollment));
+  }
+  if (options.cohortId) {
+    conditions.push(sql`${participantCohortAssignments.cohortId} = ${options.cohortId}`);
+  }
+  if (options.armId) {
+    conditions.push(sql`${randomizations.armId} = ${options.armId}`);
+  }
+  if (options.responsibleUserId) {
+    conditions.push(sql`exists (
+      select 1 from participant_responsibilities pr
+      where pr.participant_id = ${participants.id}
+        and pr.user_id = ${options.responsibleUserId}
+        and pr.revoked_at is null
+    )`);
+  }
 
   const rows = await getDb()
     .select({
@@ -127,18 +179,77 @@ export async function listParticipants(
       enrollmentStatus: participants.enrollmentStatus,
       createdAt: participants.createdAt,
       fullName: includeContact ? participantContacts.fullName : sql<null>`null`,
+      cohortId: cohorts.id,
+      cohortCode: cohorts.code,
+      armId: studyArms.id,
+      armCode: studyArms.code,
+      requiresPhysicalConsent: studyArms.requiresPhysicalConsent,
+      hasScreeningResult: sql<boolean>`exists (
+        select 1 from screenings s
+        where s.participant_id = ${participants.id} and s.result is not null
+      )`,
+      hasOpenScreening: sql<boolean>`exists (
+        select 1 from screenings s
+        where s.participant_id = ${participants.id} and s.status = 'SCHEDULED'
+      )`,
+      activeConsentTypes: sql<string[]>`coalesce((
+        select array_agg(distinct c.consent_type::text) from consents c
+        where c.participant_id = ${participants.id} and c.status = 'CONSENTED'
+      ), '{}')`,
+      initialVisitStatus: sql<string | null>`(
+        select v.status::text from initial_visits v
+        where v.participant_id = ${participants.id}
+        order by v.created_at desc limit 1
+      )`,
+      hasInitialSessionResponsible: sql<boolean>`exists (
+        select 1 from participant_responsibilities pr
+        where pr.participant_id = ${participants.id}
+          and pr.role = 'INITIAL_SESSION'
+          and pr.revoked_at is null
+      )`,
     })
     .from(participants)
     .leftJoin(participantContacts, eq(participantContacts.participantId, participants.id))
-    .where(
-      eligibility
-        ? and(eq(participants.studyId, studyId), eq(participants.eligibilityStatus, eligibility))
-        : eq(participants.studyId, studyId),
+    .leftJoin(
+      participantCohortAssignments,
+      and(
+        eq(participantCohortAssignments.participantId, participants.id),
+        isNull(participantCohortAssignments.removedAt),
+      ),
     )
+    .leftJoin(cohorts, eq(cohorts.id, participantCohortAssignments.cohortId))
+    .leftJoin(randomizations, eq(randomizations.participantId, participants.id))
+    .leftJoin(studyArms, eq(studyArms.id, randomizations.armId))
+    .where(and(...conditions))
     .orderBy(desc(participants.createdAt))
     .limit(limit);
 
-  return rows as ParticipantListRow[];
+  return rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    recruitmentStatus: r.recruitmentStatus,
+    eligibilityStatus: r.eligibilityStatus,
+    enrollmentStatus: r.enrollmentStatus,
+    createdAt: r.createdAt,
+    fullName: r.fullName,
+    cohortId: r.cohortId,
+    cohortCode: r.cohortCode,
+    armId: r.armId,
+    armCode: r.armCode,
+    snapshot: {
+      enrollmentStatus: r.enrollmentStatus,
+      hasScreeningResult: Boolean(r.hasScreeningResult),
+      hasOpenScreening: Boolean(r.hasOpenScreening),
+      activeConsentTypes: (r.activeConsentTypes ?? []).filter(isConsentType),
+      // Null until an allocation exists, which is what keeps `nextStep` from
+      // asserting a physical consent is missing before anyone knows the arm.
+      requiresPhysicalConsent: r.armId ? Boolean(r.requiresPhysicalConsent) : null,
+      hasAllocation: Boolean(r.armId),
+      hasCohort: Boolean(r.cohortId),
+      initialVisitStatus: isVisitStatus(r.initialVisitStatus) ? r.initialVisitStatus : null,
+      hasInitialSessionResponsible: Boolean(r.hasInitialSessionResponsible),
+    },
+  }));
 }
 
 export interface ParticipantDetail {

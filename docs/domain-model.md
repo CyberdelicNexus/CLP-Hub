@@ -125,11 +125,26 @@ migration header for the impact.
 New service: `transferToCohort`, which moves a participant between cohorts in one
 transaction and audits it as `cohort_assignment.moved`.
 
+## Implemented (Phase 4d · migration 0010)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `participant_responsibilities` | Who runs the initial visit, and who handles the headset | Historical; one active holder per role. Grants **no** extra visibility, unlike `cohort_staff` (D-035) |
+| `initial_visits` | The in-person visit where the physical consent is signed and equipment handed over | Historical; one open at a time. Carries the app's only two open free-text fields, both capped and never audited by content (D-035) |
+
+Added enums: `responsibility_role`, `visit_status`.
+
+New pure module `src/domain/next-step.ts`: what record is MISSING for a
+participant, never a judgement about them (D-036). New read service
+`src/services/audit-trail.ts`: the audit log, redacted to field names (D-037).
+
+Participants can now be filtered by eligibility, enrollment, cohort, arm and
+responsible, and the list shows each participant's next step.
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 4d Responsibles and initial visit | `participant_responsibilities`, `initial_visits` |
 | 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |
@@ -153,6 +168,8 @@ Transitions of eligibility, consent, randomization and withdrawal are explicit s
 - Attendance: EXPECTED, ATTENDED, LATE, ABSENT, EXCUSED, TECHNICAL_FAILURE, WITHDRAWN (TECHNICAL_FAILURE ≠ ABSENT)
 - Consent status: PENDING, CONSENTED, DECLINED, WITHDRAWN, SUPERSEDED
 - Consent type: DIGITAL, PHYSICAL (D-032)
+- Responsibility role: INITIAL_SESSION, VR_EQUIPMENT (D-035)
+- Visit status: SCHEDULED, COMPLETED, NO_SHOW, CANCELLED (D-035)
 - Device: AVAILABLE, RESERVED, PREPARING, SHIPPED, DELIVERED, ACTIVE, RETURN_REQUESTED, RETURN_IN_TRANSIT, RETURNED, CLEANING, MAINTENANCE
 - VR readiness: READY, NOT_READY, NEEDS_SUPPORT (explicit, reported by staff on the participant's behalf or via a public form — never inferred)
 - Communication status: QUEUED, SENT, DELIVERED, FAILED, CANCELLED, SKIPPED

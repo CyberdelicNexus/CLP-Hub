@@ -20,6 +20,7 @@ import {
 } from "@/domain/session";
 import { CONTENT_STATUSES, CONTENT_TYPES } from "@/domain/content";
 import { ELIGIBILITY_REASON_CATEGORIES } from "@/domain/eligibility-reason";
+import { RESPONSIBILITY_ROLES, VISIT_STATUSES } from "@/domain/responsibility";
 import {
   INTAKE_TARGETS,
   INTEGRATION_MODES,
@@ -68,3 +69,7 @@ export const integrationModeEnum = pgEnum("integration_mode", INTEGRATION_MODES)
 
 // Consent types and scopes (Phase 4b, migration 0008)
 export const consentTypeEnum = pgEnum("consent_type", CONSENT_TYPES);
+
+// Responsibles and the initial visit (Phase 4d, migration 0010)
+export const responsibilityRoleEnum = pgEnum("responsibility_role", RESPONSIBILITY_ROLES);
+export const visitStatusEnum = pgEnum("visit_status", VISIT_STATUSES);

@@ -10,3 +10,4 @@ export * from "./cohorts";
 export * from "./sessions";
 export * from "./content";
 export * from "./intake";
+export * from "./participant-care";

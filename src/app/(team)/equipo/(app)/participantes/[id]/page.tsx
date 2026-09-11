@@ -20,7 +20,16 @@ import {
   type ConsentStatus,
 } from "@/domain/consent";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { NextStepBadge } from "@/components/team/next-step-badge";
+import { nextStep, outstandingSteps } from "@/domain/next-step";
 import { ENROLLMENT_TRANSITIONS } from "@/domain/participant-state";
+import {
+  listInitialVisits,
+  listResponsibleCandidates,
+  listResponsibles,
+} from "@/services/participant-care";
+import { AuditPanel } from "./audit-panel";
+import { CarePanel } from "./care-panel";
 import {
   describeScopes,
   getParticipantDetail,
@@ -92,6 +101,17 @@ export default async function ParticipantDetailPage({
   // Loaded for any consent viewer: a recorded authorization must still read as
   // words once the scope that named it has been retired.
   const scopes = includeConsent ? await listConsentScopes(ctx.study.id) : [];
+
+  // Responsibles and the initial visit are operational, so they follow
+  // participants.read rather than a permission of their own. Naming a
+  // responsible grants no visibility, so there is nothing extra to gate.
+  const [responsibles, visits, responsibleCandidates] = await Promise.all([
+    listResponsibles(id),
+    listInitialVisits(id),
+    ctx.permissions.has("participants.manage")
+      ? listResponsibleCandidates(ctx.study.id)
+      : Promise.resolve([]),
+  ]);
   const canManageConsent = ctx.permissions.has("consent.manage");
   const canManageParticipant = ctx.permissions.has("participants.manage");
   const canReadRandomization = ctx.permissions.has("randomization.read");
@@ -132,6 +152,33 @@ export default async function ParticipantDetailPage({
       })
     : [];
 
+  /**
+   * The next MISSING RECORD, not a judgement about the person. The domain
+   * enforces that distinction; see src/domain/next-step.ts.
+   *
+   * Screening and consent are gated by their own permissions, so a viewer
+   * without them would compute a next step from a partial picture and be told
+   * something false. It is therefore computed only when both are visible.
+   */
+  const canSeeWholePicture = includeScreening && includeConsent;
+  const snapshot = canSeeWholePicture
+    ? {
+        enrollmentStatus: participant.enrollmentStatus,
+        hasScreeningResult: screenings.some((sc) => sc.result !== null),
+        hasOpenScreening: Boolean(openScreening),
+        activeConsentTypes: activeConsents
+          .filter((e) => e.consent?.status === "CONSENTED")
+          .map((e) => e.type),
+        requiresPhysicalConsent: placement?.randomization?.requiresPhysicalConsent ?? null,
+        hasAllocation: Boolean(placement?.randomization),
+        hasCohort: Boolean(placement?.cohort),
+        initialVisitStatus: visits[0]?.status ?? null,
+        hasInitialSessionResponsible: responsibles.some((r) => r.role === "INITIAL_SESSION"),
+      }
+    : null;
+  const step = snapshot ? nextStep(snapshot) : null;
+  const outstanding = snapshot ? outstandingSteps(snapshot) : [];
+
   const errorLabels = {
     forbidden: t("common.noAccess"),
     invalid: t("participants.error.invalid"),
@@ -142,6 +189,11 @@ export default async function ParticipantDetailPage({
     cohortClosed: t("cohorts.error.cohortClosed"),
     notFound: t("participants.error.notFound"),
     failed: t("participants.error.failed"),
+    visitAlreadyOpen: t("care.error.visitAlreadyOpen"),
+    notesTooLong: t("care.error.notesTooLong"),
+    armMismatch: t("cohorts.error.armMismatch"),
+    armNotRecorded: t("cohorts.error.armNotRecorded"),
+    sameCohort: t("cohorts.error.sameCohort"),
   };
   const formBase = { submit: t("common.save"), submitting: t("common.loading"), errors: errorLabels };
 
@@ -185,6 +237,7 @@ export default async function ParticipantDetailPage({
               label={t(`participants.enrollment.${participant.enrollmentStatus}`)}
             />
           ) : null}
+          {step ? <NextStepBadge step={step} label={t(`nextStep.${step}`)} /> : null}
         </div>
       </header>
 
@@ -551,6 +604,21 @@ export default async function ParticipantDetailPage({
             </Card>
           ) : null}
 
+          {outstanding.length > 1 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("nextStep.outstandingTitle")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {outstanding.map((os) => (
+                    <li key={os}>{t(`nextStep.${os}`)}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {canManageParticipant && enrollmentOptions.length > 0 ? (
             <Card>
               <CardHeader>
@@ -567,6 +635,25 @@ export default async function ParticipantDetailPage({
           ) : null}
         </div>
       </div>
+
+      <CarePanel
+        participantId={participant.id}
+        responsibles={responsibles}
+        visits={visits}
+        candidates={responsibleCandidates}
+        canManage={canManageParticipant}
+        timezone={ctx.study.timezone}
+        formBase={formBase}
+      />
+
+      {/* Reading the audit log needs its own permission; writing it never did. */}
+      {ctx.permissions.has("audit.read") ? (
+        <AuditPanel
+          studyId={ctx.study.id}
+          participantId={participant.id}
+          timezone={ctx.study.timezone}
+        />
+      ) : null}
     </div>
   );
 }

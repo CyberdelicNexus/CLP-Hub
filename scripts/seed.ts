@@ -1065,6 +1065,86 @@ async function main() {
       });
     }
 
+    // One responsible and one booked initial visit, so the Phase 4d panel has
+    // something real to show. Notes are logistics, never clinical.
+    const [demoEligible] = await db
+      .select({ id: schema.participants.id, code: schema.participants.code })
+      .from(schema.participants)
+      .where(
+        and(
+          eq(schema.participants.studyId, study.id),
+          eq(schema.participants.externalRef, DEMO_QUALTRICS_INTAKE[0].externalRef),
+        ),
+      )
+      .limit(1);
+
+    const coordinatorId = staffIds.get("STUDY_MANAGER");
+    if (demoEligible && coordinatorId) {
+      const [alreadyResponsible] = await db
+        .select({ id: schema.participantResponsibilities.id })
+        .from(schema.participantResponsibilities)
+        .where(
+          and(
+            eq(schema.participantResponsibilities.participantId, demoEligible.id),
+            isNull(schema.participantResponsibilities.revokedAt),
+          ),
+        )
+        .limit(1);
+
+      if (!alreadyResponsible) {
+        await db.transaction(async (tx) => {
+          const [row] = await tx
+            .insert(schema.participantResponsibilities)
+            .values({
+              studyId: study.id,
+              participantId: demoEligible.id,
+              role: "INITIAL_SESSION",
+              userId: coordinatorId,
+            })
+            .returning({ id: schema.participantResponsibilities.id });
+
+          await recordAuditEvent(tx, {
+            studyId: study.id,
+            actor: { type: "SYSTEM" },
+            action: "participant_responsibility.assigned",
+            entityType: "participant_responsibility",
+            entityId: row.id,
+            after: { role: "INITIAL_SESSION", userId: coordinatorId, participantCode: demoEligible.code },
+            metadata: { source: "seed", demo: true, grantsCohortVisibility: false },
+          });
+
+          const [visit] = await tx
+            .insert(schema.initialVisits)
+            .values({
+              studyId: study.id,
+              participantId: demoEligible.id,
+              status: "SCHEDULED",
+              scheduledAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+              location: "Sala Demo 1 (SINTÉTICA)",
+              notes: "Nota sintética de logística. Sin información clínica.",
+              recordedBy: coordinatorId,
+            })
+            .returning({ id: schema.initialVisits.id });
+
+          await recordAuditEvent(tx, {
+            studyId: study.id,
+            actor: { type: "SYSTEM" },
+            action: "initial_visit.scheduled",
+            entityType: "initial_visit",
+            entityId: visit.id,
+            after: {
+              participantCode: demoEligible.code,
+              status: "SCHEDULED",
+              hasLocation: true,
+              hasNotes: true,
+            },
+            metadata: { source: "seed", demo: true },
+          });
+        });
+        console.log(`care    ${demoEligible.code}  responsible + initial visit`);
+      }
+    }
+
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {
     await sqlClient.end();

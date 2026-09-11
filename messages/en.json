@@ -324,7 +324,9 @@
       "eligibility": "Eligibility",
       "enrollment": "Participation",
       "status": "Status",
-      "open": "Open participant"
+      "open": "Open participant",
+      "cohort": "Cohort",
+      "nextStep": "Next step"
     },
     "error": {
       "invalid": "That change is not allowed.",
@@ -350,7 +352,12 @@
     },
     "consentScopes": "Additional authorizations",
     "consentScopesHelp": "Tick only what the person expressly authorized when signing. Nothing is ticked by default.",
-    "consentMissing": "Consent still to be recorded: {types}."
+    "consentMissing": "Consent still to be recorded: {types}.",
+    "filterEnrollment": "Filter by enrollment status",
+    "filterCohort": "Cohort",
+    "filterArm": "Arm",
+    "filterResponsible": "Responsible",
+    "filterAny": "All"
   },
   "screening": {
     "subtitle": "Scheduled screenings still to happen.",
@@ -639,6 +646,93 @@
       "DUPLICATE": "Duplicate",
       "STUDY_CAPACITY": "Study capacity",
       "OTHER": "Other reasons"
+    }
+  },
+  "care": {
+    "title": "Initial visit and responsibles",
+    "responsibles": "Responsibles",
+    "role": {
+      "INITIAL_SESSION": "Responsible for the initial session",
+      "VR_EQUIPMENT": "Responsible for the headset"
+    },
+    "unassigned": "Unassigned",
+    "assign": "Assign",
+    "replace": "Change responsible",
+    "revoke": "Leave unassigned",
+    "person": "Person",
+    "noCandidates": "No staff are available in this study.",
+    "noVisibilityNote": "Being responsible for a person does not widen what you can see in the application: it is a work assignment.",
+    "visit": "Initial visit",
+    "noVisits": "No visit has been recorded yet.",
+    "scheduleVisit": "Schedule visit",
+    "recordVisit": "Record outcome",
+    "saveNotes": "Save notes",
+    "when": "Date and time",
+    "location": "Location",
+    "outcome": "Outcome",
+    "notes": "Operational notes",
+    "notesHelp": "Logistics only: place, access, equipment. Do not write clinical or health information.",
+    "visitStatus": {
+      "SCHEDULED": "Scheduled",
+      "COMPLETED": "Held",
+      "NO_SHOW": "Did not attend",
+      "CANCELLED": "Cancelled"
+    },
+    "visitAction": {
+      "COMPLETED": "It took place",
+      "NO_SHOW": "Did not attend",
+      "CANCELLED": "Cancelled"
+    },
+    "error": {
+      "visitAlreadyOpen": "There is already a visit scheduled for this person.",
+      "notesTooLong": "The notes exceed the maximum length."
+    }
+  },
+  "nextStep": {
+    "outstandingTitle": "Still to record",
+    "RECORD_SCREENING_RESULT": "Record the screening outcome",
+    "SCHEDULE_SCREENING": "Schedule screening",
+    "RECORD_DIGITAL_CONSENT": "Record the digital consent",
+    "RECORD_ALLOCATION": "Record the arm allocation",
+    "ASSIGN_COHORT": "Assign to a cohort",
+    "RECORD_PHYSICAL_CONSENT": "Record the in-person consent",
+    "SCHEDULE_INITIAL_VISIT": "Schedule the initial visit",
+    "ASSIGN_INITIAL_RESPONSIBLE": "Name who runs the visit",
+    "COMPLETE_INITIAL_VISIT": "Record the visit outcome",
+    "IN_FOLLOW_UP": "In follow-up",
+    "NONE": "Nothing outstanding"
+  },
+  "audit": {
+    "title": "Change history",
+    "note": "Audit log: what changed, when, and who did it. Changed field names are shown, never their values.",
+    "empty": "No changes recorded yet.",
+    "actor": {
+      "STAFF": "Staff",
+      "SYSTEM": "System",
+      "PARTICIPANT": "Participant"
+    },
+    "action": {
+      "participant.created": "Participant created",
+      "participant.eligibility_changed": "Eligibility changed",
+      "participant.enrollment_changed": "Enrollment status changed",
+      "participant.recruitment_status_changed": "Recruitment status changed",
+      "application.submitted": "Application recorded",
+      "application.status_changed": "Application status changed",
+      "screening.scheduled": "Screening scheduled",
+      "screening.completed": "Screening completed",
+      "screening.closed": "Screening closed with no outcome",
+      "consent.started": "Consent started",
+      "consent.decision_recorded": "Consent decision",
+      "consent.superseded": "Consent superseded",
+      "randomization.recorded": "Allocation recorded",
+      "cohort_assignment.created": "Assigned to a cohort",
+      "cohort_assignment.removed": "Removed from the cohort",
+      "cohort_assignment.moved": "Moved between cohorts",
+      "participant_responsibility.assigned": "Responsible assigned",
+      "participant_responsibility.revoked": "Responsible stood down",
+      "initial_visit.scheduled": "Initial visit scheduled",
+      "initial_visit.closed": "Initial visit closed",
+      "initial_visit.notes_updated": "Visit notes updated"
     }
   }
 }
