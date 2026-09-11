@@ -904,5 +904,28 @@
       "empty": "El mensaje no puede estar vacío.",
       "failed": "No se pudo completar la operación."
     }
+  },
+  "attention": {
+    "title": "Requiere atención",
+    "empty": "No hay nada pendiente ahora mismo.",
+    "reviewRequired": "{count, plural, one {# participante requiere revisión} other {# participantes requieren revisión}}",
+    "waitingForAllocation": "{count, plural, one {# persona elegible sin asignación de grupo} other {# personas elegibles sin asignación de grupo}}",
+    "cohorts": "Cohortes",
+    "cohortUnder": "Faltan {needed}",
+    "cohortOver": "Excedida",
+    "cohortRemaining": "{remaining} plazas libres",
+    "logistics": "Logística VR",
+    "andMore": "y {count} más",
+    "logisticsStep": {
+      "PREPARE_DEVICE": "Preparar el equipo",
+      "HAND_OVER_OR_SHIP": "Entregar o enviar",
+      "CONFIRM_RECEIPT": "Confirmar recepción",
+      "CONFIRM_SETUP": "Confirmar configuración",
+      "REQUEST_RETURN": "Solicitar devolución",
+      "CONFIRM_RETURN": "Confirmar devolución",
+      "RESOLVE_INCIDENT": "Resolver incidencia",
+      "CLOSE": "Cerrar logística",
+      "NONE": "Sin pendientes"
+    }
   }
 }

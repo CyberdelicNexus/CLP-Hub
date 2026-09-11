@@ -741,6 +741,27 @@ application's reach; it is recorded here as a standing instruction on the
 communications screen and as an open item below, not as a setting this app can
 enforce.
 
+## D-040 · 2026-09-11 · The overview answers "what needs a person today"
+
+The home screen kept counts and one link. It now carries an attention panel that
+gathers, in one place: determinations parked for review, eligible people with no
+allocation recorded, cohorts at the edge of their configured size, and device
+assignments whose step is waiting on somebody.
+
+Three rules it follows:
+
+- **Every row links to where the work is done.** A dashboard that reports a
+  problem without taking you to it gets read once.
+- **Each section is gated by the permission that owns its data**, so a
+  facilitator does not see a logistics queue they cannot act on and a researcher
+  does not see one at all.
+- **Nothing merely in progress appears.** A cohort still filling and a device
+  that left yesterday are not problems. Showing them would make the panel
+  wallpaper, which is the failure mode of every operations dashboard.
+
+It shows counts and codes, never a participant name, even for a viewer entitled
+to read one: this is the screen most likely to be left open on a shared monitor.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.

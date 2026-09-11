@@ -359,12 +359,16 @@ export interface ParticipantOpsCounts {
   screeningPending: number;
   eligible: number;
   enrolled: number;
+  /** Determinations staff parked for a second look. */
+  reviewRequired: number;
+  /** Eligible people with no allocation recorded — the funnel's usual bottleneck. */
+  waitingForAllocation: number;
 }
 
 /** Counts for the overview tiles. Each is a plain fact, not a derived judgement. */
 export async function countParticipantOps(studyId: string): Promise<ParticipantOpsCounts> {
   const db = getDb();
-  const [pending, eligible, enrolled] = await Promise.all([
+  const [pending, eligible, enrolled, review, unallocated] = await Promise.all([
     db
       .select({ n: count() })
       .from(screenings)
@@ -383,12 +387,35 @@ export async function countParticipantOps(studyId: string): Promise<ParticipantO
           inArray(participants.enrollmentStatus, ["ENROLLED", "RANDOMIZED", "COHORT_ASSIGNED"]),
         ),
       ),
+    db
+      .select({ n: count() })
+      .from(participants)
+      .where(
+        and(
+          eq(participants.studyId, studyId),
+          eq(participants.eligibilityStatus, "REVIEW_REQUIRED"),
+        ),
+      ),
+    db
+      .select({ n: count() })
+      .from(participants)
+      .where(
+        and(
+          eq(participants.studyId, studyId),
+          eq(participants.eligibilityStatus, "ELIGIBLE"),
+          sql`not exists (
+            select 1 from randomizations r where r.participant_id = ${participants.id}
+          )`,
+        ),
+      ),
   ]);
 
   return {
     screeningPending: Number(pending[0]?.n ?? 0),
     eligible: Number(eligible[0]?.n ?? 0),
     enrolled: Number(enrolled[0]?.n ?? 0),
+    reviewRequired: Number(review[0]?.n ?? 0),
+    waitingForAllocation: Number(unallocated[0]?.n ?? 0),
   };
 }
 

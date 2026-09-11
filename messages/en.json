@@ -904,5 +904,28 @@
       "empty": "The message cannot be empty.",
       "failed": "The operation could not be completed."
     }
+  },
+  "attention": {
+    "title": "Needs attention",
+    "empty": "Nothing is outstanding right now.",
+    "reviewRequired": "{count, plural, one {# participant needs review} other {# participants need review}}",
+    "waitingForAllocation": "{count, plural, one {# eligible person with no arm allocation} other {# eligible people with no arm allocation}}",
+    "cohorts": "Cohorts",
+    "cohortUnder": "{needed} short",
+    "cohortOver": "Over",
+    "cohortRemaining": "{remaining} places left",
+    "logistics": "VR logistics",
+    "andMore": "and {count} more",
+    "logisticsStep": {
+      "PREPARE_DEVICE": "Prepare the device",
+      "HAND_OVER_OR_SHIP": "Hand over or ship",
+      "CONFIRM_RECEIPT": "Confirm receipt",
+      "CONFIRM_SETUP": "Confirm setup",
+      "REQUEST_RETURN": "Request return",
+      "CONFIRM_RETURN": "Confirm return",
+      "RESOLVE_INCIDENT": "Resolve incident",
+      "CLOSE": "Close logistics",
+      "NONE": "Nothing outstanding"
+    }
   }
 }

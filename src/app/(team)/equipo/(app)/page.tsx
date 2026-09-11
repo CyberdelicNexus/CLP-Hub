@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { countParticipantOps } from "@/services/participant-ops";
 import { countApplicationsByStatus } from "@/services/recruitment";
+import { AttentionPanel } from "./attention";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("team.overview");
@@ -130,6 +131,14 @@ export default async function OverviewPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/*
+        Everything that is actually waiting on a person, in one place and gated
+        per section by the permission that owns the data.
+      */}
+      <div>
+        <AttentionPanel ctx={ctx} />
       </div>
 
       <footer className="space-y-1 text-xs text-muted-foreground">
