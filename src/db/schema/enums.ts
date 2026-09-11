@@ -21,6 +21,7 @@ import {
 import { CONTENT_STATUSES, CONTENT_TYPES } from "@/domain/content";
 import { ELIGIBILITY_REASON_CATEGORIES } from "@/domain/eligibility-reason";
 import { RESPONSIBILITY_ROLES, VISIT_STATUSES } from "@/domain/responsibility";
+import { DEVICE_STATUSES, INCIDENT_KINDS, VR_READINESS_STATES } from "@/domain/logistics";
 import {
   INTAKE_TARGETS,
   INTEGRATION_MODES,
@@ -73,3 +74,8 @@ export const consentTypeEnum = pgEnum("consent_type", CONSENT_TYPES);
 // Responsibles and the initial visit (Phase 4d, migration 0010)
 export const responsibilityRoleEnum = pgEnum("responsibility_role", RESPONSIBILITY_ROLES);
 export const visitStatusEnum = pgEnum("visit_status", VISIT_STATUSES);
+
+// VR logistics (Phase 6, migration 0011)
+export const deviceStatusEnum = pgEnum("device_status", DEVICE_STATUSES);
+export const vrReadinessEnum = pgEnum("vr_readiness", VR_READINESS_STATES);
+export const incidentKindEnum = pgEnum("incident_kind", INCIDENT_KINDS);

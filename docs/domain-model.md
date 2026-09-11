@@ -141,11 +141,24 @@ participant, never a judgement about them (D-036). New read service
 Participants can now be filtered by eligibility, enrollment, cohort, arm and
 responsible, and the list shows each participant's next step.
 
+## Implemented (Phase 6 · migration 0011)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `devices` | Headset inventory | Asset data only. Deactivated, never deleted |
+| `device_assignments` | One device out with one participant | Historical; one open per device and per participant. **No responsible column** and **no next-session column** — both are read from existing tables (D-038) |
+| `device_incidents` | Equipment problems | Equipment only; no category names anything that happened to a person |
+
+Added enums: `device_status`, `vr_readiness`, `incident_kind`.
+
+`readiness` defaults to UNKNOWN and is reported, never inferred (D-003).
+The device lifecycle permits the reversals logistics actually has, unlike the
+strictly-forward cohort lifecycle (D-038).
+
 ## Planned by phase
 
 | Phase | Tables |
 |---|---|
-| 6 VR logistics | `devices`, `device_assignments`, `shipments`, participant VR readiness |
 | 7 Communications | `communication_templates`, `communications`, `broadcasts`, `broadcast_recipients` |
 | 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |
 
@@ -170,8 +183,8 @@ Transitions of eligibility, consent, randomization and withdrawal are explicit s
 - Consent type: DIGITAL, PHYSICAL (D-032)
 - Responsibility role: INITIAL_SESSION, VR_EQUIPMENT (D-035)
 - Visit status: SCHEDULED, COMPLETED, NO_SHOW, CANCELLED (D-035)
-- Device: AVAILABLE, RESERVED, PREPARING, SHIPPED, DELIVERED, ACTIVE, RETURN_REQUESTED, RETURN_IN_TRANSIT, RETURNED, CLEANING, MAINTENANCE
-- VR readiness: READY, NOT_READY, NEEDS_SUPPORT (explicit, reported by staff on the participant's behalf or via a public form — never inferred)
+- Device status: AVAILABLE, RESERVED, PREPARING, SHIPPED, DELIVERED, ACTIVE, RETURN_REQUESTED, RETURN_IN_TRANSIT, RETURNED, CLEANING, MAINTENANCE (D-038)
+- VR readiness: UNKNOWN, READY, NOT_READY, NEEDS_SUPPORT — reported, never inferred (D-003, D-038). UNKNOWN is the default: "nobody has told us" is not "it does not work"
 - Communication status: QUEUED, SENT, DELIVERED, FAILED, CANCELLED, SKIPPED
 - Delivery mode: AUTOMATIC, APPROVAL_REQUIRED, MANUAL (WhatsApp is always MANUAL, D-004)
 

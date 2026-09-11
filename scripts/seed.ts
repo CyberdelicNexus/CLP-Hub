@@ -465,6 +465,16 @@ const DEMO_QUALTRICS_INTAKE: ReadonlyArray<{
   },
 ];
 
+/**
+ * Synthetic VR inventory (Phase 6). Asset codes and models only — a device row
+ * holds nothing about any participant.
+ */
+const DEMO_DEVICES = [
+  { code: "VR-DEMO-01", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0001" },
+  { code: "VR-DEMO-02", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0002" },
+  { code: "VR-DEMO-03", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0003" },
+] as const;
+
 /** Obviously fake applicants. Names and addresses are clearly synthetic. */
 const DEMO_APPLICANTS = [
   {
@@ -1144,6 +1154,19 @@ async function main() {
         console.log(`care    ${demoEligible.code}  responsible + initial visit`);
       }
     }
+
+    // VR inventory (Phase 6). Equipment, not people: obviously fake asset codes
+    // and no participant data on any of these rows.
+    for (const d of DEMO_DEVICES) {
+      await db
+        .insert(schema.devices)
+        .values({ ...d, studyId: study.id })
+        .onConflictDoUpdate({
+          target: [schema.devices.studyId, schema.devices.code],
+          set: { model: d.model, active: true },
+        });
+    }
+    console.log(`devices ${DEMO_DEVICES.length} synthetic headsets`);
 
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {

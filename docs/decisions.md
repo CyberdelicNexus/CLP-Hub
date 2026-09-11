@@ -626,6 +626,58 @@ accident.
 
 Access requires `audit.read` — held by ADMIN and STUDY_MANAGER today.
 
+## D-038 · 2026-09-11 · VR logistics reuses what exists rather than restating it
+
+Phase 6, approved at the 2026-09-11 meeting. `devices`, `device_assignments` and
+`device_incidents` track equipment. Everything here is asset data attached to a
+participant *code*; no column holds anything research-related.
+
+**What is deliberately absent, and why.** The brief asked not to duplicate
+existing entities, and two obvious columns were left out for that reason:
+
+- **No `responsible_user_id` on an assignment.** Who handles a participant's
+  equipment is `participant_responsibilities` with role VR_EQUIPMENT (D-035). A
+  column here would be the same fact written twice, and the two would disagree
+  the first time somebody changed one. The logistics views join to that table, so
+  the dashboard and the participant page cannot contradict each other.
+- **No `next_session_at`.** That is `cohort_sessions` for the participant's
+  cohort, read at display time. Copied onto the assignment it would go stale the
+  moment a session moved.
+
+**Readiness is reported, never inferred (D-003).** The default is UNKNOWN rather
+than NOT_READY, because "nobody has told us" is a different fact from "it does
+not work". NEEDS_SUPPORT is its own value rather than a flavour of NOT_READY, the
+same argument D-024 makes about TECHNICAL_FAILURE: folding them together loses
+the one that requires someone to act. A test asserts the domain module contains
+no telemetry or last-seen inference.
+
+**The device lifecycle goes backwards, unlike the cohort one.** D-023 made the
+cohort lifecycle strictly forward because sessions depend on the stage. Logistics
+is different: shipments get recalled, returns get cancelled because someone kept
+the headset for one more session, devices come back from maintenance to the
+shelf. Refusing those would make staff record something untrue. What *is* refused
+is a jump that skips the physical world — AVAILABLE straight to RETURNED, from
+somewhere it was never sent.
+
+**What logistics refuses, and why each refusal is integrity rather than
+judgement:** a device already out cannot be re-assigned, a participant cannot
+hold two, and an assignment cannot be closed while the device has not come back
+or an incident is still open. The first two are physically impossible and a
+record saying otherwise would make every later figure wrong; the third is the
+mechanism by which a broken headset gets forgotten.
+
+**Incidents are about equipment.** There is no category, and no column, for
+something that happened to a *person* — an adverse event is Category C and
+belongs in the institution's approved system. The form says so in Spanish, the
+description is capped at 500 characters, and its content is never copied into an
+audit snapshot (the D-035 rule). A test asserts no incident kind names a clinical
+concept.
+
+**The logistics screen shows participant codes, never names**, even though the
+LOGISTICS role holds `participants.contact.read`. An address is needed on a
+shipping label, not on a dashboard, and an operations screen listing everyone's
+name is a re-identification surface for anyone walking past it.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -665,6 +717,10 @@ Access requires `audit.read` — held by ADMIN and STUDY_MANAGER today.
   with no admin UI, so only a seed or a direct database change creates one.
 - Should the reason note be visible to every role that can read screening, or
   gated separately? It is the one free-text field near a determination (D-030).
+- Should a participant be able to report VR readiness themselves through a
+  public form, as D-003 anticipated? Only staff can record it today (D-038).
+- What happens to an assignment when a participant withdraws with the headset
+  still out? Nothing closes it automatically.
 - Should the visit note be visible to every role that can read a participant, or
   gated separately? It is the most open free-text field in the app (D-035).
 - Should audit snapshot VALUES ever be shown in the product, and under what

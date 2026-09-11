@@ -11,3 +11,4 @@ export * from "./sessions";
 export * from "./content";
 export * from "./intake";
 export * from "./participant-care";
+export * from "./logistics";

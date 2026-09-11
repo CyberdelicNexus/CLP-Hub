@@ -66,6 +66,19 @@ label that says *that* a criterion was not met, never which. The one free-text
 field, the 280-character single-line note, is the narrow exception — never copied
 into audit snapshots, so it exists in one place and can be erased.
 
+### How Phase 6 holds the line
+
+`devices`, `device_assignments` and `device_incidents` are asset tracking. The
+incident vocabulary names only things that happen to equipment — there is no
+category, and no column, for an adverse event, which is Category C and belongs in
+the institution's approved system. The incident description is capped at 500
+characters, the form says in Spanish that it is about the headset and not the
+person, and its content never reaches an audit snapshot.
+
+The logistics screen shows participant codes rather than names, even for the
+LOGISTICS role which may read contact data: an address is needed on a shipping
+label, not on a dashboard.
+
 ## Explicit non-features
 
 - No randomization algorithm. The `RandomizationProvider` interface exists in
@@ -77,7 +90,9 @@ into audit snapshots, so it exists in one place and can be erased.
   no source of randomness.
 - No eligibility logic. Staff record results produced elsewhere.
 - No AI decisions, no AI participant chat, no therapeutic advice.
-- No inferred readiness or behavioural analytics.
+- No inferred readiness or behavioural analytics. `vr_readiness` defaults to
+  UNKNOWN and is only ever set by a person reporting it (D-038); a test asserts
+  `src/domain/logistics.ts` contains no telemetry or last-seen logic.
 - **No Qualtrics data transfer.** No HTTP client, credential, webhook or
   scheduled pull exists in this repository. `tests/intake.test.ts` asserts that
   `src/domain/intake.ts` contains none, the same absolute-guarantee argument
