@@ -1,0 +1,377 @@
+{
+  "revealVars": {
+    "d": "780.0px",
+    "x": "720.0px"
+  },
+  "revealClosedD": "780.0px",
+  "toggleClass": "hero__media is-revealed",
+  "gateD": "0.0px",
+  "stageAt30": {
+    "p": "0.3000",
+    "vids": [
+      {
+        "k": "1",
+        "paused": true,
+        "t": 0.27
+      },
+      {
+        "k": "2",
+        "paused": false,
+        "t": 1.55
+      },
+      {
+        "k": "3",
+        "paused": true,
+        "t": 0
+      },
+      {
+        "k": "4",
+        "paused": true,
+        "t": 0
+      },
+      {
+        "k": "5",
+        "paused": true,
+        "t": 0
+      },
+      {
+        "k": "6",
+        "paused": true,
+        "t": 0
+      }
+    ],
+    "texts": [
+      {
+        "name": "Preparación",
+        "op": "0"
+      },
+      {
+        "name": "Orientación",
+        "op": "0"
+      },
+      {
+        "name": "Cuerpos de Luz",
+        "op": "1"
+      },
+      {
+        "name": "Vida",
+        "op": "0"
+      },
+      {
+        "name": "Más Allá del Cuerpo",
+        "op": "0"
+      },
+      {
+        "name": "Ofrenda",
+        "op": "0"
+      },
+      {
+        "name": "Integración Grupal",
+        "op": "0"
+      }
+    ]
+  },
+  "stageAt64": [
+    {
+      "k": "1",
+      "paused": true
+    },
+    {
+      "k": "2",
+      "paused": true
+    },
+    {
+      "k": "3",
+      "paused": true
+    },
+    {
+      "k": "4",
+      "paused": false
+    },
+    {
+      "k": "5",
+      "paused": true
+    },
+    {
+      "k": "6",
+      "paused": true
+    }
+  ],
+  "joinColors": [
+    {
+      "a": "clamp(0, min(calc((0.4999 - -1) / .08), calc((0.36 - 0.4999) / .08)), 1)",
+      "label": "oklab(0.794614 -0.0136044 0.00314671)",
+      "num": "oklab(0.657052 -0.0174897 0.00236869)"
+    },
+    {
+      "a": "clamp(0, min(calc((0.4999 - 0.3) / .08), calc((0.7 - 0.4999) / .08)), 1)",
+      "label": "oklab(0.966206 -0.00527394 0.00669074)",
+      "num": "oklab(0.836509 -0.0955042 -0.0120263)"
+    },
+    {
+      "a": "clamp(0, min(calc((0.4999 - 0.64) / .08), calc((2 - 0.4999) / .08)), 1)",
+      "label": "oklab(0.794614 -0.0136044 0.00314671)",
+      "num": "oklab(0.657052 -0.0174897 0.00236869)"
+    }
+  ],
+  "joinPinned": "sticky",
+  "splitAtRest": "clamp(0, calc((1.0000 - .22) / .3), 1)",
+  "heartT": "clamp(0, calc((1.0000 - .26) / .3), 1)",
+  "lightSizes": {
+    "seamLight": [
+      361.98480224609375,
+      361.984375
+    ],
+    "token": "clamp(15rem, 25vw, 26.25rem)"
+  },
+  "branches": [
+    {
+      "w": 144,
+      "h": 144,
+      "x": 440,
+      "y": -1425,
+      "op": "1"
+    },
+    {
+      "w": 144,
+      "h": 144,
+      "x": 856,
+      "y": -1425,
+      "op": "1"
+    }
+  ],
+  "links": [
+    {
+      "href": "#inicio",
+      "text": "aNUma",
+      "ok": true
+    },
+    {
+      "href": "#porque",
+      "text": "El estudio",
+      "ok": true
+    },
+    {
+      "href": "#incorporarse",
+      "text": "Participar",
+      "ok": true
+    },
+    {
+      "href": "#elegibilidad",
+      "text": "Preguntas",
+      "ok": true
+    },
+    {
+      "href": "#invitacion",
+      "text": "Comprobar si puedo participar",
+      "ok": true
+    },
+    {
+      "href": "#porque",
+      "text": "Conocer el estudio",
+      "ok": true
+    },
+    {
+      "href": "#invitacion",
+      "text": "Comprobar si puedo participar",
+      "ok": true
+    },
+    {
+      "href": "https://example.com/demo-screening-sintetico",
+      "text": "Comprobar si puedo participar",
+      "ok": true
+    },
+    {
+      "href": "#contacto",
+      "text": "Contactar con el equipo",
+      "ok": true
+    },
+    {
+      "href": "#porque",
+      "text": "Información del estudio",
+      "ok": true
+    },
+    {
+      "href": "#contacto",
+      "text": "Contacto",
+      "ok": true
+    },
+    {
+      "href": "/equipo/login",
+      "text": "Acceso del equipo",
+      "ok": true
+    }
+  ],
+  "overflow1440": {
+    "scrollWidth": 1440,
+    "innerWidth": 1440
+  },
+  "tabOrder": [
+    {
+      "tag": "A",
+      "text": "aNUma",
+      "inView": true,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "El estudio",
+      "inView": true,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Participar",
+      "inView": true,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Preguntas",
+      "inView": true,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Comprobar si puedo participar",
+      "inView": true,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Conocer el estudio",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Comprobar si puedo participar",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Revelar a las personas",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Qué implica participar",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Posibles beneficios y riesgos",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Qué recibe cada grupo",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Uso de las gafas de realidad vir",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Participación voluntaria y retir",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "SUMMARY",
+      "text": "Contacto y registro del estudio",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    },
+    {
+      "tag": "A",
+      "text": "Comprobar si puedo participar",
+      "inView": false,
+      "opacity": "1",
+      "outline": "solid"
+    }
+  ],
+  "faqOpen": true,
+  "errors1440": [],
+  "overflow1024": {
+    "scrollWidth": 1024,
+    "innerWidth": 1024
+  },
+  "pinnedDisplay1024": "block",
+  "errors1024": [],
+  "overflow768": {
+    "scrollWidth": 768,
+    "innerWidth": 768
+  },
+  "pinnedDisplay768": "none",
+  "errors768": [],
+  "overflowzoom200": {
+    "scrollWidth": 720,
+    "innerWidth": 720
+  },
+  "pinnedDisplayzoom200": "none",
+  "errorszoom200": [],
+  "overflow390": {
+    "scrollWidth": 390,
+    "innerWidth": 390
+  },
+  "touchHoldD": "192.5px",
+  "touchReleaseD": "0.0px",
+  "errors390": [],
+  "reduced": {
+    "pinned": "none",
+    "split": "1",
+    "heart": "1",
+    "fireAnim": "none",
+    "hintDisplay": "none"
+  },
+  "noJs": {
+    "pinned": "none",
+    "stacked": "block",
+    "cueOpacity": "1",
+    "headings": [
+      "¿Puede una experiencia compart",
+      "Mirar de frente lo que nos tra",
+      "Una experiencia guiada para ex",
+      "Etapas del Programa",
+      "Cómo incorporarse al estudio",
+      "La asignación se realiza al az",
+      "¿Este estudio puede ser para m",
+      "Decide con toda la información"
+    ]
+  },
+  "filmFailure": {
+    "note": "El vídeo no se ha podido cargar. La descripción de abajo resume su contenido.",
+    "playing": false,
+    "posterVisible": "1"
+  }
+}

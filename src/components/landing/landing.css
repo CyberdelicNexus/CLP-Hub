@@ -1,0 +1,784 @@
+/* ============================================================================
+   aNUma Clear Light recruitment landing page.
+
+   scrollcraft.css (vendored, unmodified) is the floor: tokens, devices, browser
+   surfaces, reduced motion. This file themes it with the RCT design-system
+   tokens (docs/02_DESIGN_SYSTEM_RCT_ES.md) and styles the page's own markup.
+   Nothing here restyles .sc-stage, .sc-copy or a [data-sc-*] device, with one
+   deliberate exception noted at "resilience".
+
+   One locked dark theme. Living Teal is the only interface accent. Spectral
+   colour lives only inside the light bodies and the footage.
+   ========================================================================== */
+
+.cl {
+  /* --- scrollcraft colour roles ---------------------------------------- */
+  --sc-canvas: #080c0d;
+  --sc-surface: #121b1d;
+  --sc-ink: #f2f5ef;
+  --sc-ink-soft: #b4bfba;
+  --sc-accent: #79ded4;
+  --sc-accent-ink: #071514;
+  --sc-shadow-color: 187 40% 4%;
+
+  /* --- page tokens ------------------------------------------------------ */
+  --cl-muted: #879590;
+  --cl-accent-strong: #9ce9df;
+  --cl-accent-soft: color-mix(in oklab, #79ded4 62%, #b4bfba);
+  --cl-line: rgb(212 232 225 / 0.14);
+  --cl-line-strong: rgb(212 232 225 / 0.26);
+  --cl-caution: #edbd7c;
+  --cl-radius: 16px;
+  --cl-pill: 999px;
+  --cl-nav-h: 68px;
+  --cl-container: 82.5rem;
+  --cl-ease-presence: cubic-bezier(0.16, 1, 0.3, 1);
+  --cl-ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
+
+  /* The one travelling-light diameter shared by sections 2 and 3. */
+  --cl-light: clamp(15rem, 25vw, 26.25rem);
+  --cl-light-md: clamp(6.5rem, 10vw, 9rem);
+  --cl-light-sm: clamp(2.4rem, 3.4vw, 3.2rem);
+
+  --sc-font-display: var(--font-manrope), "Manrope", "Segoe UI", system-ui, sans-serif;
+  --sc-font-text: var(--font-manrope), "Manrope", "Segoe UI", system-ui, sans-serif;
+  --sc-font-mono: var(--font-plex-mono), "IBM Plex Mono", Consolas, monospace;
+  --sc-maxw: var(--cl-container);
+  --sc-gutter: clamp(1.25rem, 4vw, 4rem);
+  --sc-section: clamp(5.5rem, 9vw, 8.5rem);
+
+  color-scheme: dark;
+  background: var(--sc-canvas);
+  color: var(--sc-ink);
+  font-family: var(--sc-font-text);
+  width: 100%;
+  position: relative;
+  overflow-x: clip;
+}
+/* The scrollcraft body ground reads the :root token; keep it in the same
+   family so nothing behind the page ever shows a different black. */
+body:has(> .cl) { background: #080c0d; }
+@media (max-width: 860px) { .cl { --cl-nav-h: 60px; } }
+
+/* --------------------------------------------------------------- resilience
+   scrollcraft.css pre-paints every cue at opacity 0 so nothing flashes before
+   the engine's first read. Until the engine has actually mounted (it adds
+   .sc-ready to <html>) that state must not hide content from a reader whose
+   JavaScript is off, blocked or still loading. Once mounted, the engine writes
+   inline opacity and this rule no longer matters. */
+html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
+
+/* Pinned scrollytelling only where it can be experienced: a wide viewport,
+   motion allowed, scripting on. Everywhere else the stacked document-flow
+   variant carries the same information. */
+.cl-pinned { display: none; }
+@media (min-width: 861px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .cl-pinned { display: block; }
+  .cl-stacked { display: none; }
+}
+
+.cl-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.cl-wrap { width: 100%; max-width: var(--cl-container); margin-inline: auto; padding-inline: var(--sc-gutter); }
+
+/* ------------------------------------------------------------------ type */
+.cl h1, .cl h2, .cl h3 { font-family: var(--sc-font-display); font-weight: 500; margin: 0; text-wrap: balance; }
+.cl p { margin: 0; text-wrap: pretty; }
+.cl-title { font-size: clamp(2.1rem, 3.9vw, 3.6rem); line-height: 1.04; letter-spacing: -0.03em; }
+.cl-title--md { font-size: clamp(1.9rem, 3.2vw, 3rem); line-height: 1.06; letter-spacing: -0.025em; }
+.cl-lead { font-size: clamp(1.05rem, 1.3vw, 1.25rem); line-height: 1.6; color: var(--sc-ink-soft); }
+.cl-body { font-size: 1rem; line-height: 1.65; color: var(--sc-ink-soft); }
+.cl-eyebrow {
+  font-family: var(--sc-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cl-accent-soft);
+}
+.cl-mono { font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cl-muted); }
+
+/* Missing approved content. Development only (src/components/landing/missing.tsx). */
+.missing {
+  display: inline-block;
+  font-family: var(--sc-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cl-caution);
+  border: 1px dashed color-mix(in oklab, var(--cl-caution) 55%, transparent);
+  border-radius: 6px;
+  padding: 0.35em 0.6em;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+/* --------------------------------------------------------------- controls */
+.cl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 0 1.75rem;
+  border-radius: var(--cl-pill);
+  background: var(--sc-accent);
+  color: var(--sc-accent-ink);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 0;
+  cursor: pointer;
+  transition: transform var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.cl-btn:hover { background: var(--cl-accent-strong); transform: translateY(-1px); }
+.cl-btn:active { transform: scale(0.98); }
+.cl-btn[aria-disabled="true"] { background: var(--sc-surface); color: var(--cl-muted); cursor: not-allowed; }
+
+.cl-link {
+  color: var(--sc-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--sc-accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.35em;
+  padding: 0.5rem 0;
+  transition: color var(--sc-d-fast) var(--sc-ease-out), text-decoration-color var(--sc-d-fast) var(--sc-ease-out);
+}
+.cl-link:hover { color: var(--cl-accent-strong); text-decoration-color: var(--cl-accent-strong); }
+.cl-link:active { transform: translateY(1px); }
+
+.cl-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: var(--cl-pill);
+  border: 1px solid var(--cl-line-strong);
+  background: color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+  color: var(--sc-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.cl-ghost:hover { border-color: var(--sc-accent); }
+.cl-ghost:active { transform: scale(0.98); }
+.cl-ghost[aria-pressed="true"] { border-color: var(--sc-accent); background: color-mix(in oklab, var(--sc-accent) 12%, var(--sc-canvas)); }
+
+/* ----------------------------------------------------------------- signal
+   The living light. One component for every appearance on the page; only the
+   diameter token and position change. Warm cream at the heart, blue-violet haze
+   around it, deliberately soft. Two overlapping haze gradients keep the edge
+   irregular rather than a perfect disc. */
+.signal {
+  position: absolute;
+  width: var(--d, var(--cl-light));
+  height: var(--d, var(--cl-light));
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(255 240 222 / 0.98) 0, rgb(255 226 196 / 0.9) 3.5%, rgb(240 196 172 / 0.55) 8%, rgb(178 128 236 / 0.34) 17%, rgb(120 78 214 / 0.16) 30%, transparent 46%),
+    radial-gradient(58% 52% at 46% 55%, rgb(112 70 206 / 0.34) 0, rgb(96 58 190 / 0.18) 40%, transparent 72%),
+    radial-gradient(54% 58% at 56% 45%, rgb(122 80 214 / 0.3) 0, rgb(90 54 176 / 0.14) 42%, transparent 74%);
+  filter: blur(calc(var(--d, var(--cl-light)) * 0.028));
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .signal--breath { animation: cl-breath 7.6s var(--cl-ease-breath) infinite; }
+  .cl[data-still] .signal--breath { animation: none; }
+}
+@keyframes cl-breath {
+  0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1); }
+  50% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1.015); }
+}
+
+/* ------------------------------------------------------------------- bar */
+.bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--cl-nav-h);
+  z-index: var(--sc-z-chrome);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-inline: var(--sc-gutter);
+  transition: background var(--sc-d-base) var(--sc-ease-out), box-shadow var(--sc-d-base) var(--sc-ease-out);
+}
+.bar.is-scrolled {
+  background: color-mix(in oklab, var(--sc-canvas) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 -1px 0 var(--cl-line);
+}
+.bar__brand {
+  font-family: var(--sc-font-display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+  color: var(--sc-ink);
+  text-decoration: none;
+  padding: 0.4rem 0;
+}
+.bar__links { display: flex; gap: 0.15rem; list-style: none; margin: 0 auto; padding: 0; }
+.bar__link {
+  display: inline-block;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--cl-pill);
+  color: var(--sc-ink-soft);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.bar__link:hover { color: var(--sc-ink); background: color-mix(in oklab, var(--sc-ink) 7%, transparent); }
+.bar__cta { margin-left: auto; font-size: 0.95rem; white-space: nowrap; }
+@media (max-width: 860px) {
+  .bar__links { display: none; }
+  .bar__brand { font-size: 1.15rem; }
+  .bar__cta { font-size: 0.875rem; }
+}
+
+/* ------------------------------------------------------------------ hero */
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  align-items: center;
+  padding: calc(var(--cl-nav-h) + 2rem) var(--sc-gutter) 6rem;
+  isolation: isolate;
+  overflow: hidden;
+  /* Coalescence: the seven bodies gather toward the bottom centre and dim as
+     the hero leaves. Flow progress runs 0.5 to 1 while the hero scrolls out. */
+  --exit: clamp(0, calc((var(--sc-p, 0.5) - 0.62) / 0.38), 1);
+}
+.hero__inner { position: relative; z-index: 3; max-width: var(--cl-container); margin-inline: auto; width: 100%; pointer-events: none; }
+/* The copy block floats over the media; only its controls take the pointer,
+   so a hover anywhere else on the hero reaches the reveal. */
+.hero__copy :is(a, button) { pointer-events: auto; }
+.hero__copy { max-width: 40rem; }
+.hero__title { margin-top: 1.25rem; max-width: 22ch; }
+.hero__support { margin-top: 1.5rem; max-width: 34ch; }
+.hero__actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; }
+
+/* Density only where the copy sits, as a sibling so it is measured. */
+.hero__scrim {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(60rem, 62%);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--sc-canvas) 82%, transparent) 0%,
+    color-mix(in oklab, var(--sc-canvas) 62%, transparent) 40%,
+    color-mix(in oklab, var(--sc-canvas) 30%, transparent) 72%,
+    transparent 100%);
+}
+
+.hero__media {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  touch-action: pan-y;
+  --reveal-x: -100px;
+  --reveal-y: -100px;
+  --reveal-d: 0px;
+}
+.hero__layer { position: absolute; inset: 0; }
+.hero__layer img { object-fit: cover; object-position: 50% 42%; }
+.hero__layer--luminous {
+  transform: scale(calc(1 - var(--exit) * 0.38));
+  transform-origin: 50% 100%;
+  opacity: calc(1 - var(--exit) * 1.15);
+}
+/* The physical people rise to ~0.9 inside a large feathered window that
+   follows the pointer. A second copy of the luminous frame sits on top of them,
+   screened at ~0.3, so the haze stays over the revealed bodies. No edge. */
+.hero__layer--physical,
+.hero__layer--haze {
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, rgb(0 0 0 / 0.92) 30%, rgb(0 0 0 / 0.5) 62%, rgb(0 0 0 / 0.14) 84%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, rgb(0 0 0 / 0.92) 30%, rgb(0 0 0 / 0.5) 62%, rgb(0 0 0 / 0.14) 84%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--reveal-d) var(--reveal-d);
+  mask-size: var(--reveal-d) var(--reveal-d);
+  -webkit-mask-position: calc(var(--reveal-x) - var(--reveal-d) / 2) calc(var(--reveal-y) - var(--reveal-d) / 2);
+  mask-position: calc(var(--reveal-x) - var(--reveal-d) / 2) calc(var(--reveal-y) - var(--reveal-d) / 2);
+  transition: opacity 700ms var(--cl-ease-presence);
+}
+.hero__layer--physical { opacity: calc(0.9 * (1 - var(--exit) * 3)); }
+.hero__layer--haze { opacity: 0.3; mix-blend-mode: screen; }
+/* Explicit reveal: the whole layered still, no window. */
+.hero__media.is-revealed .hero__layer--physical,
+.hero__media.is-revealed .hero__layer--haze {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.hero__media.is-revealed .hero__layer--luminous { opacity: calc(0.42 - var(--exit)); }
+
+.hero__reveal {
+  position: absolute;
+  right: var(--sc-gutter);
+  bottom: 2rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.hero__hint { font-size: 0.8rem; color: var(--cl-muted); }
+.hero__hint--pointer { display: none; }
+.hero__hint--touch { display: inline; }
+@media (hover: hover) and (pointer: fine) {
+  .hero__hint--pointer { display: inline; }
+  .hero__hint--touch { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .hero__hint { display: none !important; } }
+
+@media (max-width: 860px) {
+  .hero { display: block; padding-bottom: 3rem; }
+  .hero__scrim { display: none; }
+  .hero__media {
+    position: relative;
+    margin-top: 2.5rem;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--cl-radius);
+    background: var(--sc-surface);
+  }
+  .hero__reveal { position: static; margin-top: 1rem; justify-content: flex-start; }
+  /* The phone hero is tall (copy, then the frame), so its flow progress passes
+     0.62 while the frame is still on screen. Start the coalescence only once
+     the frame itself is leaving. */
+  .hero { --exit: clamp(0, calc((var(--sc-p, 0.5) - 0.8) / 0.2), 1); }
+}
+
+/* ------------------------------------------------------------ 2 · porqué */
+.porque {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: calc(var(--cl-nav-h) + 3rem) var(--sc-gutter) calc(var(--cl-light) / 2 + 3rem);
+}
+.porque__inner { max-width: 44rem; }
+.porque__body { margin-top: 1.5rem; max-width: 52ch; margin-inline: auto; }
+/* The one light. It rests half outside the bottom centre of section 2, which
+   is exactly half outside the top centre of section 3: one element, one size,
+   both states. */
+.porque__light { left: 50%; bottom: 0; --tx: -50%; --ty: 50%; transform: translate(-50%, 50%); }
+
+/* --------------------------------------------------------------- 3 · qué */
+.que { position: relative; padding: calc(var(--cl-light) / 2 + 4rem) var(--sc-gutter) var(--sc-section); }
+.que__grid {
+  max-width: var(--cl-container);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: center;
+}
+.que__body { margin-top: 1.5rem; max-width: 52ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 0.75rem 0; list-style: none; padding: 0; margin: 2rem 0 0; }
+.facts li { display: inline-flex; align-items: center; }
+.facts li + li::before { content: ""; display: inline-block; width: 1px; height: 0.9em; background: var(--cl-line-strong); margin-inline: 1.1rem; }
+.facts li { font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sc-accent); }
+
+.film { position: relative; }
+.film__frame {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--cl-radius);
+  overflow: hidden;
+  background: var(--sc-surface);
+  box-shadow: 0 18px 56px rgb(0 18 20 / 0.32);
+}
+.film__frame img, .film__frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.film__frame video { opacity: 0; transition: opacity 380ms var(--sc-ease-out); }
+.film.is-playing .film__frame video { opacity: 1; }
+.film__play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--sc-ink);
+}
+.film__play-disc {
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--sc-accent);
+  background: color-mix(in oklab, var(--sc-canvas) 60%, transparent);
+  transition: transform var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.film__play:hover .film__play-disc { background: color-mix(in oklab, var(--sc-accent) 18%, var(--sc-canvas)); transform: scale(1.04); }
+.film__play:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: -6px; border-radius: var(--cl-radius); }
+.film__play-disc::after { content: ""; width: 0; height: 0; border-style: solid; border-width: 0.6rem 0 0.6rem 1rem; border-color: transparent transparent transparent var(--sc-accent); margin-left: 0.2rem; }
+.film.is-playing .film__play { display: none; }
+.film__label {
+  position: absolute;
+  left: 1.25rem;
+  bottom: 1.1rem;
+  font-size: 1rem;
+  color: var(--sc-ink);
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+.film.is-playing .film__label { display: none; }
+.film__meta { margin-top: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-size: 0.875rem; color: var(--cl-muted); }
+.film__desc { margin-top: 0.5rem; font-size: 0.875rem; color: var(--cl-muted); max-width: 56ch; }
+
+@media (max-width: 860px) {
+  .que { padding-top: calc(var(--cl-light) / 2 + 2.5rem); }
+  .que__grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .film { max-width: 34rem; }
+}
+
+/* ------------------------------------------------------------- 4 · etapas */
+.etapas { position: relative; }
+.stage--etapas {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(18rem, 34rem) minmax(16rem, 1fr);
+  grid-template-rows: auto 1fr auto auto;
+  column-gap: clamp(1.5rem, 3vw, 3rem);
+  height: 100svh;
+  padding: calc(var(--cl-nav-h) + 1.25rem) var(--sc-gutter) 2rem;
+  max-width: var(--cl-container);
+  margin-inline: auto;
+  /* The waypoint light travels node 0 to node 6 and arrives on node k just
+     after stage k opens (p = (k + 0.2) / 7), so it leads the label rather than
+     trailing it. */
+  --u: clamp(0, calc((var(--sc-p, 0) - 0.0286) / 0.857), 1);
+}
+.etapas__head { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+.etapas__head p { margin-top: 1rem; max-width: 30ch; }
+.etapas__media {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 52vh);
+  aspect-ratio: 1;
+  border-radius: var(--cl-radius);
+  overflow: hidden;
+  background: var(--sc-surface);
+}
+.etapas__panel { position: absolute; inset: 0; }
+.etapas__panel img, .etapas__panel video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.etapas__active { grid-column: 3; grid-row: 3; align-self: end; justify-self: end; position: relative; width: 100%; max-width: 22rem; min-height: 9.5rem; }
+.etapas__text { position: absolute; inset: auto 0 0 0; }
+.etapas__text h3 { font-size: clamp(1.5rem, 2.2vw, 2.1rem); letter-spacing: -0.02em; margin-top: 0.4rem; }
+.etapas__text p { margin-top: 0.6rem; color: var(--sc-ink-soft); }
+.timeline { grid-column: 1 / -1; grid-row: 4; position: relative; margin-top: 2.25rem; padding-top: 1.1rem; }
+.timeline__track { position: absolute; left: calc(100% / 14); right: calc(100% / 14); top: 1.1rem; height: 1px; background: var(--cl-line-strong); container-type: inline-size; }
+.timeline__light {
+  --d: var(--cl-light-sm);
+  left: 0;
+  top: 0;
+  transform: translate(calc(var(--u) * 100cqw - 50%), -50%);
+  filter: blur(calc(var(--d) * 0.06));
+}
+.timeline__nodes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); position: relative; }
+.timeline__node { position: relative; text-align: center; padding-top: 1.1rem; }
+.timeline__dot { position: absolute; left: 50%; top: 0; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in oklab, var(--sc-ink) 45%, var(--sc-canvas)); transform: translate(-50%, -50%); }
+.timeline__lit { position: absolute; left: 50%; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--sc-accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--sc-accent) 24%, transparent); transform: translate(-50%, -50%); }
+.timeline__code { display: block; font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--sc-ink-soft); }
+.timeline__name { display: block; margin-top: 0.2rem; font-family: var(--sc-font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cl-muted); }
+
+/* Stacked equivalent (mobile, reduced motion, no scripting) */
+.etapas-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 2.25rem; }
+.etapas-list__item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.etapas-list__figure { margin: 0; border-radius: var(--cl-radius); overflow: hidden; aspect-ratio: 16 / 10; background: var(--sc-surface); position: relative; }
+.etapas-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.etapas-list__item h3 { font-size: 1.4rem; letter-spacing: -0.02em; margin-top: 0.25rem; }
+.etapas-list__item p { margin-top: 0.4rem; color: var(--sc-ink-soft); }
+@media (min-width: 640px) {
+  .etapas-list__item { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; gap: 1.5rem; }
+}
+
+/* ---------------------------------------------------------- 5 · incorporarse */
+/* No `position` here: .sc-stage is sticky and an author rule would un-pin it. */
+.stage--join { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); height: 100svh; }
+.join__media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.join__visual { position: absolute; inset: 0; }
+.join__visual img { object-fit: cover; object-position: 62% 50%; transform: scale(1.35); transform-origin: 62% 50%; }
+.join__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    var(--sc-canvas) 0%,
+    color-mix(in oklab, var(--sc-canvas) 92%, transparent) 36%,
+    color-mix(in oklab, var(--sc-canvas) 55%, transparent) 52%,
+    transparent 74%);
+}
+.join__light { --d: var(--cl-light); right: 0; top: 0; --tx: 38%; --ty: -42%; transform: translate(38%, -42%); z-index: 1; }
+.join__copy {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(var(--cl-nav-h) + 2rem) 2rem 3rem max(var(--sc-gutter), calc((100vw - var(--cl-container)) / 2 + var(--sc-gutter)));
+}
+.steps { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 1.4rem; }
+/* Activity per step, read straight from the act's progress: 1 inside the
+   step's window, ramping over --ramp on either side. No duplicated text. */
+.step {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr;
+  column-gap: 1rem;
+  align-items: baseline;
+  --ramp: 0.08;
+  --a: clamp(0, min(calc((var(--sc-p, 1) - var(--from)) / var(--ramp)), calc((var(--to) - var(--sc-p, 1)) / var(--ramp))), 1);
+}
+.step__num {
+  font-family: var(--sc-font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--cl-muted));
+}
+.step__label {
+  font-family: var(--sc-font-display);
+  font-size: clamp(1.2rem, 1.6vw, 1.5rem);
+  letter-spacing: -0.015em;
+  color: color-mix(in oklab, var(--sc-ink) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
+}
+.steps__desc { position: relative; margin: 1.5rem 0 0 3.75rem; min-height: 6.5rem; }
+.steps__body { position: absolute; inset: 0 0 auto 0; max-width: 32ch; color: var(--sc-ink-soft); line-height: 1.6; }
+.join__supporting { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--cl-line); font-size: 0.875rem; color: var(--cl-muted); max-width: 30rem; }
+
+.join-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 2rem; }
+.join-list__item { display: grid; grid-template-columns: 2.75rem 1fr; column-gap: 1rem; row-gap: 0.5rem; align-items: baseline; --a: 1; }
+.join-list__item h3 { font-size: 1.35rem; letter-spacing: -0.015em; }
+.join-list__item p { grid-column: 2; color: var(--sc-ink-soft); }
+.join-list__figure { grid-column: 2; margin: 0.5rem 0 0; border-radius: var(--cl-radius); overflow: hidden; aspect-ratio: 16 / 9; position: relative; background: var(--sc-surface); max-width: 26rem; }
+.join-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ----------------------------------------------------------- 6 · al azar */
+.azar {
+  position: relative;
+  padding: var(--sc-section) var(--sc-gutter);
+  text-align: center;
+  /* Flow progress 0.22 to 0.52: the light divides while the section arrives. */
+  --split: clamp(0, calc((var(--sc-p, 1) - 0.22) / 0.3), 1);
+}
+.azar__head { max-width: 44rem; margin-inline: auto; }
+.azar__head h2 { margin-top: 1rem; }
+.azar__body { margin-top: 1.25rem; max-width: 46ch; margin-inline: auto; }
+.azar__diagram {
+  position: relative;
+  width: min(100%, 52rem);
+  aspect-ratio: 16 / 9;
+  margin: 2rem auto 0;
+  container-type: size;
+}
+.azar__paths { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.azar__path {
+  fill: none;
+  stroke: var(--sc-accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--split));
+  opacity: 0.85;
+}
+/* One component for both branches: the direction token is the only difference. */
+.branch { position: absolute; left: 50%; top: 22%; width: 0; height: 0; }
+.branch__light {
+  --d: var(--cl-light-md);
+  left: 0;
+  top: 0;
+  --tx: calc(-50% + var(--dir) * var(--split) * 25cqw);
+  --ty: calc(-50% + var(--split) * 40cqh);
+  transform: translate(calc(-50% + var(--dir) * var(--split) * 25cqw), calc(-50% + var(--split) * 40cqh));
+}
+.branch__label {
+  position: absolute;
+  left: calc(var(--dir) * 25cqw);
+  top: calc(40cqh + var(--cl-light-md) / 2 + 0.75rem);
+  transform: translateX(-50%);
+  width: min(44cqw, 22rem);
+  opacity: var(--split);
+}
+.branch__name { display: block; font-family: var(--sc-font-display); font-size: clamp(0.95rem, 1.5vw, 1.2rem); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink); }
+.branch__condition { display: block; margin-top: 0.5rem; }
+.azar__supporting { margin-top: clamp(4rem, 8cqh, 6rem); color: var(--cl-muted); font-size: 0.95rem; }
+@media (max-width: 640px) {
+  .azar__diagram { aspect-ratio: 4 / 3; }
+  .branch__name { font-size: 0.8rem; letter-spacing: 0.06em; }
+}
+
+/* ------------------------------------------------------- 7 · elegibilidad */
+.elegibilidad {
+  position: relative;
+  padding: var(--sc-section) var(--sc-gutter);
+  /* Flow progress 0.26 to 0.56: the light descends into the heart. */
+  --t: clamp(0, calc((var(--sc-p, 1) - 0.26) / 0.3), 1);
+}
+.elegibilidad__grid {
+  max-width: var(--cl-container);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+.participant {
+  position: sticky;
+  top: calc(var(--cl-nav-h) + 1.5rem);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--cl-radius);
+  overflow: hidden;
+  background: var(--sc-surface);
+  container-type: size;
+}
+.participant img { object-fit: cover; object-position: 50% 50%; }
+.participant__light {
+  --d: var(--cl-light-md);
+  left: 50%;
+  top: 16%;
+  transform: translate(-50%, calc(-50% + var(--t) * 42cqh)) scale(calc(1 - var(--t) * 0.72));
+  opacity: calc(1 - var(--t) * var(--t));
+}
+.participant__heart {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 34cqw;
+  height: 34cqw;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 232 214 / 0.55) 0, rgb(236 170 200 / 0.25) 32%, transparent 68%);
+  opacity: calc(var(--t) * 0.9);
+  pointer-events: none;
+  filter: blur(6px);
+}
+.elig__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 1.5rem; }
+.elig__intro { margin-top: 1.25rem; max-width: 52ch; }
+.elig__criteria { margin-top: 2.5rem; }
+.elig__criteria h3 { font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cl-muted); font-weight: 400; }
+.elig__criteria-body { margin-top: 0.75rem; }
+.elig__required { margin-top: 0.75rem; color: var(--sc-ink-soft); font-size: 0.95rem; }
+.faq { margin-top: 2rem; border-top: 1px solid var(--cl-line-strong); }
+.faq__item { border-bottom: 1px solid var(--cl-line); }
+.faq__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.1rem 0.25rem;
+  font-family: var(--sc-font-display);
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  cursor: pointer;
+  list-style: none;
+  color: var(--sc-ink);
+}
+.faq__summary::-webkit-details-marker { display: none; }
+.faq__summary:hover { color: var(--cl-accent-strong); }
+.faq__summary:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; border-radius: 6px; }
+.faq__mark { position: relative; flex: 0 0 auto; width: 1rem; height: 1rem; }
+.faq__mark::before, .faq__mark::after { content: ""; position: absolute; background: var(--sc-accent); border-radius: 1px; transition: transform var(--sc-d-base) var(--sc-ease-out); }
+.faq__mark::before { left: 0; top: calc(50% - 0.75px); width: 100%; height: 1.5px; }
+.faq__mark::after { top: 0; left: calc(50% - 0.75px); width: 1.5px; height: 100%; }
+.faq__item[open] .faq__mark::after { transform: scaleY(0); }
+.faq__body { padding: 0 0.25rem 1.5rem; display: grid; gap: 0.75rem; max-width: 56ch; color: var(--sc-ink-soft); line-height: 1.6; }
+
+@media (max-width: 860px) {
+  .elegibilidad__grid { grid-template-columns: 1fr; gap: 2rem; }
+  .participant { position: relative; top: auto; aspect-ratio: 4 / 5; max-width: 30rem; }
+}
+
+/* ---------------------------------------------------------- 8 · invitación */
+.invitacion {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding-top: calc(var(--cl-nav-h) + 1.5rem);
+}
+.invitacion__scene {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 var(--sc-gutter) 4rem;
+}
+.arc {
+  position: relative;
+  width: min(66rem, 92%);
+  aspect-ratio: 1136 / 380;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(62% 80% at 50% 42%, #000 34%, transparent 88%);
+  mask-image: radial-gradient(62% 80% at 50% 42%, #000 34%, transparent 88%);
+}
+/* The source frame's black is lifted (video black, not #000). A touch of
+   contrast pushes it to true black so the screen blend leaves no rectangle. */
+.arc img { object-fit: contain; filter: contrast(1.18); }
+.fire {
+  position: absolute;
+  left: 50%;
+  top: 92%;
+  width: clamp(3.4rem, 5.2vw, 4.6rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(circle, #000 38%, transparent 66%);
+  mask-image: radial-gradient(circle, #000 38%, transparent 66%);
+}
+.fire img { object-fit: cover; filter: contrast(1.18); }
+@media (prefers-reduced-motion: no-preference) {
+  .fire { animation: cl-fire 6.5s var(--cl-ease-breath) infinite; }
+  .cl[data-still] .fire { animation: none; }
+}
+@keyframes cl-fire {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.94; }
+  38% { transform: translate(-50%, -50%) scale(1.03) rotate(1.5deg); opacity: 1; }
+  70% { transform: translate(-50%, -50%) scale(0.985) rotate(-1deg); opacity: 0.96; }
+}
+.invitacion__title { margin-top: 2.25rem; }
+.invitacion__support { margin-top: 1rem; }
+.invitacion__cta { margin-top: 2.25rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+.invitacion__closed { color: var(--cl-muted); font-size: 0.95rem; }
+.foot {
+  border-top: 1px solid var(--cl-line);
+  padding: 1.75rem var(--sc-gutter) 2.25rem;
+}
+.foot__inner { max-width: var(--cl-container); margin-inline: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; }
+.foot__brand { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.15rem; letter-spacing: -0.02em; }
+.foot__links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
+.foot__links a { color: var(--sc-ink-soft); text-decoration: none; padding: 0.35rem 0; }
+.foot__links a:hover { color: var(--sc-ink); text-decoration: underline; text-underline-offset: 0.3em; text-decoration-color: var(--sc-accent); }
+.foot__still { background: none; border: 0; padding: 0.35rem 0; color: var(--sc-ink-soft); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.foot__still:hover { color: var(--sc-ink); text-decoration: underline; text-underline-offset: 0.3em; text-decoration-color: var(--sc-accent); }
+.foot__note { flex-basis: 100%; margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; font-size: 0.8rem; color: var(--cl-muted); }
+
+/* ------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero { --exit: 0; }
+  .hero__layer--physical, .hero__layer--haze, .hero__layer--luminous { transition: none; }
+  .azar { --split: 1; }
+  .elegibilidad { --t: 1; }
+  .signal { will-change: auto; }
+}
+
+/* Holding page: production with unapproved content (D-042). */
+.holding { min-height: 100dvh; display: grid; place-items: center; padding: var(--sc-gutter); text-align: center; }
+.holding p { margin-top: 1rem; max-width: 44ch; margin-inline: auto; }

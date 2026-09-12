@@ -87,12 +87,11 @@ it neither mismatches on hydration nor trips the React `set-state-in-effect` rul
 
 ## Landing page
 
-`src/app/(public)/page.tsx` is a **design foundation, not the recruitment site**.
-Structure: floating pill nav → hero → highlights bento → process → data note →
-footer.
-
-All of its copy is deliberately generic placeholder text in `messages/*.json`. It
-names no trial, no arm, no schedule and no eligibility criterion, states no
-compliance claim, and collects no participant data. Real study content is
-configuration and arrives from the database in Phase 5 — it must not be moved into
-the message catalogue.
+`src/app/(public)/page.tsx` is the **Clear Light recruitment landing page**, and
+it does not use the soft-modern system above. It is one locked dark theme with
+Living Teal as the only interface accent, Manrope for the interface and IBM Plex
+Mono for identifiers, themed over the vendored scroll-craft floor
+(`src/components/landing/scrollcraft.css`). Its tokens, sections, motion and
+accessibility behaviour are documented in `docs/landing-page.md` (D-042). The
+soft-modern system continues to apply to `/participar`, `/estudio/...` and the
+team dashboard.

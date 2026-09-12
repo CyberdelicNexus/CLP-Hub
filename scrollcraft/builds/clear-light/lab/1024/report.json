@@ -1,0 +1,1053 @@
+{
+  "doc": {
+    "height": 10866,
+    "vh": 768,
+    "acts": [
+      "flow",
+      "flow",
+      "pin",
+      "pin",
+      "flow",
+      "flow"
+    ],
+    "world": null
+  },
+  "report": [
+    {
+      "i": 0,
+      "y": 0,
+      "pct": 0,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        2368,
+        5824
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 1,
+      "y": 31,
+      "pct": 0,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        2337,
+        5793
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 2,
+      "y": 147,
+      "pct": 1,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        2221,
+        5677
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 3,
+      "y": 326,
+      "pct": 3,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        2042,
+        5498
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 4,
+      "y": 442,
+      "pct": 4,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        1926,
+        5382
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 5,
+      "y": 621,
+      "pct": 6,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        1747,
+        5203
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 6,
+      "y": 737,
+      "pct": 7,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        1631,
+        5087
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 7,
+      "y": 915,
+      "pct": 9,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        1453,
+        4909
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 8,
+      "y": 1210,
+      "pct": 12,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        1158,
+        4614
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 9,
+      "y": 1505,
+      "pct": 15,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        863,
+        4319
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 10,
+      "y": 2422,
+      "pct": 24,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S0PreparaciónPuesta a punto técnica y pe",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S0PreparaciónPuesta a punto técnica y personal",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        3402
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 11,
+      "y": 2938,
+      "pct": 29,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S1OrientaciónEl grupo se conoce y sitúa ",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S1OrientaciónEl grupo se conoce y sitúa la exp",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        2886
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 12,
+      "y": 3454,
+      "pct": 34,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S2Cuerpos de LuzExplorar cómo se siente ",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S2Cuerpos de LuzExplorar cómo se siente habita",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        2370
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 13,
+      "y": 3970,
+      "pct": 39,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S4Más Allá del CuerpoReflexionar sobre e",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S4Más Allá del CuerpoReflexionar sobre el yo, ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        1854
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 14,
+      "y": 4486,
+      "pct": 44,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S5OfrendaSoltar, agradecer y ofrecer alg",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S5OfrendaSoltar, agradecer y ofrecer algo sign",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        1338
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 15,
+      "y": 5002,
+      "pct": 50,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "S6Integración GrupalDar sentido a lo viv",
+          "dir": "light-on-dark",
+          "worst": 17.86,
+          "mean": 17.86
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        0,
+        822
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 16,
+      "y": 5858,
+      "pct": 58,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Comparte tu interés mediante el formular",
+          "dir": "light-on-dark",
+          "worst": 10.28,
+          "mean": 10.38
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Comparte tu interés mediante el formulario de ",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -802,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 17,
+      "y": 6182,
+      "pct": 61,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Comparte tu interés mediante el formular",
+          "dir": "light-on-dark",
+          "worst": 10.28,
+          "mean": 10.38
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Comparte tu interés mediante el formulario de ",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -1126,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 18,
+      "y": 6507,
+      "pct": 64,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "El equipo revisará contigo los requisito",
+          "dir": "light-on-dark",
+          "worst": 10.28,
+          "mean": 10.38
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 0.23
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Comparte tu interés mediante el formulario de ",
+          "o": 0.23
+        },
+        {
+          "t": "El equipo revisará contigo los requisitos, res",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -1451,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 19,
+      "y": 6831,
+      "pct": 68,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "El equipo revisará contigo los requisito",
+          "dir": "light-on-dark",
+          "worst": 10.28,
+          "mean": 10.38
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "El equipo revisará contigo los requisitos, res",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -1775,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 20,
+      "y": 7156,
+      "pct": 71,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Si el estudio encaja y deseas continuar,",
+          "dir": "light-on-dark",
+          "worst": 10.14,
+          "mean": 10.36
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -2100,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 21,
+      "y": 7480,
+      "pct": 74,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Si el estudio encaja y deseas continuar,",
+          "dir": "light-on-dark",
+          "worst": 10.14,
+          "mean": 10.36
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -2424,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 22,
+      "y": 7546,
+      "pct": 75,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Si el estudio encaja y deseas continuar,",
+          "dir": "light-on-dark",
+          "worst": 10.07,
+          "mean": 10.36
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -2490,
+        -33
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 23,
+      "y": 7854,
+      "pct": 78,
+      "settled": true,
+      "contrast": [
+        {
+          "t": "Si el estudio encaja y deseas continuar,",
+          "dir": "light-on-dark",
+          "worst": 10.07,
+          "mean": 10.36
+        }
+      ],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "pin",
+      "stages": [
+        -2798,
+        -341
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 24,
+      "y": 8163,
+      "pct": 81,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3107,
+        -650
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 25,
+      "y": 8387,
+      "pct": 83,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3331,
+        -874
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 26,
+      "y": 8472,
+      "pct": 84,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3416,
+        -959
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 27,
+      "y": 8709,
+      "pct": 86,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3653,
+        -1196
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 28,
+      "y": 8780,
+      "pct": 87,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3724,
+        -1267
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 29,
+      "y": 9030,
+      "pct": 89,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -3974,
+        -1517
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 30,
+      "y": 9089,
+      "pct": 90,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -4033,
+        -1576
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 31,
+      "y": 9352,
+      "pct": 93,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        -4296,
+        -1839
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 32,
+      "y": 9674,
+      "pct": 96,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        -4618,
+        -2161
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 33,
+      "y": 9995,
+      "pct": 99,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        -4939,
+        -2482
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 34,
+      "y": 10098,
+      "pct": 100,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        -5042,
+        -2585
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    }
+  ],
+  "consoleErrors": [
+    "IntlError: INVALID_KEY: Namespace keys cannot contain the character \".\" as this is used to express nesting. Please remove it or replace it with another character.\n\nInvalid keys: participant.created (at audit.action), participant.eligibility_changed (at audit.action), participant.enrollment_changed (at audit.action), participant.recruitment_status_changed (at audit.action), application.submitted (at audit.action), application.status_changed (at audit.action), screening.scheduled (at audit.action), screening.completed (at audit.action), screening.closed (at audit.action), consent.started (at audit.action), consent.decision_recorded (at audit.action), consent.superseded (at audit.action), randomization.recorded (at audit.action), cohort_assignment.created (at audit.action), cohort_assignment.removed (at audit.action), cohort_assignment.moved (at audit.action), participant_responsibility.assigned (at audit.action), participant_responsibility.revoked (at audit.action), initial_visit.scheduled (at audit.action), initial_visit.closed (at audit.action), initial_visit.notes_updated (at audit.action)\n\nIf you're migrating from a flat structure, you can convert your messages as follows:\n\nimport {set} from \"lodash\";\n\nconst input = {\n  \"one.one\": \"1.1\",\n  \"one.two\": \"1.2\",\n  \"two.one.one\": \"2.1.1\"\n};\n\nconst output = Object.entries(input).reduce(\n  (acc, [key, value]) => set(acc, key, value),\n  {}\n);\n\n// Output:\n//\n// {\n//   \"one\": {\n//     \"one\": \"1.1\",\n//     \"two\": \"1.2\"\n//   },\n//   \"two\": {\n//     \"one\": {\n//       \"one\": \"2.1.1\"\n//     }\n//   }\n// }\n\n    at validateMessages (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5867:17)\n    at initializeConfig (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5909:13)\n    at IntlProvider.useMemo[value] (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5981:218)\n    at mountMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5200:25)\n    at Object.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:15070:24)\n    at exports.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:1968:36)\n    at IntlProvider (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5979:192)\n    at Object.react_stack_bottom_frame (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:14894:24)\n    at renderWithHooks (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4425:24)\n    at updateFunctionComponent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5892:21)\n    at beginWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6518:24)\n    at runWithFiberInDEV (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:761:74)\n    at performUnitOfWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9385:97)\n    at workLoopConcurrentByScheduler (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9381:58)\n    at renderRootConcurrent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9364:71)\n    at performWorkOnRoot (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:8891:150)\n    at performWorkOnRootViaSchedulerTask (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10085:9)\n    at MessagePort.performWorkUntilDeadline (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)",
+    "IntlError: INVALID_KEY: Namespace keys cannot contain the character \".\" as this is used to express nesting. Please remove it or replace it with another character.\n\nInvalid keys: participant.created (at audit.action), participant.eligibility_changed (at audit.action), participant.enrollment_changed (at audit.action), participant.recruitment_status_changed (at audit.action), application.submitted (at audit.action), application.status_changed (at audit.action), screening.scheduled (at audit.action), screening.completed (at audit.action), screening.closed (at audit.action), consent.started (at audit.action), consent.decision_recorded (at audit.action), consent.superseded (at audit.action), randomization.recorded (at audit.action), cohort_assignment.created (at audit.action), cohort_assignment.removed (at audit.action), cohort_assignment.moved (at audit.action), participant_responsibility.assigned (at audit.action), participant_responsibility.revoked (at audit.action), initial_visit.scheduled (at audit.action), initial_visit.closed (at audit.action), initial_visit.notes_updated (at audit.action)\n\nIf you're migrating from a flat structure, you can convert your messages as follows:\n\nimport {set} from \"lodash\";\n\nconst input = {\n  \"one.one\": \"1.1\",\n  \"one.two\": \"1.2\",\n  \"two.one.one\": \"2.1.1\"\n};\n\nconst output = Object.entries(input).reduce(\n  (acc, [key, value]) => set(acc, key, value),\n  {}\n);\n\n// Output:\n//\n// {\n//   \"one\": {\n//     \"one\": \"1.1\",\n//     \"two\": \"1.2\"\n//   },\n//   \"two\": {\n//     \"one\": {\n//       \"one\": \"2.1.1\"\n//     }\n//   }\n// }\n\n    at validateMessages (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5867:17)\n    at initializeConfig (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5909:13)\n    at IntlProvider.useMemo[value] (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5981:218)\n    at mountMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5204:17)\n    at Object.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:15070:24)\n    at exports.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:1968:36)\n    at IntlProvider (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5979:192)\n    at Object.react_stack_bottom_frame (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:14894:24)\n    at renderWithHooks (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4425:24)\n    at updateFunctionComponent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5892:21)\n    at beginWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6518:24)\n    at runWithFiberInDEV (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:761:74)\n    at performUnitOfWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9385:97)\n    at workLoopConcurrentByScheduler (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9381:58)\n    at renderRootConcurrent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9364:71)\n    at performWorkOnRoot (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:8891:150)\n    at performWorkOnRootViaSchedulerTask (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10085:9)\n    at MessagePort.performWorkUntilDeadline (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)"
+  ],
+  "failed": []
+}

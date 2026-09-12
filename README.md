@@ -10,7 +10,8 @@ Initial screening happens in Qualtrics: `/participar` collects nothing and hands
 
 | Surface | Path | Who | Phase |
 |---|---|---|---|
-| Public recruitment site (hand-off to Qualtrics, collects nothing) | `/` | Anyone | 1, 4a |
+| Public recruitment landing page (Clear Light, hands off to Qualtrics, collects nothing) | `/` | Anyone | D-042 |
+| Qualtrics hand-off explanation | `/participar` | Anyone | 1, 4a |
 | Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
 | VR logistics | `/equipo/logistica-vr` | `logistics.read` | 6 ✓ |
@@ -46,6 +47,7 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 | `npm test` | Vitest (authorization, scoping, audit, env guards) |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:seed` | Synthetic development data (refuses in production) |
+| `node scripts/landing-media.mjs` | Regenerate landing-page media derivatives from the handoff package |
 
 ## Documentation
 
@@ -55,6 +57,7 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 - `docs/automations.md` — events, rules, scheduled actions (design, Phase 8)
 - `docs/content-model.md` — versioned study content (design, Phase 5)
 - `docs/design-system.md` — tokens, type, motion, theming, accessibility rules
+- `docs/landing-page.md` — the public recruitment landing page: structure, media, gate, missing content
 - `docs/research-data-boundaries.md` — what this app must never store
 - `docs/development.md` — environments, migrations, seeding, testing
 - `docs/decisions.md` — append-only decision log

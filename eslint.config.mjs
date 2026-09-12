@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored scroll-craft engine, kept byte-identical to the skill (docs/landing-page.md).
+    "public/landing/scrollcraft.js",
   ]),
 ]);
 

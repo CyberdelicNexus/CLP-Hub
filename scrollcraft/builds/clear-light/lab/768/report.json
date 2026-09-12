@@ -1,0 +1,696 @@
+{
+  "doc": {
+    "height": 9652,
+    "vh": 1024,
+    "acts": [
+      "flow",
+      "flow",
+      "pin",
+      "pin",
+      "flow",
+      "flow"
+    ],
+    "world": null
+  },
+  "report": [
+    {
+      "i": 0,
+      "y": 0,
+      "pct": 0,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S0PreparaciónPuesta a punto técnica y personal",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Comparte tu interés mediante el formulario de ",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 1,
+      "y": 41,
+      "pct": 0,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 2,
+      "y": 197,
+      "pct": 2,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 3,
+      "y": 434,
+      "pct": 5,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 4,
+      "y": 590,
+      "pct": 7,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 5,
+      "y": 827,
+      "pct": 10,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 6,
+      "y": 983,
+      "pct": 11,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 7,
+      "y": 1221,
+      "pct": 14,
+      "settled": true,
+      "contrast": [],
+      "cues": [
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "S6Integración GrupalDar sentido a lo vivido y ",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "",
+          "o": 1
+        },
+        {
+          "t": "Si el estudio encaja y deseas continuar, recib",
+          "o": 1
+        }
+      ],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 8,
+      "y": 1614,
+      "pct": 19,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 9,
+      "y": 2007,
+      "pct": 23,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 10,
+      "y": 5413,
+      "pct": 63,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 11,
+      "y": 5759,
+      "pct": 67,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 12,
+      "y": 6106,
+      "pct": 71,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 13,
+      "y": 6206,
+      "pct": 72,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 14,
+      "y": 6452,
+      "pct": 75,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 15,
+      "y": 6680,
+      "pct": 77,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 16,
+      "y": 6798,
+      "pct": 79,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 17,
+      "y": 7145,
+      "pct": 83,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 18,
+      "y": 7155,
+      "pct": 83,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 19,
+      "y": 7630,
+      "pct": 88,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 20,
+      "y": 8104,
+      "pct": 94,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "flow",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 21,
+      "y": 8579,
+      "pct": 99,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    },
+    {
+      "i": 22,
+      "y": 8628,
+      "pct": 100,
+      "settled": true,
+      "contrast": [],
+      "cues": [],
+      "clips": [],
+      "rails": [],
+      "wipes": [],
+      "act": "-",
+      "stages": [
+        0,
+        0
+      ],
+      "segs": [],
+      "custom": [],
+      "customHold": false,
+      "seg": null,
+      "segp": null,
+      "bg": "#08090b"
+    }
+  ],
+  "consoleErrors": [
+    "IntlError: INVALID_KEY: Namespace keys cannot contain the character \".\" as this is used to express nesting. Please remove it or replace it with another character.\n\nInvalid keys: participant.created (at audit.action), participant.eligibility_changed (at audit.action), participant.enrollment_changed (at audit.action), participant.recruitment_status_changed (at audit.action), application.submitted (at audit.action), application.status_changed (at audit.action), screening.scheduled (at audit.action), screening.completed (at audit.action), screening.closed (at audit.action), consent.started (at audit.action), consent.decision_recorded (at audit.action), consent.superseded (at audit.action), randomization.recorded (at audit.action), cohort_assignment.created (at audit.action), cohort_assignment.removed (at audit.action), cohort_assignment.moved (at audit.action), participant_responsibility.assigned (at audit.action), participant_responsibility.revoked (at audit.action), initial_visit.scheduled (at audit.action), initial_visit.closed (at audit.action), initial_visit.notes_updated (at audit.action)\n\nIf you're migrating from a flat structure, you can convert your messages as follows:\n\nimport {set} from \"lodash\";\n\nconst input = {\n  \"one.one\": \"1.1\",\n  \"one.two\": \"1.2\",\n  \"two.one.one\": \"2.1.1\"\n};\n\nconst output = Object.entries(input).reduce(\n  (acc, [key, value]) => set(acc, key, value),\n  {}\n);\n\n// Output:\n//\n// {\n//   \"one\": {\n//     \"one\": \"1.1\",\n//     \"two\": \"1.2\"\n//   },\n//   \"two\": {\n//     \"one\": {\n//       \"one\": \"2.1.1\"\n//     }\n//   }\n// }\n\n    at validateMessages (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5867:17)\n    at initializeConfig (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5909:13)\n    at IntlProvider.useMemo[value] (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5981:218)\n    at mountMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5200:25)\n    at Object.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:15070:24)\n    at exports.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:1968:36)\n    at IntlProvider (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5979:192)\n    at Object.react_stack_bottom_frame (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:14894:24)\n    at renderWithHooks (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4425:24)\n    at updateFunctionComponent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5892:21)\n    at beginWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6518:24)\n    at runWithFiberInDEV (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:761:74)\n    at performUnitOfWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9385:97)\n    at workLoopConcurrentByScheduler (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9381:58)\n    at renderRootConcurrent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9364:71)\n    at performWorkOnRoot (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:8891:150)\n    at performWorkOnRootViaSchedulerTask (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10085:9)\n    at MessagePort.performWorkUntilDeadline (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)",
+    "IntlError: INVALID_KEY: Namespace keys cannot contain the character \".\" as this is used to express nesting. Please remove it or replace it with another character.\n\nInvalid keys: participant.created (at audit.action), participant.eligibility_changed (at audit.action), participant.enrollment_changed (at audit.action), participant.recruitment_status_changed (at audit.action), application.submitted (at audit.action), application.status_changed (at audit.action), screening.scheduled (at audit.action), screening.completed (at audit.action), screening.closed (at audit.action), consent.started (at audit.action), consent.decision_recorded (at audit.action), consent.superseded (at audit.action), randomization.recorded (at audit.action), cohort_assignment.created (at audit.action), cohort_assignment.removed (at audit.action), cohort_assignment.moved (at audit.action), participant_responsibility.assigned (at audit.action), participant_responsibility.revoked (at audit.action), initial_visit.scheduled (at audit.action), initial_visit.closed (at audit.action), initial_visit.notes_updated (at audit.action)\n\nIf you're migrating from a flat structure, you can convert your messages as follows:\n\nimport {set} from \"lodash\";\n\nconst input = {\n  \"one.one\": \"1.1\",\n  \"one.two\": \"1.2\",\n  \"two.one.one\": \"2.1.1\"\n};\n\nconst output = Object.entries(input).reduce(\n  (acc, [key, value]) => set(acc, key, value),\n  {}\n);\n\n// Output:\n//\n// {\n//   \"one\": {\n//     \"one\": \"1.1\",\n//     \"two\": \"1.2\"\n//   },\n//   \"two\": {\n//     \"one\": {\n//       \"one\": \"2.1.1\"\n//     }\n//   }\n// }\n\n    at validateMessages (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5867:17)\n    at initializeConfig (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5909:13)\n    at IntlProvider.useMemo[value] (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5981:218)\n    at mountMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5204:17)\n    at Object.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:15070:24)\n    at exports.useMemo (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:1968:36)\n    at IntlProvider (http://localhost:3002/_next/static/chunks/node_modules_0c36dxt._.js:5979:192)\n    at Object.react_stack_bottom_frame (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:14894:24)\n    at renderWithHooks (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4425:24)\n    at updateFunctionComponent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5892:21)\n    at beginWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6518:24)\n    at runWithFiberInDEV (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:761:74)\n    at performUnitOfWork (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9385:97)\n    at workLoopConcurrentByScheduler (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9381:58)\n    at renderRootConcurrent (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9364:71)\n    at performWorkOnRoot (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:8891:150)\n    at performWorkOnRootViaSchedulerTask (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10085:9)\n    at MessagePort.performWorkUntilDeadline (http://localhost:3002/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)"
+  ],
+  "failed": []
+}

@@ -99,62 +99,9 @@
     }
   },
   "public": {
-    "landing": {
-      "brand": "Estudio",
-      "badge": "Sitio en preparación",
-      "title": "La información del estudio, en un solo lugar",
-      "subtitle": "Esta página se está preparando. Pronto encontrarás aquí la información sobre el estudio y cómo participar.",
-      "primaryCta": "Ver qué encontrarás",
-      "teamAccess": "Acceso del equipo",
-      "nav": {
-        "study": "El estudio",
-        "process": "Cómo funciona",
-        "privacy": "Privacidad"
-      },
-      "study": {
-        "title": "Qué encontrarás aquí",
-        "description": "Las secciones ya están preparadas. El contenido se publicará antes de que comience la participación.",
-        "about": {
-          "title": "Sobre el estudio",
-          "description": "En qué consiste, quién lo lleva a cabo y con qué finalidad."
-        },
-        "sessions": {
-          "title": "Sesiones y calendario",
-          "description": "Fechas, lugares y qué esperar en cada encuentro."
-        },
-        "participation": {
-          "title": "Cómo participar",
-          "description": "Los pasos para solicitar participación y qué ocurre después."
-        },
-        "contact": {
-          "title": "Contacto",
-          "description": "A quién escribir si te surge cualquier duda."
-        }
-      },
-      "process": {
-        "title": "Cómo funciona",
-        "description": "Un resumen general del recorrido. Los detalles concretos se publicarán en esta misma página.",
-        "first": {
-          "title": "Información",
-          "description": "Lee en qué consiste el estudio y resuelve tus dudas antes de decidir."
-        },
-        "second": {
-          "title": "Contacto",
-          "description": "Si te interesa, te pones en contacto con el equipo del estudio."
-        },
-        "third": {
-          "title": "Seguimiento",
-          "description": "El equipo te explica los siguientes pasos y resuelve tus preguntas."
-        }
-      },
-      "privacy": {
-        "title": "Tus datos",
-        "description": "Esta página es informativa y no recoge datos personales. La información sobre el tratamiento de datos se publicará aquí junto con el resto de la documentación del estudio."
-      },
-      "footer": {
-        "note": "Contenido provisional. La información definitiva se publicará antes del inicio de la participación."
-      },
-      "applyCta": "Solicitar participación"
+    "holding": {
+      "title": "Sitio en preparación",
+      "body": "La información pública del estudio se publicará cuando esté aprobada."
     },
     "apply": {
       "title": "Participar en el estudio",

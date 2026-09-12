@@ -805,6 +805,48 @@ message they never received.
 to, not who copies it. There is no client, credential or endpoint, and the tests
 that assert their absence are unchanged.
 
+## D-042 · 2026-09-11 · The public landing page is the Clear Light recruitment site, built from the V3 handoff
+
+`/` stops being a generic design-foundation shell and becomes the Spanish
+recruitment landing page for the trial, built to the V3 design handoff (eight
+locked sections, one living light, a feathered human reveal, one dark theme).
+Full description in `docs/landing-page.md`.
+
+Four choices worth recording.
+
+**The copy is a typed module, not messages and not the database.** Recruitment
+copy is neither a staff UI string (messages/*.json, D-009) nor participant
+session content (the versioned content model, D-029). It changes through review,
+not through a dashboard, and it must be diffable against the approved protocol
+wording. So it lives in `src/content/landing/clear-light.ts` with tests that pin
+the rules that protect participants (no dashes, one CTA label, two identical
+groups, no promised outcome). Moving it into managed content later is an open
+question, not a rejected one.
+
+**Unresolved protocol values are markers, and production refuses to publish
+them.** A missing criterion or contact renders as `FALTA CONTENIDO APROBADO:
+KEY` outside production. When `APP_ENV` is `production` and any marker remains,
+the route renders a holding page. Nothing invented reaches the public, and the
+gate is in code rather than in a checklist. The Qualtrics URL is configuration
+(`studies.screening_url`, D-031) and drops out of the list once set.
+
+**The only outbound link sits after the randomization explanation.** The nav and
+hero "Comprobar si puedo participar" anchor to the final invitation; the
+outbound Qualtrics link exists only there. The brief requires the two groups to
+be explained before the CTA, and a visitor who skips ahead does so by their own
+click.
+
+**The scroll engine is vendored verbatim and loaded as a script.** The
+scroll-craft engine (`public/landing/scrollcraft.js`) is the mechanism the
+handoff asked for; its rule is that it is never edited per project, so it is not
+bundled, linted or typed. Page code drives everything bespoke from the `--sc-p`
+variable it publishes. Pinned acts exist only on wide, motion-allowed, scripted
+viewports; every other reader gets the same content stacked in document flow.
+
+Not done here, on purpose: no analytics, no form, no captions invented for the
+film, no team section, and no documentary onboarding photos that the team has
+not supplied. The old `LandingNav`, which listened to window scroll, is removed.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -833,6 +875,9 @@ that assert their absence are unchanged.
   session happens? Drift is detectable today but nothing acts on it (D-028).
 - Do participants need an index of the study pages, or are the links only ever
   handed out in messages? There is no /estudio landing page today.
+- Should the recruitment landing copy become managed study content instead of a
+  typed module, and should `/participar` remain once the landing carries the
+  same hand-off? (D-042)
 - Should EN translations of study content be required, or is Spanish enough with
   EN only for staff preview (as D-009 implies)?
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
