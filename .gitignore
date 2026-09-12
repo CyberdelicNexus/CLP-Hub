@@ -45,3 +45,13 @@ next-env.d.ts
 .env.*
 !.env.example
 drizzle-introspection/
+
+# The V3 design handoff package IS tracked: it is the design canon for the
+# recruitment landing page and the only copy of the original Clear Light media,
+# which scripts/landing-media.mjs reads to build the web derivatives.
+
+# scroll-craft verification: keep the contact sheets and reports, not every frame.
+scrollcraft/builds/*/lab/*/*
+!scrollcraft/builds/*/lab/*/sheet.png
+!scrollcraft/builds/*/lab/*/report.json
+!scrollcraft/builds/*/lab/*/results.json
