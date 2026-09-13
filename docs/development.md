@@ -40,7 +40,23 @@ npm run dev
 
 Login: `http://localhost:3000/equipo/login`. Switch language in the header; the choice is stored on the staff profile and audited.
 
+## The scheduled-action processor
+
+`POST /api/internal/process-scheduled-actions` is invoked by Vercel Cron. It
+processes due actions and runs the alert sweeps for every ACTIVE study.
+
+```bash
+curl -X POST http://localhost:3000/api/internal/process-scheduled-actions   -H "Authorization: Bearer $CRON_SECRET"
+```
+
+`CRON_SECRET` is optional in `.env.local` and the endpoint **refuses every
+request when it is unset** (503) — an unconfigured deployment is closed, not
+open. `GET` is refused with 405 because the endpoint changes state.
+
+It prepares work and never delivers any of it. See `docs/automations.md`.
+
 ## Testing
+
 
 `npm test` runs Vitest. Tests focus on research-sensitive behaviour: authorization matrix, study-scoping resolver, audit row builder, seed guards, locale defaults. Later phases add state-transition, rule-evaluation and execution-time re-check tests. Coverage percentages are not a goal.
 

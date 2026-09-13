@@ -9,7 +9,9 @@
     "noAccess": "No tienes acceso a esta sección.",
     "skipToContent": "Ir al contenido",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "all": "Todas",
+    "none": "Ninguno"
   },
   "locale": {
     "label": "Idioma",
@@ -889,6 +891,172 @@
       "RESOLVE_INCIDENT": "Resolver incidencia",
       "CLOSE": "Cerrar logística",
       "NONE": "Sin pendientes"
+    },
+    "openTasks": "{count, plural, one {# tarea abierta} other {# tareas abiertas}}",
+    "openAlerts": "{count, plural, one {# alerta sin resolver} other {# alertas sin resolver}}",
+    "preparedMessages": "{count, plural, one {# mensaje preparado para enviar} other {# mensajes preparados para enviar}}"
+  },
+  "tasks": {
+    "subtitle": "Lo que alguien tiene que hacer. Creado a mano o por una regla del estudio.",
+    "open": "Abiertas",
+    "overdue": "Vencidas",
+    "done": "Hechas",
+    "cancelled": "Canceladas",
+    "noTasks": "No hay tareas abiertas.",
+    "title": "Tarea",
+    "detail": "Detalle",
+    "detailHelp": "Contexto operativo. No escribas aquí nada sobre la salud de una persona.",
+    "priority": "Prioridad",
+    "dueAt": "Fecha límite",
+    "assignedTo": "Asignada a",
+    "unassigned": "Sin asignar",
+    "origin": "Origen",
+    "subject": "Sobre",
+    "add": "Nueva tarea",
+    "markDone": "Marcar hecha",
+    "cancel": "Cancelar tarea",
+    "assign": "Asignar",
+    "filter": "Estado",
+    "boundary": "Las tareas son trabajo operativo del equipo. No son notas clínicas ni observaciones sobre participantes.",
+    "status": {
+      "OPEN": "Abierta",
+      "DONE": "Hecha",
+      "CANCELLED": "Cancelada"
+    },
+    "priorityLabel": {
+      "LOW": "Baja",
+      "NORMAL": "Normal",
+      "HIGH": "Alta"
+    },
+    "originLabel": {
+      "MANUAL": "Manual",
+      "RULE": "Regla"
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "notFound": "No se ha encontrado la tarea.",
+      "failed": "No se ha podido completar la acción."
+    }
+  },
+  "alerts": {
+    "subtitle": "Lo que no cuadra en los registros del estudio. Nadie ha concluido nada: hay que mirarlo.",
+    "noAlerts": "No hay alertas abiertas.",
+    "raisedAt": "Detectada",
+    "lastSeen": "Vista por última vez",
+    "subject": "Sobre",
+    "detail": "Detalle",
+    "acknowledge": "Marcar como vista",
+    "resolve": "Marcar resuelta",
+    "resolutionNote": "Qué se ha hecho",
+    "acknowledgedBy": "Vista por",
+    "filter": "Estado",
+    "boundary": "Una alerta señala un registro incompleto, tardío o incoherente. Nunca es una valoración sobre una persona.",
+    "severityLabel": {
+      "INFO": "Informativa",
+      "WARNING": "Aviso",
+      "CRITICAL": "Crítica"
+    },
+    "status": {
+      "OPEN": "Abierta",
+      "ACKNOWLEDGED": "Vista",
+      "RESOLVED": "Resuelta"
+    },
+    "kind": {
+      "ALLOCATION_WITHOUT_CONSENT": "Asignación registrada sin consentimiento vigente",
+      "COHORT_UNDERSIZED": "Cohorte activa por debajo de su mínimo",
+      "COHORT_OVER_CAPACITY": "Cohorte por encima de su máximo",
+      "DEVICE_RETURN_OVERDUE": "Devolución de equipo fuera de plazo",
+      "EXCLUSION_WITHOUT_REASON": "Exclusiones registradas sin motivo",
+      "VR_NOT_READY_BEFORE_SESSION": "Configuración de RV sin confirmar antes de la sesión",
+      "SCHEDULED_ACTION_FAILED": "Ha fallado el procesado de una acción programada",
+      "RULE_MISCONFIGURED": "Regla de automatización mal configurada"
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "notFound": "No se ha encontrado la alerta.",
+      "failed": "No se ha podido completar la acción."
+    }
+  },
+  "automation": {
+    "title": "Automatización",
+    "subtitle": "Cuándo pasa algo, qué se prepara y con cuánta antelación. Todo es configuración.",
+    "nothingSends": "CLP Hub no envía nada. Una acción preparada aparece en la cola y una persona la copia y la manda.",
+    "rules": "Reglas",
+    "noRules": "Todavía no hay reglas configuradas.",
+    "rule": "Regla",
+    "event": "Cuándo ocurre",
+    "offset": "Desfase",
+    "offsetHelp": "Minutos respecto al momento de referencia. Negativo es antes.",
+    "offsetBefore": "{minutes} min antes",
+    "offsetAfter": "{minutes} min después",
+    "offsetSame": "En ese momento",
+    "actionKind": "Qué hace",
+    "deliveryMode": "Entrega",
+    "deliveryUnavailable": "La entrega automática no existe en esta aplicación.",
+    "template": "Plantilla",
+    "conditions": "Condiciones",
+    "noConditions": "Sin condiciones",
+    "active": "Activa",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "queue": "Cola preparada",
+    "queueSubtitle": "Mensajes que ya tocan y que siguen teniendo sentido. Los copia y los manda una persona.",
+    "noQueue": "No hay nada preparado ahora mismo.",
+    "scheduledFor": "Programado para",
+    "late": "Con retraso",
+    "openInComms": "Abrir en Comunicaciones",
+    "eventType": {
+      "APPLICATION_SUBMITTED": "Se recibe una solicitud",
+      "SCREENING_SCHEDULED": "Se agenda una evaluación",
+      "SCREENING_COMPLETED": "Se completa una evaluación",
+      "ELIGIBILITY_DETERMINED": "Se registra una determinación",
+      "CONSENT_RECORDED": "Se registra un consentimiento",
+      "ALLOCATION_RECORDED": "Se registra una asignación",
+      "COHORT_ASSIGNED": "Alguien entra en una cohorte",
+      "COHORT_STATUS_CHANGED": "Cambia el estado de una cohorte",
+      "VISIT_SCHEDULED": "Se agenda la visita inicial",
+      "SESSION_SCHEDULED": "Se agenda una sesión",
+      "SESSION_RESCHEDULED": "Se reprograma una sesión",
+      "SESSION_CANCELLED": "Se cancela una sesión",
+      "SESSION_HELD": "Se celebra una sesión",
+      "DEVICE_ASSIGNED": "Se asigna un equipo",
+      "DEVICE_DELIVERED": "Se entrega un equipo",
+      "DEVICE_RETURN_REQUESTED": "Se pide la devolución de un equipo",
+      "DEVICE_RETURNED": "Se devuelve un equipo",
+      "PARTICIPANT_WITHDRAWN": "Alguien se retira",
+      "PARTICIPANT_COMPLETED": "Alguien termina el estudio"
+    },
+    "action": {
+      "MESSAGE": "Preparar un mensaje",
+      "TASK": "Crear una tarea",
+      "ALERT": "Levantar una alerta"
+    },
+    "delivery": {
+      "MANUAL": "Manual",
+      "APPROVAL_REQUIRED": "Requiere aprobación",
+      "AUTOMATIC": "Automática"
+    },
+    "condition": {
+      "participantActive": "sigue en el estudio",
+      "participantEnrolled": "está inscrita",
+      "consentActive": "tiene consentimiento vigente",
+      "cohortActive": "su cohorte sigue en marcha",
+      "sessionScheduled": "la sesión sigue agendada",
+      "attendanceNotRecorded": "aún no hay asistencia registrada",
+      "deviceOut": "tiene un equipo fuera",
+      "vrNotReady": "su configuración de RV no está confirmada"
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "notFound": "No se ha encontrado la regla.",
+      "duplicateKey": "Ya existe una regla con esa clave.",
+      "unavailableDeliveryMode": "La entrega automática no está disponible.",
+      "invalidOffset": "El desfase está fuera de los límites permitidos.",
+      "shape": "Faltan datos para ese tipo de acción.",
+      "failed": "No se ha podido completar la acción."
     }
   }
 }

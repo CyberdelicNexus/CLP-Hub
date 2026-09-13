@@ -2,7 +2,7 @@
 
 ## Shape
 
-One Next.js application, one Postgres database (Supabase), one scheduled-job mechanism (Vercel Cron, Phase 8). No microservices, no message brokers, no GraphQL.
+One Next.js application, one Postgres database (Supabase), one scheduled-job mechanism (Vercel Cron). No microservices, no message brokers, no GraphQL.
 
 ```
 Browser ──► Next.js (Vercel)
@@ -63,4 +63,10 @@ Hardening before real participant data (not done): dedicated least-privilege DB 
 
 ## Background work
 
-Phase 8 adds `study_events`, `automation_rules`, `scheduled_actions` and a cron-invoked processor that re-checks participant state at execution time. See `docs/automations.md`.
+Phase 8 adds `study_events`, `automation_rules`, `scheduled_actions`, `tasks`,
+`alerts` and a cron-invoked processor at
+`POST /api/internal/process-scheduled-actions` that re-checks participant state
+at execution time. The processor **prepares and never delivers**: an action that
+still makes sense reaches READY and waits for a person. It is authorised with a
+bearer `CRON_SECRET`, and refuses every request when that is unset. See
+`docs/automations.md`.

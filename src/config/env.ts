@@ -17,6 +17,15 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error"]).default("info"),
+  /**
+   * Shared secret for the scheduled-action processor (Phase 8).
+   *
+   * Optional, and that is deliberate: a developer running the app locally has
+   * no cron, and requiring a secret they will never use would be one more
+   * reason to copy a placeholder into .env. The endpoint refuses every request
+   * when it is unset, so an unconfigured deployment is closed, not open.
+   */
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;

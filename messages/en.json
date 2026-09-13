@@ -9,7 +9,9 @@
     "noAccess": "You do not have access to this section.",
     "skipToContent": "Skip to content",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "all": "All",
+    "none": "None"
   },
   "locale": {
     "label": "Language",
@@ -889,6 +891,172 @@
       "RESOLVE_INCIDENT": "Resolve incident",
       "CLOSE": "Close logistics",
       "NONE": "Nothing outstanding"
+    },
+    "openTasks": "{count, plural, one {# open task} other {# open tasks}}",
+    "openAlerts": "{count, plural, one {# unresolved alert} other {# unresolved alerts}}",
+    "preparedMessages": "{count, plural, one {# message prepared to send} other {# messages prepared to send}}"
+  },
+  "tasks": {
+    "subtitle": "What somebody has to do. Created by hand or by a study rule.",
+    "open": "Open",
+    "overdue": "Overdue",
+    "done": "Done",
+    "cancelled": "Cancelled",
+    "noTasks": "No open tasks.",
+    "title": "Task",
+    "detail": "Detail",
+    "detailHelp": "Operational context. Do not write anything about a person's health here.",
+    "priority": "Priority",
+    "dueAt": "Due",
+    "assignedTo": "Assigned to",
+    "unassigned": "Unassigned",
+    "origin": "Origin",
+    "subject": "About",
+    "add": "New task",
+    "markDone": "Mark done",
+    "cancel": "Cancel task",
+    "assign": "Assign",
+    "filter": "Status",
+    "boundary": "Tasks are the team's operational work. They are not clinical notes or observations about participants.",
+    "status": {
+      "OPEN": "Open",
+      "DONE": "Done",
+      "CANCELLED": "Cancelled"
+    },
+    "priorityLabel": {
+      "LOW": "Low",
+      "NORMAL": "Normal",
+      "HIGH": "High"
+    },
+    "originLabel": {
+      "MANUAL": "Manual",
+      "RULE": "Rule"
+    },
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "notFound": "Task not found.",
+      "failed": "The action could not be completed."
+    }
+  },
+  "alerts": {
+    "subtitle": "What does not add up in the study's records. Nothing has been concluded: somebody should look.",
+    "noAlerts": "No open alerts.",
+    "raisedAt": "Raised",
+    "lastSeen": "Last seen",
+    "subject": "About",
+    "detail": "Detail",
+    "acknowledge": "Mark as seen",
+    "resolve": "Mark resolved",
+    "resolutionNote": "What was done",
+    "acknowledgedBy": "Seen by",
+    "filter": "Status",
+    "boundary": "An alert flags a record that is incomplete, late or inconsistent. It is never a judgement about a person.",
+    "severityLabel": {
+      "INFO": "Info",
+      "WARNING": "Warning",
+      "CRITICAL": "Crítical"
+    },
+    "status": {
+      "OPEN": "Open",
+      "ACKNOWLEDGED": "Seen",
+      "RESOLVED": "Resolved"
+    },
+    "kind": {
+      "ALLOCATION_WITHOUT_CONSENT": "Allocation recorded without an active consent",
+      "COHORT_UNDERSIZED": "Active cohort below its minimum",
+      "COHORT_OVER_CAPACITY": "Cohort above its maximum",
+      "DEVICE_RETURN_OVERDUE": "Device return overdue",
+      "EXCLUSION_WITHOUT_REASON": "Exclusions recorded with no reason",
+      "VR_NOT_READY_BEFORE_SESSION": "VR setup unconfirmed before the session",
+      "SCHEDULED_ACTION_FAILED": "A scheduled action failed to process",
+      "RULE_MISCONFIGURED": "Automation rule misconfigured"
+    },
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "notFound": "Alert not found.",
+      "failed": "The action could not be completed."
+    }
+  },
+  "automation": {
+    "title": "Automation",
+    "subtitle": "When something happens, what gets prepared, and how long before. All of it configuration.",
+    "nothingSends": "CLP Hub sends nothing. A prepared action appears in the queue and a person copies it and sends it.",
+    "rules": "Rules",
+    "noRules": "No rules configured yet.",
+    "rule": "Rule",
+    "event": "When this happens",
+    "offset": "Offset",
+    "offsetHelp": "Minutes from the reference moment. Negative is before.",
+    "offsetBefore": "{minutes} min before",
+    "offsetAfter": "{minutes} min after",
+    "offsetSame": "At that moment",
+    "actionKind": "What it does",
+    "deliveryMode": "Delivery",
+    "deliveryUnavailable": "Automatic delivery does not exist in this application.",
+    "template": "Template",
+    "conditions": "Conditions",
+    "noConditions": "No conditions",
+    "active": "Active",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "queue": "Prepared queue",
+    "queueSubtitle": "Messages that are due and still make sense. A person copies and sends them.",
+    "noQueue": "Nothing prepared right now.",
+    "scheduledFor": "Scheduled for",
+    "late": "Late",
+    "openInComms": "Open in Communications",
+    "eventType": {
+      "APPLICATION_SUBMITTED": "An application arrives",
+      "SCREENING_SCHEDULED": "A screening is booked",
+      "SCREENING_COMPLETED": "A screening is completed",
+      "ELIGIBILITY_DETERMINED": "A determination is recorded",
+      "CONSENT_RECORDED": "A consent decision is recorded",
+      "ALLOCATION_RECORDED": "An allocation is recorded",
+      "COHORT_ASSIGNED": "Somebody joins a cohort",
+      "COHORT_STATUS_CHANGED": "A cohort changes status",
+      "VISIT_SCHEDULED": "The initial visit is booked",
+      "SESSION_SCHEDULED": "A session is booked",
+      "SESSION_RESCHEDULED": "A session is moved",
+      "SESSION_CANCELLED": "A session is cancelled",
+      "SESSION_HELD": "A session takes place",
+      "DEVICE_ASSIGNED": "A device is assigned",
+      "DEVICE_DELIVERED": "A device is handed over",
+      "DEVICE_RETURN_REQUESTED": "A device return is requested",
+      "DEVICE_RETURNED": "A device comes back",
+      "PARTICIPANT_WITHDRAWN": "Somebody withdraws",
+      "PARTICIPANT_COMPLETED": "Somebody finishes the study"
+    },
+    "action": {
+      "MESSAGE": "Prepare a message",
+      "TASK": "Create a task",
+      "ALERT": "Raise an alert"
+    },
+    "delivery": {
+      "MANUAL": "Manual",
+      "APPROVAL_REQUIRED": "Approval required",
+      "AUTOMATIC": "Automatic"
+    },
+    "condition": {
+      "participantActive": "is still in the study",
+      "participantEnrolled": "is enrolled",
+      "consentActive": "has a consent that stands",
+      "cohortActive": "their cohort is still running",
+      "sessionScheduled": "the session is still booked",
+      "attendanceNotRecorded": "attendance has not been recorded yet",
+      "deviceOut": "has a device out",
+      "vrNotReady": "their VR setup is not confirmed"
+    },
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "notFound": "Rule not found.",
+      "duplicateKey": "A rule with that key already exists.",
+      "unavailableDeliveryMode": "Automatic delivery is not available.",
+      "invalidOffset": "The offset is outside the permitted bounds.",
+      "shape": "That action kind is missing required data.",
+      "failed": "The action could not be completed."
     }
   }
 }

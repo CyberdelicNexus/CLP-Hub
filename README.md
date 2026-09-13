@@ -2,7 +2,9 @@
 
 Operations platform for a Spanish-language randomized controlled trial: recruitment site, public study content pages, and an internal team dashboard (ES/EN).
 
-**Status: Phases 0–7 — operations, logistics and messaging.** Staff triage, screening with recorded exclusion reasons, digital and in-person consent, cohorts with configured size bounds, recorded allocations, sessions, attendance, versioned public study pages, per-participant responsibles and initial visits, VR device logistics, and WhatsApp message templates all exist. Automation (Phase 8) is still to come.
+**Status: Phases 0–8 — operations, logistics, messaging and automation.** Staff triage, screening with recorded exclusion reasons, digital and in-person consent, cohorts with configured size bounds, recorded allocations, sessions, attendance, versioned public study pages, per-participant responsibles and initial visits, VR device logistics, WhatsApp message templates, and configurable automation rules that prepare work and raise alerts all exist.
+
+**Nothing in this repository sends anything.** Automation schedules, re-checks and *prepares*; a person copies the message and sends it (D-004, D-039, D-043).
 
 Initial screening happens in Qualtrics: `/participar` collects nothing and hands people off, and identifiable screening data stays there (D-031). Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
@@ -15,7 +17,10 @@ Initial screening happens in Qualtrics: `/participar` collects nothing and hands
 | Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
 | VR logistics | `/equipo/logistica-vr` | `logistics.read` | 6 ✓ |
-| Message templates | `/equipo/comunicaciones` | `communications.read` | 7 ✓ |
+| Message templates and the prepared queue | `/equipo/comunicaciones` | `communications.read` | 7, 8 ✓ |
+| Tasks | `/equipo/tareas` | `tasks.read` | 8 ✓ |
+| Alerts | `/equipo/alertas` | `alerts.read` | 8 ✓ |
+| Scheduled-action processor (cron, secret-protected) | `POST /api/internal/process-scheduled-actions` | `CRON_SECRET` | 8 ✓ |
 
 Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles.
 
@@ -33,7 +38,7 @@ npm run db:seed                 # DEMO study + synthetic staff (needs ALLOW_DEMO
 npm run dev                     # http://localhost:3000/equipo/login
 ```
 
-The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/participar` and `/equipo/solicitudes` are usable immediately.
+The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/participar` and `/equipo/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
 
 Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example.com`, `demo.facilitator@example.com`, `demo.researcher@example.com`, `demo.logistics@example.com`, password = `SEED_STAFF_PASSWORD`.
 
@@ -54,7 +59,7 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 - `docs/architecture.md` — surfaces, layers, request flow, security model
 - `docs/domain-model.md` — entities, status enums, phase-by-phase schema plan
 - `docs/permissions.md` — roles → permissions matrix
-- `docs/automations.md` — events, rules, scheduled actions (design, Phase 8)
+- `docs/automations.md` — events, rules, scheduled actions, sweeps, the processor
 - `docs/content-model.md` — versioned study content (design, Phase 5)
 - `docs/design-system.md` — tokens, type, motion, theming, accessibility rules
 - `docs/landing-page.md` — the public recruitment landing page: structure, media, gate, missing content
@@ -64,4 +69,4 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 
 ## Non-negotiables
 
-No randomization algorithm — `src/domain/randomization.ts` records allocations made elsewhere and is guarded by a test asserting it contains no source of randomness. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.
+**Nothing sends.** There is no HTTP client, credential or endpoint in the communications or automation features; `tests/communication.test.ts` and `tests/automation.test.ts` assert the absence. No randomization algorithm — `src/domain/randomization.ts` records allocations made elsewhere and is guarded by a test asserting it contains no source of randomness. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.

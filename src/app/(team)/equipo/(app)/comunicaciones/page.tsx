@@ -14,6 +14,7 @@ import {
   type CommunicationAudience,
 } from "@/domain/communication";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { listPreparedActions } from "@/services/automation";
 import {
   listCohortOptions,
   listSessionOptions,
@@ -47,7 +48,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CommunicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ destinatario?: string; participante?: string; cohorte?: string }>;
+  searchParams: Promise<{
+    destinatario?: string;
+    participante?: string;
+    cohorte?: string;
+    /** A prepared action opened from the queue below. */
+    accion?: string;
+  }>;
 }) {
   const ctx = await getStudyContext();
   if (!ctx) return null;
@@ -64,12 +71,23 @@ export default async function CommunicationsPage({
   const canManage = ctx.permissions.has("communications.manage");
   const includeContact = ctx.permissions.has("participants.contact.read");
 
-  const [templates, sessionOptions, cohortOptions, participantRows] = await Promise.all([
+  const [templates, sessionOptions, cohortOptions, participantRows, prepared] = await Promise.all([
     listTemplates(ctx.study.id),
     listSessionOptions(ctx.study.id),
     listCohortOptions(ctx.study.id),
     listParticipants(ctx.study.id, { includeContact: false, limit: 500 }),
+    listPreparedActions(ctx.study.id),
   ]);
+
+  // The queue item being answered, if the composer was opened from it. Looked
+  // up rather than trusted: the id comes from the URL, and a template that does
+  // not belong to a prepared action in this study must not be preselected.
+  const openAction = params.accion ? prepared.find((a) => a.id === params.accion) : undefined;
+
+  // One reading of the clock for the whole page, so two rows cannot disagree
+  // about whether the same moment is late.
+  const now = new Date();
+  const lateAfterMs = 24 * 60 * 60 * 1000;
 
   const selectedCohort =
     audience === "COHORT_CHANNEL" && params.cohorte
@@ -155,6 +173,59 @@ export default async function CommunicationsPage({
         {t("communications.manualNote")}
       </p>
 
+      {/* Prepared queue ---------------------------------------------------- */}
+      {/*
+        What the processor scheduled, re-checked when it came due, and found to
+        still make sense. Nothing here has been sent: each row opens the composer
+        with its template already chosen, and a person copies it and says they
+        sent it (D-004, D-043).
+      */}
+      {prepared.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("automation.queue")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t("automation.queueSubtitle")}</p>
+            <ul className="space-y-2">
+              {prepared.map((action) => {
+                const target = action.participantId
+                  ? `${base}?destinatario=PARTICIPANT&participante=${action.participantId}&accion=${action.id}`
+                  : `${base}?destinatario=COHORT_CHANNEL&cohorte=${action.cohortId}&accion=${action.id}`;
+                const late = action.scheduledFor.getTime() < now.getTime() - lateAfterMs;
+
+                return (
+                  <li key={action.id}>
+                    <Link
+                      href={target}
+                      className="group flex flex-wrap items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    >
+                      <span className="font-medium">{action.templateName ?? action.ruleName}</span>
+                      <span data-numeric className="text-xs text-muted-foreground">
+                        {action.participantCode ?? action.cohortCode}
+                      </span>
+                      <span data-numeric className="text-xs text-muted-foreground">
+                        {new Intl.DateTimeFormat("es-ES", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                          timeZone: ctx.study.timezone,
+                        }).format(action.scheduledFor)}
+                      </span>
+                      {/*
+                        Shown rather than hidden: an action prepared days ago and
+                        still sitting here is the failure this phase has to make
+                        visible, not tidy away.
+                      */}
+                      {late ? <StatusBadge tone="warning">{t("automation.late")}</StatusBadge> : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Compose ---------------------------------------------------------- */}
       <Card>
         <CardHeader>
@@ -217,6 +288,8 @@ export default async function CommunicationsPage({
               audience={audience}
               canReadContact={includeContact}
               suggested={suggested}
+              actionId={openAction?.id}
+              initialTemplateId={openAction?.templateId ?? undefined}
               templates={composerTemplates.map((tpl) => ({
                 id: tpl.id,
                 name: tpl.nameEs,

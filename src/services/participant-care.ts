@@ -1,6 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import { getDb } from "@/db/client";
 import {
   initialVisits,
@@ -283,6 +284,16 @@ export async function scheduleInitialVisit(params: {
         hasLocation: Boolean(location),
         hasNotes: Boolean(notes),
       },
+    });
+
+    // Anchored on the appointment. "Two days before the initial visit" is then
+    // a rule row, not a number in this file.
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "VISIT_SCHEDULED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      anchorAt: scheduledAt,
+      metadata: { participantCode: participant.code },
     });
 
     return created.id;

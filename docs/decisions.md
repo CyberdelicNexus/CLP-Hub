@@ -847,6 +847,86 @@ Not done here, on purpose: no analytics, no form, no captions invented for the
 film, no team section, and no documentary onboarding photos that the team has
 not supplied. The old `LandingNav`, which listened to window scroll, is removed.
 
+## D-043 · 2026-09-13 · Automation prepares work; it never delivers any of it (Phase 8)
+
+Phase 8 lands the last planned tables — `study_events`, `automation_rules`,
+`scheduled_actions`, `tasks`, `alerts` (migration 0015) — plus a cron-invoked
+processor and the `/equipo/tareas` and `/equipo/alertas` surfaces. Full
+description in `docs/automations.md`.
+
+Six choices worth recording.
+
+**READY is the end of what the system can do alone.** A processor that walks a
+queue of due reminders is one HTTP client away from being a mailer, so Phase 8
+does not weaken D-004 or D-039 — it restates them in a place where they are
+easier to break. `scheduled_actions.status` has no SENT and no DELIVERED; DONE
+is a person saying they acted. `tests/automation.test.ts` asserts that no HTTP
+client, credential or endpoint exists across the domain module, the service and
+the processor route, the same way D-018 makes randomization an absence rather
+than a set of guards.
+
+**AUTOMATIC stays in the vocabulary and is refused at save time.** The design
+called for three delivery modes and the enum keeps all three, because deleting
+the value would lose the record of what was intended. What must never exist is a
+STORED rule claiming it — the team would believe their reminders were going out
+on their own. It is refused in the domain (`isDeliveryModeAvailable`), in the
+service (`createRule`) and by a check constraint. Refusing at save time rather
+than at execution time means the misunderstanding surfaces while somebody is
+still looking at the form.
+
+**An event carries two timestamps, and that is what makes one engine enough.**
+`occurred_at` is when the fact was recorded; `anchor_at` is what a rule's offset
+is measured from. "Immediately after the application" is the same instant for
+both. "24 h before session 2" anchors on the session's start, which is still in
+the future when the event is written. No rule has to know which kind it is
+reading, and `scheduled_for = anchor_at + offset_minutes` is the whole
+calculation.
+
+**Rule conditions are a closed allow-list of operational predicates.** Eight
+named booleans — `participantActive`, `sessionScheduled`, `deviceOut` and so on
+— with no operators, no values and no field access. This is the same safety model
+as `TEMPLATE_VARIABLES` (D-039) and the same reasoning as non-negotiable 3: a
+rule that could read an arbitrary column would eventually branch on a screening
+result. `consentActive` asks whether a consent row exists and stands, never what
+it granted. An unknown key in a stored row is dropped rather than honoured or
+thrown on, and raises `RULE_MISCONFIGURED`.
+
+**The go/no-go is taken when the action is due, and the snapshot is never
+consulted.** `snapshot_json` exists so somebody can later see what the world
+looked like when the action was planned; the decision reads the state as it is at
+execution. A reminder scheduled on Monday for a participant who withdrew on
+Tuesday is SKIPPED with the unmet condition named. There is no grace window
+either: an action the processor missed on Friday is prepared on Monday with its
+original time visible and marked late, because dropping it silently would hide an
+outage. Rescheduling or cancelling cancels the open actions against that subject
+rather than editing them, so the audit trail of what was planned survives.
+
+**Alerts answer four open questions the same way: surface it, name it, let a
+person decide.** "Should recording an allocation for a participant without active
+consent raise an alert?" — yes, CRITICAL. "Should an under-sized cohort activated
+with an override raise one?" — yes, WARNING. So do a headset past its return date
+and an exclusion recorded with no reason. Every alert kind is about the DATA:
+something missing, late or inconsistent in the records the team keeps. None is a
+judgement about a participant, and none can be, because the sweeps that raise
+them read only operational columns. An exclusion count is raised against the
+STUDY rather than against one of the excluded people. Severity is fixed in code
+rather than configurable, because a team that can turn "allocation without
+consent" down to INFO will, on the week it fires. Nothing resolves its own
+alerts: a sweep that did would erase the record that something was wrong for a
+fortnight.
+
+**No sweep contains a trial-specific number.** Each reads either a configured
+bound (`cohorts.min_size`) or a fact with no threshold at all. A check like "warn
+48 h before the session if the headset is not ready" has this trial's number in
+it, so it is a rule row — event `SESSION_SCHEDULED`, negative offset, action
+ALERT — and the seed ships one as a worked example. A test asserts the sweep
+bodies contain no bare duration or group-size constant (non-negotiable 6).
+
+Not done here, on purpose: no reschedule path for a session (so
+`SESSION_RESCHEDULED` is in the vocabulary and not yet emitted), no approval
+workflow behind `communications.approve`, no per-study on/off switch for sweeps,
+and no delivery of any kind.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -863,8 +943,6 @@ not supplied. The old `LandingNav`, which listened to window scroll, is removed.
   assumption, not from the brief.
 - How should a genuine randomization correction be recorded? Today a second
   allocation for the same participant is refused outright (D-021).
-- Should recording an allocation for a participant without active consent raise
-  an alert? It is captured in the audit today but nothing surfaces it (Phase 8).
 - Confirm the session status vocabulary (SCHEDULED / HELD / CANCELLED) — it is an
   assumption, not from the brief (D-025).
 - Should attendance become locked once a session is HELD, or stay correctable as
@@ -905,8 +983,6 @@ not supplied. The old `LandingNav`, which listened to window scroll, is removed.
   retention rule? Nothing shows them today (D-037).
 - Is ACTIVE the right moment to check cohort size, or should PREPARATION also be
   checked? (D-033)
-- Should an under-sized cohort that was activated with an override raise an
-  alert in Phase 8, as the consent anomaly question does?
 - Should a cohort whose arm is null be allowed at all once arms exist, or should
   naming an arm become mandatory for new cohorts? (D-034)
 - Who may add or retire a consent scope, and what happens to a consent that
@@ -916,5 +992,15 @@ not supplied. The old `LandingNav`, which listened to window scroll, is removed.
 - Confirm that contact details for a Qualtrics-route participant are only ever
   entered when the initial visit is being arranged (D-031). Nothing enforces the
   timing today.
-- Whether email reminders may be AUTOMATIC or should also be manual.
+- Whether email reminders may ever be AUTOMATIC. Refused everywhere today
+  (D-043); answering yes means adding a provider, a credential and a delivery
+  record, and re-opening D-004.
+- Should a study be able to turn an individual sweep off, or is the fixed set
+  the right one? Severity is deliberately not configurable (D-043).
+- Which timings from the previous study apply to this one? The four rules in the
+  seed are synthetic demonstrations, not this trial's schedule.
+- How should a session be rescheduled? There is no path today, so
+  `SESSION_RESCHEDULED` is in the vocabulary and never emitted (D-043).
+- Should `communications.approve` gate the APPROVAL_REQUIRED delivery mode, or
+  is the distinction between MANUAL and APPROVAL_REQUIRED only advisory today?
 - MFA requirement for staff.

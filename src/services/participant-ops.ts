@@ -1,6 +1,7 @@
 import "server-only";
 import { and, count, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
   cohorts,
@@ -600,6 +601,16 @@ export async function scheduleScreening(params: {
       });
     }
 
+    // Anchored on the appointment, so "the day before the screening" is a rule
+    // a study can configure without this code knowing when that is.
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "SCREENING_SCHEDULED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      anchorAt: scheduledAt,
+      metadata: { participantCode: participant.code },
+    });
+
     return created.id;
   });
 }
@@ -717,6 +728,23 @@ export async function completeScreening(params: {
         reasonCode: reason?.code ?? null,
         reasonCategory: reason?.category ?? null,
       },
+    });
+
+    // Two events, because they are two different things a rule may want. The
+    // RESULT is deliberately absent from both: a rule can act on the fact that
+    // a determination was made without this log ever carrying what it was
+    // (CLAUDE.md rule 3).
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "SCREENING_COMPLETED",
+      subject: { kind: "PARTICIPANT", id: current.participantId },
+      metadata: { participantCode: current.participantCode },
+    });
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "ELIGIBILITY_DETERMINED",
+      subject: { kind: "PARTICIPANT", id: current.participantId },
+      metadata: { participantCode: current.participantCode },
     });
   });
 }
@@ -966,6 +994,14 @@ export async function recordConsentDecision(params: {
         metadata: { via: "consent", consentId },
       });
     }
+
+    // That a decision was recorded, never which one and never what it granted.
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "CONSENT_RECORDED",
+      subject: { kind: "PARTICIPANT", id: current.participantId },
+      metadata: { participantCode: current.participantCode },
+    });
   });
 }
 
@@ -1007,6 +1043,15 @@ export async function setEnrollmentStatus(params: {
       entityId: participantId,
       before: { enrollmentStatus: current.enrollmentStatus },
       after: { enrollmentStatus: status, participantCode: current.code },
+    });
+
+    // A withdrawal cancels every action still planned for this person. Nothing
+    // prepared after this point can be about them (docs/automations.md).
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: status === "WITHDRAWN" ? "PARTICIPANT_WITHDRAWN" : "PARTICIPANT_COMPLETED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      metadata: { participantCode: current.code },
     });
   });
 }

@@ -29,6 +29,19 @@ import {
   COMMUNICATION_STATUSES,
 } from "@/domain/communication";
 import {
+  ACTION_KINDS,
+  ALERT_KINDS,
+  ALERT_SEVERITIES,
+  ALERT_STATUSES,
+  DELIVERY_MODES,
+  EVENT_TYPES,
+  SCHEDULED_ACTION_STATUSES,
+  SUBJECT_KINDS,
+  TASK_ORIGINS,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+} from "@/domain/automation";
+import {
   INTAKE_TARGETS,
   INTEGRATION_MODES,
   QUALTRICS_FIELD_CLASSES,
@@ -93,3 +106,19 @@ export const communicationStatusEnum = pgEnum("communication_status", COMMUNICAT
 
 // Audience (Phase 7b, migration 0014)
 export const communicationAudienceEnum = pgEnum("communication_audience", COMMUNICATION_AUDIENCES);
+
+// Automation (Phase 8, migration 0015)
+export const automationEventTypeEnum = pgEnum("automation_event_type", EVENT_TYPES);
+export const automationSubjectKindEnum = pgEnum("automation_subject_kind", SUBJECT_KINDS);
+export const automationActionKindEnum = pgEnum("automation_action_kind", ACTION_KINDS);
+export const automationDeliveryModeEnum = pgEnum("automation_delivery_mode", DELIVERY_MODES);
+export const scheduledActionStatusEnum = pgEnum(
+  "scheduled_action_status",
+  SCHEDULED_ACTION_STATUSES,
+);
+export const taskStatusEnum = pgEnum("task_status", TASK_STATUSES);
+export const taskPriorityEnum = pgEnum("task_priority", TASK_PRIORITIES);
+export const taskOriginEnum = pgEnum("task_origin", TASK_ORIGINS);
+export const alertKindEnum = pgEnum("alert_kind", ALERT_KINDS);
+export const alertSeverityEnum = pgEnum("alert_severity", ALERT_SEVERITIES);
+export const alertStatusEnum = pgEnum("alert_status", ALERT_STATUSES);

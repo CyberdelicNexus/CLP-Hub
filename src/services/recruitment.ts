@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, desc, eq, gt, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
   applicationAnswers,
@@ -377,6 +378,13 @@ export async function submitApplication(
       },
     });
 
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "APPLICATION_SUBMITTED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      metadata: { participantCode, source: "PUBLIC_FORM" },
+    });
+
     return { applicationId: application.id, participantCode, deduplicated: false };
   });
 }
@@ -501,6 +509,13 @@ export async function recordQualtricsIntake(params: {
         // No answers are imported, so there is nothing to count.
         answerCount: 0,
       },
+    });
+
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "APPLICATION_SUBMITTED",
+      subject: { kind: "PARTICIPANT", id: participant.id },
+      metadata: { participantCode, source: "QUALTRICS" },
     });
 
     return { participantId: participant.id, participantCode, applicationId: application.id };

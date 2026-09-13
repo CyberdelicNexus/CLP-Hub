@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import { getDb } from "@/db/client";
 import {
   cohorts,
@@ -430,6 +431,16 @@ export async function assignDevice(params: {
       metadata: { via: "assignment", assignmentId: created.id },
     });
 
+    // Against the DEVICE, not the person. A logistics rule is about a headset
+    // that has to come back; the participant is reachable from the open
+    // assignment when a rule genuinely needs them.
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "DEVICE_ASSIGNED",
+      subject: { kind: "DEVICE", id: deviceId },
+      metadata: { deviceCode: device.code, participantCode: participant.code },
+    });
+
     return created.id;
   });
 }
@@ -502,6 +513,19 @@ export async function recordAssignmentMilestone(params: {
       },
       before: { deviceStatus: row.deviceStatus },
     });
+
+    // Only the two milestones a rule can usefully hang off: the headset is with
+    // the participant, or it is back. RECEIVED is the participant confirming
+    // arrival and has no schedule of its own.
+    if (milestone === "HANDED_OVER" || milestone === "RETURNED") {
+      await recordStudyEvent(tx, {
+        studyId,
+        eventType: milestone === "HANDED_OVER" ? "DEVICE_DELIVERED" : "DEVICE_RETURNED",
+        subject: { kind: "DEVICE", id: row.deviceId },
+        anchorAt: at,
+        metadata: { deviceCode: row.deviceCode, participantCode: row.participantCode },
+      });
+    }
   });
 }
 

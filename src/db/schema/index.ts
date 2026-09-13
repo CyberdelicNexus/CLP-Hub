@@ -13,3 +13,4 @@ export * from "./intake";
 export * from "./participant-care";
 export * from "./logistics";
 export * from "./communications";
+export * from "./automation";

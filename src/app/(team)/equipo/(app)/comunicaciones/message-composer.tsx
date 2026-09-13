@@ -47,6 +47,8 @@ export function MessageComposer({
   templates,
   suggested,
   canReadContact,
+  actionId,
+  initialTemplateId,
   labels,
 }: {
   subject: { kind: "PARTICIPANT" | "COHORT_CHANNEL"; id: string };
@@ -54,6 +56,14 @@ export function MessageComposer({
   templates: ComposerTemplate[];
   suggested: TemplateValues;
   canReadContact: boolean;
+  /**
+   * The prepared action this send answers, when the composer was opened from
+   * the queue. Submitted so the queue item closes and the timeline can say
+   * which scheduled reminder this particular message was (Phase 8).
+   */
+  actionId?: string;
+  /** The template the queue item is for, so the right one is already chosen. */
+  initialTemplateId?: string;
   labels: {
     template: string;
     values: string;
@@ -72,7 +82,11 @@ export function MessageComposer({
   };
 }) {
   const [state, action, pending] = useActionState(markSentAction, initial);
-  const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
+  const [templateId, setTemplateId] = useState(
+    initialTemplateId && templates.some((t) => t.id === initialTemplateId)
+      ? initialTemplateId
+      : (templates[0]?.id ?? ""),
+  );
   const [values, setValues] = useState<TemplateValues>(suggested);
   const [copied, setCopied] = useState(false);
 
@@ -205,6 +219,7 @@ export function MessageComposer({
           <input type="hidden" name="cohortId" value={subject.id} />
         )}
         <input type="hidden" name="templateId" value={templateId} />
+        {actionId ? <input type="hidden" name="actionId" value={actionId} /> : null}
         <div className="min-w-48 flex-1 space-y-1.5">
           <Label htmlFor="skipReason" className="text-xs">
             {labels.skipReason}

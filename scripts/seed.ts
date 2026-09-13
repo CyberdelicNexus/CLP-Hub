@@ -557,6 +557,65 @@ const DEMO_TEMPLATES = [
  * person there tells everybody else who they are (D-041), and the save path
  * refuses it.
  */
+/**
+ * Demonstration automation rules (Phase 8).
+ *
+ * EVERY TIMING HERE IS SEED DATA, not a decision about this trial. They exist so
+ * the queue, the tasks list and the rules screen have something in them on a
+ * fresh database, and so the shape of a rule is legible before anyone writes a
+ * real one. The real schedule comes from the protocol and is entered by the
+ * team (CLAUDE.md rule 6).
+ *
+ * Note what none of them is: AUTOMATIC. Nothing in this application delivers,
+ * and a check constraint refuses the value (D-043).
+ */
+const DEMO_RULES = [
+  {
+    key: "demo-confirmar-solicitud",
+    nameEs: "Confirmar la solicitud (SINTÉTICA)",
+    eventType: "APPLICATION_SUBMITTED" as const,
+    actionKind: "MESSAGE" as const,
+    // Straight away: the anchor is the moment the application arrived.
+    offsetMinutes: 0,
+    templateKey: "confirmacion-solicitud",
+    conditions: { participantActive: true },
+  },
+  {
+    key: "demo-recordatorio-vispera",
+    nameEs: "Recordatorio la víspera de la sesión (SINTÉTICA)",
+    eventType: "SESSION_SCHEDULED" as const,
+    actionKind: "MESSAGE" as const,
+    // 24 h before the session STARTS, because the event's anchor is the
+    // session's start rather than the moment it was booked.
+    offsetMinutes: -1440,
+    templateKey: "canal-recordatorio-intro",
+    // Re-checked when it comes due: a cancelled session skips instead of
+    // reminding a cohort about something that is not happening.
+    conditions: { sessionScheduled: true, cohortActive: true },
+  },
+  {
+    key: "demo-preparar-visor",
+    nameEs: "Preparar el visor antes de la visita (SINTÉTICA)",
+    eventType: "VISIT_SCHEDULED" as const,
+    actionKind: "TASK" as const,
+    offsetMinutes: -2880,
+    taskTitleEs: "Preparar y comprobar el visor antes de la visita inicial",
+    taskPriority: "HIGH" as const,
+    conditions: { participantActive: true },
+  },
+  {
+    key: "demo-config-rv-sin-confirmar",
+    nameEs: "Avisar si la configuración de RV sigue sin confirmar (SINTÉTICA)",
+    eventType: "SESSION_SCHEDULED" as const,
+    actionKind: "ALERT" as const,
+    offsetMinutes: -2880,
+    alertKind: "VR_NOT_READY_BEFORE_SESSION" as const,
+    // A time-based check belongs in a rule, not in a sweep: the "two days" is
+    // this row, and changing it is a configuration change.
+    conditions: { sessionScheduled: true, vrNotReady: true },
+  },
+] as const;
+
 const DEMO_CHANNEL_TEMPLATES = [
   {
     key: "canal-bienvenida",
@@ -1348,6 +1407,54 @@ async function main() {
     console.log(
       `msgs    ${DEMO_TEMPLATES.length} personal + ${DEMO_CHANNEL_TEMPLATES.length} channel templates (manual only)`,
     );
+
+    // Automation rules (Phase 8). Configuration rows, so the queue and the
+    // rules screen are not empty on a fresh database. Nothing sends.
+    const templateIdByKey = new Map(
+      (
+        await db
+          .select({ id: schema.communicationTemplates.id, key: schema.communicationTemplates.key })
+          .from(schema.communicationTemplates)
+          .where(eq(schema.communicationTemplates.studyId, study.id))
+      ).map((r) => [r.key, r.id] as const),
+    );
+
+    for (const [i, rule] of DEMO_RULES.entries()) {
+      const templateId =
+        rule.actionKind === "MESSAGE" ? (templateIdByKey.get(rule.templateKey) ?? null) : null;
+      // A MESSAGE rule without its template would violate the shape constraint.
+      // Skipping is the honest response: the seed is demonstrating the rule
+      // engine, not repairing a half-seeded database.
+      if (rule.actionKind === "MESSAGE" && !templateId) continue;
+
+      await db
+        .insert(schema.automationRules)
+        .values({
+          studyId: study.id,
+          key: rule.key,
+          nameEs: rule.nameEs,
+          eventType: rule.eventType,
+          actionKind: rule.actionKind,
+          offsetMinutes: rule.offsetMinutes,
+          deliveryMode: "MANUAL",
+          communicationTemplateId: templateId,
+          taskTitleEs: rule.actionKind === "TASK" ? rule.taskTitleEs : null,
+          taskPriority: rule.actionKind === "TASK" ? rule.taskPriority : "NORMAL",
+          alertKind: rule.actionKind === "ALERT" ? rule.alertKind : null,
+          conditionsJson: rule.conditions,
+          position: (i + 1) * 10,
+        })
+        .onConflictDoUpdate({
+          target: [schema.automationRules.studyId, schema.automationRules.key],
+          set: {
+            nameEs: rule.nameEs,
+            offsetMinutes: rule.offsetMinutes,
+            conditionsJson: rule.conditions,
+            active: true,
+          },
+        });
+    }
+    console.log(`rules   ${DEMO_RULES.length} synthetic automation rules (nothing sends)`);
 
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {

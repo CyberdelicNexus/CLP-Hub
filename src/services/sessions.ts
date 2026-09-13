@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import type { CohortScope } from "@/auth/cohort-scope";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
@@ -249,6 +250,17 @@ export async function scheduleSession(params: {
       },
     });
 
+    // The ANCHOR is the session's start, not now: "24 h before session 2" is
+    // relative to when session 2 happens (Phase 8). Inside this transaction, so
+    // a session and the work scheduled around it commit together.
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "SESSION_SCHEDULED",
+      subject: { kind: "SESSION", id: created.id },
+      anchorAt: params.scheduledStart,
+      metadata: { cohortCode: cohort.code, modality: params.modality },
+    });
+
     return created.id;
   });
 }
@@ -355,6 +367,16 @@ export async function setSessionStatus(params: {
       entityId: sessionId,
       before: { status: current.status },
       after: { status, name: current.name },
+    });
+
+    // A cancelled session invalidates every reminder still planned against it;
+    // `recordStudyEvent` cancels them rather than editing them in place, so the
+    // audit trail of what was planned survives (docs/automations.md).
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: status === "HELD" ? "SESSION_HELD" : "SESSION_CANCELLED",
+      subject: { kind: "SESSION", id: sessionId },
+      metadata: { previousStatus: current.status },
     });
   });
 }

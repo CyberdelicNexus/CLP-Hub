@@ -176,11 +176,29 @@ Added enum: `communication_audience`.
 `CONTENT_TYPES` keeps EMAIL_TEMPLATE and WHATSAPP_TEMPLATE for readability, but
 `AUTHORABLE_CONTENT_TYPES` no longer offers them: message templates live here now.
 
+## Implemented (Phase 8 · migration 0015)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `study_events` | Operational facts a rule can hang off | Plain rows, not event sourcing. Carries `occurred_at` AND `anchor_at` — the time a rule offsets from |
+| `automation_rules` | Configuration: when, how long before, what | `conditions_json` is a closed allow-list of boolean predicates. `delivery_mode` may not be AUTOMATIC (check constraint) |
+| `scheduled_actions` | One rule firing for one subject | No SENT and no DELIVERED. READY is as far as the system goes; DONE is a person. Unique per `(rule_id, event_id)` |
+| `tasks` | Human work | Created by a person or a TASK rule. Staff-authored free text, same boundary as the visit note (D-035) |
+| `alerts` | Operational risk | About the DATA, never about a person. Deduplicated by `<kind>:<subjectKind>:<subjectId>` with no date in the key |
+
+Added enums: `automation_event_type`, `automation_subject_kind`,
+`automation_action_kind`, `automation_delivery_mode`, `scheduled_action_status`,
+`task_status`, `task_priority`, `task_origin`, `alert_kind`, `alert_severity`,
+`alert_status`.
+
+No event carries a determination, an arm or a contact detail.
+`ELIGIBILITY_DETERMINED` records that a determination was made, never what it
+was. Full description in `docs/automations.md` and D-043.
+
 ## Planned by phase
 
-| Phase | Tables |
-|---|---|
-| 8 Automation | `study_events`, `automation_rules`, `scheduled_actions`, `tasks`, `alerts` |
+Every table in the original brief now exists. Further work is refinement of what
+is here, not new phases — see the open questions in `docs/decisions.md`.
 
 Dropped from the original brief by decision D-003: `participant_progress` (no participant accounts, no per-participant page tracking).
 

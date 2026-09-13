@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
+import { recordStudyEvent } from "./automation";
 import type { CohortScope } from "@/auth/cohort-scope";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
@@ -422,6 +423,13 @@ export async function advanceCohortStatus(params: {
           }
         : null,
     });
+
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "COHORT_STATUS_CHANGED",
+      subject: { kind: "COHORT", id: cohortId },
+      metadata: { cohortCode: current.code, from: current.status, to: status },
+    });
   });
 }
 
@@ -557,6 +565,16 @@ export async function recordRandomization(params: {
       });
     }
 
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "ALLOCATION_RECORDED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      // The arm CODE is not carried here. An event is read by the processor and
+      // shown in operational screens; which arm somebody is in is research data
+      // that belongs on the randomization row, not in a log that drives reminders.
+      metadata: { participantCode: participant.code },
+    });
+
     return created.id;
   });
 }
@@ -676,6 +694,13 @@ export async function assignToCohort(params: {
         metadata: { via: "cohort_assignment", cohortCode: cohort.code },
       });
     }
+
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "COHORT_ASSIGNED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      metadata: { participantCode: participant.code, cohortCode: cohort.code },
+    });
   });
 }
 

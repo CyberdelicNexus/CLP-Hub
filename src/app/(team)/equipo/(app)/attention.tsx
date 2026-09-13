@@ -7,6 +7,11 @@ import { StatusBadge } from "@/components/status-badge";
 import type { StudyContext } from "@/auth/study-context";
 import { needsAttention } from "@/domain/logistics";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import {
+  countOpenTasks,
+  countUnresolvedAlerts,
+  listPreparedActions,
+} from "@/services/automation";
 import { listCohorts } from "@/services/cohorts";
 import { listOpenAssignments } from "@/services/logistics";
 import { countParticipantOps } from "@/services/participant-ops";
@@ -36,11 +41,20 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
   const canReadParticipants = ctx.permissions.has("participants.read");
   const canReadCohorts = ctx.permissions.has("cohorts.read");
   const canReadLogistics = ctx.permissions.has("logistics.read");
+  const canReadTasks = ctx.permissions.has("tasks.read");
+  const canReadAlerts = ctx.permissions.has("alerts.read");
+  const canReadComms = ctx.permissions.has("communications.read");
 
-  const [ops, cohorts, assignments] = await Promise.all([
+  const [ops, cohorts, assignments, openTasks, openAlerts, prepared] = await Promise.all([
     canReadParticipants ? countParticipantOps(ctx.study.id) : null,
     canReadCohorts ? listCohorts(ctx.study.id, { scope: ctx.cohortScope }) : [],
     canReadLogistics ? listOpenAssignments(ctx.study.id) : [],
+    canReadTasks ? countOpenTasks(ctx.study.id) : 0,
+    canReadAlerts ? countUnresolvedAlerts(ctx.study.id) : 0,
+    // The queue of messages the processor prepared and a person still has to
+    // send. It belongs here rather than only on Comunicaciones: a prepared
+    // reminder nobody opens is the failure mode this whole phase has to avoid.
+    canReadComms ? listPreparedActions(ctx.study.id, { limit: 50 }) : [],
   ]);
 
   // "Nearly complete" means inside its bounds and with places left, plus any
@@ -57,7 +71,10 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
   const nothingToShow =
     (!ops || (ops.reviewRequired === 0 && ops.waitingForAllocation === 0)) &&
     cohortsWorthSeeing.length === 0 &&
-    logisticsWorthSeeing.length === 0;
+    logisticsWorthSeeing.length === 0 &&
+    openTasks === 0 &&
+    openAlerts === 0 &&
+    prepared.length === 0;
 
   return (
     <Card>
@@ -66,6 +83,32 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
       </CardHeader>
       <CardContent className="space-y-5">
         {nothingToShow ? <p className="text-sm text-muted-foreground">{t("empty")}</p> : null}
+
+        {/*
+          Alerts first, because an alert is the only row here that says something
+          may be wrong rather than merely outstanding.
+        */}
+        {openAlerts > 0 ? (
+          <Row
+            href={`${TEAM_BASE_PATH}/alertas?estado=OPEN`}
+            label={t("openAlerts", { count: openAlerts })}
+            tone="warning"
+          />
+        ) : null}
+
+        {prepared.length > 0 ? (
+          <Row
+            href={`${TEAM_BASE_PATH}/comunicaciones`}
+            label={t("preparedMessages", { count: prepared.length })}
+          />
+        ) : null}
+
+        {openTasks > 0 ? (
+          <Row
+            href={`${TEAM_BASE_PATH}/tareas?estado=OPEN`}
+            label={t("openTasks", { count: openTasks })}
+          />
+        ) : null}
 
         {ops && ops.reviewRequired > 0 ? (
           <Row

@@ -14,6 +14,7 @@ import {
 } from "@/domain/communication";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
+import { completeMessageAction } from "@/services/automation";
 import {
   ConflictError,
   createTemplate,
@@ -72,6 +73,9 @@ function fail(err: unknown, event: string): CommsState {
 
 function revalidate(participantId?: string) {
   revalidatePath(`${TEAM_BASE_PATH}/comunicaciones`);
+  // The overview carries the prepared-queue count, so it goes stale the moment
+  // somebody clears an item.
+  revalidatePath(TEAM_BASE_PATH);
   if (participantId) revalidatePath(`${TEAM_BASE_PATH}/participantes/${participantId}`);
 }
 
@@ -191,6 +195,8 @@ const sendSchema = z
     templateId: uuid,
     status: z.enum(["SENT", "SKIPPED"]).default("SENT"),
     skipReason: z.string().trim().max(280).optional(),
+    /** Present when the composer was opened from the prepared queue. */
+    actionId: z.union([uuid, z.literal("")]).optional(),
   })
   // Exactly one subject, refused here as well as in SQL so the form gets a
   // useful error rather than a constraint violation.
@@ -213,6 +219,7 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
     templateId: formData.get("templateId"),
     status: formData.get("status") ?? undefined,
     skipReason: formData.get("skipReason") ?? undefined,
+    actionId: formData.get("actionId") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -224,7 +231,7 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
     // Read, not manage: the facilitator who pasted the message is the person who
     // should be able to say they did.
     assertPermission(ctx, "communications.read");
-    await recordSend({
+    const communicationId = await recordSend({
       studyId: ctx.study.id,
       target,
       templateId: parsed.data.templateId,
@@ -232,6 +239,18 @@ export async function markSentAction(_prev: CommsState, formData: FormData): Pro
       status: parsed.data.status,
       skipReason: parsed.data.skipReason,
     });
+
+    // Close the queue item this send answers. Only on a real send: a SKIPPED
+    // record says the person decided not to send it, and the prepared action
+    // should stay visible rather than disappear as if it had gone out.
+    if (parsed.data.actionId && parsed.data.status === "SENT") {
+      await completeMessageAction({
+        studyId: ctx.study.id,
+        actionId: parsed.data.actionId,
+        actorId: ctx.session.userId,
+        communicationId,
+      });
+    }
   } catch (err) {
     return fail(err, "communication.record");
   }
