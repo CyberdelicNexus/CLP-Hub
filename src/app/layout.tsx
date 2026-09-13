@@ -35,6 +35,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={locale}
       suppressHydrationWarning
+      // Tells the router that the smooth scrolling in globals.css is deliberate,
+      // so it suppresses it during route transitions instead of warning. Without
+      // it, navigating between team sections animates the scroll back to the top
+      // — which reads as lag on a page that has already changed.
+      data-scroll-behavior="smooth"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

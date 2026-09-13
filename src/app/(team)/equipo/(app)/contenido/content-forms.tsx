@@ -80,8 +80,21 @@ export function CreateContentForm({
       {needsSession ? (
         <div className="space-y-1.5">
           <Label htmlFor="sessionTemplateId">{labels.session}</Label>
-          <select id="sessionTemplateId" name="sessionTemplateId" required className={SELECT_CLASS}>
-            <option value="" disabled selected />
+          {/*
+            `defaultValue` on the select, never `selected` on the option: React
+            warns about the latter and then ignores it, which would leave this
+            field pre-filled with the first session rather than empty — a
+            required field that looks answered is worse than one that looks
+            empty. Same shape as every other select in the team area.
+          */}
+          <select
+            id="sessionTemplateId"
+            name="sessionTemplateId"
+            required
+            defaultValue=""
+            className={SELECT_CLASS}
+          >
+            <option value="" disabled />
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
