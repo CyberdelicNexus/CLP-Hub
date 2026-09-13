@@ -927,6 +927,41 @@ Not done here, on purpose: no reschedule path for a session (so
 workflow behind `communications.approve`, no per-study on/off switch for sweeps,
 and no delivery of any kind.
 
+## D-044 · 2026-09-13 · Study settings and team membership are the last two stub sections
+
+`/equipo/configuracion` and `/equipo/equipo` stop being "Próximamente" cards.
+Neither needed a migration: `studies` already carries what settings edits, and
+`user_roles` has carried grant/revoke history with `granted_by` since migration
+0001.
+
+**This application cannot create a login, and should not be able to.** Staff
+accounts live in Supabase Auth. An app that could mint one would be an
+account-creation surface sitting behind a single compromised session. Someone is
+invited through Supabase, appears in `/equipo/equipo` once they exist, and is
+then GRANTED a role — which is the part that is this application's business and
+the part that is audited.
+
+**A grant is never deleted.** Revoking stamps `revoked_at` and `revoked_by`, so
+"who could see this in March" stays answerable. Roles are not exclusive: someone
+can facilitate and handle logistics, and forcing a single role would push the
+team into granting the broader of the two.
+
+**Settings edits are audited with before and after, because they change what the
+application does.** The screening URL is where every applicant is sent (D-031);
+the timezone is what every date on every screen is rendered in; the status is
+what the processor uses to decide which studies to work through. A silent change
+to any of them would be indistinguishable from a bug.
+
+**Automation rules are configuration, so they are edited here** rather than on
+the communications screen. `study.settings.manage` gates the whole section — a
+facilitator who can use a template should not be able to change when it fires.
+
+**And the stub route is gone.** `[section]/page.tsx` answered any unknown path
+under `/equipo` with a "Próximamente" card. That was right while sections were
+still arriving; now that every nav entry has a route, it would turn a typo into
+a false promise. A wrong path is a 404, and `tests/settings.test.ts` asserts
+every nav entry has a page.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.
@@ -1004,3 +1039,8 @@ and no delivery of any kind.
 - Should `communications.approve` gate the APPROVAL_REQUIRED delivery mode, or
   is the distinction between MANUAL and APPROVAL_REQUIRED only advisory today?
 - MFA requirement for staff.
+- Who may hold ADMIN, and should granting ADMIN require a second
+  administrator's approval? Any ADMIN can grant it today (D-044).
+- Should revoking your own last grant be refused? It is permitted today: the
+  grant is never deleted, so it can be restored, and a guard would have to
+  decide what "locked out" means across five roles and several studies.

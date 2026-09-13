@@ -4,8 +4,6 @@
     "loading": "Cargando…",
     "save": "Guardar",
     "cancel": "Cancelar",
-    "comingSoon": "Próximamente",
-    "comingSoonDescription": "Esta sección se construirá en una fase posterior.",
     "noAccess": "No tienes acceso a esta sección.",
     "skipToContent": "Ir al contenido",
     "yes": "Sí",
@@ -89,7 +87,26 @@
       "foundationNote": "Fase 1: reclutamiento. Las evaluaciones, cohortes y comunicaciones llegarán en fases posteriores.",
       "attentionApplications": "{count, plural, one {# solicitud sin revisar} other {# solicitudes sin revisar}}"
     },
-    "yourRoles": "Tus roles"
+    "yourRoles": "Tus roles",
+    "subtitle": "Quién está en el estudio y qué puede hacer.",
+    "accountsNote": "CLP Hub no crea cuentas. Las altas se hacen en Supabase Auth; aquí se conceden y se retiran roles dentro de este estudio, y cada cambio queda auditado.",
+    "members": "Personas del estudio",
+    "noMembers": "Todavía no hay nadie con un rol en este estudio.",
+    "grant": "Conceder rol",
+    "revoke": "Retirar",
+    "person": "Persona",
+    "role": "Rol",
+    "noCandidates": "No hay cuentas disponibles. Invita primero a la persona en Supabase Auth.",
+    "inactive": "Cuenta desactivada",
+    "permissionCount": "{count, plural, one {# permiso} other {# permisos}}",
+    "showPermissions": "Ver permisos",
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "notFound": "No se ha encontrado la concesión.",
+      "duplicate": "Esa persona ya tiene ese rol en este estudio.",
+      "failed": "No se ha podido completar la acción."
+    }
   },
   "status": {
     "study": {
@@ -1056,6 +1073,35 @@
       "unavailableDeliveryMode": "La entrega automática no está disponible.",
       "invalidOffset": "El desfase está fuera de los límites permitidos.",
       "shape": "Faltan datos para ese tipo de acción.",
+      "failed": "No se ha podido completar la acción."
+    },
+    "inactive": "Inactiva",
+    "conditionNot": "NO {condition}"
+  },
+  "settings": {
+    "subtitle": "Los valores que cambian lo que hace la aplicación para todo el equipo.",
+    "study": "Estudio",
+    "codeFixed": "El código del estudio ({code}) no se puede cambiar: aparece en los códigos de participante, en las exportaciones y en cada fila de auditoría.",
+    "title": "Título",
+    "status": "Estado",
+    "statusHelp": "El procesador de acciones programadas solo recorre los estudios en estado Activo.",
+    "locale": "Idioma por defecto",
+    "timezone": "Zona horaria",
+    "timezoneHelp": "Identificador IANA, por ejemplo Europe/Madrid. Es la zona en la que se muestran todas las fechas.",
+    "recruitmentOpen": "Reclutamiento abierto",
+    "screeningUrl": "URL de evaluación (Qualtrics)",
+    "screeningUrlHelp": "Aquí se envía a todas las personas que quieren participar. Debe empezar por https. Si es incorrecta, nadie se dará cuenta más adelante.",
+    "saved": "Guardado.",
+    "newRule": "Nueva regla",
+    "ruleKey": "Clave",
+    "conditionsHelp": "Se comprueban cuando la acción toca, no cuando se programa. Si alguna no se cumple, la acción se omite y se registra por qué.",
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "notFound": "No se ha encontrado el estudio.",
+      "title": "El título no puede estar vacío.",
+      "timezone": "Esa zona horaria no es válida.",
+      "screeningUrl": "La URL debe empezar por https y no contener espacios.",
       "failed": "No se ha podido completar la acción."
     }
   }

@@ -20,9 +20,11 @@ Initial screening happens in Qualtrics: `/participar` collects nothing and hands
 | Message templates and the prepared queue | `/equipo/comunicaciones` | `communications.read` | 7, 8 ✓ |
 | Tasks | `/equipo/tareas` | `tasks.read` | 8 ✓ |
 | Alerts | `/equipo/alertas` | `alerts.read` | 8 ✓ |
+| Team and roles | `/equipo/equipo` | `team.read` | 8 ✓ |
+| Study settings and automation rules | `/equipo/configuracion` | `study.settings.manage` | 8 ✓ |
 | Scheduled-action processor (cron, secret-protected) | `POST /api/internal/process-scheduled-actions` | `CRON_SECRET` | 8 ✓ |
 
-Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles.
+Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles; this application grants and revokes roles but cannot create an account (D-044).
 
 ## Stack
 

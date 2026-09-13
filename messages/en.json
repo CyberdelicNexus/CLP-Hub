@@ -4,8 +4,6 @@
     "loading": "Loading…",
     "save": "Save",
     "cancel": "Cancel",
-    "comingSoon": "Coming soon",
-    "comingSoonDescription": "This section will be built in a later phase.",
     "noAccess": "You do not have access to this section.",
     "skipToContent": "Skip to content",
     "yes": "Yes",
@@ -89,7 +87,26 @@
       "foundationNote": "Phase 1: recruitment. Screening, cohorts and communications arrive in later phases.",
       "attentionApplications": "{count, plural, one {# application awaiting review} other {# applications awaiting review}}"
     },
-    "yourRoles": "Your roles"
+    "yourRoles": "Your roles",
+    "subtitle": "Who is on the study and what they can do.",
+    "accountsNote": "CLP Hub does not create accounts. People are invited in Supabase Auth; roles within this study are granted and revoked here, and every change is audited.",
+    "members": "Study members",
+    "noMembers": "Nobody holds a role in this study yet.",
+    "grant": "Grant role",
+    "revoke": "Revoke",
+    "person": "Person",
+    "role": "Role",
+    "noCandidates": "No accounts available. Invite the person in Supabase Auth first.",
+    "inactive": "Account deactivated",
+    "permissionCount": "{count, plural, one {# permission} other {# permissions}}",
+    "showPermissions": "Show permissions",
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "notFound": "Grant not found.",
+      "duplicate": "That person already holds this role in this study.",
+      "failed": "The action could not be completed."
+    }
   },
   "status": {
     "study": {
@@ -1056,6 +1073,35 @@
       "unavailableDeliveryMode": "Automatic delivery is not available.",
       "invalidOffset": "The offset is outside the permitted bounds.",
       "shape": "That action kind is missing required data.",
+      "failed": "The action could not be completed."
+    },
+    "inactive": "Inactive",
+    "conditionNot": "NOT {condition}"
+  },
+  "settings": {
+    "subtitle": "The values that change what the application does for everybody.",
+    "study": "Study",
+    "codeFixed": "The study code ({code}) cannot be changed: it appears in participant codes, in exports and in every audit row.",
+    "title": "Title",
+    "status": "Status",
+    "statusHelp": "The scheduled-action processor only works through studies that are Active.",
+    "locale": "Default language",
+    "timezone": "Timezone",
+    "timezoneHelp": "IANA identifier, for example Europe/Madrid. Every date is rendered in this zone.",
+    "recruitmentOpen": "Recruitment open",
+    "screeningUrl": "Screening URL (Qualtrics)",
+    "screeningUrlHelp": "Every applicant is sent here. It must start with https. If it is wrong, nothing downstream will notice.",
+    "saved": "Saved.",
+    "newRule": "New rule",
+    "ruleKey": "Key",
+    "conditionsHelp": "Checked when the action comes due, not when it is scheduled. If one does not hold, the action is skipped and the reason recorded.",
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "notFound": "Study not found.",
+      "title": "The title cannot be empty.",
+      "timezone": "That timezone is not valid.",
+      "screeningUrl": "The URL must start with https and contain no spaces.",
       "failed": "The action could not be completed."
     }
   }
