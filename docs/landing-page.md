@@ -167,9 +167,11 @@ Playwright script (`lab/interaction/results.json` and screenshots).
 | `npm run typecheck`, `lint`, `test` (277), `build` | Pass |
 
 Not verified: a real phone (iOS decoder, Low Power Mode, real touch scrolling)
-and real assistive technology. The dev server logs a pre-existing next-intl
-error about dotted `audit.action` message keys on every route; it predates the
-landing page.
+and real assistive technology.
+
+The next-intl error about dotted `audit.action` message keys, which the dev
+server logged on every route at the time of this run, was fixed later in D-045
+and is gone.
 
 ## Open questions
 
