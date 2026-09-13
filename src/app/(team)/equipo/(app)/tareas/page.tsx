@@ -135,7 +135,8 @@ export default async function TasksPage({
                 dueAt: t("tasks.dueAt"),
                 assignedTo: t("tasks.assignedTo"),
                 unassigned: t("tasks.unassigned"),
-                subject: t("tasks.subject"),
+                aboutParticipant: t("tasks.aboutParticipant"),
+                aboutCohort: t("tasks.aboutCohort"),
                 none: t("common.none"),
               }}
               priorities={TASK_PRIORITIES.map((p) => ({

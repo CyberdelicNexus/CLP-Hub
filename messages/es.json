@@ -972,7 +972,6 @@
     "assignedTo": "Asignada a",
     "unassigned": "Sin asignar",
     "origin": "Origen",
-    "subject": "Sobre",
     "add": "Nueva tarea",
     "markDone": "Marcar hecha",
     "cancel": "Cancelar tarea",
@@ -998,14 +997,15 @@
       "invalid": "Revisa los datos del formulario.",
       "notFound": "No se ha encontrado la tarea.",
       "failed": "No se ha podido completar la acción."
-    }
+    },
+    "aboutParticipant": "Sobre un participante",
+    "aboutCohort": "Sobre una cohorte"
   },
   "alerts": {
     "subtitle": "Lo que no cuadra en los registros del estudio. Nadie ha concluido nada: hay que mirarlo.",
     "noAlerts": "No hay alertas abiertas.",
     "raisedAt": "Detectada",
     "lastSeen": "Vista por última vez",
-    "subject": "Sobre",
     "detail": "Detalle",
     "acknowledge": "Marcar como vista",
     "resolve": "Marcar resuelta",

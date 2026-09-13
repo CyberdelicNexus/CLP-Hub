@@ -45,7 +45,8 @@ export function CreateTaskForm({
     dueAt: string;
     assignedTo: string;
     unassigned: string;
-    subject: string;
+    aboutParticipant: string;
+    aboutCohort: string;
     none: string;
   };
   priorities: { value: string; label: string }[];
@@ -108,12 +109,14 @@ export function CreateTaskForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="taskSubject">{labels.subject}</Label>
         {/*
-          One subject or none. A task about a participant and a cohort at once is
-          really two tasks, and the list would show it under whichever it felt
-          like.
+          Two selects, two labels. They were both "Sobre" and read as a repeated
+          field rather than as a choice between two kinds of subject.
+
+          One subject or none: a task about a participant AND a cohort is really
+          two tasks, and the list would show it under whichever it felt like.
         */}
+        <Label htmlFor="taskSubject">{labels.aboutParticipant}</Label>
         <select id="taskSubject" name="participantId" defaultValue="" className={SELECT_CLASS}>
           <option value="">{labels.none}</option>
           {participants.map((p) => (
@@ -125,7 +128,7 @@ export function CreateTaskForm({
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">
-        <Label htmlFor="taskCohort">{labels.subject}</Label>
+        <Label htmlFor="taskCohort">{labels.aboutCohort}</Label>
         <select id="taskCohort" name="cohortId" defaultValue="" className={SELECT_CLASS}>
           <option value="">{labels.none}</option>
           {cohorts.map((c) => (

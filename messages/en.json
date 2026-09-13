@@ -972,7 +972,6 @@
     "assignedTo": "Assigned to",
     "unassigned": "Unassigned",
     "origin": "Origin",
-    "subject": "About",
     "add": "New task",
     "markDone": "Mark done",
     "cancel": "Cancel task",
@@ -998,14 +997,15 @@
       "invalid": "Check the form.",
       "notFound": "Task not found.",
       "failed": "The action could not be completed."
-    }
+    },
+    "aboutParticipant": "About a participant",
+    "aboutCohort": "About a cohort"
   },
   "alerts": {
     "subtitle": "What does not add up in the study's records. Nothing has been concluded: somebody should look.",
     "noAlerts": "No open alerts.",
     "raisedAt": "Raised",
     "lastSeen": "Last seen",
-    "subject": "About",
     "detail": "Detail",
     "acknowledge": "Mark as seen",
     "resolve": "Mark resolved",

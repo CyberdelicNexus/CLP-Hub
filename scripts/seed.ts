@@ -616,6 +616,37 @@ const DEMO_RULES = [
   },
 ] as const;
 
+/**
+ * Synthetic operational tasks (Phase 8).
+ *
+ * Hand-typed work, so `origin` is MANUAL and no rule is attached. They exist so
+ * the Tareas screen is not empty on a fresh database; rule-created tasks appear
+ * on their own once an event fires.
+ *
+ * Note what is NOT here: anything about a person's state. A task is the team's
+ * own work (docs/research-data-boundaries.md).
+ */
+const DEMO_TASKS = [
+  {
+    titleEs: "Revisar el inventario de visores antes de la próxima cohorte (SINTÉTICA)",
+    detail: "Comprobar carga, limpieza y versión de software de los tres equipos.",
+    priority: "HIGH" as const,
+    dueInDays: 3,
+  },
+  {
+    titleEs: "Confirmar la sala para las sesiones presenciales (SINTÉTICA)",
+    detail: "Reservar y confirmar por escrito con el centro.",
+    priority: "NORMAL" as const,
+    dueInDays: 7,
+  },
+  {
+    titleEs: "Repasar las plantillas de mensajes con el equipo de facilitación (SINTÉTICA)",
+    detail: null,
+    priority: "LOW" as const,
+    dueInDays: null,
+  },
+] as const;
+
 const DEMO_CHANNEL_TEMPLATES = [
   {
     key: "canal-bienvenida",
@@ -1455,6 +1486,30 @@ async function main() {
         });
     }
     console.log(`rules   ${DEMO_RULES.length} synthetic automation rules (nothing sends)`);
+
+    // Synthetic tasks, so the Tareas screen has something in it on a fresh
+    // database. Deduped on a stable key so re-seeding updates rather than piles
+    // up, which is what `dedupe_key` is for.
+    const day = 24 * 60 * 60 * 1000;
+    for (const [i, task] of DEMO_TASKS.entries()) {
+      await db
+        .insert(schema.tasks)
+        .values({
+          studyId: study.id,
+          dedupeKey: `seed:task:${i + 1}`,
+          titleEs: task.titleEs,
+          detail: task.detail,
+          status: "OPEN",
+          priority: task.priority,
+          origin: "MANUAL",
+          dueAt: task.dueInDays === null ? null : new Date(Date.now() + task.dueInDays * day),
+          // The study manager, not the Supabase admin client: a seeded task is
+          // attributed to a person who could plausibly have typed it.
+          createdBy: staffIds.get("STUDY_MANAGER") ?? null,
+        })
+        .onConflictDoNothing();
+    }
+    console.log(`tasks   ${DEMO_TASKS.length} synthetic operational tasks`);
 
     console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {
