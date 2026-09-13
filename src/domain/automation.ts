@@ -189,6 +189,39 @@ export function scheduledFor(anchorAt: Date, offsetMinutes: number): Date {
 export const RULE_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{1,47}$/;
 export const RULE_NAME_MAX_LENGTH = 120;
 
+/**
+ * An offset in the largest unit that says it exactly.
+ *
+ * Rules are stored and edited in minutes, because that is the only unit that
+ * expresses every timing the previous study used without rounding. Reading them
+ * back in minutes is another matter: "2880 min antes" is a sum somebody has to
+ * do in their head on the screen where they are deciding whether the rule is
+ * right.
+ *
+ * Exactness is the rule — 90 minutes stays 90 minutes rather than becoming
+ * "1.5 h", because a rounded number on a configuration screen is a number
+ * somebody will later quote as the setting.
+ */
+export type OffsetUnit = "minutes" | "hours" | "days";
+
+export interface OffsetDescription {
+  direction: "same" | "before" | "after";
+  unit: OffsetUnit;
+  /** Always positive; `direction` carries the sign. */
+  value: number;
+}
+
+export function describeOffset(minutes: number): OffsetDescription {
+  if (minutes === 0) return { direction: "same", unit: "minutes", value: 0 };
+
+  const direction = minutes < 0 ? "before" : "after";
+  const magnitude = Math.abs(minutes);
+
+  if (magnitude % 1440 === 0) return { direction, unit: "days", value: magnitude / 1440 };
+  if (magnitude % 60 === 0) return { direction, unit: "hours", value: magnitude / 60 };
+  return { direction, unit: "minutes", value: magnitude };
+}
+
 // ---------------------------------------------------------------------------
 // Conditions
 // ---------------------------------------------------------------------------

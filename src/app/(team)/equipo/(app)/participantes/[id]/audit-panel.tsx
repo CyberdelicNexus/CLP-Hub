@@ -71,6 +71,17 @@ export async function AuditPanel({
 }
 
 /**
+ * The separator an audit action uses in the MESSAGE FILES.
+ *
+ * The stored action keeps its dot — `<entity>.<verb>` is the database
+ * vocabulary and `src/audit/record.ts` validates that shape. But next-intl
+ * reads a dot in a key as nesting and rejects the whole namespace as malformed,
+ * which made every page that loaded messages log INVALID_KEY. Translating the
+ * separator at lookup time keeps both conventions intact.
+ */
+const MESSAGE_KEY_SEPARATOR = "__";
+
+/**
  * A translated label for an audit action, falling back to the raw
  * `<entity>.<verb>` key.
  *
@@ -80,9 +91,10 @@ export async function AuditPanel({
  * problem; a missing history entry is a wrong answer to "what happened".
  */
 function actionLabel(t: (key: string) => string, action: string): string {
-  const key = `audit.action.${action}`;
+  const key = `audit.action.${action.replace(".", MESSAGE_KEY_SEPARATOR)}`;
   try {
     const label = t(key);
+    // next-intl returns the key itself when there is no message for it.
     return label === key ? action : label;
   } catch {
     return action;

@@ -962,6 +962,37 @@ still arriving; now that every nav entry has a route, it would turn a typo into
 a false promise. A wrong path is a 404, and `tests/settings.test.ts` asserts
 every nav entry has a page.
 
+## D-045 · 2026-09-13 · Message files are checked by tests, not by opening the page
+
+Running the new screens in a browser surfaced two message-file bugs that had
+been shipping for a while and that no gate could see. Both are fixed, and both
+now have a test, because the failure mode is the same: `typecheck`, `lint` and
+`vitest` all passed while every team page logged an error on load.
+
+**An audit action keeps its dot; its message key does not.** `audit.action` was
+keyed by the stored action — `"participant.created"` — and next-intl reads a dot
+in a key as nesting, so it rejected the whole namespace as malformed on every
+render. The stored action is not negotiable: `<entity>.<verb>` is the database
+vocabulary and `src/audit/record.ts` validates that shape. So the MESSAGE key
+uses `__` instead and the separator is translated at lookup. `tests/messages.test.ts`
+now refuses any key containing a dot.
+
+**A literal brace in a message has to be quoted.** Two strings showed the
+template syntax to the author — "no puede usar {{nombre}}" — and ICU reads `{` as
+an argument opener, so they threw MALFORMED_ARGUMENT at render. The fix is
+`'{{'nombre'}}'`; the test now parses every string in every locale as ICU.
+
+**And every audit action a service writes must have a label in every locale.**
+The audit panel deliberately falls back to the raw key rather than hiding an
+entry, so a missing label is cosmetic — but forty of the sixty-five actions were
+falling back, which is half the history screen in snake_case. The test collects
+the actions from the source rather than from a list somebody has to remember to
+update, and fails both ways: a missing label, and a label for an action nothing
+writes.
+
+The locale files are also now checked for key parity, so a string added in
+Spanish and forgotten in English fails before it reaches a screen.
+
 ## Open questions for researchers
 
 - Hosting region / data processing agreements before any real participant.

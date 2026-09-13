@@ -15,6 +15,7 @@ import {
   TASK_PRIORITIES,
   alertDedupeKey,
   decide,
+  describeOffset,
   invalidatesPriorSchedule,
   isDeliveryModeAvailable,
   isDue,
@@ -419,6 +420,40 @@ describe("the processor endpoint", () => {
   });
 });
 
+describe("the prepared queue is addressable", () => {
+  const service = read("src/services/automation.ts");
+  const page = read("src/app/(team)/equipo/(app)/comunicaciones/page.tsx");
+
+  /**
+   * A session reminder's SUBJECT is the session — that is what the rule anchors
+   * on and what gets re-checked — but the message goes to that session's cohort
+   * channel. Without resolving it, such an action would be prepared and then be
+   * unaddressable, which is the same as not being prepared at all. Found by
+   * running the pipeline against a real database rather than by reading it.
+   */
+  it("resolves a session action's cohort through the session", () => {
+    expect(service).toMatch(
+      /coalesce\(\$\{scheduledActions\.cohortId\}, \$\{cohortSessions\.cohortId\}\)/,
+    );
+    expect(service).toMatch(/targetCohortId: cohorts\.id/);
+  });
+
+  it("never builds a link it cannot address", () => {
+    // `cohorte=null` in a URL is worse than no link: it looks like it works.
+    expect(page).toMatch(/action\.targetCohortId/);
+    expect(page).not.toMatch(/cohorte=\$\{action\.cohortId\}/);
+  });
+
+  /**
+   * A skip is a person deciding NOT to send. The queue item should stay visible
+   * rather than disappear as if the message had gone out.
+   */
+  it("closes a queue item only on a real send", () => {
+    const actions = read("src/app/(team)/equipo/(app)/comunicaciones/actions.ts");
+    expect(actions).toMatch(/parsed\.data\.actionId && parsed\.data\.status === "SENT"/);
+  });
+});
+
 describe("permissions", () => {
   it("lets the roles that do the work see the queue", () => {
     expect(hasPermission(["FACILITATOR"], "tasks.read")).toBe(true);
@@ -463,5 +498,37 @@ describe("the vocabulary matches the migration", () => {
   it("makes one rule fire at most once per event", () => {
     // What makes an overlapping or retrying cron safe.
     expect(migration).toMatch(/scheduled_actions_rule_event_unique[\s\S]*?\(rule_id, event_id\)/);
+  });
+});
+
+describe("an offset reads as a duration, not as a sum", () => {
+  /**
+   * Rules are stored in minutes because that is the only unit that expresses
+   * every timing without rounding. Reading one back as "2880 min antes" makes
+   * the person checking whether the rule is right do the arithmetic in their
+   * head, on the screen where a mistake is expensive.
+   */
+  it("picks the largest unit that says it exactly", () => {
+    expect(describeOffset(0)).toEqual({ direction: "same", unit: "minutes", value: 0 });
+    expect(describeOffset(-2880)).toEqual({ direction: "before", unit: "days", value: 2 });
+    expect(describeOffset(-1440)).toEqual({ direction: "before", unit: "days", value: 1 });
+    expect(describeOffset(-120)).toEqual({ direction: "before", unit: "hours", value: 2 });
+    expect(describeOffset(120)).toEqual({ direction: "after", unit: "hours", value: 2 });
+  });
+
+  /** Exactness beats tidiness: 90 minutes is not "1.5 h". */
+  it("never rounds", () => {
+    expect(describeOffset(-90)).toEqual({ direction: "before", unit: "minutes", value: 90 });
+    // 1500 minutes IS exactly 25 hours, so hours is the exact reading — and
+    // "25 horas antes" is still better than "1500 min antes".
+    expect(describeOffset(-1500)).toEqual({ direction: "before", unit: "hours", value: 25 });
+    expect(describeOffset(-1501)).toEqual({ direction: "before", unit: "minutes", value: 1501 });
+    expect(describeOffset(45)).toEqual({ direction: "after", unit: "minutes", value: 45 });
+  });
+
+  it("carries the sign in the direction, never in the value", () => {
+    for (const minutes of [-2880, -90, -1, 1, 90, 2880]) {
+      expect(describeOffset(minutes).value).toBeGreaterThan(0);
+    }
   });
 });

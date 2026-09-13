@@ -1252,6 +1252,17 @@ export interface PreparedActionRow extends ScheduledAction {
   templateId: string | null;
   templateName: string | null;
   participantCode: string | null;
+  /**
+   * The cohort the message is actually addressed to.
+   *
+   * NOT the same as `cohortId`. A session reminder's subject is the SESSION —
+   * that is what the rule anchors on and what has to be re-checked — but the
+   * message goes to the cohort's channel. Resolving it here is what lets the
+   * queue open the composer on the right subject; without it a session action
+   * would be prepared and then be unaddressable, which is the same as not
+   * being prepared at all.
+   */
+  targetCohortId: string | null;
   cohortCode: string | null;
 }
 
@@ -1274,6 +1285,7 @@ export async function listPreparedActions(
       templateId: automationRules.communicationTemplateId,
       templateName: communicationTemplates.nameEs,
       participantCode: participants.code,
+      targetCohortId: cohorts.id,
       cohortCode: cohorts.code,
     })
     .from(scheduledActions)
@@ -1283,7 +1295,14 @@ export async function listPreparedActions(
       eq(communicationTemplates.id, automationRules.communicationTemplateId),
     )
     .leftJoin(participants, eq(participants.id, scheduledActions.participantId))
-    .leftJoin(cohorts, eq(cohorts.id, scheduledActions.cohortId))
+    // A session action carries no cohort of its own, so the cohort is reached
+    // through the session. Joined rather than resolved per row so the queue is
+    // still one query.
+    .leftJoin(cohortSessions, eq(cohortSessions.id, scheduledActions.sessionId))
+    .leftJoin(
+      cohorts,
+      sql`${cohorts.id} = coalesce(${scheduledActions.cohortId}, ${cohortSessions.cohortId})`,
+    )
     .where(
       and(
         eq(scheduledActions.studyId, studyId),
@@ -1301,6 +1320,7 @@ export async function listPreparedActions(
     templateId: r.templateId,
     templateName: r.templateName,
     participantCode: r.participantCode,
+    targetCohortId: r.targetCohortId,
     cohortCode: r.cohortCode,
   }));
 }

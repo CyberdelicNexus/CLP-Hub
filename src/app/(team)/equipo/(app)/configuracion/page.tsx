@@ -11,6 +11,7 @@ import {
   DELIVERY_MODES,
   EVENT_TYPES,
   TASK_PRIORITIES,
+  describeOffset,
   isDeliveryModeAvailable,
   parseConditions,
 } from "@/domain/automation";
@@ -257,13 +258,20 @@ export default async function SettingsPage() {
   );
 }
 
-/** "90 min antes" reads better in a list than "-90". */
+/**
+ * "2 días antes" rather than "2880 min antes".
+ *
+ * Rules are stored and edited in minutes because that is the only unit that
+ * expresses every timing without rounding. Reading them back in minutes makes
+ * the person checking whether a rule is right do the arithmetic in their head,
+ * on exactly the screen where a mistake is expensive. `describeOffset` picks the
+ * largest unit that says it EXACTLY, so 90 minutes stays 90 minutes.
+ */
 function offsetLabel(
   minutes: number,
   t: (key: string, values?: Record<string, string | number | Date>) => string,
 ) {
-  if (minutes === 0) return t("automation.offsetSame");
-  return minutes < 0
-    ? t("automation.offsetBefore", { minutes: Math.abs(minutes) })
-    : t("automation.offsetAfter", { minutes });
+  const offset = describeOffset(minutes);
+  if (offset.direction === "same") return t("automation.offsetLabel.same");
+  return t(`automation.offsetLabel.${offset.direction}.${offset.unit}`, { value: offset.value });
 }

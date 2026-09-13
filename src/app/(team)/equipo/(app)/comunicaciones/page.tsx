@@ -189,35 +189,53 @@ export default async function CommunicationsPage({
             <p className="text-sm text-muted-foreground">{t("automation.queueSubtitle")}</p>
             <ul className="space-y-2">
               {prepared.map((action) => {
+                // A session reminder's subject is the SESSION, but the message
+                // goes to that session's cohort channel — `targetCohortId`
+                // resolves it. An action with neither is not addressable, and is
+                // shown as plain text rather than as a link that goes nowhere.
                 const target = action.participantId
                   ? `${base}?destinatario=PARTICIPANT&participante=${action.participantId}&accion=${action.id}`
-                  : `${base}?destinatario=COHORT_CHANNEL&cohorte=${action.cohortId}&accion=${action.id}`;
+                  : action.targetCohortId
+                    ? `${base}?destinatario=COHORT_CHANNEL&cohorte=${action.targetCohortId}&accion=${action.id}`
+                    : null;
                 const late = action.scheduledFor.getTime() < now.getTime() - lateAfterMs;
+
+                const content = (
+                  <>
+                    <span className="font-medium">{action.templateName ?? action.ruleName}</span>
+                    <span data-numeric className="text-xs text-muted-foreground">
+                      {action.participantCode ?? action.cohortCode}
+                    </span>
+                    <span data-numeric className="text-xs text-muted-foreground">
+                      {new Intl.DateTimeFormat("es-ES", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                        timeZone: ctx.study.timezone,
+                      }).format(action.scheduledFor)}
+                    </span>
+                    {/*
+                      Shown rather than hidden: an action prepared days ago and
+                      still sitting here is the failure this phase has to make
+                      visible, not tidy away.
+                    */}
+                    {late ? <StatusBadge tone="warning">{t("automation.late")}</StatusBadge> : null}
+                  </>
+                );
 
                 return (
                   <li key={action.id}>
-                    <Link
-                      href={target}
-                      className="group flex flex-wrap items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      <span className="font-medium">{action.templateName ?? action.ruleName}</span>
-                      <span data-numeric className="text-xs text-muted-foreground">
-                        {action.participantCode ?? action.cohortCode}
-                      </span>
-                      <span data-numeric className="text-xs text-muted-foreground">
-                        {new Intl.DateTimeFormat("es-ES", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                          timeZone: ctx.study.timezone,
-                        }).format(action.scheduledFor)}
-                      </span>
-                      {/*
-                        Shown rather than hidden: an action prepared days ago and
-                        still sitting here is the failure this phase has to make
-                        visible, not tidy away.
-                      */}
-                      {late ? <StatusBadge tone="warning">{t("automation.late")}</StatusBadge> : null}
-                    </Link>
+                    {target ? (
+                      <Link
+                        href={target}
+                        className="group flex flex-wrap items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        {content}
+                      </div>
+                    )}
                   </li>
                 );
               })}
