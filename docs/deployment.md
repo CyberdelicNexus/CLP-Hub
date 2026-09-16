@@ -49,9 +49,14 @@ come from the Supabase project; never commit them (`.env*` is git-ignored, and
 | `CRON_SECRET` | Only for Phase 8 automation | 16 characters or more. Unset means the processor endpoint refuses every request (503), which is the closed state. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Never in Vercel | Scripts only (seeding), from a local shell. Application code never reads it. |
 
-The first four are not optional: `getEnv()` parses them at request time, so a
-deployment missing any of them answers `/` with a 500 rather than a page.
-Verified against a production build with them unset.
+The first four are not optional at runtime: `getEnv()` parses them on the
+request, so a deployment missing any of them answers `/` with a 500 rather than
+a page. Verified against a production build with them unset.
+
+The *build* needs none of them, and no database: every route is dynamic
+(`ƒ` in the build's route table), so nothing is prerendered and the build
+container never opens a connection. A first deploy will therefore go green
+before the variables are set, and then serve 500s — set them first.
 
 ## First deployment
 
