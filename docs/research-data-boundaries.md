@@ -136,6 +136,6 @@ and no reply column: this application never holds a WhatsApp conversation.
 6. **Staff MFA** before production.
 7. **Dedicated database role** with least privilege instead of the Supabase `postgres` role before production.
 8. **Logs** redact identity fields (see `src/lib/logger.ts`); never log message bodies or screening results.
-9. **No PII in URLs**, analytics parameters, or tracking pixels. The app sets `robots: noindex`.
+9. **No PII in URLs**, analytics parameters, or tracking pixels. The app sets `robots: noindex, nofollow` on every page and serves a `robots.txt` that disallows crawling outright (`src/app/robots.ts`).
 
 Security features existing in the code do **not** constitute GDPR, clinical, trial or institutional compliance. Those are external determinations.

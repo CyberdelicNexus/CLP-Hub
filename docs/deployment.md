@@ -7,9 +7,10 @@ serve; `docs/development.md` covers the local loop.
 **Nothing here is approved for real participants.** Hosting regions and data
 processing agreements are still open (`docs/research-data-boundaries.md`), so
 any deployment is a prototype carrying synthetic data only. The whole site is
-`robots: index: false, follow: false` (`src/app/layout.tsx`), so no deployment
-should reach a search engine, but a Vercel URL is public to anyone who has it:
-treat the link as internal.
+`robots: index: false, follow: false` (`src/app/layout.tsx`) and `/robots.txt`
+disallows crawling outright (`src/app/robots.ts`), so no deployment should
+reach a search engine. A deployment URL is still public to anyone who has it,
+custom domain included: treat the link as internal.
 
 ## What each environment serves
 
