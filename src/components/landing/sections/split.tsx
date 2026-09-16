@@ -1,48 +1,48 @@
-import type { CSSProperties } from "react";
-import { Missing } from "@/components/landing/missing";
-import { Signal } from "@/components/landing/signal";
+import { SplitStage } from "@/components/landing/split-stage";
 import { SPLIT } from "@/content/landing/clear-light";
 
 /**
- * Section 6. Assignment at random: one light divides into two identical
- * lights. Both branches render from the same component with the same tokens;
- * the direction token is the only difference, so neither can be brighter,
- * larger, closer or better placed than the other. The division is driven by
- * the section's flow progress (`--split` in landing.css) and is static under
- * reduced motion.
+ * Section 6. What a randomized controlled trial is, and why there are two
+ * groups: one light divides into two identical lights (split-stage.tsx), and
+ * the two groups' text sits in equal columns centred under them. Both columns
+ * render from the same map with the same classes, so neither group can be
+ * given more weight than the other.
+ *
+ * The group wording is a working draft. Its approval keys stay in the
+ * publication gate (CONDICION_GRUPO_*, ETIQUETAS_GRUPOS) but are not drawn as
+ * markers here, at the founder's direction.
  */
 export function Split() {
   return (
-    <section id="asignacion" className="azar" data-sc-act="flow" aria-labelledby="azar-title">
+    <section id="asignacion" className="azar" aria-labelledby="azar-title">
       <div className="azar__head">
         <p className="cl-eyebrow">{SPLIT.eyebrow}</p>
         <h2 id="azar-title" className="cl-title">
           {SPLIT.heading}
         </h2>
-        <p className="cl-lead azar__body">{SPLIT.body}</p>
-      </div>
-
-      <div className="azar__diagram">
-        <svg className="azar__paths" viewBox="0 0 1000 562" preserveAspectRatio="none" aria-hidden>
-          <path className="azar__path" pathLength={1} vectorEffect="non-scaling-stroke" d="M500 124 C 500 232, 250 236, 250 348" />
-          <path className="azar__path" pathLength={1} vectorEffect="non-scaling-stroke" d="M500 124 C 500 232, 750 236, 750 348" />
-        </svg>
-        {SPLIT.branches.map((b, i) => (
-          <div key={b.label} className="branch" style={{ "--dir": i === 0 ? -1 : 1 } as CSSProperties}>
-            <Signal className="branch__light" size="var(--cl-light-md)" />
-            <p className="branch__label">
-              <span className="branch__name">{b.label}</span>
-              <span className="branch__condition">
-                <Missing item={b.condition} />
-              </span>
-            </p>
-          </div>
+        {SPLIT.body.map((p) => (
+          <p key={p} className="cl-lead azar__body">
+            {p}
+          </p>
         ))}
       </div>
 
-      <p className="azar__supporting">
-        {SPLIT.supporting} <Missing item={SPLIT.labels} />
-      </p>
+      <SplitStage>
+        <ul className="azar__branches">
+          {SPLIT.branches.map((b) => (
+            <li key={b.label} className="azar__branch">
+              <p className="azar__name">{b.label}</p>
+              {b.lines.map((line) => (
+                <p key={line} className="azar__line">
+                  {line}
+                </p>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </SplitStage>
+
+      <p className="azar__supporting">{SPLIT.supporting}</p>
     </section>
   );
 }

@@ -67,6 +67,7 @@ Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example
 - `docs/landing-page.md` — the public recruitment landing page: structure, media, gate, missing content
 - `docs/research-data-boundaries.md` — what this app must never store
 - `docs/development.md` — environments, migrations, seeding, testing
+- `docs/deployment.md` — Vercel: environment variables, what each `APP_ENV` serves, first deploy
 - `docs/decisions.md` — append-only decision log
 
 ## Non-negotiables

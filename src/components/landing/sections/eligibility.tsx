@@ -1,15 +1,19 @@
 import Image from "next/image";
-import { Missing } from "@/components/landing/missing";
 import { Signal } from "@/components/landing/signal";
 import { ELIGIBILITY } from "@/content/landing/clear-light";
 
 /**
  * Section 7. Eligibility and questions, combined. The documentary participant
- * stays on the left; the travelling light descends into the heart centre as
- * the section arrives (`--t` in landing.css). Criteria, benefits and risks,
- * equipment, voluntary participation and withdrawal, contact and registry are
- * all reachable through native <details>, keyboard operable, no JavaScript.
- * Nothing here invents a criterion: every protocol value is a marker.
+ * stays on the left; section 6's two lights reunite at the top of the
+ * photograph and hand over to this light, which then descends into the heart
+ * centre (split-stage.tsx drives `--t`; without it, landing.css does). Criteria,
+ * benefits and risks, equipment, voluntary participation and withdrawal,
+ * contact and registry are all reachable through native <details>, keyboard
+ * operable, no JavaScript.
+ *
+ * The answers are general working drafts that invent no criterion, duration,
+ * risk or contact. Their approval keys are not drawn as markers here (D-051)
+ * but still block publication.
  */
 export function Eligibility() {
   return (
@@ -17,20 +21,17 @@ export function Eligibility() {
       <div className="elegibilidad__grid">
         <figure className="participant">
           <Image
-            src="/landing/media/participant-heart.webp"
+            src="/landing/media/participant-heart-v3.webp"
             alt={ELIGIBILITY.participantAlt}
             fill
             sizes="(max-width: 860px) 100vw, 40vw"
+            quality={90}
           />
           <span className="participant__heart" aria-hidden />
           <Signal className="participant__light" size="var(--cl-light-md)" />
         </figure>
 
         <div>
-          <p className="elig__meta">
-            <Missing item={ELIGIBILITY.registry} />
-            <Missing item={ELIGIBILITY.investigator} />
-          </p>
           <h2 id="elig-title" className="cl-title">
             {ELIGIBILITY.heading}
           </h2>
@@ -38,9 +39,12 @@ export function Eligibility() {
 
           <div className="elig__criteria">
             <h3>{ELIGIBILITY.criteriaHeading}</h3>
-            <p className="elig__criteria-body">
-              <Missing item={ELIGIBILITY.criteria} />
-            </p>
+            <ul className="elig__criteria-list">
+              {ELIGIBILITY.criteriaItems.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+            <p className="elig__criteria-body">{ELIGIBILITY.criteriaText}</p>
             <p className="elig__required">{ELIGIBILITY.requiredLine}</p>
           </div>
 
@@ -55,9 +59,6 @@ export function Eligibility() {
                   {item.statements.map((s) => (
                     <p key={s}>{s}</p>
                   ))}
-                  <p>
-                    <Missing item={item.pending} />
-                  </p>
                 </div>
               </details>
             ))}

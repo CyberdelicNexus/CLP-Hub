@@ -2,21 +2,21 @@
 /**
  * Landing-page media derivatives.
  *
- * Reads the ORIGINAL handoff media (22 MB of source footage and 1.2-1.6 MB
- * PNGs, tracked under claude-handoff-v3/) and writes the web derivatives that
- * the landing page actually ships under public/landing/media. Originals are
- * never modified; the derivatives are regenerated from them.
+ * Reads the ORIGINAL handoff media (tracked under claude-handoff-v3/) and
+ * writes the web derivatives that the landing page actually ships under
+ * public/landing/media. Originals are never modified; the derivatives are
+ * regenerated from them.
  *
  *   node scripts/landing-media.mjs [--src <handoff assets dir>] [--only images|video]
  *
  * Default source: ./claude-handoff-v3/assets (the design handoff package).
  *
  * Rules applied here (docs/landing-page.md):
- * - Footage is soft and low resolution by design. It is cropped and scaled,
- *   never sharpened or upscaled beyond its content bounds.
- * - Every derivative is silent. The source clips carry only ambient audio and
- *   nothing on the page may depend on English audio.
- * - Every clip gets a poster from a representative frame.
+ * - Nothing is sharpened or upscaled beyond its source resolution. Images are
+ *   written as full-resolution, high-quality masters; next/image resizes them.
+ * - Every clip is silent; nothing on the page may depend on audio.
+ * - A derivative whose content changes gets a new file name: next/image and
+ *   browsers cache by URL.
  *
  * Requires ffmpeg on PATH. sharp comes with Next.js.
  */
@@ -42,40 +42,70 @@ mkdirSync(OUT, { recursive: true });
 
 const src = (...p) => resolve(SRC, ...p);
 const out = (name) => resolve(OUT, name);
-
-function ffmpeg(args) {
-  execFileSync("ffmpeg", ["-v", "error", "-y", ...args], { stdio: "inherit" });
-}
+const master = (file, name, quality = 92) =>
+  sharp(src(file)).webp({ quality, smartSubsample: true, effort: 6 }).toFile(out(name));
 
 // ---------------------------------------------------------------------------
 // Images
 // ---------------------------------------------------------------------------
+const HERO_LUMINOUS = "hero-reveal/Numadelic Circle Upscaled.png";
+// D-059 then D-060: the founder's own re-renders of the physical layer
+// photograph, at their own resolutions (D-059 was 5460x3072; D-060, "without
+// the weird carpet issue", is 3360x1888). Only the hero's physical layer uses
+// this; the section 3 poster (below) now has its own, unrelated source.
+const HERO_PHYSICAL_V3 = "hero-reveal/hero-circle-humans-enhanced.png";
+
 async function images() {
-  // Hero layers: same source size (1672x941), same crop, so they register.
-  for (const [file, name] of [
-    ["hero-reveal/hero-luminous-soft-v3.png", "hero-luminous.webp"],
-    ["hero-reveal/hero-physical-quest3-v3.png", "hero-physical.webp"],
-  ]) {
-    await sharp(src(file)).resize({ width: 1600 }).webp({ quality: 82 }).toFile(out(name));
+  // Hero layers: same source size (3344x1882), same crop, so they register.
+  // A small or heavily compressed master is compressed twice by next/image and
+  // bands visibly across these dark gradients on a retina screen.
+  await master(HERO_LUMINOUS, "hero-luminous-hd.webp", 95);
+  await master(HERO_PHYSICAL_V3, "hero-physical-v3.webp");
+
+  // Section 3 film preview, 16:9, `object-fit: cover` in the page (no manual
+  // pre-crop needed: this source's own aspect ratio, 2400x1372, is already
+  // close to 16:9). D-060: the founder's single-participant reference photo,
+  // replacing the circle-of-seven crop this used to be.
+  await master("stock-images/physical-cloud-reveal-reference.png", "film-poster-v2.webp");
+
+  // Section 4: one image per programme stage, S0 to S6. Mixed aspect ratios on
+  // black; shown whole (never cropped) with a feathered edge in the page.
+  // S2 went through several founder revisions (D-055 to D-058): an enhanced
+  // version, a hand-edited portrait crop of `Etapas/S2.png`, then the same
+  // file re-edited landscape (3632x2048, D-058). `etapa-s2.webp` is pinned by
+  // tests/landing-content.test.ts's `etapa-s${k}.webp` pattern (a `-v<n>`
+  // suffix is allowed); each revision gets a fresh derivative name so neither
+  // the dev server's image cache nor a visitor's browser cache can keep
+  // serving a stale one (D-056 hit this the hard way).
+  const ETAPAS = { 2: ["Etapas/S2.png", "etapa-s2-v4.webp"] };
+  for (let k = 0; k <= 6; k++) {
+    const [file, name] = ETAPAS[k] ?? [`Etapas/S${k}.png`, `etapa-s${k}.webp`];
+    await master(`stock-images/${file}`, name);
   }
 
-  // Section 7: the documentary participant with the heart light (1200x686).
-  await sharp(src("source-media/images/physical-cloud-reveal-reference.png"))
-    .webp({ quality: 84 })
-    .toFile(out("participant-heart.webp"));
+  // Section 5: one photograph per onboarding step (1672x941, subject on the
+  // right, dark on the left where the copy sits). The source file numbers do
+  // not follow the step order; the mapping is by what each picture shows.
+  // Step 1 (D-055): the founder's enhanced "responde" photo, under a new
+  // derivative name (join-responde-v2.webp) since nothing pins the old one.
+  await master("stock-images/02-responde-enhanced.jpeg", "join-responde-v2.webp");
+  await master("stock-images/01-habla.png", "join-habla.webp");
+  await master("stock-images/03-recibe.png", "join-recibe.webp");
 
-  // Section 8: the body arc is the top of "CL circle 2" (1136x806) and the
-  // fire is a crop of the same frame. Both are authentic source frames.
-  const circle2 = src("source-media/images/CL circle 2.png");
-  await sharp(circle2)
-    .extract({ left: 0, top: 0, width: 1136, height: 380 })
-    .webp({ quality: 84 })
-    .toFile(out("arc-top.webp"));
-  await sharp(circle2)
-    .extract({ left: 400, top: 320, width: 270, height: 270 })
-    .resize({ width: 320 })
-    .webp({ quality: 84 })
-    .toFile(out("fire.webp"));
+  // Section 7: the documentary participant with the heart light. D-056
+  // replaces D-053's photo with the founder's third "FAQ" version (2048x2720,
+  // in fact a PNG). New file name again, same reasoning as above.
+  await sharp(src("stock-images/FAQ-enhanced-image-3.jpeg"))
+    .webp({ quality: 92 })
+    .toFile(out("participant-heart-v3.webp"));
+
+  // Section 8 (D-052): the founder's footer frame, six bodies in an arc with the
+  // fire at its centre (3342x1882). The lower half is empty black, so only the
+  // top 1040px ship.
+  await sharp(src("stock-images/footer/footer.png"))
+    .extract({ left: 0, top: 0, width: 3342, height: 1040 })
+    .webp({ quality: 92 })
+    .toFile(out("footer-arc.webp"));
 
   console.log("images written");
 }
@@ -83,62 +113,29 @@ async function images() {
 // ---------------------------------------------------------------------------
 // Video
 // ---------------------------------------------------------------------------
-// Content bounds measured with ffmpeg cropdetect: the two mp4 files are
-// pillarboxed 1080x1080 content inside 1920x1080; the MOV files are 1024 square.
-const CLIPS = {
-  phase1: { file: "source-media/videos/short phase 1.mp4", crop: "1080:1080:420:0" },
-  phase2: { file: "source-media/videos/short phase 2.MOV", crop: "1024:1024:0:0" },
-  phase3: { file: "source-media/videos/short phase 3.MOV", crop: "1024:1024:0:0" },
-  // The ring of lights occupies a small band; a tighter crop keeps it legible.
-  phase4: { file: "source-media/videos/short phase 4 group.mp4", crop: "720:720:600:180" },
-};
-
-// Stage clips: 8-second loops. Which clip means what is art direction from
-// docs/03_MEDIA_MOTION_DIRECTION.md, confirmed by inspecting the frames.
-const STAGES = [
-  { id: "s0", clip: "phase1", start: 1, still: true },
-  { id: "s1", clip: "phase1", start: 14 },
-  { id: "s2", clip: "phase1", start: 28 },
-  { id: "s3", clip: "phase3", start: 12 },
-  { id: "s4", clip: "phase2", start: 6 },
-  { id: "s5", clip: "phase4", start: 8 },
-  { id: "s6", clip: "phase3", start: 46 },
-];
-
-// Section 5 interim visuals (see docs/landing-page.md: documentary onboarding
-// photos are still missing; these are quiet source frames used meanwhile).
-const JOIN_STILLS = [
-  { id: "join-1", clip: "phase2", at: 10 },
-  { id: "join-2", clip: "phase3", at: 50 },
-  { id: "join-3", clip: "phase4", at: 12 },
-];
-
-function poster(clip, at, name, size = 720) {
-  const { file, crop } = CLIPS[clip];
-  ffmpeg(["-ss", String(at), "-i", src(file), "-frames:v", "1", "-vf", `crop=${crop},scale=${size}:${size}`, out(`${name}.webp`)]);
-}
-
-function encode(clip, start, duration, name, crf) {
-  const { file, crop } = CLIPS[clip];
-  ffmpeg([
-    "-ss", String(start), "-t", String(duration), "-i", src(file),
-    "-vf", `crop=${crop},scale=720:720,fps=25`,
-    "-an",
-    "-c:v", "libx264", "-preset", "slow", "-crf", String(crf), "-pix_fmt", "yuv420p",
-    "-g", "50", "-movflags", "+faststart",
-    out(`${name}.mp4`),
-  ]);
-}
+// The opening light sequence (light-sequence.tsx): seven bodies coalesce into
+// one light (0 to 3.6s), it sinks to the bottom (rest at 5.25s), then rises to
+// the top (rest at 7.9s). Played at its own rate, never scrubbed, so a normal
+// GOP is right; keyframes are forced on the three rest times so a jump back to
+// a rest seeks to an exact frame. Native 1280x720, no audio, low CRF because
+// the whole frame is a dark gradient that bands easily.
+const LIGHT_SEQUENCE = "hero-reveal/Numadelics_Gemini Omni Flash Reference to Video_2026-09-14_12-17-53.mp4";
 
 function video() {
-  for (const s of STAGES) {
-    poster(s.clip, s.start + 1, `stage-${s.id}`);
-    if (!s.still) encode(s.clip, s.start, 8, `stage-${s.id}`, 28);
-  }
-  for (const j of JOIN_STILLS) poster(j.clip, j.at, j.id, 960);
-  // Section 3 film: the whole of phase 1, silent.
-  poster("phase1", 19, "film-poster");
-  encode("phase1", 0, 60, "film", 26);
+  execFileSync(
+    "ffmpeg",
+    [
+      "-v", "error", "-y",
+      "-i", src(LIGHT_SEQUENCE),
+      "-vf", "format=yuv420p",
+      "-an",
+      "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-crf", "17",
+      "-g", "24", "-force_key_frames", "0,5.25,7.9",
+      "-movflags", "+faststart",
+      out("light-sequence.mp4"),
+    ],
+    { stdio: "inherit" },
+  );
   console.log("video written");
 }
 

@@ -993,7 +993,506 @@ writes.
 The locale files are also now checked for key parity, so a string added in
 Spanish and forgotten in English fails before it reaches a screen.
 
+## D-046 · 2026-09-14 · The hero and sections 2 and 3 are one opening sequence driven by events, not scrubbing
+
+The founder supplied higher-resolution renders of both hero layers (3344x1882)
+and an 8-second clip of the seven light bodies gathering into one light, which
+then sinks to the bottom of the frame and rises to the top. That is the
+handoff's own "light below section 2, above section 3", filmed.
+
+**One pinned stage on desktop, starting in the hero.** `opening.tsx` puts the
+hero, "El porqué" and "El qué" in one pinned act over the hero media; the stacked
+variant (mobile, reduced motion, no JS) is the same three flow sections as
+before. A first attempt put a scrubbed act under sections 2 and 3 only; the
+founder rejected it because the gathering must happen in the hero, and because
+scrubbing frames felt clunky.
+
+**Scroll triggers events; the clip plays at its own rate.** Act progress picks a
+destination; `light-sequence.tsx` plays the clip to that destination's rest
+frame (0, 5.25s sunk, 7.92s risen) and the copy follows the playhead, so each
+text arrives when the light does. Forward motion always stops at the next rest
+and dwells 2.4s, so continuous scrolling cannot skip "El porqué"; the reader is
+never held (leaving the pin cuts to "El qué"). Going back, anchor links and
+keyboard focus dip to dark and cut rather than rewind, because reverse playback
+means seeking backwards frame by frame, which is exactly the stutter that was
+rejected. The alternative, text in normal flow over a sticky clip, was rejected
+because moving copy would pass over the orb and the reveals could not be
+synchronised with it.
+
+**The handoff from still to clip is registered, not approximated.** The clip's
+first frame differs from the still by a measurable scale and offset (fitted on
+the seven heart lights). A transform in container units undoes it at rest and
+eases away once the bodies move, so the switch is invisible while the still
+keeps its full resolution.
+
+**Anchors and focus.** The pinned panels share one sticky box, so `#porque`
+cannot point at the panel. Anchor spans sit in the act's scroll track and take
+the ids only while the pinned stage is showing; the server markup gives them to
+the stacked sections, so no-JS and mobile anchors keep working.
+
+**Hero pixelation was the pipeline, not the source.** The derivative was a
+1600px WebP at quality 82, which `next/image` re-encoded at its Next 16 default
+quality of 75 and a retina screen stretched. Masters are now full resolution at
+WebP 95/92, served at quality 90 (`images.qualities` in next.config.ts). The
+CSS `--exit` shrink and fade on the hero is removed in both variants.
+
+**Section 3's film is a YouTube embed**, per the founder, loaded only on click
+(`youtube-nocookie.com`), with a 16:9 preview cropped from the physical hero
+photograph and no text beneath it. `SUBTITULOS_VIDEO` is no longer rendered as
+a marker but still blocks publication.
+
+**Two page-wide fixes found on the way.** `.cl p` and `.cl h1, h2, h3` reset
+margins at a higher specificity than every component class, so intended gaps
+such as `.hero__support` and `.que__body` were zeroed; the resets now use
+`:where()`. And changed derivatives get new file names (`-hd`, `-circle`),
+because the image optimizer and browsers cache by URL.
+
+## D-047 · 2026-09-14 · Section 5 uses supplied photographs, step 3 is cohort assignment, and the ground is true black
+
+**Step 3 changed at the founder's direction.** "Decide con toda la información"
+(consent information before joining) became "Asignación a tu cohorte": if
+selected, the person is assigned to a study cohort and a visit is arranged to
+hand over and explain the headset. This departs from the handoff's locked
+"questionnaire, conversation, informed decision" sequence; the founder outranks
+it, but two things need protocol review before publication: the three steps no
+longer mention informed consent (the page still says interest is not consent,
+in the invitation and FAQ), and "cohorte" appears before section 6 explains
+random assignment to two groups, so a reader could take the cohort for the
+group. The em dash in the supplied wording is not rendered; the numeral and the
+label are separate elements and the page bans em dashes.
+
+**The FOTOS_INCORPORACION marker is retired.** It existed because section 5
+had no photographs; the founder supplied three. They are generated images, so
+their approval and public-use rights join the hero participants in the pending
+list rather than blocking the page as a marker. The source file numbers do not
+follow the step order (`01-habla` is the conversation); the mapping is by what
+each image shows.
+
+**The fade is black, and the ground is true black.** `--sc-canvas` moves from
+`#080c0d` to `#000`, which every scrim and fade already mixes from, so the
+footage and photographs sit on the same black as the page. The section 5 fade
+uses the stops the founder proposed (0, 37, 58, 78%) in that token rather than
+the proposed `#050708`, plus a top and bottom fade so the photograph has no hard
+edge while the stage slides in and out. The three descriptions now share one
+grid cell, so the slot grows to the longest; the previous fixed-height slot
+would have let step 3 overlap the supporting line.
+
+## D-048 · 2026-09-15 · Section 4 shows one supplied image per stage, and the timeline's active node is its own dot
+
+**Seven images replace the interim footage.** The founder supplied one image per
+stage (`stock-images/Etapas/S0.png` to `S6.png`). They sit on black at mixed
+aspect ratios, from 3:2 to a 2.33:1 film strip, so they are shown whole rather
+than cropped into the previous square frame: each image is its own box, sized
+to fit the middle column and the height above the timeline, with a feathered
+mask on its real edges (several run content right up to an edge, which would
+read as a hard line on the black page). With no clips left, `stage-media.tsx`
+and the phase-footage encoding in `scripts/landing-media.mjs` are removed.
+
+**The blue dot is gone; the node's own dot marks the active stage.** The
+`.timeline__lit` accent dot was misaligned because it carried an engine cue,
+and a cue writes an inline `transform` that replaced the dot's centring
+translate. It also painted above the travelling light. The active stage is now
+shown by the same white dot growing and brightening, driven by CSS against
+`--sc-p` over the stage's window (the section 5 step-rail pattern), and the
+travelling light sits in its own layer above the nodes so it passes over each
+dot.
+
+**Stage names use the founder's `#887cde`** (5.98:1 on the black ground). A
+first pass used the founder's `#624d7b`, which measured 2.87:1, below the 3:1
+large-text minimum; the founder then chose the brighter shade. Names take a
+heading line height (1.08) instead of inheriting the body copy's, and the right
+column's minimum grows from 16rem to 19.5rem (the left shrinks to 15rem) so
+every name sets on one line; the image column gives up about 7% at 1440.
+
+## D-049 · 2026-09-15 · Section 6 explains the trial, and its split is an event with one geometry
+
+**The lights left their lines.** The lights moved in a straight diagonal driven
+by `--sc-p` while the lines were SVG curves drawn by a dash offset. Chrome
+computes dashes in screen space under `vector-effect: non-scaling-stroke`, so
+`pathLength` did not hold and the lines looked complete while the lights were
+still 15% short; the two only met at the very end, and the split happened
+while the diagram was still entering from the bottom of the viewport.
+`split-stage.tsx` now builds both curves from the diagram's measured pixels
+and places each light at a distance along its own curve, drawing the line to
+just behind it. Following the founder's direction for the opening sequence
+(D-046), it is an event, not a scrub: it waits until the diagram is wholly on
+screen, pauses 600ms and plays once.
+
+**The lines take the light's colours.** A gradient from transparent at the fork
+through violet to a pale warm tint at the light, at the founder's request. This
+is a narrow exception to "Living Teal is the only interface accent": the lines
+belong to the light imagery, not the interface.
+
+**The copy explains a randomized controlled trial.** The founder chose, from
+three drafts, the plain comparison framing ("Dos grupos para saber si la
+experiencia ayuda."), and for the group text a role-based draft that says what
+each group contributes to the comparison and nothing about what the control
+group receives, so it cannot contradict whatever the protocol says (waiting
+list, usual care or an active comparator). It still has not had clinical or
+ethics review.
+
+**The markers are not drawn in section 6, but still block publication.** At the
+founder's direction the yellow `CONDICION_GRUPO_*` and `ETIQUETAS_GRUPOS`
+markers no longer render here. The keys stay in `missingContentList()`, so
+production still shows the holding page until the group wording and labels are
+approved.
+
+## D-050 · 2026-09-15 · Section 6 follows scroll again, the control group "receives a similar experience", and labels move to Poppins
+
+**Scroll, not an event.** Having seen D-049's timed split, the founder preferred
+the split to follow scrolling. Unlike the opening footage (D-046), where
+scrubbing frames felt clunky, this is geometry, so it scrubs smoothly: the
+lights wait at the fork until the whole diagram is up from the bottom of the
+viewport, travel as it rises and reverse on the way back, with a small inertia.
+D-049's single geometry stays, so the lights remain on their lines.
+
+**The heading returns to "La asignación se realiza al azar."** The trial
+explanation in the body stays.
+
+**The control group "recibe una experiencia similar para comparar."** The
+founder's wording, so that patients are not discouraged by the prospect of
+being in the control group. This supersedes D-049's protocol-neutral draft and
+is a factual claim about the control condition: **it must match the
+protocol**. If control is a waiting list or usual care, this line would
+mislead people deciding whether to take part, and has to change before
+publication. The body now says the same ("el otro en una experiencia
+similar"). `CONDICION_GRUPO_CONTROL` still blocks publication.
+
+**Group names get distinct gradients.** Violet to pink and teal to blue, at
+matched lightness, so the groups are told apart without either looking
+brighter. The lights themselves stay identical.
+
+**Poppins for eyebrows, group names and the closing line.** The 0.72rem IBM
+Plex Mono eyebrow rendered pixelated on black; eyebrows and the section 3 facts
+move to Poppins at 0.85 to 0.95rem. The closing line ("misma importancia") is
+larger with a slow shimmer that stops under reduced motion and "Pausar
+animación". Hovering a light or its text brightens that side.
+
+## D-051 · 2026-09-15 · Section 6's lights reunite into section 7's light, and section 7 gets general answers instead of markers
+
+**One journey, driven by scroll.** At the founder's direction, after the group
+text is read the two lights leave their lines, travel down and reunite at the
+top of the participant photograph, where they become section 7's light, which
+then sinks into the heart. This is the handoff's `HEART_DISSOLVE` beat ("the
+lights reunite and dissolve into the VR participant's heart center"), which the
+page previously skipped: section 7's light used to descend on its own flow
+progress. Scrolling back reverses the whole journey. `split-stage.tsx` now
+drives section 7's `--t` too, so the descent cannot start before the lights
+arrive; the section's CSS fallback is unchanged for reduced motion and no
+JavaScript. The lines fade as the lights leave rather than staying as
+disconnected tails, since the founder asked that a light never look detached
+from its line.
+
+**Section 7's copy, chosen by the founder from drafts.** Every answer is
+general and states no protocol fact the team has not supplied:
+
+- Criteria: the two the founder supplied mid-change, "Tener una enfermedad que
+  amenaza la vida" and "Hablar castellano" (the first worded like section 2's
+  "una enfermedad que amenaza la vida"), followed by a line that remits the rest
+  to the call "según todos los criterios aprobados". They are not the complete
+  protocol set (no exclusion criteria, age or residence), so `CRITERIOS` still
+  blocks publication.
+- What participating involves and headset use: only what the page already says
+  (seven stages, video calls, VR sessions, home delivery and explanation of the
+  headset from step 3). Duration and schedule are promised "antes de empezar".
+- Benefits and risks: the minimum ("no se garantiza", "todavía no sabemos"),
+  plus that the team will explain them before the reader decides. No risk is
+  named, so none needs clinical sign-off yet.
+- What each group receives: the section 6 wording, including the control
+  group's "experiencia similar" (still subject to D-050's protocol check).
+- Withdrawal: "en cualquier momento, sin tener que dar explicaciones", standard
+  wording that the ethics committee must still confirm.
+- Contact and registry: the team will get in touch after the questionnaire;
+  registry and contact details will be published here.
+
+**The markers are gone from section 7, but not from the gate.** The registry
+and team markers above the heading are removed along with the in-answer
+markers. Every key stays in `missingContentList()`, so production still shows
+the holding page. The criteria label moves to Poppins like the other labels.
+
+## D-052 · 2026-09-15 · Footer rebuilt with a design-only contact dialog, cookie consent, draft legal pages, and a lavender accent
+
+**The contact form sends nothing.** The founder asked for a contact form in a
+centred modal. Where messages go was put to the founder as a decision, because
+any destination changes what the site collects: a message from a prospective
+participant can easily contain health information (Category C,
+docs/research-data-boundaries.md), and storing it here would need a table,
+anti-abuse protection (the same gap as D-015), a legal basis and a privacy
+notice. The founder chose design only for now. The dialog is complete, but its
+form has no action and makes no request, and submitting says so. A test pins
+that. `CONTACTO_FORMULARIO` blocks publication until a destination is chosen.
+The dialog asks visitors not to include health information.
+
+**Consent covers the one optional item.** The public pages set no cookie for
+an anonymous visitor (the Supabase session cookie exists only for staff), so
+the only content that needs consent is the section 3 YouTube film. The banner
+styles accept and reject identically, as the AEPD guidance asks. The choice is
+stored in localStorage for 12 months and can be reopened from the footer, and
+the film asks for consent in place instead of loading YouTube.
+
+**Legal pages are drafts with marked gaps.** `/aviso-legal` (legal notice and
+terms of use, since Spanish sites combine the two under LSSI-CE), `/privacidad`
+and `/cookies` follow the structure LSSI-CE and GDPR arts. 13 and 14 ask for.
+They describe only what the code does, and every fact the team has not supplied
+(site owner, controller, DPO, legal basis, retention, processors and hosting
+region) is a marker that blocks publication, as is `REVISION_LEGAL`. Nothing
+here claims compliance; that is for a lawyer or the DPO to determine. The
+founder did not know the data controller yet.
+
+**The pause control stays, as an icon.** The founder asked to remove the
+"Pausar animación" link. Removing the control would leave the breathing lights,
+fire glow and shimmer with no way to stop them (WCAG 2.2.2), so the founder
+chose a small labelled icon button in the footer instead. The team access link
+is gone; staff use `/equipo/login` directly.
+
+**Lavender replaces Living Teal as the accent.** At the founder's request,
+buttons use a lavender-to-violet-to-pink gradient with dark ink (the darkest
+stop is still over 6:1 against the ink), links get a gradient underline, and
+the accent token (focus rings, eyebrows, FAQ marks) moves to lavender. This
+departs from the handoff design system's "Living Teal is the only interface
+accent". Section 6's teal-to-blue control group name is a group colour, not the
+accent, and stays.
+
+**Section 7 additions.** The "Posibles beneficios y riesgos" answer carries the
+founder's text, moved from "usted" ("obtenga") to the page's "tú" ("obtengas")
+with two typos corrected (remunerada, amenazante). A new "Confidencialidad y
+protección de datos" answer describes only what the system does (participant
+codes, research answers kept in the institution's systems apart from contact
+data) and the reader's GDPR rights; `PROTECCION_DATOS` blocks publication until
+the DPO or ethics committee approves it.
+
+**Media.** Section 8 uses the founder's footer frame (six bodies around the
+fire) in place of the two "CL circle 2" crops, with a soft CSS glow breathing
+over the fire. Section 7 uses the founder's 2400px upscale under a new file
+name, so caches do not keep serving the old image.
+
+## D-053 · 2026-09-15 · Section 7 photo replaced again, under a new file name
+
+The founder supplied another participant photo (`FAQ-enhanced-image.jpeg`, in
+fact a PNG despite the extension; sharp reads it by content), replacing
+D-052's upscale. Same pose and composition (near 3:4, matching the section's
+portrait frame closely), so no layout change was needed. Written to
+`participant-heart-v2.webp`, a new name rather than overwriting
+`participant-heart-hd.webp`: this project's media pipeline warns that
+`next/image` and browsers cache derivatives by URL, and reusing the old name
+during this same change did in fact keep serving the old photo in the dev
+server until the file was renamed and the Next.js image cache cleared.
+
+## D-054 · 2026-09-15 · The hero's explicit reveal toggle is removed, not relocated
+
+The founder asked to remove "the buttons on the right corner" of the hero
+(the "Revelar a las personas" toggle and its hint text). The first pass moved
+the control to bottom-left instead of deleting it, reasoning that it was the
+only way keyboard-only and reduced-motion visitors could ever see the
+physical layer, per the master brief ("touch: press-and-hold or an explicit
+button"; "reduced motion: a stable layered still with an accessible reveal
+toggle"). The founder repeated the request with a screenshot of the exact
+control and "we dont need it": deleted outright.
+
+Pointer hover and touch press-and-hold are untouched, since neither depends
+on the button. Keyboard-only and reduced-motion visitors now see only the
+seven light bodies for the whole session; the physical photograph (the Quest
+3 headsets, which the master brief calls out as required content: "revealed
+people must visibly wear Quest 3 headsets and hold Quest 3 controllers") is
+unreachable for them. This is a real, knowing gap against the locked
+accessibility requirement, kept because the founder's direction outranks it
+per the page's own authority order, and recorded rather than hidden.
+
+Removed with it: the `revealed` state and `.is-revealed` CSS path (dead once
+nothing could set it), the `HERO.reveal` copy fields for the button's labels
+(`show`/`hide`/`pointerHint`/`touchHint`; the alt text fields stay), and a
+`light-sequence.tsx` focus-order special case that existed only to treat the
+button as belonging to the hero state.
+
+## D-055 · 2026-09-15 · Two more founder upscales replace the S2 and "responde" photos
+
+`S2-enhanced.jpeg` and `02-responde-enhanced.jpeg` (both in fact PNGs despite
+the extension; sharp reads by content, as D-053 already established) replace
+the section 4 S2 image and the section 5 "Responde el cuestionario" photo.
+Same scenes, higher resolution (3632x2048 for both); no copy or layout change.
+
+`etapa-s2.webp` keeps its name: `tests/landing-content.test.ts` pins the
+`etapa-s${k}.webp` pattern for every stage image, so instead of a fresh file
+name this one derivative was overwritten in place and `.next/cache/images` was
+cleared by hand, as D-053 first had to. `join-responde.webp` has no such test
+pin, so it follows the normal rule and becomes `join-responde-v2.webp`; the
+superseded file is removed.
+
+## D-056 · 2026-09-15 · The two cache-pinned image names give way; the section 7 photo changes again
+
+D-055 overwrote `etapa-s2.webp` in place, because a test pinned that exact
+name, and cleared the dev server's Next.js image cache. The founder still saw
+the old photo: some cache this project does not control (very likely the
+browser's own disk cache, since the URL for that image never changed) kept
+serving the old bytes. The fix is the one the project already documents for
+this exact situation: give the file a real new name, `etapa-s2-v2.webp`, and
+loosen `tests/landing-content.test.ts`'s exact-match assertion to a pattern
+that still pins the stage-index prefix but allows a `-v<n>` suffix. Every
+other stage still resolves to its plain `etapa-s${k}.webp`, so this is a
+narrow exception, not a relaxation of the naming discipline.
+
+The founder also supplied a third section 7 photo (`FAQ-enhanced-image-3.jpeg`,
+2048x2720, in fact a PNG despite the name), replacing D-053's. Same treatment:
+`participant-heart-v3.webp`, a new name, superseded file removed.
+
+## D-057 · 2026-09-15 · S2 reverts to the founder's own edit, and a portrait stage image gets a narrower mobile box
+
+The founder edited `claude-handoff-v3/assets/stock-images/Etapas/S2.png`
+directly (Affinity, 1838x2048, a different crop from the file D-048 first
+used, 1672x941) and asked for it back in place of D-055/D-056's enhanced
+swap. New derivative name again (`etapa-s2-v3.webp`), for the same reason as
+D-056.
+
+**A portrait stage image needs its own box on the stacked list.** Every other
+stage photo is landscape, so `.etapas-list__figure img { width: 100% }` (full
+mobile column width) has always kept them a modest height. S2's new crop is
+nearly square, so filling that same width made it roughly 390px tall on a
+narrow phone, visibly dominating the row the founder was looking at.
+`stages.tsx` now flags any stage whose image is taller than it is wide, and
+`.etapas-list__figure--portrait` caps that image at 70% width (about 30%
+smaller), bringing it back in line with the rest; the rule reads by aspect
+ratio, so it will apply automatically to a future portrait stage image too,
+not just this one. The desktop pinned panel is unaffected, since it already
+sizes by a fixed container height rather than the page's own width.
+
+## D-058 · 2026-09-15 · S2 goes landscape, so the portrait-only narrower box stops applying on its own
+
+The founder re-edited the same `S2.png` landscape (3632x2048, same scene as
+D-057's portrait crop). New derivative name again, `etapa-s2-v4.webp`. No
+markup or CSS change was needed: D-057's narrower mobile box keys off the
+image's own width and height (`media.width < media.height`), so a landscape
+S2 falls through to the plain full-width treatment every other stage image
+already gets. Verified rendered at 350x197 on a 390px phone, matching the
+other stages' proportions, with no `--portrait` class applied.
+
+## D-059 · 2026-09-15 · The hero's revealed-people photo is upscaled
+
+`hero-circle-humans-enhanced.png` (5460x3072) is the founder's upscale of the
+same photograph already used for the hero's physical (revealed) layer, not a
+different composition: same room, poses, lighting and near-identical aspect
+ratio (1.7773 against the original 1.7770), confirmed by eye against the
+original before swapping. New derivative name, `hero-physical-v2.webp`, per
+this session's now-standard practice; the superseded `hero-physical-hd.webp`
+is removed.
+
+The section 3 film poster (`film-poster-circle.webp`) still crops from the
+*original* `Numadelics_Magnific Precision Upscale V2` source, not this
+upscale: its extract rectangle is pixel coordinates sized for that file's
+3344x1882, and recomputing them for the new file's size was out of scope for
+"update the hero" alone.
+
+Verified in Chrome at 1440 and 390: the revealed photo still registers with
+the luminous light bodies (each headset under its orb, same arc), at rest and
+mid-reveal, with no console errors.
+
+## D-060 · 2026-09-15 · Hero physical layer re-rendered again, and the section 3 poster becomes an unrelated photo
+
+The founder re-rendered `hero-circle-humans-enhanced.png` a second time ("without
+the weird carpet issue", the earlier render's floor texture), 3360x1888.
+`hero-physical-v3.webp`, a fresh name again; `hero-physical-v2.webp` removed.
+
+While investigating a reported misalignment between this layer and the fixed
+luminous light-body layer, comparing the old and new physical photographs
+point-by-point (a bright reference candle, and matched crops at three regions
+of the frame) showed they agree to well under a pixel at every point checked:
+the "enhanced" renders are faithful re-renders of the same photograph, not
+regenerated content. Swapping back to the pre-D-059 photograph reproduced the
+same local mismatch at the same spot, so it predates this session's photo
+changes entirely: the light-body illustration and the photograph are two
+separately authored images with only a shared "where the group roughly sits"
+framing (both start their content around the same distance from the left
+edge), not per-body-part registration, and a few figures — especially the
+rightmost one — sit further from their corresponding glow than the rest.
+`object-position` has only a few pixels of range to work with at typical
+widths (the two images' aspect ratios are within 0.2% of each other, so
+`cover` has almost no crop slack to redistribute), and a `transform: translate`
+large enough to fix one figure measurably worsens others, since the
+per-figure offsets are not uniform. Closing this properly needs one of the two
+source images redone to register against the other; it is not a CSS fix. Left
+as a known limitation for now.
+
+**The section 3 video thumbnail changes to an unrelated photo.** It no longer
+derives from the hero's physical layer at all: the founder supplied
+`physical-cloud-reveal-reference.png` (2400x1372, one participant meditating
+against a blue backdrop, not the circle of seven) specifically for this slot.
+Its aspect ratio is already close to the frame's 16:9, so no manual crop was
+needed; `.film__frame img { object-fit: cover }` frames it well on its own.
+The poster alt text is rewritten for the new, different scene.
+
+## D-061 · 2026-09-16 · The stacked variant gets a reading light, and the opening sequence holds the scroll
+
+Six changes for the founder's review build, five of them the phone's:
+
+**The hero frame fills the phone.** The frame's composition keeps the circle in
+its right two thirds and leaves the left third black for the desktop copy. On a
+phone there is no copy beside it, so that third was empty space and the bodies
+sat small and off to the right. Under 861px the box becomes 8:7 with a
+right-anchored crop, which drops the empty third; the layers keep one
+`object-position`, so the reveal stays registered.
+
+The first attempt at this (6:5, 1:1 under 420px) still looked off-centre,
+because both numbers were guesses. Measuring the frame settles it: the bodies
+span 37.3% to 98.3% of its width, centroid 67%. A cover crop shows a slice of
+the width whose size is fixed by the box ratio alone, so exactly one ratio puts
+that slice's centre on 67% at `object-position: 100%`, and it is 8:7. Squarer
+clips the outer two bodies; wider shrinks them. Measured on the rendered page
+at 360, 390, 430, 700 and 860px: the bodies sit 2.2 to 2.7% from the left edge
+and 2.3 to 2.6% from the right at every width, filling ~95% of the box.
+
+**A reading light carries sections 2 and 3 on the phone.** The desktop opening
+sequence reveals that copy through the clip's wipes; stacked, it all arrived at
+once. `reading-light.tsx` runs a small lavender light down the two sections with
+the reader, lighting each block as it reaches it. It passes *behind* the copy
+(z-index 0, under both sections): in front it read as a smudge over the words.
+Three rules it keeps: nothing hides until the script sets `data-reading="live"`
+(no-JS and pre-hydration readers see finished copy, verified with JavaScript
+off), a block that has been lit stays lit, and reduced motion or "Pausar
+animación" opts out entirely.
+
+**Etapas and the onboarding steps fade up** through the vendored engine's own
+`data-sc-in`, which fires once per item on entry. That attribute's base style
+lives in scrollcraft.css and starts at `opacity: 0`, so the resilience rule in
+landing.css, which until now only covered `[data-sc-cue]`, had to be widened:
+without it a no-JS reader would have found those items invisible.
+
+**The onboarding steps become cards.** The photographs are lit from the right
+and fade to black on the left, so a picture hanging under its paragraph showed
+that fade as a hard odd edge. Each step is now a card with the photograph as its
+ground and the copy over it, numeral first.
+
+**Section 6's copy narrows on a phone.** Centred copy at a phone's full width
+set too many long lines; the head, body and closing line get their own measures
+under 640px.
+
+**`DESCRIPCION_ETAPAS` is no longer drawn** (founder's request), like the other
+markers before it. It still blocks publication. No marker is now drawn anywhere
+on the landing page.
+
+**The opening sequence holds the scroll.** At the founder's request, scrolling
+down during a transition is held until the clip reaches its rest and the copy
+has wiped in, so the sequence cannot be skipped: about 6.9s for the first
+transition (the clip's own 5.25s plus the hold) and 4.3s for the second. This is
+scroll-jacking, which is hostile if it goes wrong, so every exit is open:
+scrolling up, Escape, any other key, moving focus to a control, leaving the
+stage, "Pausar animación", and a hard `LOCK_MAX_MS` cap that releases the page
+whatever the clip does. It never runs on the stacked variant, under reduced
+motion, or without scripting, and scrolling up behaves exactly as before.
+`DWELL_MS` drops from 2400 to 1600, since the lock now does the anti-skip work
+the dwell was doing alone, and the lock releases exactly when the next
+transition may start, so the scroll after it begins the next event rather than
+falling into a dead dwell.
+
+Verified in Chrome: the lock holds at one scroll position through six further
+wheel notches, releases with "El porqué" fully revealed, holds again for the
+second transition, then leaves the page free; an upward notch releases it at
+once.
+
 ## Open questions for researchers
+
+- Where should contact form messages go: the study mailbox, a CLP Hub inbox, or
+  elsewhere? Each changes what the public site collects (D-052).
+- Who is the data controller and the DPO for the public site and the study, and
+  who reviews the legal pages? (D-052)
 
 - Hosting region / data processing agreements before any real participant.
 - Captcha / WAF and rate limiting for the public application form (D-015).

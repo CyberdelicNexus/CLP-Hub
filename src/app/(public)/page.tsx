@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { ClearLightLanding } from "@/components/landing/clear-light-landing";
+import { HOLDING_FONT_CLASS, PUBLIC_FONT_CLASS } from "@/components/landing/fonts";
 import { isProduction } from "@/config/env";
 import { META, missingContentList } from "@/content/landing/clear-light";
 import { logger } from "@/lib/logger";
@@ -13,15 +13,11 @@ import "@/components/landing/landing.css";
  * Public recruitment landing page for the aNUma Clear Light trial.
  *
  * Spanish only, one locked dark theme, eight sections in the order fixed by the
- * V3 design handoff (docs/landing-page.md, D-042). The page collects nothing:
- * its single outbound action is the study's Qualtrics screening link, read from
- * `studies.screening_url` of the study open for recruitment (D-031).
- *
- * The fonts are declared here rather than in the root layout so that staff
- * pages do not download faces they never use.
+ * V3 design handoff (docs/landing-page.md, D-042). The page stores nothing: its
+ * single outbound action is the study's Qualtrics screening link, read from
+ * `studies.screening_url` of the study open for recruitment (D-031), and the
+ * contact dialog sends nothing yet (D-052).
  */
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-plex-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: { absolute: META.title },
@@ -48,7 +44,7 @@ export default async function PublicHomePage() {
   if (isProduction() && missingContentList({ qualtricsUrl }).length > 0) {
     const t = await getTranslations("public.holding");
     return (
-      <main id="main" className={`cl holding ${manrope.variable}`} lang="es">
+      <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang="es">
         <div>
           <h1 className="cl-title--md">{t("title")}</h1>
           <p className="cl-lead">{t("body")}</p>
@@ -57,5 +53,5 @@ export default async function PublicHomePage() {
     );
   }
 
-  return <ClearLightLanding qualtricsUrl={qualtricsUrl} fontClass={`${manrope.variable} ${plexMono.variable}`} />;
+  return <ClearLightLanding qualtricsUrl={qualtricsUrl} fontClass={PUBLIC_FONT_CLASS} />;
 }

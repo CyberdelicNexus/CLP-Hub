@@ -1,11 +1,12 @@
+import { CookieBanner } from "@/components/landing/consent";
+import { ContactDialog } from "@/components/landing/contact-dialog";
 import { ScrollCraftMount } from "@/components/landing/scrollcraft-mount";
 import { Eligibility } from "@/components/landing/sections/eligibility";
-import { Hero } from "@/components/landing/sections/hero";
 import { Invitation } from "@/components/landing/sections/invitation";
 import { Join } from "@/components/landing/sections/join";
+import { Opening } from "@/components/landing/sections/opening";
 import { Split } from "@/components/landing/sections/split";
 import { Stages } from "@/components/landing/sections/stages";
-import { What, Why } from "@/components/landing/sections/why-what";
 import { SiteBar } from "@/components/landing/site-bar";
 import { ACTIONS, NAV } from "@/content/landing/clear-light";
 
@@ -21,15 +22,15 @@ export function ClearLightLanding({ qualtricsUrl, fontClass }: { qualtricsUrl: s
     <div id={LANDING_ROOT_ID} className={`cl ${fontClass}`} lang="es">
       <SiteBar brand="aNUma" links={NAV} cta={{ href: "#invitacion", label: ACTIONS.primaryCta }} />
       <main id="main">
-        <Hero />
-        <Why />
-        <What />
+        <Opening />
         <Stages />
         <Join />
         <Split />
         <Eligibility />
         <Invitation qualtricsUrl={qualtricsUrl} rootId={LANDING_ROOT_ID} />
       </main>
+      <ContactDialog />
+      <CookieBanner />
       <ScrollCraftMount rootId={LANDING_ROOT_ID} />
     </div>
   );

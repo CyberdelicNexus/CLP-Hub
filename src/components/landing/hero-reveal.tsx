@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import clsx from "clsx";
+import { useEffect, useRef, type ReactNode } from "react";
 
 /**
  * The hero's feathered human reveal.
@@ -17,22 +16,19 @@ import clsx from "clsx";
  *   when it arrives.
  * - Touch: press-and-hold opens the window at the touch point; lifting or
  *   scrolling closes it (pointercancel fires when a scroll begins).
- * - Everyone: an explicit toggle shows the whole layered still. Under reduced
- *   motion the toggle is the only control and nothing tracks the pointer.
  * - Coalescence gate: once the media frame is less than ~65% visible the
  *   reveal closes and stays closed, so the bodies gather without a photograph
  *   underneath them. The frame, not the section: on a phone the frame sits
  *   below the copy and is fully in view while the section is mostly above.
+ *
+ * There is no explicit toggle (D-054, founder request): keyboard-only and
+ * reduced-motion visitors do not see the physical layer at all, only the
+ * light bodies. That is a real gap against the original brief's "touch or an
+ * explicit button" / "reduced motion: toggle only" requirement, kept because
+ * the founder asked for the control removed rather than relocated.
  */
-export function HeroReveal({
-  children,
-  labels,
-}: {
-  children: ReactNode;
-  labels: { show: string; hide: string; pointerHint: string; touchHint: string };
-}) {
+export function HeroReveal({ children }: { children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     const el = box.current;
@@ -129,26 +125,8 @@ export function HeroReveal({
   }, []);
 
   return (
-    <>
-      <div ref={box} className={clsx("hero__media", revealed && "is-revealed")}>
-        {children}
-      </div>
-      <div className="hero__reveal">
-        <button
-          type="button"
-          className="cl-ghost"
-          aria-pressed={revealed}
-          onClick={() => setRevealed((v) => !v)}
-        >
-          {revealed ? labels.hide : labels.show}
-        </button>
-        {!revealed ? (
-          <span className="hero__hint" aria-hidden>
-            <span className="hero__hint--pointer">{labels.pointerHint}</span>
-            <span className="hero__hint--touch">{labels.touchHint}</span>
-          </span>
-        ) : null}
-      </div>
-    </>
+    <div ref={box} className="hero__media">
+      {children}
+    </div>
   );
 }

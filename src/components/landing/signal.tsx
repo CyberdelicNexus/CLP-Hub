@@ -10,17 +10,20 @@ export function Signal({
   className,
   size,
   breath = false,
+  style,
 }: {
   className?: string;
   /** CSS length or token for the diameter; defaults to the section 2/3 token. */
   size?: string;
   breath?: boolean;
+  /** Position tokens only (such as section 6's direction); never colour or size. */
+  style?: CSSProperties;
 }) {
   return (
     <span
       aria-hidden
       className={clsx("signal", breath && "signal--breath", className)}
-      style={size ? ({ "--d": size } as CSSProperties) : undefined}
+      style={size || style ? ({ ...style, ...(size ? { "--d": size } : null) } as CSSProperties) : undefined}
     />
   );
 }

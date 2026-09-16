@@ -51,6 +51,12 @@ Hub holds `participants.external_ref` — an opaque response ID, pattern-checked
 SQL so it cannot become a place to write a name — and nothing else about the
 person until staff deliberately add contact details to arrange a visit (D-031).
 
+The landing page's contact dialog (D-052) renders a name, email and message
+form but has no destination: no action, no request, no storage, and a test
+asserts it. It asks visitors not to include health information. Giving it a
+destination is a recorded decision still to be made, for exactly the reason
+above: free text from prospective participants invites Category C.
+
 `/participar` collects nothing. It renders no form, no input and no server
 action; a test asserts this, because the digital consent is accepted in Qualtrics
 *before* any datum is collected and a form here would invert that order.

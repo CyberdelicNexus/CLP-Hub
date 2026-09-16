@@ -38,18 +38,23 @@ source, and mark the few places where the build had to decide.
 
 | # | Section | Feeling | What causes it |
 |---|---|---|---|
-| 1 | Hero | Curiosity | Seven indistinct lights; the hand reveals people with headsets |
-| 2 | El porqué | Recognition | Illness named plainly, centred, one light resting below |
-| 3 | El qué | Orientation | A clear explanation and a user-started film |
+| 1 | Hero | Curiosity | Seven indistinct lights; the hand reveals people with headsets; the first scroll gathers them into one |
+| 2 | El porqué | Recognition | The one light sinks; illness named plainly, centred above it |
+| 3 | El qué | Orientation | The light rises; a clear explanation and a user-started film below it |
 | 4 | Etapas | Wonder (the peak) | The light walks S0 to S6 while the footage changes |
 | 5 | Incorporarse | Reassurance | Three calm steps, "no te compromete" |
 | 6 | Al azar | Fairness | One light divides into two identical lights |
 | 7 | Elegibilidad | Intimacy, trust | The light comes home to a person's heart; the facts follow |
 | 8 | Invitación | Calm resolve | The arc, one small fire, one CTA, and the page holds |
 
-**Peak:** section 4, the only act with a large span (4.5 viewport heights) and
-the only place the footage plays. Silence before it: section 3 is a static
-flow section. **Ending:** resolves and holds; the last cue is the CTA and the
+**Peak:** section 4, the act with the largest span (4.5 viewport heights).
+
+**Revised 2026-09-14 (D-046), founder-directed:** sections 1 to 3 became one
+opening sequence (span 3.2) that plays supplied footage of the seven bodies
+gathering into one light. Footage now also plays before the peak, so the act
+before section 4 is no longer quiet. Open question for the founder: the
+gathering is a strong candidate for the one moment people remember, which
+would move the peak to the opening; section 4 keeps the most scroll room. **Ending:** resolves and holds; the last cue is the CTA and the
 footer sits inside the final viewport.
 
 **Tell-someone sentence:** "It's the site where you move your hand over glowing
@@ -77,19 +82,21 @@ is untouched.
 
 | Beat | Section | Device | Why |
 |---|---|---|---|
-| Curiosity | 1 | `flow` + pointer mask (bespoke) | The reader's hand is the first input |
-| Recognition | 2 | `flow` | Centred copy; motion would cheapen the sentence |
-| Orientation | 3 | `flow` + user-started film | Information, not spectacle |
+| Curiosity, recognition, orientation | 1 to 3 | `pin` 3.2 + event-triggered footage (bespoke) + pointer mask | Scroll starts each event (gather, sink, rise) and the copy arrives with the light; nothing is scrubbed |
 | Wonder | 4 | `pin` 4.5 + cues + `--sc-p` waypoint | Seven states need scroll room |
 | Reassurance | 5 | `pin` 3.2 + cues (cross-fade) | Three states, held frame |
 | Fairness | 6 | `flow` + `--sc-p` split | The division happens as the section arrives |
 | Intimacy | 7 | `flow` + `--sc-p` dissolve | Same |
 | Resolve | 8 | `flow`, holds | The page stops |
 
-Two pinned acts in a row (4 and 5) contradict the skill's "never the same
-device twice in a row"; both pins are locked decisions (docs/07 items 11 and
-13), which outrank the skill. They differ in kind: a travelling waypoint over
-seven media states, then a three-state rail over cross-fading stills.
+Three pinned acts in a row (the opening, 4 and 5) contradict the skill's "never
+the same device twice in a row". The pins in 4 and 5 are locked decisions
+(docs/07 items 11 and 13) and the opening was directed by the founder; all
+outrank the skill. They differ in kind: time-based events over footage, a
+travelling waypoint over seven media states, a three-state rail over
+cross-fading stills. The scroll-craft harness samples fixed positions and
+cannot see a state that arrives by time, so the opening is verified by its own
+script (docs/landing-page.md, "Opening sequence verified").
 
 Authored silence: none. The empty screens the first desktop run showed between
 sections 5 and 6 were a bug (an author `position` rule un-pinning the stage)

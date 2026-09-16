@@ -7,24 +7,29 @@
    Nothing here restyles .sc-stage, .sc-copy or a [data-sc-*] device, with one
    deliberate exception noted at "resilience".
 
-   One locked dark theme. Living Teal is the only interface accent. Spectral
-   colour lives only inside the light bodies and the footage.
+   One locked dark theme. Lavender, as a gradient on buttons and link
+   highlights, is the interface accent (D-052; it replaced Living Teal).
+   Spectral colour otherwise lives inside the light bodies and the footage.
    ========================================================================== */
 
 .cl {
   /* --- scrollcraft colour roles ---------------------------------------- */
-  --sc-canvas: #080c0d;
+  /* True black: the footage and photographs are graded to it. */
+  --sc-canvas: #000;
   --sc-surface: #121b1d;
   --sc-ink: #f2f5ef;
   --sc-ink-soft: #b4bfba;
-  --sc-accent: #79ded4;
-  --sc-accent-ink: #071514;
-  --sc-shadow-color: 187 40% 4%;
+  --sc-accent: #b79cff;
+  --sc-accent-ink: #170c30;
+  --sc-shadow-color: 262 40% 4%;
 
   /* --- page tokens ------------------------------------------------------ */
   --cl-muted: #879590;
-  --cl-accent-strong: #9ce9df;
-  --cl-accent-soft: color-mix(in oklab, #79ded4 62%, #b4bfba);
+  --cl-accent-strong: #d3c2ff;
+  --cl-accent-soft: color-mix(in oklab, #b79cff 70%, #b4bfba);
+  /* The lavender gradient on buttons and link highlights (D-052). */
+  --cl-grad: linear-gradient(120deg, #cdb9ff 0%, #a888f6 48%, #dba8ee 100%);
+  --cl-grad-line: linear-gradient(90deg, #cdb9ff, #a888f6, #dba8ee);
   --cl-line: rgb(212 232 225 / 0.14);
   --cl-line-strong: rgb(212 232 225 / 0.26);
   --cl-caution: #edbd7c;
@@ -43,6 +48,7 @@
   --sc-font-display: var(--font-manrope), "Manrope", "Segoe UI", system-ui, sans-serif;
   --sc-font-text: var(--font-manrope), "Manrope", "Segoe UI", system-ui, sans-serif;
   --sc-font-mono: var(--font-plex-mono), "IBM Plex Mono", Consolas, monospace;
+  --cl-font-label: var(--font-poppins), "Poppins", "Segoe UI", system-ui, sans-serif;
   --sc-maxw: var(--cl-container);
   --sc-gutter: clamp(1.25rem, 4vw, 4rem);
   --sc-section: clamp(5.5rem, 9vw, 8.5rem);
@@ -57,7 +63,7 @@
 }
 /* The scrollcraft body ground reads the :root token; keep it in the same
    family so nothing behind the page ever shows a different black. */
-body:has(> .cl) { background: #080c0d; }
+body:has(> .cl) { background: #000; }
 @media (max-width: 860px) { .cl { --cl-nav-h: 60px; } }
 
 /* --------------------------------------------------------------- resilience
@@ -66,7 +72,7 @@ body:has(> .cl) { background: #080c0d; }
    .sc-ready to <html>) that state must not hide content from a reader whose
    JavaScript is off, blocked or still loading. Once mounted, the engine writes
    inline opacity and this rule no longer matters. */
-html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
+html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) { opacity: 1; transform: none; }
 
 /* Pinned scrollytelling only where it can be experienced: a wide viewport,
    motion allowed, scripting on. Everywhere else the stacked document-flow
@@ -82,16 +88,21 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
 .cl-wrap { width: 100%; max-width: var(--cl-container); margin-inline: auto; padding-inline: var(--sc-gutter); }
 
 /* ------------------------------------------------------------------ type */
-.cl h1, .cl h2, .cl h3 { font-family: var(--sc-font-display); font-weight: 500; margin: 0; text-wrap: balance; }
-.cl p { margin: 0; text-wrap: pretty; }
+/* :where() keeps these resets at class weight, so a component's own margin
+   (.hero__support, .porque__body, .que__body) is not silently zeroed. */
+.cl :where(h1, h2, h3) { font-family: var(--sc-font-display); font-weight: 500; margin: 0; text-wrap: balance; }
+.cl :where(p) { margin: 0; text-wrap: pretty; }
 .cl-title { font-size: clamp(2.1rem, 3.9vw, 3.6rem); line-height: 1.04; letter-spacing: -0.03em; }
 .cl-title--md { font-size: clamp(1.9rem, 3.2vw, 3rem); line-height: 1.06; letter-spacing: -0.025em; }
 .cl-lead { font-size: clamp(1.05rem, 1.3vw, 1.25rem); line-height: 1.6; color: var(--sc-ink-soft); }
 .cl-body { font-size: 1rem; line-height: 1.65; color: var(--sc-ink-soft); }
+/* Poppins at a real text size: the 0.72rem mono eyebrow rendered pixelated on
+   the black ground (D-050). */
 .cl-eyebrow {
-  font-family: var(--sc-font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  font-family: var(--cl-font-label);
+  font-weight: 500;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cl-accent-soft);
 }
@@ -123,7 +134,7 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   min-height: 3.25rem;
   padding: 0 1.75rem;
   border-radius: var(--cl-pill);
-  background: var(--sc-accent);
+  background: var(--cl-grad) 0 0 / 180% 100%;
   color: var(--sc-accent-ink);
   font-weight: 600;
   font-size: 1rem;
@@ -132,22 +143,22 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   white-space: nowrap;
   border: 0;
   cursor: pointer;
-  transition: transform var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+  box-shadow: 0 0 0 rgb(168 136 246 / 0);
+  transition: transform var(--sc-d-fast) var(--sc-ease-out), background-position 600ms var(--cl-ease-presence), box-shadow 600ms var(--cl-ease-presence);
 }
-.cl-btn:hover { background: var(--cl-accent-strong); transform: translateY(-1px); }
+.cl-btn:hover { background-position: 100% 0; transform: translateY(-1px); box-shadow: 0 8px 28px rgb(168 136 246 / 0.35); }
 .cl-btn:active { transform: scale(0.98); }
-.cl-btn[aria-disabled="true"] { background: var(--sc-surface); color: var(--cl-muted); cursor: not-allowed; }
+.cl-btn[aria-disabled="true"] { background: var(--sc-surface); color: var(--cl-muted); cursor: not-allowed; box-shadow: none; transform: none; }
 
+/* The underline is the lavender gradient, drawn as a background so it can be one. */
 .cl-link {
   color: var(--sc-ink);
-  text-decoration: underline;
-  text-decoration-color: var(--sc-accent);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 0.35em;
+  text-decoration: none;
+  background: var(--cl-grad-line) 0 calc(100% - 0.3rem) / 100% 1.5px no-repeat;
   padding: 0.5rem 0;
-  transition: color var(--sc-d-fast) var(--sc-ease-out), text-decoration-color var(--sc-d-fast) var(--sc-ease-out);
+  transition: color var(--sc-d-fast) var(--sc-ease-out), background-size 400ms var(--cl-ease-presence);
 }
-.cl-link:hover { color: var(--cl-accent-strong); text-decoration-color: var(--cl-accent-strong); }
+.cl-link:hover { color: var(--cl-accent-strong); background-size: 100% 2.5px; }
 .cl-link:active { transform: translateY(1px); }
 
 .cl-ghost {
@@ -250,16 +261,15 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   padding: calc(var(--cl-nav-h) + 2rem) var(--sc-gutter) 6rem;
   isolation: isolate;
   overflow: hidden;
-  /* Coalescence: the seven bodies gather toward the bottom centre and dim as
-     the hero leaves. Flow progress runs 0.5 to 1 while the hero scrolls out. */
-  --exit: clamp(0, calc((var(--sc-p, 0.5) - 0.62) / 0.38), 1);
 }
 .hero__inner { position: relative; z-index: 3; max-width: var(--cl-container); margin-inline: auto; width: 100%; pointer-events: none; }
 /* The copy block floats over the media; only its controls take the pointer,
    so a hover anywhere else on the hero reaches the reveal. */
 .hero__copy :is(a, button) { pointer-events: auto; }
 .hero__copy { max-width: 40rem; }
-.hero__title { margin-top: 1.25rem; max-width: 22ch; }
+/* Slightly smaller and narrower than the shared .cl-title scale, so the
+   longest lines clear the light bodies on the right instead of sitting on them. */
+.hero__title { margin-top: 1.25rem; max-width: 20ch; font-size: clamp(1.85rem, 3.35vw, 3.15rem); }
 .hero__support { margin-top: 1.5rem; max-width: 34ch; }
 .hero__actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; }
 
@@ -289,11 +299,6 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
 }
 .hero__layer { position: absolute; inset: 0; }
 .hero__layer img { object-fit: cover; object-position: 50% 42%; }
-.hero__layer--luminous {
-  transform: scale(calc(1 - var(--exit) * 0.38));
-  transform-origin: 50% 100%;
-  opacity: calc(1 - var(--exit) * 1.15);
-}
 /* The physical people rise to ~0.9 inside a large feathered window that
    follows the pointer. A second copy of the luminous frame sits on top of them,
    screened at ~0.3, so the haze stays over the revealed bodies. No edge. */
@@ -309,51 +314,28 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   mask-position: calc(var(--reveal-x) - var(--reveal-d) / 2) calc(var(--reveal-y) - var(--reveal-d) / 2);
   transition: opacity 700ms var(--cl-ease-presence);
 }
-.hero__layer--physical { opacity: calc(0.9 * (1 - var(--exit) * 3)); }
+.hero__layer--physical { opacity: 0.9; }
 .hero__layer--haze { opacity: 0.3; mix-blend-mode: screen; }
-/* Explicit reveal: the whole layered still, no window. */
-.hero__media.is-revealed .hero__layer--physical,
-.hero__media.is-revealed .hero__layer--haze {
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-.hero__media.is-revealed .hero__layer--luminous { opacity: calc(0.42 - var(--exit)); }
-
-.hero__reveal {
-  position: absolute;
-  right: var(--sc-gutter);
-  bottom: 2rem;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.hero__hint { font-size: 0.8rem; color: var(--cl-muted); }
-.hero__hint--pointer { display: none; }
-.hero__hint--touch { display: inline; }
-@media (hover: hover) and (pointer: fine) {
-  .hero__hint--pointer { display: inline; }
-  .hero__hint--touch { display: none; }
-}
-@media (prefers-reduced-motion: reduce) { .hero__hint { display: none !important; } }
 
 @media (max-width: 860px) {
   .hero { display: block; padding-bottom: 3rem; }
   .hero__scrim { display: none; }
+  /* The frame's own composition puts the circle in its right two thirds and
+     leaves the left third black for the desktop copy. On a phone there is no
+     copy beside it, so the crop drops that empty third (D-061).
+     The numbers are measured, not guessed: the bodies span 37.3% to 98.3% of
+     the frame's width. At 8/7 a cover crop shows 35.7% to 100% of it, which
+     centres them to within 0.1% and leaves them filling 95% of the box. Any
+     squarer and the outer two get clipped; any wider and they shrink. */
   .hero__media {
     position: relative;
-    margin-top: 2.5rem;
-    aspect-ratio: 16 / 10;
+    margin-top: 2rem;
+    aspect-ratio: 8 / 7;
     border-radius: var(--cl-radius);
-    background: var(--sc-surface);
+    background: var(--sc-canvas);
   }
-  .hero__reveal { position: static; margin-top: 1rem; justify-content: flex-start; }
-  /* The phone hero is tall (copy, then the frame), so its flow progress passes
-     0.62 while the frame is still on screen. Start the coalescence only once
-     the frame itself is leaving. */
-  .hero { --exit: clamp(0, calc((var(--sc-p, 0.5) - 0.8) / 0.2), 1); }
+  /* Vertical placement is moot here: at this ratio the crop only takes width. */
+  .hero__layer img { object-position: 100% 50%; }
 }
 
 /* ------------------------------------------------------------ 2 · porqué */
@@ -373,6 +355,42 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
    both states. */
 .porque__light { left: 50%; bottom: 0; --tx: -50%; --ty: 50%; transform: translate(-50%, 50%); }
 
+/* ------------------------------------------- 2 to 3 · the reading light
+   Stacked variant only (reading-light.tsx, D-061). A small lavender light
+   travels the two sections with the reader and lights each block as it
+   reaches it. Nothing hides until the script sets [data-reading="live"], so
+   no-JS and pre-hydration readers see finished copy. */
+.reading { position: relative; }
+/* It passes BEHIND the copy (z-index 0, under both sections), so it reads as a
+   light moving under the page rather than a smudge over the words. */
+.reading__light {
+  --d: clamp(4rem, 14vw, 6rem);
+  position: absolute;
+  left: 50%;
+  top: var(--ly, 0px);
+  width: var(--d);
+  height: var(--d);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle,
+    rgb(232 222 255 / 0.85) 0%,
+    rgb(183 156 255 / 0.5) 28%,
+    rgb(150 116 246 / 0.2) 54%,
+    transparent 76%);
+  filter: blur(calc(var(--d) * 0.16));
+}
+.reading[data-reading="live"] .reading__light { opacity: var(--lo, 0); transition: opacity 500ms var(--cl-ease-presence); }
+.reading[data-reading="live"] [data-reading-block] {
+  opacity: 0;
+  transform: translate3d(0, 1.1rem, 0);
+  filter: blur(6px);
+  transition: opacity 760ms var(--cl-ease-presence), transform 760ms var(--cl-ease-presence), filter 760ms var(--cl-ease-presence);
+}
+.reading[data-reading="live"] [data-reading-block][data-lit] { opacity: 1; transform: none; filter: none; }
+
 /* --------------------------------------------------------------- 3 · qué */
 .que { position: relative; padding: calc(var(--cl-light) / 2 + 4rem) var(--sc-gutter) var(--sc-section); }
 .que__grid {
@@ -384,23 +402,32 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   align-items: center;
 }
 .que__body { margin-top: 1.5rem; max-width: 52ch; }
-.facts { display: flex; flex-wrap: wrap; gap: 0.75rem 0; list-style: none; padding: 0; margin: 2rem 0 0; }
-.facts li { display: inline-flex; align-items: center; }
-.facts li + li::before { content: ""; display: inline-block; width: 1px; height: 0.9em; background: var(--cl-line-strong); margin-inline: 1.1rem; }
-.facts li { font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sc-accent); }
+/* Separators sit in the column gap; the one that would start a wrapped line
+   falls outside the list's box and is clipped, so no line begins with a bar. */
+.facts { display: flex; flex-wrap: wrap; gap: 0.75rem 2.2rem; list-style: none; padding: 0; margin: 2rem 0 0; overflow: hidden; }
+.facts li { display: inline-flex; align-items: center; position: relative; }
+.facts li + li::before { content: ""; position: absolute; left: -1.1rem; top: 50%; width: 1px; height: 0.9em; transform: translateY(-50%); background: var(--cl-line-strong); }
+.facts li { font-family: var(--cl-font-label); font-weight: 500; font-size: clamp(0.85rem, 1vw, 0.95rem); letter-spacing: 0.1em; text-transform: uppercase; color: var(--sc-accent); }
 
 .film { position: relative; }
 .film__frame {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 9;
   border-radius: var(--cl-radius);
   overflow: hidden;
   background: var(--sc-surface);
   box-shadow: 0 18px 56px rgb(0 18 20 / 0.32);
 }
-.film__frame img, .film__frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.film__frame video { opacity: 0; transition: opacity 380ms var(--sc-ease-out); }
-.film.is-playing .film__frame video { opacity: 1; }
+.film__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Legibility for the label over the photograph. */
+.film__frame::after {
+  content: "";
+  position: absolute;
+  inset: 55% 0 0 0;
+  background: linear-gradient(to top, color-mix(in oklab, var(--sc-canvas) 62%, transparent), transparent);
+  pointer-events: none;
+}
+.film.is-playing .film__frame::after { display: none; }
 .film__play {
   position: absolute;
   inset: 0;
@@ -423,6 +450,22 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
 }
 .film__play:hover .film__play-disc { background: color-mix(in oklab, var(--sc-accent) 18%, var(--sc-canvas)); transform: scale(1.04); }
 .film__play:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: -6px; border-radius: var(--cl-radius); }
+/* Consent asked in place when the visitor presses play without it (D-052). */
+.film__consent {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: color-mix(in oklab, var(--sc-canvas) 72%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.film__consent p { max-width: 30ch; color: var(--sc-ink); }
 .film__play-disc::after { content: ""; width: 0; height: 0; border-style: solid; border-width: 0.6rem 0 0.6rem 1rem; border-color: transparent transparent transparent var(--sc-accent); margin-left: 0.2rem; }
 .film.is-playing .film__play { display: none; }
 .film__label {
@@ -435,8 +478,7 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   pointer-events: none;
 }
 .film.is-playing .film__label { display: none; }
-.film__meta { margin-top: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-size: 0.875rem; color: var(--cl-muted); }
-.film__desc { margin-top: 0.5rem; font-size: 0.875rem; color: var(--cl-muted); max-width: 56ch; }
+.film__embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
 @media (max-width: 860px) {
   .que { padding-top: calc(var(--cl-light) / 2 + 2.5rem); }
@@ -444,11 +486,106 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   .film { max-width: 34rem; }
 }
 
+/* --------------------------------------------------- 1 to 3 · opening sequence
+   One pinned stage (opening.tsx, light-sequence.tsx). The stage's data-state
+   follows the clip's playhead, not the wheel: inicio, bajada (the light
+   sinking), porque, subida (rising), que, and transito during a dip to dark.
+   No `position` on the stage: it is sticky (see the note above stage--join). */
+@property --reg { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --wipe { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+
+.opening__act { position: relative; }
+.opening[data-fallback] .cl-pinned { display: none !important; }
+.opening[data-fallback] .cl-stacked { display: block !important; }
+.op__anchor { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-margin-top: 0; }
+.stage--opening { height: 100svh; }
+.stage--opening .hero__media { container-type: size; }
+
+/* The still holds the hero until the clip is showing, then steps aside, so a
+   dip between the later states goes to dark instead of flashing the bodies. */
+.stage--opening .hero__layer--luminous { transition: opacity 360ms var(--sc-ease-out); }
+.stage--opening[data-moved] .hero__layer--luminous { opacity: 0; transition-delay: 340ms; }
+
+/* Registered to the still: the clip's first frame measured against the still
+   by its seven heart lights is 1.57% wider, 1.55% shorter and shifted, which
+   `--reg: 1` undoes (translate and scale about the rendered 16:9 frame, in
+   container units so it holds for any cover crop). Once the bodies start to
+   move, --reg eases to 0 and the clip plays untransformed. */
+.op__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  opacity: 0;
+  transform-origin: 50% calc((100cqh - max(100cqh, 56.25cqw)) * 0.42);
+  transform:
+    translateX(calc(var(--reg) * 0.0191 * max(100cqw, 177.78cqh)))
+    scale(calc(1 + 0.0157 * var(--reg)), calc(1 - 0.0155 * var(--reg)));
+  transition: opacity 320ms var(--sc-ease-out), --reg 1400ms var(--cl-ease-breath) 150ms;
+}
+.stage--opening[data-moved] .op__video { opacity: 1; --reg: 0; }
+.stage--opening[data-dip] .op__video { opacity: 0; transition-duration: 300ms, 0ms; }
+
+/* The revealed people belong to the still; they never show over the clip. */
+.stage--opening:is([data-moved], :not([data-state="inicio"])) :is(.hero__layer--physical, .hero__layer--haze) { opacity: 0; }
+
+.op__panel {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 380ms var(--sc-ease-out);
+}
+.stage--opening[data-state="inicio"] .op__hero,
+.stage--opening[data-state="porque"] .op__why,
+.stage--opening[data-state="que"] .op__what { opacity: 1; transition-duration: 700ms; }
+.op__what :is(a, button, iframe) { pointer-events: auto; }
+.stage--opening:not([data-state="inicio"]) .op__hero :is(a, button),
+.stage--opening:not([data-state="que"]) .op__what :is(a, button, iframe) { pointer-events: none; }
+
+.op__hero { display: grid; align-items: center; padding: calc(var(--cl-nav-h) + 2rem) var(--sc-gutter) 6rem; }
+
+/* Directional reveals with a feathered edge, animated in time rather than
+   scrubbed: top-down for "El porqué", bottom-up for "El qué". */
+.op__reveal {
+  -webkit-mask-image: linear-gradient(var(--dir, to bottom), #000 calc(var(--wipe) - 30%), transparent var(--wipe));
+  mask-image: linear-gradient(var(--dir, to bottom), #000 calc(var(--wipe) - 30%), transparent var(--wipe));
+  transition: --wipe 1300ms var(--cl-ease-presence);
+}
+.stage--opening[data-state="porque"] .op__why .op__reveal,
+.stage--opening[data-state="que"] .op__what .op__reveal { --wipe: 130%; }
+
+/* The light rests half outside the bottom: the copy sits above it. */
+.op__why {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--cl-nav-h) var(--sc-gutter) 42svh;
+}
+.op__why-copy { --dir: to bottom; max-width: 44rem; }
+.op__why .porque__body { margin-inline: auto; }
+
+/* The light rests half outside the top: the copy and film sit below it. */
+.op__what {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 37svh var(--sc-gutter) 4svh;
+}
+.op__what-grid { width: 100%; }
+.op__what .op__reveal { --dir: to top; }
+.op__what .op__reveal + .op__reveal { transition-delay: 160ms; }
 /* ------------------------------------------------------------- 4 · etapas */
 .etapas { position: relative; }
 .stage--etapas {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) minmax(18rem, 34rem) minmax(16rem, 1fr);
+  /* The right column holds the active stage's name and description, so it is
+     the widest of the two sides. */
+  grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 40rem) minmax(19.5rem, 1fr);
   grid-template-rows: auto 1fr auto auto;
   column-gap: clamp(1.5rem, 3vw, 3rem);
   height: 100svh;
@@ -462,27 +599,44 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
 }
 .etapas__head { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
 .etapas__head p { margin-top: 1rem; max-width: 30ch; }
+/* The images sit on black and are shown whole (their aspect ratios differ, from
+   3:2 to a 2.33:1 film strip), sized to fit the middle column and the height
+   above the timeline. Each image is its own box, so the feathered mask follows
+   its real edges: several run content right up to an edge, which would
+   otherwise read as a hard line against the page. */
 .etapas__media {
   grid-column: 2;
   grid-row: 1 / span 3;
-  align-self: center;
-  justify-self: center;
+  align-self: stretch;
+  justify-self: stretch;
   position: relative;
-  width: 100%;
-  max-width: min(100%, 52vh);
-  aspect-ratio: 1;
-  border-radius: var(--cl-radius);
-  overflow: hidden;
-  background: var(--sc-surface);
+  min-height: 0;
 }
-.etapas__panel { position: absolute; inset: 0; }
-.etapas__panel img, .etapas__panel video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.etapas__active { grid-column: 3; grid-row: 3; align-self: end; justify-self: end; position: relative; width: 100%; max-width: 22rem; min-height: 9.5rem; }
+.etapas__panel { position: absolute; inset: 0; margin: 0; display: flex; align-items: center; justify-content: center; }
+.etapas__panel img,
+.etapas-list__figure img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
+  mask-composite: intersect;
+}
+.etapas__active { grid-column: 3; grid-row: 3; align-self: end; justify-self: end; position: relative; width: 100%; max-width: 26rem; min-height: 9.5rem; }
 .etapas__text { position: absolute; inset: auto 0 0 0; }
 .etapas__text h3 { font-size: clamp(1.5rem, 2.2vw, 2.1rem); letter-spacing: -0.02em; margin-top: 0.4rem; }
-.etapas__text p { margin-top: 0.6rem; color: var(--sc-ink-soft); }
+.etapas__text p { margin-top: 0.6rem; color: var(--sc-ink-soft); line-height: 1.45; }
+/* Stage names, in both variants: the founder's colour (5.98:1 on the black
+   ground) at a heading's line height rather than the body copy's. */
+.cl .etapas__name { color: #887cde; line-height: 1.08; }
 .timeline { grid-column: 1 / -1; grid-row: 4; position: relative; margin-top: 2.25rem; padding-top: 1.1rem; }
-.timeline__track { position: absolute; left: calc(100% / 14); right: calc(100% / 14); top: 1.1rem; height: 1px; background: var(--cl-line-strong); container-type: inline-size; }
+/* Three layers: the line, the nodes on it, and the travelling light above
+   both, so it passes over each dot rather than behind it. */
+.timeline__track { position: absolute; left: calc(100% / 14); right: calc(100% / 14); top: 1.1rem; height: 1px; background: var(--cl-line-strong); }
+.timeline__glide { position: absolute; left: calc(100% / 14); right: calc(100% / 14); top: 1.1rem; height: 0; z-index: 2; pointer-events: none; container-type: inline-size; }
 .timeline__light {
   --d: var(--cl-light-sm);
   left: 0;
@@ -490,18 +644,43 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   transform: translate(calc(var(--u) * 100cqw - 50%), -50%);
   filter: blur(calc(var(--d) * 0.06));
 }
-.timeline__nodes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); position: relative; }
-.timeline__node { position: relative; text-align: center; padding-top: 1.1rem; }
-.timeline__dot { position: absolute; left: 50%; top: 0; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in oklab, var(--sc-ink) 45%, var(--sc-canvas)); transform: translate(-50%, -50%); }
-.timeline__lit { position: absolute; left: 50%; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--sc-accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--sc-accent) 24%, transparent); transform: translate(-50%, -50%); }
+.timeline__nodes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); position: relative; z-index: 1; }
+/* A node is active over its stage's window (stages.tsx), ramping in and out
+   like the step rail in section 5. */
+.timeline__node {
+  position: relative;
+  text-align: center;
+  padding-top: 1.1rem;
+  --ramp: 0.035;
+  --a: clamp(0, min(calc((var(--sc-p, 0) - var(--from)) / var(--ramp)), calc((var(--to) - var(--sc-p, 0)) / var(--ramp))), 1);
+}
+/* The same white dot, centred on the line, that grows and brightens while its
+   stage is active. */
+.timeline__dot {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--sc-ink) calc(45% + var(--a, 0) * 55%), var(--sc-canvas));
+  box-shadow: 0 0 calc(var(--a, 0) * 12px) calc(var(--a, 0) * 1px) color-mix(in oklab, var(--sc-ink) calc(var(--a, 0) * 55%), transparent);
+  transform: translate(-50%, -50%) scale(calc(1 + var(--a, 0) * 0.75));
+}
 .timeline__code { display: block; font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--sc-ink-soft); }
 .timeline__name { display: block; margin-top: 0.2rem; font-family: var(--sc-font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cl-muted); }
 
-/* Stacked equivalent (mobile, reduced motion, no scripting) */
+/* Stacked equivalent (mobile, reduced motion, no scripting). Each item carries
+   the engine's own flow reveal (`data-sc-in`, stages.tsx), so image and text
+   fade up together as the reader arrives and stay put afterwards (D-061). */
 .etapas-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 2.25rem; }
 .etapas-list__item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-.etapas-list__figure { margin: 0; border-radius: var(--cl-radius); overflow: hidden; aspect-ratio: 16 / 10; background: var(--sc-surface); position: relative; }
-.etapas-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.etapas-list__figure { margin: 0; display: flex; justify-content: center; }
+.etapas-list__figure img { width: 100%; }
+/* A portrait stage image runs the mobile column's full width, which makes it
+   far taller than every landscape one; 70% (about 30% smaller) brings its
+   footprint back in line with the rest (D-057). */
+.etapas-list__figure--portrait img { width: 70%; }
 .etapas-list__item h3 { font-size: 1.4rem; letter-spacing: -0.02em; margin-top: 0.25rem; }
 .etapas-list__item p { margin-top: 0.4rem; color: var(--sc-ink-soft); }
 @media (min-width: 640px) {
@@ -513,17 +692,35 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
 .stage--join { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); height: 100svh; }
 .join__media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .join__visual { position: absolute; inset: 0; }
-.join__visual img { object-fit: cover; object-position: 62% 50%; transform: scale(1.35); transform-origin: 62% 50%; }
+/* Each photograph keeps its subject on the right; anchoring the crop there
+   keeps the person in frame as a narrower viewport trims the sides. */
+.join__visual img { object-fit: cover; object-position: 72% 50%; }
+/* Black holds the copy side and releases over the photograph; the top and
+   bottom edges fade too, so no hard photo edge shows while the stage slides in
+   or out against the black sections around it. */
 .join__scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(90deg,
-    var(--sc-canvas) 0%,
-    color-mix(in oklab, var(--sc-canvas) 92%, transparent) 36%,
-    color-mix(in oklab, var(--sc-canvas) 55%, transparent) 52%,
-    transparent 74%);
+  background:
+    linear-gradient(90deg,
+      var(--sc-canvas) 0%,
+      color-mix(in oklab, var(--sc-canvas) 97%, transparent) 37%,
+      color-mix(in oklab, var(--sc-canvas) 62%, transparent) 58%,
+      transparent 78%),
+    linear-gradient(to bottom,
+      var(--sc-canvas) 0%,
+      transparent 22%,
+      transparent 84%,
+      var(--sc-canvas) 100%),
+    /* The horizontal fade above already darkens the top-left; this corner
+       is the one edge with nothing softening it, so the top-right of the
+       stage reads as a hard rectangle sliding in from the black section
+       above it (Etapas). */
+    radial-gradient(ellipse 46% 42% at 100% 0%,
+      color-mix(in oklab, var(--sc-canvas) 88%, transparent) 0%,
+      transparent 72%);
 }
 .join__light { --d: var(--cl-light); right: 0; top: 0; --tx: 38%; --ty: -42%; transform: translate(38%, -42%); z-index: 1; }
 .join__copy {
@@ -553,84 +750,204 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   font-variant-numeric: tabular-nums;
   color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--cl-muted));
 }
+/* The label matches the numeral's colour rather than just brightening, so an
+   active step reads as one accent-coloured unit. */
 .step__label {
   font-family: var(--sc-font-display);
   font-size: clamp(1.2rem, 1.6vw, 1.5rem);
   letter-spacing: -0.015em;
-  color: color-mix(in oklab, var(--sc-ink) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
+  color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
 }
-.steps__desc { position: relative; margin: 1.5rem 0 0 3.75rem; min-height: 6.5rem; }
-.steps__body { position: absolute; inset: 0 0 auto 0; max-width: 32ch; color: var(--sc-ink-soft); line-height: 1.6; }
+/* All three descriptions share one grid cell, so the slot is as tall as the
+   longest and none spills into the line below. Its own --a (the .step
+   ramp, against the same --from/--to) so the active description also
+   carries the numeral's colour, not just its opacity. */
+.steps__desc { display: grid; margin: 1.5rem 0 0 3.75rem; }
+.steps__body {
+  --ramp: 0.08;
+  --a: clamp(0, min(calc((var(--sc-p, 1) - var(--from)) / var(--ramp)), calc((var(--to) - var(--sc-p, 1)) / var(--ramp))), 1);
+  grid-area: 1 / 1;
+  max-width: 34ch;
+  color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
+  line-height: 1.6;
+}
 .join__supporting { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--cl-line); font-size: 0.875rem; color: var(--cl-muted); max-width: 30rem; }
 
-.join-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 2rem; }
-.join-list__item { display: grid; grid-template-columns: 2.75rem 1fr; column-gap: 1rem; row-gap: 0.5rem; align-items: baseline; --a: 1; }
-.join-list__item h3 { font-size: 1.35rem; letter-spacing: -0.015em; }
-.join-list__item p { grid-column: 2; color: var(--sc-ink-soft); }
-.join-list__figure { grid-column: 2; margin: 0.5rem 0 0; border-radius: var(--cl-radius); overflow: hidden; aspect-ratio: 16 / 9; position: relative; background: var(--sc-surface); max-width: 26rem; }
-.join-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Stacked: each step is a card whose ground is its photograph, with the copy
+   over it (numeral, label, body). The photographs are lit from the right and
+   fade to black on the left, so the copy sits in the dark half they already
+   carry and the scrim only has to finish the job (D-061). */
+.join-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 1.5rem; }
+.join-list__item {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 17rem;
+  padding: clamp(1.25rem, 4vw, 1.75rem);
+  border-radius: var(--cl-radius);
+  overflow: hidden;
+  background: var(--sc-canvas);
+  --a: 1;
+}
+.join-list__figure { position: absolute; inset: 0; z-index: -1; margin: 0; }
+.join-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 76% 42%; }
+.join-list__figure::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, var(--sc-canvas) 0%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 34%, transparent 78%),
+    linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 72%, transparent) 0%, transparent 62%);
+}
+.join-list__copy { max-width: 32ch; }
+.join-list__item .step__num { display: block; font-size: 0.95rem; letter-spacing: 0.06em; }
+.join-list__item h3 { margin-top: 0.15rem; font-size: 1.3rem; letter-spacing: -0.015em; }
+.join-list__item p { margin-top: 0.45rem; font-size: 0.95rem; line-height: 1.5; color: var(--sc-ink-soft); }
+@media (min-width: 640px) {
+  .join-list__item { min-height: 20rem; }
+  .join-list__copy { max-width: 36ch; }
+}
 
 /* ----------------------------------------------------------- 6 · al azar */
 .azar {
   position: relative;
   padding: var(--sc-section) var(--sc-gutter);
   text-align: center;
-  /* Flow progress 0.22 to 0.52: the light divides while the section arrives. */
-  --split: clamp(0, calc((var(--sc-p, 1) - 0.22) / 0.3), 1);
 }
 .azar__head { max-width: 44rem; margin-inline: auto; }
 .azar__head h2 { margin-top: 1rem; }
-.azar__body { margin-top: 1.25rem; max-width: 46ch; margin-inline: auto; }
-.azar__diagram {
-  position: relative;
-  width: min(100%, 52rem);
-  aspect-ratio: 16 / 9;
-  margin: 2rem auto 0;
-  container-type: size;
-}
+/* Wide enough that a paragraph's last line is a real line, not one orphaned word. */
+.azar__body { margin-top: 1.25rem; max-width: 62ch; margin-inline: auto; }
+.azar__body + .azar__body { margin-top: 0.9rem; }
+
+/* The diagram and the text columns share one width, so each column's centre
+   is exactly its light's centre (25% and 75%). split-stage.tsx measures this
+   box and places the lights and lines in its pixels. */
+.azar__stage { width: min(100%, 52rem); margin: clamp(2.5rem, 5vw, 3.5rem) auto 0; }
+.azar__diagram { position: relative; aspect-ratio: 16 / 7; }
 .azar__paths { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.azar__path {
-  fill: none;
-  stroke: var(--sc-accent);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: calc(1 - var(--split));
-  opacity: 0.85;
+.azar__path { fill: none; stroke-width: 2; stroke-linecap: round; opacity: var(--line, 1); }
+/* No JavaScript: both lights at their ends. Once split-stage.tsx runs it owns
+   the position through an inline `translate` from the top-left corner, which
+   leaves `scale` (the hover) centred on the light. The lights paint above the
+   lines. */
+.azar__light {
+  z-index: 1;
+  left: calc(50% + var(--dir) * 25%);
+  top: calc(100% - var(--d) / 2);
+  transform: translate(-50%, -50%);
 }
-/* One component for both branches: the direction token is the only difference. */
-.branch { position: absolute; left: 50%; top: 22%; width: 0; height: 0; }
-.branch__light {
-  --d: var(--cl-light-md);
-  left: 0;
-  top: 0;
-  --tx: calc(-50% + var(--dir) * var(--split) * 25cqw);
-  --ty: calc(-50% + var(--split) * 40cqh);
-  transform: translate(calc(-50% + var(--dir) * var(--split) * 25cqw), calc(-50% + var(--split) * 40cqh));
+.azar__stage[data-split] .azar__light { left: 0; top: 0; transform: none; }
+/* The reunion (split-stage.tsx): the lights leave for section 7, and on arrival
+   hand over to the participant's light, which is the same component. */
+.azar__stage:is([data-away="moving"], [data-away="met"]) .azar__light { pointer-events: none; }
+.azar__stage[data-away="met"] .azar__light { opacity: 0; }
+
+.azar__branches {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  column-gap: 0;
+  /* The text arrives over the last 30% of the split (--k from split-stage.tsx). */
+  --in: clamp(0, calc((var(--k, 1) - 0.7) / 0.3), 1);
+  opacity: var(--in);
+  transform: translateY(calc((1 - var(--in)) * 0.6rem));
 }
-.branch__label {
-  position: absolute;
-  left: calc(var(--dir) * 25cqw);
-  top: calc(40cqh + var(--cl-light-md) / 2 + 0.75rem);
-  transform: translateX(-50%);
-  width: min(44cqw, 22rem);
-  opacity: var(--split);
+/* Subgrid rows: a name that wraps on a phone pushes both columns' lines down together. */
+.azar__branch { display: grid; grid-row: span 3; grid-template-rows: subgrid; align-content: start; padding-inline: clamp(0.5rem, 1.5vw, 1.25rem); }
+/* Each group has its own gradient so the two read as distinct, at matched
+   lightness so neither reads as brighter or preferred (D-050). */
+.azar__name {
+  font-family: var(--cl-font-label);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sc-ink);
+  background: linear-gradient(90deg, var(--from), var(--to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  justify-self: center;
 }
-.branch__name { display: block; font-family: var(--sc-font-display); font-size: clamp(0.95rem, 1.5vw, 1.2rem); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink); }
-.branch__condition { display: block; margin-top: 0.5rem; }
-.azar__supporting { margin-top: clamp(4rem, 8cqh, 6rem); color: var(--cl-muted); font-size: 0.95rem; }
+.azar__branch:nth-child(1) .azar__name { --from: #b59dff; --to: #f2a9dc; }
+.azar__branch:nth-child(2) .azar__name { --from: #7fe3d4; --to: #93b9ff; }
+.azar__line { margin-top: 0.4rem; font-size: 0.98rem; line-height: 1.55; color: var(--sc-ink-soft); }
+.azar__name + .azar__line { margin-top: 0.7rem; }
+
+/* Hovering a light or its text lights up that whole side: light, line, name, text. */
+.azar__light, .azar__path, .azar__name, .azar__line { transition: filter 450ms var(--cl-ease-presence), scale 450ms var(--cl-ease-presence), color 450ms var(--cl-ease-presence), stroke-width 450ms var(--cl-ease-presence); }
+@media (hover: hover) {
+  .azar__light { pointer-events: auto; }
+  .azar__stage:has(.azar__light:nth-of-type(1):hover, .azar__branch:nth-child(1):hover) .azar__light:nth-of-type(1),
+  .azar__stage:has(.azar__light:nth-of-type(2):hover, .azar__branch:nth-child(2):hover) .azar__light:nth-of-type(2) {
+    filter: blur(calc(var(--d) * 0.028)) brightness(1.5) saturate(1.2);
+    scale: 1.14;
+  }
+  .azar__stage:has(.azar__light:nth-of-type(1):hover, .azar__branch:nth-child(1):hover) .azar__path:nth-of-type(1),
+  .azar__stage:has(.azar__light:nth-of-type(2):hover, .azar__branch:nth-child(2):hover) .azar__path:nth-of-type(2) {
+    filter: brightness(1.6) drop-shadow(0 0 4px rgb(178 128 236 / 0.8));
+    stroke-width: 2.5;
+  }
+  .azar__stage:has(.azar__light:nth-of-type(1):hover) .azar__branch:nth-child(1),
+  .azar__stage:has(.azar__light:nth-of-type(2):hover) .azar__branch:nth-child(2),
+  .azar__branch:hover {
+    & .azar__name { filter: brightness(1.2) drop-shadow(0 0 12px color-mix(in oklab, var(--from) 60%, transparent)); }
+    & .azar__line { color: var(--sc-ink); }
+  }
+}
+
+/* The closing line matters: larger, in Poppins, with a slow light passing across it. */
+.azar__supporting {
+  margin: clamp(3rem, 6vw, 4.5rem) auto 0;
+  max-width: 30ch;
+  font-family: var(--cl-font-label);
+  font-weight: 500;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--sc-ink);
+  background: linear-gradient(100deg, var(--sc-ink-soft) 0%, var(--sc-ink-soft) 40%, #fff 50%, var(--sc-ink-soft) 60%, var(--sc-ink-soft) 100%) 100% 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .azar__supporting { animation: cl-shimmer 5s var(--cl-ease-breath) infinite; }
+  .cl[data-still] .azar__supporting { animation: none; }
+}
+@keyframes cl-shimmer {
+  0% { background-position: 100% 0; }
+  60%, 100% { background-position: 0% 0; }
+}
 @media (max-width: 640px) {
   .azar__diagram { aspect-ratio: 4 / 3; }
-  .branch__name { font-size: 0.8rem; letter-spacing: 0.06em; }
+  .azar__name { font-size: 0.85rem; letter-spacing: 0.04em; }
+  .azar__line { font-size: 0.88rem; }
+  /* Centred copy at a phone's full width sets too many long lines to read
+     comfortably; a narrower measure keeps the block tidy (D-061). */
+  .azar { padding-inline: max(var(--sc-gutter), 6vw); }
+  .azar__head { max-width: 32ch; }
+  .azar__body { max-width: 30ch; font-size: 1rem; line-height: 1.55; }
+  .azar__supporting { max-width: 22ch; }
 }
 
 /* ------------------------------------------------------- 7 · elegibilidad */
 .elegibilidad {
   position: relative;
   padding: var(--sc-section) var(--sc-gutter);
-  /* Flow progress 0.26 to 0.56: the light descends into the heart. */
+  /* Without the journey script: flow progress 0.26 to 0.56, the light descends into the heart. */
   --t: clamp(0, calc((var(--sc-p, 1) - 0.26) / 0.3), 1);
 }
+/* With it, section 6's two lights arrive first and the descent follows (D-051). */
+.elegibilidad[data-journey] { --t: var(--jt, 0); }
+.elegibilidad[data-journey="waiting"] .participant__light { opacity: 0; }
 .elegibilidad__grid {
   max-width: var(--cl-container);
   margin-inline: auto;
@@ -669,11 +986,13 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   pointer-events: none;
   filter: blur(6px);
 }
-.elig__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 1.5rem; }
 .elig__intro { margin-top: 1.25rem; max-width: 52ch; }
 .elig__criteria { margin-top: 2.5rem; }
-.elig__criteria h3 { font-family: var(--sc-font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cl-muted); font-weight: 400; }
-.elig__criteria-body { margin-top: 0.75rem; }
+.elig__criteria h3 { font-family: var(--cl-font-label); font-size: clamp(0.85rem, 1vw, 0.95rem); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cl-accent-soft); font-weight: 500; }
+.elig__criteria-list { list-style: none; margin: 0.9rem 0 0; padding: 0; display: grid; gap: 0.55rem; }
+.elig__criteria-list li { position: relative; padding-left: 1.5rem; font-size: clamp(1.02rem, 1.2vw, 1.15rem); line-height: 1.5; color: var(--sc-ink); }
+.elig__criteria-list li::before { content: ""; position: absolute; left: 0.2rem; top: 0.62em; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: radial-gradient(circle, rgb(255 232 214) 0, rgb(178 128 236) 70%); box-shadow: 0 0 8px rgb(178 128 236 / 0.7); }
+.elig__criteria-body { margin-top: 0.9rem; max-width: 56ch; color: var(--sc-ink-soft); line-height: 1.6; }
 .elig__required { margin-top: 0.75rem; color: var(--sc-ink-soft); font-size: 0.95rem; }
 .faq { margin-top: 2rem; border-top: 1px solid var(--cl-line-strong); }
 .faq__item { border-bottom: 1px solid var(--cl-line); }
@@ -690,7 +1009,7 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   color: var(--sc-ink);
 }
 .faq__summary::-webkit-details-marker { display: none; }
-.faq__summary:hover { color: var(--cl-accent-strong); }
+.faq__summary:hover, .faq__item[open] .faq__summary { color: var(--cl-accent-strong); }
 .faq__summary:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; border-radius: 6px; }
 .faq__mark { position: relative; flex: 0 0 auto; width: 1rem; height: 1rem; }
 .faq__mark::before, .faq__mark::after { content: ""; position: absolute; background: var(--sc-accent); border-radius: 1px; transition: transform var(--sc-d-base) var(--sc-ease-out); }
@@ -721,60 +1040,297 @@ html:not(.sc-ready) .cl [data-sc-cue] { opacity: 1; }
   text-align: center;
   padding: 0 var(--sc-gutter) 4rem;
 }
+/* The founder's footer frame (D-052): six bodies in an arc around the fire.
+   Its black is true black, so it needs no blend; the mask only softens the
+   outer bodies into the page. */
 .arc {
   position: relative;
-  width: min(66rem, 92%);
-  aspect-ratio: 1136 / 380;
-  mix-blend-mode: screen;
-  -webkit-mask-image: radial-gradient(62% 80% at 50% 42%, #000 34%, transparent 88%);
-  mask-image: radial-gradient(62% 80% at 50% 42%, #000 34%, transparent 88%);
+  width: min(72rem, 100%);
+  aspect-ratio: 3342 / 1040;
+  -webkit-mask-image: radial-gradient(70% 95% at 50% 40%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(70% 95% at 50% 40%, #000 55%, transparent 100%);
 }
-/* The source frame's black is lifted (video black, not #000). A touch of
-   contrast pushes it to true black so the screen blend leaves no rectangle. */
-.arc img { object-fit: contain; filter: contrast(1.18); }
-.fire {
+.arc img { object-fit: contain; }
+/* A soft warm breath over the fire, which is part of the photograph. */
+.arc__glow {
   position: absolute;
-  left: 50%;
-  top: 92%;
-  width: clamp(3.4rem, 5.2vw, 4.6rem);
+  left: 49.75%;
+  top: 64.3%;
+  width: 14%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 170 80 / 0.28) 0, rgb(255 120 40 / 0.1) 38%, transparent 70%);
   mix-blend-mode: screen;
-  -webkit-mask-image: radial-gradient(circle, #000 38%, transparent 66%);
-  mask-image: radial-gradient(circle, #000 38%, transparent 66%);
+  pointer-events: none;
 }
-.fire img { object-fit: cover; filter: contrast(1.18); }
 @media (prefers-reduced-motion: no-preference) {
-  .fire { animation: cl-fire 6.5s var(--cl-ease-breath) infinite; }
-  .cl[data-still] .fire { animation: none; }
+  .arc__glow { animation: cl-fire 6.5s var(--cl-ease-breath) infinite; }
+  .cl[data-still] .arc__glow { animation: none; }
 }
 @keyframes cl-fire {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.94; }
-  38% { transform: translate(-50%, -50%) scale(1.03) rotate(1.5deg); opacity: 1; }
-  70% { transform: translate(-50%, -50%) scale(0.985) rotate(-1deg); opacity: 0.96; }
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.75; }
+  38% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  70% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.85; }
 }
-.invitacion__title { margin-top: 2.25rem; }
+/* One ember at the fire's own centre (invitation.tsx): a soft round dot, never
+   a flame shape, breathing slowly and faintly so the ball reads as alive
+   without drawing the eye. Same centre as .arc__glow. */
+.arc__ember {
+  position: absolute;
+  left: 49.75%;
+  top: 64.3%;
+  width: 5%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  /* A small hot core (near-white, full alpha) inside the warm halo, rather than
+     one uniformly soft blob: a spark reads as intentional, a haze reads as noise. */
+  background: radial-gradient(circle, rgb(255 244 222 / 1) 0%, rgb(255 214 160 / 0.85) 20%, rgb(255 140 60 / 0.4) 52%, transparent 78%);
+  mix-blend-mode: screen;
+  opacity: 0.3;
+  pointer-events: none;
+  transition: filter 450ms var(--sc-ease-out);
+}
+/* A generous, invisible hit area (the ember itself is only 5% wide): hovering
+   it brightens the ember and the ambient glow, on top of whichever point they
+   are each at in their own breathing cycle, so the hover reads as the fire
+   responding rather than restarting an animation. Fine pointers only, same
+   convention as the section 6 light hover. */
+@media (hover: hover) and (pointer: fine) {
+  .arc__fire-hover {
+    position: absolute;
+    left: 49.75%;
+    top: 64.3%;
+    width: 22%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: auto;
+  }
+  .arc:has(.arc__fire-hover:hover) .arc__glow,
+  .arc:has(.arc__fire-hover:hover) .arc__ember {
+    filter: brightness(1.65) saturate(1.15);
+  }
+  .arc__glow { transition: filter 450ms var(--sc-ease-out); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .arc__ember { animation: cl-ember 5.5s var(--cl-ease-breath) infinite; }
+  .cl[data-still] .arc__ember { animation: none; }
+}
+@keyframes cl-ember {
+  0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.8); }
+  50% { opacity: 0.75; transform: translate(-50%, -50%) scale(1.15); }
+}
+.invitacion__title { margin-top: 1.5rem; }
 .invitacion__support { margin-top: 1rem; }
 .invitacion__cta { margin-top: 2.25rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
 .invitacion__closed { color: var(--cl-muted); font-size: 0.95rem; }
+
+/* ----------------------------------------------------------------- footer */
 .foot {
   border-top: 1px solid var(--cl-line);
-  padding: 1.75rem var(--sc-gutter) 2.25rem;
+  padding: clamp(2.5rem, 5vw, 3.5rem) var(--sc-gutter) 2rem;
 }
-.foot__inner { max-width: var(--cl-container); margin-inline: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; }
-.foot__brand { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.15rem; letter-spacing: -0.02em; }
-.foot__links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
-.foot__links a { color: var(--sc-ink-soft); text-decoration: none; padding: 0.35rem 0; }
-.foot__links a:hover { color: var(--sc-ink); text-decoration: underline; text-underline-offset: 0.3em; text-decoration-color: var(--sc-accent); }
-.foot__still { background: none; border: 0; padding: 0.35rem 0; color: var(--sc-ink-soft); font: inherit; font-size: 0.9rem; cursor: pointer; }
-.foot__still:hover { color: var(--sc-ink); text-decoration: underline; text-underline-offset: 0.3em; text-decoration-color: var(--sc-accent); }
-.foot__note { flex-basis: 100%; margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; font-size: 0.8rem; color: var(--cl-muted); }
+.foot__inner {
+  max-width: var(--cl-container);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+  gap: 2.5rem clamp(2rem, 6vw, 6rem);
+}
+.foot__brand { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.35rem; letter-spacing: -0.02em; color: var(--sc-ink); text-decoration: none; }
+.foot__tagline { margin-top: 0.6rem; max-width: 32ch; color: var(--cl-muted); font-size: 0.92rem; line-height: 1.55; }
+.foot__groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+.foot__heading { font-family: var(--cl-font-label); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cl-accent-soft); }
+.foot__links { list-style: none; margin: 0.9rem 0 0; padding: 0; display: grid; gap: 0.15rem; font-size: 0.95rem; }
+.foot__links :is(a, .foot__button) {
+  display: inline-block;
+  padding: 0.35rem 0;
+  color: var(--sc-ink-soft);
+  text-decoration: none;
+  background: var(--cl-grad-line) 0 calc(100% - 0.2rem) / 0 1.5px no-repeat;
+  transition: color var(--sc-d-fast) var(--sc-ease-out), background-size 400ms var(--cl-ease-presence);
+}
+.foot__links :is(a, .foot__button):hover { color: var(--sc-ink); background-size: 100% 1.5px; }
+.foot__button { border: 0; font: inherit; cursor: pointer; background-color: transparent; }
+.foot__base {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cl-line);
+}
+.foot__note { font-size: 0.8rem; color: var(--cl-muted); }
+.foot__still {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--cl-line-strong);
+  background: transparent;
+  color: var(--sc-ink-soft);
+  cursor: pointer;
+  transition: border-color var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out);
+}
+.foot__still:hover { border-color: var(--sc-accent); color: var(--sc-ink); }
+@media (max-width: 700px) {
+  .foot__inner { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .foot__groups { grid-template-columns: 1fr; gap: 1.5rem; }
+}
+
+/* ----------------------------------------------------- contact dialog */
+.contact {
+  width: min(34rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sc-ink);
+  overflow: visible;
+}
+.contact::backdrop {
+  background: rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.contact__panel {
+  position: relative;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border-radius: calc(var(--cl-radius) + 6px);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgb(168 136 246 / 0.16), transparent 60%),
+    color-mix(in oklab, #0b0913 92%, transparent);
+  border: 1px solid rgb(205 185 255 / 0.18);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6), 0 0 60px rgb(168 136 246 / 0.12);
+  font-family: var(--sc-font-text);
+}
+.contact[open] .contact__panel { animation: cl-dialog-in 420ms var(--cl-ease-presence); }
+.contact[open]::backdrop { animation: cl-fade-in 300ms ease-out; }
+@keyframes cl-dialog-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+@keyframes cl-fade-in { from { opacity: 0; } }
+.contact__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--cl-line-strong);
+  background: transparent;
+  cursor: pointer;
+}
+.contact__close span::before, .contact__close span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.9rem;
+  height: 1.5px;
+  background: var(--sc-ink-soft);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.contact__close span::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.contact__close:hover { border-color: var(--sc-accent); }
+.contact__title { font-family: var(--sc-font-display); font-size: clamp(1.5rem, 3vw, 1.9rem); letter-spacing: -0.02em; padding-right: 2.5rem; }
+.contact__intro { margin-top: 0.5rem; color: var(--sc-ink-soft); }
+.contact__form { margin-top: 1.5rem; display: grid; gap: 1rem; }
+.contact__field { display: grid; gap: 0.4rem; }
+.contact__field span { font-family: var(--cl-font-label); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cl-accent-soft); }
+.contact__field :is(input, textarea) {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid var(--cl-line-strong);
+  background: rgb(255 255 255 / 0.03);
+  color: var(--sc-ink);
+  font: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  transition: border-color var(--sc-d-fast) var(--sc-ease-out), box-shadow var(--sc-d-fast) var(--sc-ease-out);
+}
+.contact__field :is(input, textarea):focus { outline: none; border-color: var(--sc-accent); box-shadow: 0 0 0 3px rgb(168 136 246 / 0.25); }
+.contact__note { font-size: 0.85rem; color: var(--cl-muted); line-height: 1.5; }
+.contact__note .cl-link { padding: 0; }
+.contact__submit { justify-self: start; margin-top: 0.25rem; }
+.contact__status:empty { display: none; }
+.contact__status { font-size: 0.92rem; color: var(--cl-accent-strong); }
+
+/* ----------------------------------------------------- consent banner */
+.consent {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: calc(var(--sc-z-chrome) + 1);
+  width: min(52rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--cl-radius);
+  border: 1px solid rgb(205 185 255 / 0.18);
+  background: color-mix(in oklab, #0b0913 90%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
+  animation: cl-dialog-in 420ms var(--cl-ease-presence);
+}
+.consent__title { font-family: var(--cl-font-label); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cl-accent-soft); }
+.consent__text p { margin-top: 0.35rem; font-size: 0.9rem; line-height: 1.5; color: var(--sc-ink-soft); }
+.consent__text .cl-link { padding: 0; }
+.consent__actions { display: flex; gap: 0.6rem; flex: none; }
+/* Accept and reject look the same: neither choice is nudged. */
+.consent__choice { min-width: 7rem; justify-content: center; }
+@media (max-width: 640px) {
+  .consent { flex-direction: column; align-items: stretch; }
+  .consent__actions > * { flex: 1; }
+}
+
+/* ------------------------------------------------------------- legal pages */
+.legal { min-height: 100dvh; display: flex; flex-direction: column; }
+.legal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--cl-nav-h);
+  padding-inline: var(--sc-gutter);
+  box-shadow: inset 0 -1px 0 var(--cl-line);
+}
+.legal__main { flex: 1; width: 100%; max-width: 48rem; margin-inline: auto; padding: clamp(3rem, 7vw, 5rem) var(--sc-gutter) clamp(4rem, 8vw, 6rem); }
+.legal__draft { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; align-items: center; font-size: 0.85rem; color: var(--cl-accent-strong); }
+.legal__title { margin-top: 1.25rem; font-size: clamp(2rem, 4vw, 3rem); }
+.legal__section { margin-top: 2.75rem; }
+.legal__heading { font-family: var(--sc-font-display); font-size: clamp(1.2rem, 2vw, 1.45rem); letter-spacing: -0.01em; }
+.legal__p, .legal__list, .legal__rows, .legal__table { margin-top: 0.9rem; color: var(--sc-ink-soft); line-height: 1.7; }
+.legal__list { padding-left: 1.2rem; display: grid; gap: 0.45rem; }
+.legal__list li::marker { color: var(--sc-accent); }
+.legal__rows { display: grid; gap: 0.6rem; }
+.legal__rows > div { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: 1rem; }
+.legal__rows dt { color: var(--sc-ink); }
+.legal__rows dd { margin: 0; }
+.legal__table { overflow-x: auto; }
+.legal__table table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 38rem; }
+.legal__table :is(th, td) { text-align: left; vertical-align: top; padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--cl-line); }
+.legal__table thead th { font-family: var(--cl-font-label); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cl-accent-soft); }
+.legal__table tbody th { color: var(--sc-ink); font-weight: 500; }
+@media (max-width: 560px) {
+  .legal__rows > div { grid-template-columns: 1fr; gap: 0.2rem; }
+}
 
 /* ------------------------------------------------------- reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .hero { --exit: 0; }
   .hero__layer--physical, .hero__layer--haze, .hero__layer--luminous { transition: none; }
-  .azar { --split: 1; }
   .elegibilidad { --t: 1; }
   .signal { will-change: auto; }
 }

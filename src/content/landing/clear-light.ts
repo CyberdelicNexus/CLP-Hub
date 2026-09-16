@@ -16,6 +16,8 @@
  * intent.
  */
 
+import { LEGAL, legalMissing } from "@/content/landing/legal";
+
 export interface Missing {
   readonly missing: true;
   /** Stable key, listed in docs/landing-page.md. */
@@ -36,7 +38,6 @@ export const ACTIONS = {
   /** Hero exploration action: scrolls to the explanation, never to Qualtrics. */
   exploreCta: "Conocer el estudio",
   contactCta: "Contactar con el equipo",
-  teamAccess: "Acceso del equipo",
 } as const;
 
 export const NAV = [
@@ -46,15 +47,12 @@ export const NAV = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "Estudio clínico · Realidad virtual compartida",
-  headline: "¿Puede una experiencia compartida transformar cómo nos relacionamos con la mortalidad?",
-  support: "Un estudio investiga una experiencia grupal para explorar el cuerpo, la identidad y la conexión.",
+  eyebrow: "Estudio de investigación · Realidad virtual compartida",
+  headline: "¿Puede una experiencia inmersiva transformar cómo nos relacionamos con la mortalidad?",
+  support:
+    "Este estudio investiga si es posible reducir la ansiedad ante la muerte y aumentar la aceptación de este proceso universal.",
   reveal: {
-    show: "Revelar a las personas",
-    hide: "Volver a las luces",
-    pointerHint: "o mueve el cursor sobre la imagen",
-    touchHint: "o mantén pulsada la imagen",
-    /** Alt text for the layered still. */
+    /** Alt text for the layered still. No explicit toggle labels: the control was removed (D-054). */
     luminousAlt: "Siete presencias de luz azul violeta, difusas, sentadas en un arco poco profundo sobre un fondo oscuro.",
     physicalAlt:
       "Siete personas sentadas en círculo en una sala cálida, cada una con unas gafas Meta Quest 3 y dos mandos en las manos.",
@@ -73,10 +71,9 @@ export const WHAT = {
   film: {
     label: "Una mirada al proyecto",
     play: "Reproducir el vídeo",
-    /** Truthful: the derivative is silent; the source carried only ambient audio. */
-    context: "Vídeo sin audio, con contexto en español.",
-    description:
-      "Fragmento del entorno de realidad virtual del programa: un grupo de cuerpos de luz que se reúne, se acerca y se aleja en un espacio oscuro.",
+    // D-060: a single participant, not the hero's circle of seven.
+    posterAlt: "Una persona sentada con las piernas cruzadas frente a un fondo azul, con unas gafas de realidad virtual y un mando en cada mano; una luz cálida en el pecho.",
+    /** Not rendered on the page; still blocks publication until approved. */
     captions: missing("SUBTITULOS_VIDEO", "Subtítulos o transcripción en español aprobados para el vídeo de la sección 3"),
   },
 } as const;
@@ -85,8 +82,8 @@ export interface Stage {
   readonly code: string;
   readonly name: string;
   readonly description: string;
-  /** Poster and optional clip under /landing/media. */
-  readonly media: { readonly poster: string; readonly clip?: string; readonly alt: string };
+  /** One image under /landing/media, with its intrinsic size so it is shown whole. */
+  readonly media: { readonly src: string; readonly width: number; readonly height: number; readonly alt: string };
 }
 
 export const STAGES = {
@@ -98,16 +95,22 @@ export const STAGES = {
       code: "S0",
       name: "Preparación",
       description: "Puesta a punto técnica y personal antes de comenzar.",
-      media: { poster: "/landing/media/stage-s0.webp", alt: "Una hilera de pequeñas luces lejanas sobre fondo oscuro." },
+      media: {
+        src: "/landing/media/etapa-s0.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Un portátil con una videollamada de grupo que comparte la presentación «¿Cómo prepararse para el programa?».",
+      },
     },
     {
       code: "S1",
       name: "Orientación",
       description: "El grupo se conoce y sitúa la experiencia.",
       media: {
-        poster: "/landing/media/stage-s1.webp",
-        clip: "/landing/media/stage-s1.mp4",
-        alt: "Una luz grande se acerca a una hilera de luces pequeñas.",
+        src: "/landing/media/etapa-s1.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Unas manos entregan a otras unas gafas de realidad virtual.",
       },
     },
     {
@@ -115,9 +118,12 @@ export const STAGES = {
       name: "Cuerpos de Luz",
       description: "Explorar cómo se siente habitar una forma hecha de luz.",
       media: {
-        poster: "/landing/media/stage-s2.webp",
-        clip: "/landing/media/stage-s2.mp4",
-        alt: "Un grupo de cuerpos de luz blanca y violeta reunidos en la oscuridad.",
+        // The founder re-edited S2.png landscape (D-058), so it no longer
+        // needs the portrait-only narrower box (stages.tsx, D-057).
+        src: "/landing/media/etapa-s2-v4.webp",
+        width: 3632,
+        height: 2048,
+        alt: "Una mujer con una luz cálida en el pecho y en las palmas, envuelta en un contorno de luz violeta.",
       },
     },
     {
@@ -125,9 +131,10 @@ export const STAGES = {
       name: "Vida",
       description: "Recorrer la propia historia con atención y autocompasión.",
       media: {
-        poster: "/landing/media/stage-s3.webp",
-        clip: "/landing/media/stage-s3.mp4",
-        alt: "Un cuerpo de luz violeta con un punto cálido en el pecho avanza despacio.",
+        src: "/landing/media/etapa-s3.webp",
+        width: 1915,
+        height: 821,
+        alt: "Una tira de película con escenas de una vida: la mano de un bebé, unas zapatillas infantiles, un cuaderno, unas llaves y una mano anciana.",
       },
     },
     {
@@ -135,9 +142,10 @@ export const STAGES = {
       name: "Más Allá del Cuerpo",
       description: "Reflexionar sobre el yo, el cuerpo y la realidad.",
       media: {
-        poster: "/landing/media/stage-s4.webp",
-        clip: "/landing/media/stage-s4.mp4",
-        alt: "Una figura de luz azul se disuelve en una forma luminosa más amplia.",
+        src: "/landing/media/etapa-s4.webp",
+        width: 1376,
+        height: 768,
+        alt: "Una mujer sentada con gafas de realidad virtual junto a una forma de luz violeta que se eleva a su lado.",
       },
     },
     {
@@ -145,9 +153,10 @@ export const STAGES = {
       name: "Ofrenda",
       description: "Soltar, agradecer y ofrecer algo significativo al grupo.",
       media: {
-        poster: "/landing/media/stage-s5.webp",
-        clip: "/landing/media/stage-s5.mp4",
-        alt: "Un anillo de pequeñas luces cálidas de color naranja.",
+        src: "/landing/media/etapa-s5.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Una persona sentada en el centro de un círculo de cuerpos de luz violeta, con una luz en las manos.",
       },
     },
     {
@@ -155,9 +164,10 @@ export const STAGES = {
       name: "Integración Grupal",
       description: "Dar sentido a lo vivido y compartir lo que permanece.",
       media: {
-        poster: "/landing/media/stage-s6.webp",
-        clip: "/landing/media/stage-s6.mp4",
-        alt: "Dos cuerpos de luz violeta se encuentran y permanecen juntos.",
+        src: "/landing/media/etapa-s6.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Un hombre participa desde su portátil en una videollamada con el grupo.",
       },
     },
   ] as readonly Stage[],
@@ -170,38 +180,66 @@ export const JOIN = {
       numeral: "01",
       label: "Responde el cuestionario",
       body: "Comparte tu interés mediante el formulario de Qualtrics. Enviarlo no te compromete a participar.",
-      visual: { src: "/landing/media/join-1.webp", alt: "Una presencia de luz azul, sola y tranquila, en la oscuridad." },
+      visual: {
+        // The founder's enhanced version (D-055), same scene, new file name
+        // since nothing pins the old one and content changed.
+        src: "/landing/media/join-responde-v2.webp",
+        alt: "Una mujer responde un cuestionario en una tableta, sentada a la mesa de su casa al anochecer.",
+      },
     },
     {
       numeral: "02",
       label: "Habla con el equipo",
       body: "El equipo revisará contigo los requisitos, resolverá tus dudas y explicará el estudio.",
-      visual: { src: "/landing/media/join-2.webp", alt: "Dos cuerpos de luz violeta, uno frente al otro." },
+      visual: {
+        src: "/landing/media/join-habla.webp",
+        alt: "Una mujer conversa por videollamada con una profesional desde un portátil en su casa.",
+      },
     },
     {
       numeral: "03",
-      label: "Decide con toda la información",
-      body: "Si el estudio encaja y deseas continuar, recibirás la información de consentimiento antes de incorporarte.",
-      visual: { src: "/landing/media/join-3.webp", alt: "Un anillo de luces cálidas, como un grupo reunido." },
+      label: "Asignación a tu cohorte",
+      body: "Si resultas seleccionado/a, te asignaremos a una cohorte del estudio y coordinaremos una visita para entregarte las gafas de realidad virtual y explicarte cómo utilizarlas.",
+      visual: {
+        src: "/landing/media/join-recibe.webp",
+        alt: "Una integrante del equipo entrega en la puerta de una casa unas gafas de realidad virtual en su estuche.",
+      },
     },
   ],
   supporting: "Mostrar interés no te compromete a participar.",
-  visuals: missing("FOTOS_INCORPORACION", "Fotografías documentales aprobadas para los tres pasos de incorporación"),
 } as const;
 
-/** One definition for both branches: only the label may differ (D-042). */
+/** One definition for both branches, with the same number of lines (D-042, D-049). */
 export interface Branch {
   readonly label: string;
+  /**
+   * Working draft (founder wording, D-050). The control line states that the
+   * control group receives a similar experience, which must match the
+   * protocol. `condition` keeps blocking publication until the study team
+   * approves it.
+   */
+  readonly lines: readonly [string, string];
   readonly condition: Missing;
 }
 
 export const SPLIT = {
   eyebrow: "Por qué hay dos grupos",
   heading: "La asignación se realiza al azar.",
-  body: "Un sistema te asignará a uno de los dos grupos. Ambos son necesarios para comparar los resultados con rigor.",
+  body: [
+    "Este estudio es un ensayo controlado aleatorizado. Formamos dos grupos parecidos: uno participa en el programa Clear Light y el otro en una experiencia similar. Al final comparamos cómo está cada grupo.",
+    "Así podemos saber qué cambios se deben al programa y no a otros factores. Para que la comparación sea justa, nadie elige su grupo: lo decide el azar.",
+  ],
   branches: [
-    { label: "Grupo del programa", condition: missing("CONDICION_GRUPO_PROGRAMA", "Descripción aprobada del grupo del programa") },
-    { label: "Grupo control", condition: missing("CONDICION_GRUPO_CONTROL", "Descripción aprobada del grupo control") },
+    {
+      label: "Grupo del programa",
+      lines: ["Participa en el programa Clear Light.", "Nos muestra qué cambia con la experiencia."],
+      condition: missing("CONDICION_GRUPO_PROGRAMA", "Descripción aprobada del grupo del programa"),
+    },
+    {
+      label: "Grupo control",
+      lines: ["Recibe una experiencia similar para comparar.", "Nos permite medir los resultados con rigor."],
+      condition: missing("CONDICION_GRUPO_CONTROL", "Descripción aprobada del grupo control"),
+    },
   ] as readonly [Branch, Branch],
   labels: missing("ETIQUETAS_GRUPOS", "Nombres aprobados de los dos grupos"),
   supporting: "Los dos grupos tienen la misma importancia para el estudio.",
@@ -210,8 +248,12 @@ export const SPLIT = {
 export interface FaqItem {
   readonly id: string;
   readonly topic: string;
-  /** Statements the ethical design contract requires, or nothing yet. */
+  /**
+   * Working answer (founder-chosen drafts, D-051). General wording only: no
+   * criterion, duration, risk or contact detail the protocol has not supplied.
+   */
   readonly statements: readonly string[];
+  /** Not rendered (D-051); still blocks publication until the protocol value is approved. */
   readonly pending: Missing;
 }
 
@@ -219,47 +261,85 @@ export const ELIGIBILITY = {
   heading: "¿Este estudio puede ser para mí?",
   intro: "La elegibilidad se confirma con el equipo. Aquí puedes revisar los criterios aprobados y las preguntas más frecuentes.",
   criteriaHeading: "Criterios de participación",
+  /**
+   * Criteria supplied by the founder (2026-09-15, D-051). Not necessarily the
+   * full protocol list (no exclusions yet), so the text below remits the rest
+   * to the call and `criteria` keeps blocking publication.
+   */
+  criteriaItems: ["Tener una enfermedad que amenaza la vida.", "Hablar castellano."],
+  criteriaText:
+    "En la llamada con el equipo revisaremos juntos si el estudio encaja contigo, según todos los criterios aprobados para el estudio.",
   criteria: missing("CRITERIOS", "Criterios de inclusión y exclusión aprobados"),
   requiredLine: "No se garantizan beneficios personales.",
   registry: missing("REGISTRO", "Registro público e identificador del estudio"),
   investigator: missing("EQUIPO", "Investigador responsable, promotor y centro"),
   participantAlt:
-    "Una persona sentada con las piernas cruzadas en una sala luminosa, con unas gafas de realidad virtual y un mando en cada mano; una luz cálida y difusa en el centro del pecho.",
+    "Una persona sentada con las piernas cruzadas sobre una alfombra tejida, con unas gafas de realidad virtual y un mando en cada mano; un aura violeta la envuelve y una luz cálida brilla en el centro del pecho.",
   faq: [
     {
       id: "participar",
       topic: "Qué implica participar",
-      statements: ["La participación es voluntaria."],
+      statements: [
+        "El programa tiene siete etapas: preparación, encuentros por videollamada y sesiones de realidad virtual. Te explicaremos la duración y el calendario antes de empezar.",
+        "La participación es voluntaria.",
+      ],
       pending: missing("DEDICACION", "Duración total, número y formato de las sesiones, lugar y dedicación"),
     },
     {
       id: "beneficios",
       topic: "Posibles beneficios y riesgos",
-      statements: ["No se garantiza un beneficio personal.", "Todavía no sabemos si esta experiencia ayuda."],
+      statements: [
+        // Founder wording (D-052), in the page's "tú" register.
+        "No se espera que obtengas ningún beneficio directo por participar en el estudio. La participación es voluntaria y no será remunerada.",
+        "La investigación pretende descubrir aspectos desconocidos o poco claros sobre el potencial del uso de la realidad virtual en la salud mental y el bienestar en personas con diagnóstico de enfermedad amenazante para la vida. Esta información podrá ser de utilidad en un futuro para otras personas.",
+        "Antes de decidir, el equipo te explicará con detalle los posibles beneficios, riesgos y molestias.",
+      ],
       pending: missing("RIESGOS", "Posibles beneficios, riesgos, molestias y cargas aprobados"),
     },
     {
       id: "grupos",
       topic: "Qué recibe cada grupo",
-      statements: ["La asignación se realiza al azar. No puedes elegir el grupo."],
+      statements: [
+        "La asignación se realiza al azar. No puedes elegir el grupo.",
+        "El grupo del programa participa en Clear Light. El grupo control recibe una experiencia similar para poder comparar.",
+      ],
       pending: missing("CONDICION_GRUPOS", "Descripción aprobada de lo que recibe cada grupo"),
     },
     {
       id: "gafas",
       topic: "Uso de las gafas de realidad virtual",
-      statements: [],
+      statements: [
+        "Una persona del equipo te entrega las gafas en casa y te explica cómo usarlas.",
+        "Si tienes dudas durante el estudio, el equipo te ayuda.",
+      ],
       pending: missing("EQUIPAMIENTO", "Entrega, configuración y devolución del equipo, y adaptaciones de accesibilidad"),
     },
     {
       id: "retirada",
       topic: "Participación voluntaria y retirada",
-      statements: ["Puedes hacer preguntas antes de decidir.", "Puedes dejar el estudio según el procedimiento aprobado."],
+      statements: [
+        "Puedes hacer preguntas antes de decidir.",
+        "Puedes dejar el estudio en cualquier momento, sin tener que dar explicaciones.",
+      ],
       pending: missing("RETIRADA", "Procedimiento aprobado de retirada y de contacto"),
+    },
+    {
+      id: "datos",
+      topic: "Confidencialidad y protección de datos",
+      statements: [
+        "Tus datos personales se tratarán de forma confidencial y solo para los fines del estudio.",
+        "El equipo identifica a cada participante con un código, no con su nombre. Las respuestas de los cuestionarios se guardan en sistemas aprobados por la institución, separadas de tus datos de contacto.",
+        "Puedes pedir acceder a tus datos, corregirlos o suprimirlos, y retirar tu consentimiento en cualquier momento. Encontrarás los detalles en la política de privacidad y en la información de consentimiento.",
+      ],
+      pending: missing("PROTECCION_DATOS", "Aprobación del texto de confidencialidad y protección de datos por el DPO o el comité de ética"),
     },
     {
       id: "contacto",
       topic: "Contacto y registro del estudio",
-      statements: [],
+      statements: [
+        "Cuando completes el cuestionario, el equipo se pondrá en contacto contigo.",
+        "Publicaremos aquí el registro del estudio y los datos de contacto.",
+      ],
       pending: missing("CONTACTO", "Correo electrónico y teléfono del estudio, vía alternativa de contacto y enlace al registro"),
     },
   ] as readonly FaqItem[],
@@ -271,14 +351,67 @@ export const INVITATION = {
   qualtricsUrl: missing("URL_QUALTRICS", "URL de producción del cuestionario Qualtrics (studies.screening_url)"),
   closed: "El cuestionario de interés no está disponible en este momento.",
   footer: {
-    study: { href: "#porque", label: "Información del estudio" },
-    privacy: missing("PRIVACIDAD", "Enlace aprobado a la información de privacidad"),
-    contact: { href: "#contacto", label: "Contacto" },
+    tagline: "Estudio de investigación sobre una experiencia grupal de realidad virtual.",
+    groups: [
+      {
+        heading: "El estudio",
+        links: [
+          { href: "#porque", label: "Información del estudio" },
+          { href: "#elegibilidad", label: "Preguntas frecuentes" },
+          { href: "#contacto", label: "Contacto" },
+        ],
+      },
+      {
+        heading: "Legal",
+        links: [
+          { href: "/aviso-legal", label: "Aviso legal y condiciones de uso" },
+          { href: "/privacidad", label: "Política de privacidad" },
+          { href: "/cookies", label: "Política de cookies" },
+        ],
+      },
+    ],
+    cookieSettings: "Configurar cookies",
+    still: { pause: "Pausar animación", resume: "Reanudar animación" },
     note: "Material de reclutamiento en preparación. La información definitiva se publicará tras su aprobación.",
+    /** The policy page exists (D-052); its text still needs legal approval. */
+    privacy: missing("PRIVACIDAD", "Aprobación legal de la política de privacidad"),
+    /** Not rendered (D-052); still blocks publication. */
     version: missing("VERSION_MATERIAL", "Versión y fecha del material de reclutamiento"),
   },
-  arcAlt: "Un arco de cuerpos de luz azulada, difusos, sobre fondo oscuro.",
-  fireAlt: "",
+  arcAlt: "Un arco de seis cuerpos de luz azulada con un pequeño fuego naranja en el centro, sobre fondo oscuro.",
+} as const;
+
+/**
+ * The contact dialog (D-052). Design only: nothing is sent or stored until the
+ * study team approves where messages go, and the dialog says so on submit.
+ */
+export const CONTACT = {
+  title: "Contactar con el equipo",
+  intro: "Escríbenos si tienes dudas sobre el estudio.",
+  name: "Nombre",
+  email: "Correo electrónico",
+  message: "Mensaje",
+  healthNote: "Por favor, no incluyas información sobre tu salud en el mensaje.",
+  privacyBefore: "Usaremos estos datos solo para responderte. Consulta la",
+  privacyLink: "política de privacidad",
+  submit: "Enviar mensaje",
+  close: "Cerrar",
+  unavailable: "El envío de mensajes estará disponible próximamente. Tu mensaje no se ha enviado ni guardado.",
+  destination: missing("CONTACTO_FORMULARIO", "Destino aprobado de los mensajes del formulario de contacto"),
+} as const;
+
+/**
+ * Cookie and third-party consent (D-052). The page sets no cookies of its own;
+ * the only optional content is the section 3 YouTube film.
+ */
+export const CONSENT = {
+  title: "Cookies y contenido de terceros",
+  body: "Esta web solo usa el almacenamiento técnico necesario para funcionar. Si lo aceptas, también podremos cargar el vídeo de YouTube, que puede guardar datos en tu navegador.",
+  accept: "Aceptar",
+  reject: "Rechazar",
+  policy: "Política de cookies",
+  filmBlocked: "Para ver el vídeo, acepta el contenido de YouTube.",
+  filmAccept: "Aceptar y reproducir",
 } as const;
 
 export const META = {
@@ -298,7 +431,6 @@ export function missingContentList(resolved: { qualtricsUrl: string | null } = {
   };
   add(WHAT.film.captions);
   add(STAGES.approval);
-  add(JOIN.visuals);
   for (const b of SPLIT.branches) add(b.condition);
   add(SPLIT.labels);
   add(ELIGIBILITY.criteria);
@@ -310,6 +442,8 @@ export function missingContentList(resolved: { qualtricsUrl: string | null } = {
   if (!resolved.qualtricsUrl) add(INVITATION.qualtricsUrl);
   add(INVITATION.footer.privacy);
   add(INVITATION.footer.version);
+  add(CONTACT.destination);
+  for (const m of legalMissing()) add(m);
   return [...seen.values()];
 }
 
@@ -327,6 +461,6 @@ export function visibleStrings(): readonly string[] {
       Object.values(v).forEach(walk);
     }
   };
-  walk({ ACTIONS, NAV, HERO, WHY, WHAT, STAGES, JOIN, SPLIT, ELIGIBILITY, INVITATION, META });
+  walk({ ACTIONS, NAV, HERO, WHY, WHAT, STAGES, JOIN, SPLIT, ELIGIBILITY, INVITATION, CONTACT, CONSENT, META, LEGAL });
   return out;
 }
