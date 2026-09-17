@@ -33,24 +33,39 @@ const WHY_IN = 4.85;
 const WHY_OUT = 5.4;
 const WHAT_IN = 7.05;
 /**
- * How long a rest is held before the next one may start. The scroll lock now
- * does the anti-skip work this number used to do alone (D-061), so it is the
- * length of the pause the reader gets on each rest rather than a guard.
+ * The threshold hold (D-062, replacing D-061's scroll lock).
+ *
+ * D-061 froze scroll from the moment a transition began, so the scroll that
+ * started the clip was followed by seconds of dead input, which visitors read
+ * as the site failing to render. Now scroll stays free while the clip plays.
+ * The hold is a wall at the scroll position where the NEXT sequence would
+ * begin (`ENTER[1]` for "El qué", the end of the pin for the rest of the
+ * page), and it only stands while the current transition is still in flight
+ * or its copy is still wiping in. A reader who never reaches the wall never
+ * feels it.
+ *
+ * Two refinements keep the wall from reading as lag:
+ * - Pushing against it is not ignored: while the reader pushes, the clip
+ *   plays faster (up to PUSH_RATE) and eases back when they stop.
+ * - It lifts exactly when the next scroll can start the next transition:
+ *   DWELL_MS is both the hold after arrival and the gate on the next play, so
+ *   the push that follows the release begins the next event at once.
+ *
+ * Every exit stays open: scrolling up is never held, Escape, focus leaving the
+ * stage, any in-page link, a jump larger than half a viewport (navigation,
+ * find in page, the scrollbar), "Pausar animación", leaving the stage, and
+ * HOLD_SAFETY_MS whatever the clip does. The wall's listeners exist only while
+ * it stands, so the rest of the page scrolls without waiting on script.
  */
-const DWELL_MS = 1600;
+/** Hold after a rest is reached, and the gate before the next transition. */
+const DWELL_MS = 1100;
+/** Clip rate while the reader pushes against the wall. 1 turns it off. */
+const PUSH_RATE = 2;
+const PUSH_WINDOW_MS = 300;
+const RATE_STEP = 0.1;
+const HOLD_SAFETY_MS = 6000;
 const DIP_MS = 320;
 const EPS = 0.03;
-/**
- * Scroll lock (D-061). While the clip plays toward the next rest, scrolling
- * DOWN is held so the sequence cannot be skipped; it releases DWELL_MS after
- * the clip arrives, by which time the copy's 1300ms wipe has finished. Scroll
- * up, Escape, moving focus, leaving the stage or "Pausar animación" all
- * release it at once, and it can never outlast LOCK_MAX_MS whatever happens
- * to the clip.
- */
-const LOCK_MAX_MS = 9000;
-const DOWN_KEYS = new Set(["ArrowDown", "PageDown", "End", " ", "Spacebar"]);
-const UP_KEYS = new Set(["ArrowUp", "PageUp", "Home", "Escape"]);
 
 type Name = (typeof NAMES)[number];
 
@@ -106,41 +121,82 @@ export function LightSequence({ src }: { src: string }) {
       let pending: number | null = null;
       let forced: { k: number; until: number } | null = null;
 
-      // --- scroll lock ---------------------------------------------------
-      let locked = false;
-      let lockY = 0;
-      let lockUntil = 0;
-      let hardUntil = 0;
+      // --- threshold hold ----------------------------------------------
+      let wall: { k: number; until: number; safety: number } | null = null;
+      let lastPush = -Infinity;
+      let baseRate = 1;
       let touchY = 0;
 
+      /** Scroll position where the transition after rest k would begin. */
+      const wallY = (k: number) => {
+        const top = act.getBoundingClientRect().top + window.scrollY;
+        const travel = Math.max(act.offsetHeight - window.innerHeight, 1);
+        return top + travel * (k === 1 ? ENTER[1] - 0.005 : 1);
+      };
+
+      const hold = (y: number) => {
+        lastPush = performance.now();
+        if (Math.abs(window.scrollY - y) > 1) window.scrollTo({ top: y, behavior: "instant" });
+      };
+
       const onWheel = (e: WheelEvent) => {
-        if (e.deltaY > 0) e.preventDefault();
-        else if (e.deltaY < 0) release();
+        if (!wall || e.deltaY <= 0 || e.ctrlKey) return;
+        const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+        const y = wallY(wall.k);
+        if (window.scrollY + px < y) return;
+        e.preventDefault();
+        hold(y);
       };
       const onTouchStart = (e: TouchEvent) => {
         touchY = e.touches[0]?.clientY ?? 0;
       };
       const onTouchMove = (e: TouchEvent) => {
-        const y = e.touches[0]?.clientY ?? 0;
-        if (touchY - y > 0) e.preventDefault();
-        else release();
+        const at = e.touches[0]?.clientY ?? touchY;
+        const down = touchY - at;
+        touchY = at;
+        if (!wall || down <= 0) return;
+        const y = wallY(wall.k);
+        if (window.scrollY + down < y) return;
+        if (e.cancelable) e.preventDefault();
+        hold(y);
       };
       const onKey = (e: KeyboardEvent) => {
-        if (UP_KEYS.has(e.key)) return release();
-        // Shift+Space pages up, so it is an exit too.
-        if (DOWN_KEYS.has(e.key) && !e.shiftKey) e.preventDefault();
-        else release();
+        if (!wall) return;
+        if (e.key === "Escape") return release();
+        if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+        const el = e.target as Element | null;
+        if (el?.closest?.("input, textarea, select, button, [contenteditable]")) return;
+        const step =
+          e.key === "ArrowDown"
+            ? 40
+            : e.key === "PageDown" || ((e.key === " " || e.key === "Spacebar") && !e.shiftKey)
+              ? window.innerHeight * 0.875
+              : e.key === "End"
+                ? Infinity
+                : 0;
+        if (!step) return;
+        const y = wallY(wall.k);
+        if (window.scrollY + step < y) return;
+        e.preventDefault();
+        hold(y);
       };
       const onScroll = () => {
-        if (window.scrollY > lockY) window.scrollTo({ top: lockY, behavior: "instant" });
+        if (!wall) return;
+        const y = wallY(wall.k);
+        const over = window.scrollY - y;
+        if (over <= 1) return;
+        // Momentum and smooth scrolling overshoot a little and are held. A jump
+        // this large in one step is navigation, never a gesture: let it go.
+        if (over > window.innerHeight * 0.5) return release();
+        hold(y);
       };
-      // Never trap a keyboard reader: reaching any control lets the page go.
-      const onFocusIn = () => release();
+      const onFocusIn = (e: FocusEvent) => {
+        if (!stage.contains(e.target as Node)) release();
+      };
 
       const release = () => {
-        if (!locked) return;
-        locked = false;
-        delete stage.dataset.locked;
+        if (!wall) return;
+        wall = null;
         window.removeEventListener("wheel", onWheel);
         window.removeEventListener("touchstart", onTouchStart);
         window.removeEventListener("touchmove", onTouchMove);
@@ -149,14 +205,13 @@ export function LightSequence({ src }: { src: string }) {
         document.removeEventListener("focusin", onFocusIn);
       };
 
-      const engage = () => {
+      const arm = (k: number) => {
         const still = root?.hasAttribute("data-still") ?? false;
-        if (locked || still || !mq.matches) return;
-        locked = true;
-        lockY = window.scrollY;
-        hardUntil = performance.now() + LOCK_MAX_MS;
-        lockUntil = hardUntil;
-        stage.dataset.locked = "";
+        if (wall || k < 1 || still || !mq.matches) return;
+        // A reader already past the wall (a flick that beat the first frame, an
+        // anchor) is never pulled back to it.
+        if (window.scrollY > wallY(k) + 1) return;
+        wall = { k, until: Infinity, safety: performance.now() + HOLD_SAFETY_MS };
         window.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("touchstart", onTouchStart, { passive: true });
         window.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -196,8 +251,7 @@ export function LightSequence({ src }: { src: string }) {
       const jump = async (k: number, dip: boolean) => {
         busy = true;
         heading = null;
-        // A jump is a cut, not the played sequence: going back, an anchor, or
-        // leaving. Nothing to hold the reader for.
+        // A jump is a cut (going back, an anchor, leaving): nothing to hold.
         release();
         video.pause();
         if (dip) {
@@ -219,7 +273,7 @@ export function LightSequence({ src }: { src: string }) {
         const p = parseFloat(act.style.getPropertyValue("--sc-p")) || 0;
         const leaving = stage.getBoundingClientRect().top < -2;
         const still = root?.hasAttribute("data-still") ?? false;
-        if (locked && (now >= lockUntil || leaving || still)) release();
+        if (wall && (now >= wall.until || now >= wall.safety || leaving || still)) release();
         let target = leaving ? 2 : p < ENTER[0] ? 0 : p < ENTER[1] ? 1 : 2;
         if (forced) {
           if (now < forced.until) target = forced.k;
@@ -248,17 +302,25 @@ export function LightSequence({ src }: { src: string }) {
 
         // Playing toward a rest: stop on its frame.
         if (heading !== null && !video.paused && t >= REST[heading] - 1 / 48) {
-          const rest = REST[heading];
+          const k = heading;
           video.pause();
-          video.currentTime = rest;
+          video.currentTime = REST[k];
           heading = null;
           arrivedAt = now;
-          paint(rest);
-          // Hold until the copy has wiped in and the next rest may start, so
-          // the scroll that follows begins the next event instead of falling
-          // into the dwell.
-          if (locked) lockUntil = Math.min(hardUntil, now + DWELL_MS);
+          paint(REST[k]);
+          // The wall stands while the copy wipes in, then lifts exactly when
+          // the next transition may start.
+          if (wall?.k === k) wall.until = now + DWELL_MS;
           return;
+        }
+
+        // Pushing against the wall plays the clip faster; letting go eases back.
+        if (heading !== null && !video.paused) {
+          const want = now - lastPush < PUSH_WINDOW_MS ? PUSH_RATE : baseRate;
+          const rate = video.playbackRate;
+          if (Math.abs(want - rate) > 0.01) {
+            video.playbackRate = rate + Math.sign(want - rate) * Math.min(Math.abs(want - rate), RATE_STEP);
+          }
         }
 
         const goal = REST[target];
@@ -276,9 +338,9 @@ export function LightSequence({ src }: { src: string }) {
             const resting = t > EPS && REST.some((r) => Math.abs(r - t) <= EPS);
             if (!resting || now - arrivedAt >= DWELL_MS) {
               heading = next;
-              // Downward, played, skippable: this is the one case the lock is for.
-              engage();
-              video.playbackRate = target > next ? 1.25 : 1;
+              baseRate = target > next ? 1.25 : 1;
+              video.playbackRate = baseRate;
+              arm(next);
               video.play().catch(() => {
                 heading = null;
                 release();
@@ -286,10 +348,14 @@ export function LightSequence({ src }: { src: string }) {
             }
           }
         } else if (!video.paused) {
+          // The other way to reach a rest: within EPS of it but short of the
+          // frame check above, which a fast rate makes common. It must start
+          // the wall's release too, or the hold stands until HOLD_SAFETY_MS.
           video.pause();
           video.currentTime = goal;
           heading = null;
           arrivedAt = now;
+          if (wall?.k === target) wall.until = now + DWELL_MS;
         }
         paint(t);
       };
@@ -297,6 +363,7 @@ export function LightSequence({ src }: { src: string }) {
       const onClick = (e: MouseEvent) => {
         const link = (e.target as Element | null)?.closest?.("a[href^='#']");
         if (!(link instanceof HTMLAnchorElement)) return;
+        release();
         const k = NAMES.indexOf(link.hash.slice(1) as Name);
         if (k >= 0) pending = k;
       };
@@ -311,6 +378,7 @@ export function LightSequence({ src }: { src: string }) {
         const a = anchor(k);
         if (!a) return;
         pending = k;
+        release();
         window.scrollTo({ top: a.getBoundingClientRect().top + window.scrollY, behavior: "instant" });
       };
 

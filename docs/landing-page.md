@@ -67,8 +67,8 @@ the CSS custom property `--sc-p` on the act element. Everything bespoke is CSS
 `calc()` against that variable (the timeline waypoint and its active node, the
 heart dissolve, the step-rail colours) or a small client island that reads
 scroll position in an animation frame while its section is near the viewport
-(the opening sequence, section 6's split). There is no window scroll listener
-in page code.
+(the opening sequence, section 6's split). The only window scroll listener in
+page code is the opening's threshold hold, attached only while it stands (D-062).
 
 Three acts pin (the opening, 4 and 5). They are rendered only under
 `(min-width: 861px) and (prefers-reduced-motion: no-preference) and (scripting: enabled)`;
@@ -89,7 +89,7 @@ ordinary flow for the stacked variant. `light-sequence.tsx` controls it:
   porqué" arrives at 4.85s as the light settles, and "El qué" at 7.05s once it
   is up. The reveals are timed CSS transitions of a feathered mask.
 - **No skipped chapter.** Moving forward always stops at the next rest and
-  dwells 2.4s before continuing, so a reader who keeps scrolling still reads
+  dwells 1.1s before continuing, so a reader who keeps scrolling still reads
   "El porqué". Scrolling does not get trapped: if the reader leaves the pin
   first, the stage cuts to "El qué" as it slides away.
 - **No rewinding.** Scrolling back, a nav link, the hero's "Conocer el estudio",
@@ -109,15 +109,29 @@ ordinary flow for the stacked variant. `light-sequence.tsx` controls it:
 Section 1 does not shrink or fade on scroll in either variant; the gathering
 is the footage, not a CSS transform.
 
-**The scroll lock (D-061).** While the clip plays toward a rest, scrolling down
-is held at the position the transition began, so the sequence cannot be
-skipped; it releases `DWELL_MS` after the clip arrives, by which time the
-copy's 1300ms wipe has finished and the next transition may start. About 6.9s
-for the first transition and 4.3s for the second. Every exit stays open:
-scrolling up, Escape, any other key, moving focus to a control, leaving the
-stage, "Pausar animación", and a `LOCK_MAX_MS` cap. Pinned variant only, so
-never under reduced motion, on a phone, or without scripting. `data-locked`
-sits on the stage while it holds.
+**The threshold hold (D-062, replacing D-061's scroll lock).** D-061 froze
+scroll from the moment a transition began: up to 6.9s, then 4.3s, of dead input
+right after the scroll that started the clip, which visitors read as the site
+failing to render. Now the scroll that starts a transition is never held. The
+hold is a wall at the scroll position where the *next* sequence would begin
+(`ENTER[1]` for "El qué", the end of the pin for the rest of the page), and it
+stands only while the current transition is in flight or its copy is wiping
+in. A reader who never reaches the wall never feels it.
+
+- **Pushing is answered.** While the reader pushes against the wall the clip
+  plays faster, up to `PUSH_RATE` (2x), easing back when they stop.
+- **It lifts when the next scroll can act.** `DWELL_MS` (1100ms) is both the
+  hold after a rest is reached and the gate on the next transition, so the
+  push that follows the release starts the next event at once.
+- **Every exit stays open.** Scrolling up is never held; Escape, focus leaving
+  the stage, any in-page link, a jump larger than half a viewport (navigation,
+  find in page, the scrollbar), "Pausar animación", leaving the stage and a
+  `HOLD_SAFETY_MS` cap (6s) all release it. A reader already past the wall is
+  never pulled back. Pinned variant only, so never under reduced motion, on a
+  phone, or without scripting.
+- **Listeners only while it stands.** The non-passive wheel, touch and key
+  listeners are added when the wall is armed and removed when it lifts, so the
+  rest of the page scrolls without waiting on script.
 
 ### The reading light (stacked sections 2 and 3)
 
@@ -488,7 +502,8 @@ travelling lights briefly overlap the group text on the way down.
 Not verified: Safari and Firefox (`<dialog>` and `::backdrop` blur), a real
 screen reader in the dialog, and any legal adequacy of the pages.
 
-**Mobile pass and the scroll lock verified 2026-09-16 (D-061)** in Chrome at
+**Mobile pass and the scroll lock verified 2026-09-16 (D-061)**, *the lock
+itself since replaced by the threshold hold, D-062*, in Chrome at
 390x844 and 430x844 (touch), 1440x900, 1440x900 with reduced motion, and with
 JavaScript off:
 

@@ -214,7 +214,7 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
   });
 });
 
-describe("mobile reading and the hero scroll lock (D-061)", () => {
+describe("mobile reading and the opening sequence's pacing (D-062)", () => {
   const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
 
   it("never hides copy until the reading light's script is running", () => {
@@ -238,18 +238,33 @@ describe("mobile reading and the hero scroll lock (D-061)", () => {
     );
   });
 
-  it("holds the scroll only downward, and can always be escaped", () => {
+  it("holds scroll only at the edge of the next sequence, briefly, and always lets go (D-062)", () => {
     const source = read("src/components/landing/light-sequence.tsx");
-    // Down blocks, up releases.
-    expect(source).toMatch(/if \(e\.deltaY > 0\) e\.preventDefault\(\);\s*\n\s*else if \(e\.deltaY < 0\) release\(\)/);
-    // Escape, moving focus, "Pausar animación", leaving the stage and a hard cap.
-    expect(source).toMatch(/UP_KEYS\.has\(e\.key\)\) return release\(\)/);
-    expect(source).toMatch(/UP_KEYS = new Set\(\[[^\]]*"Escape"/);
-    expect(source).toMatch(/const onFocusIn = \(\) => release\(\)/);
-    expect(source).toMatch(/now >= lockUntil \|\| leaving \|\| still\)\) release\(\)/);
-    expect(source).toMatch(/hardUntil = performance\.now\(\) \+ LOCK_MAX_MS/);
-    // Never on the stacked variant, reduced motion or a paused page.
-    expect(source).toMatch(/if \(locked \|\| still \|\| !mq\.matches\) return/);
+    // The wall is armed when a forward transition starts, not by blocking the
+    // scroll that started it, and never pulls back a reader already past it.
+    expect(source).toMatch(/arm\(next\);\s*\n\s*video\.play\(\)/);
+    expect(source).toMatch(/if \(window\.scrollY > wallY\(k\) \+ 1\) return;/);
+    // It sits where the next sequence would begin.
+    expect(source).toMatch(/travel \* \(k === 1 \? ENTER\[1\] - 0\.005 : 1\)/);
+    // It lifts DWELL_MS after arrival, on BOTH ways a rest is reached, and the
+    // same DWELL_MS gates the next play, so the next push starts it at once.
+    expect(source).toMatch(/const DWELL_MS = 1100/);
+    expect(source.match(/wall\.until = now \+ DWELL_MS/g)?.length).toBe(2);
+    expect(source).toMatch(/now - arrivedAt >= DWELL_MS/);
+    // Pushing is answered: the clip plays faster while the reader pushes.
+    expect(source).toMatch(/now - lastPush < PUSH_WINDOW_MS \? PUSH_RATE : baseRate/);
+    // Up is never held; Escape, focus elsewhere, a navigation-sized jump, a
+    // jump or cut, leaving, "Pausar animación" and a safety cap all release.
+    expect(source).toMatch(/if \(!wall \|\| e\.deltaY <= 0 \|\| e\.ctrlKey\) return;/);
+    expect(source).toMatch(/if \(e\.key === "Escape"\) return release\(\)/);
+    expect(source).toMatch(/if \(!stage\.contains\(e\.target as Node\)\) release\(\)/);
+    expect(source).toMatch(/if \(over > window\.innerHeight \* 0\.5\) return release\(\)/);
+    expect(source).toMatch(/now >= wall\.until \|\| now >= wall\.safety \|\| leaving \|\| still\)\) release\(\)/);
+    expect(source).toMatch(/if \(wall \|\| k < 1 \|\| still \|\| !mq\.matches\) return/);
+    // Non-passive listeners exist only while the wall stands.
+    expect(source.match(/addEventListener\("wheel"/g)?.length).toBe(1);
+    expect(source).toMatch(/const arm = [\s\S]*addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
+    expect(source).toMatch(/const release = [\s\S]*removeEventListener\("wheel", onWheel\)/);
   });
 
   it("does not draw the stage marker, but still gates publication on it", () => {

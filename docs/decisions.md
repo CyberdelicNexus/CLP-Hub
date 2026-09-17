@@ -1487,6 +1487,79 @@ wheel notches, releases with "El porqué" fully revealed, holds again for the
 second transition, then leaves the page free; an upward notch releases it at
 once.
 
+## D-062 · 2026-09-17 · The opening's scroll hold moves to the edge of the next sequence, and gets shorter
+
+D-061 held scroll from the moment a transition began until the clip had
+arrived and the copy had wiped in: about 6.9s for the first transition and
+4.3s for the second. The founder reported that visitors to the review build
+read this as the site failing to respond, "maybe too many seconds without
+scroll... people feel is their computer not able to render the website."
+
+Removing the hold outright was tried first. The founder asked for one more
+approach before giving up on it: freeze for less time, and at the edge where
+the next sequence begins rather than at the start of the animation. That is
+what `light-sequence.tsx` now does, with two refinements to the idea.
+
+**Where it holds.** The scroll that starts a transition is never held, so the
+reader always sees their input begin the clip. The hold is a wall at the scroll
+position where the next sequence would begin: just before `ENTER[1]` while the
+light travels to "El porqué", the end of the pin while it travels to "El qué".
+The engine's pinned progress is linear in scroll (`p = (y - top) / (height -
+vh)`), so the wall is computed from the act's geometry on each check and stays
+right after a resize. It stands only while the transition is in flight or its
+copy is wiping in.
+
+**Refinement 1: pushing is answered.** The wall alone would not shorten much:
+the first clip is 5.25s and a steady scroller reaches the wall after about a
+second, so they would still wait four. Inside a pinned stage nothing moves when
+scroll moves, so a held reader has no sign the page heard them. While they push
+against the wall, the clip plays faster, easing up to `PUSH_RATE` (2x) and back
+down when they stop. Their input visibly does something, and the wait halves.
+`PUSH_RATE = 1` turns this off if the faster gathering reads as rushed.
+
+**Refinement 2: it lifts exactly when the next scroll can act.** In D-061 the
+lock released on one timer while `DWELL_MS` gated the next transition on
+another, so a release could still be followed by a push that did nothing.
+`DWELL_MS` (1100ms, enough for the 1300ms copy wipe that starts just before the
+clip lands) is now both the hold after arrival and the gate on the next play.
+
+Exits are unchanged in spirit: scrolling up is never held; Escape, focus leaving
+the stage, any in-page link, a jump larger than half a viewport (navigation,
+find in page, a scrollbar drag), "Pausar animación", leaving the stage and a 6s
+`HOLD_SAFETY_MS` cap release it; a reader already past the wall is never pulled
+back. The non-passive wheel, touch and key listeners exist only while the wall
+stands, so the rest of the page keeps scrolling without waiting on script.
+
+**Verified in Chrome at 1440x900 against the dev server** (Playwright driving
+installed Chrome, which decodes the H.264 clip):
+
+| Reader | Result |
+|---|---|
+| Mouse wheel spun nonstop | Clip starts 155ms after the first notch. Held at the wall (782px, never past it) from 1.2s to 4.5s: **3.3s**, was 6.9s. "El qué" starts 50ms after release. Second hold **1.7s**, was 4.3s. Out of the opening at 7.7s |
+| One notch, then waits | Never meets the wall; clip plays at 1x ("El porqué" at 5.3s); the next notch starts "El qué" within 110ms |
+| Trackpad (18px every 16ms) | "El porqué" 3.9s, "El qué" 6.8s, out at 8.9s; the pinned stage moved 0px on every frame before leaving, so holding the overshoot causes no visible jitter |
+| Space held | Out of the opening at 6.9s |
+| Scrolls back up mid-transition | Scroll is free; cuts back to the hero |
+| Nav link mid-transition | Lands on "Preguntas", not pulled back to the wall |
+
+The first run of these checks found a bug the unit tests could not: at 2x the
+clip often reaches a rest through the controller's second arrival path (within
+`EPS` of the rest but short of its frame), which did not start the release, so
+the first hold lasted 4.9s until the safety cap. Both arrival paths now start it.
+
+**Performance review in the same pass** (the founder also asked for the site to
+run well on most computers without losing quality). Nothing else changed,
+because nothing showed a cost worth the risk: images ship as full-resolution
+`sharp` masters that `next/image` resizes per device (by design,
+`scripts/landing-media.mjs`); the landing page loads no UI library
+(`@base-ui/react` is unused there, the contact dialog is a native `<dialog>`);
+the light and fire animations only animate `transform` and `opacity`; and every
+scroll-driven controller (`light-sequence.tsx`, `hero-reveal.tsx`,
+`reading-light.tsx`, `split-stage.tsx`) already gates its per-frame work on an
+`IntersectionObserver`. The one change with a performance reason is the one
+above: D-061's non-passive listeners were also only attached during a hold, and
+still are, so the rest of the page never waits on script to scroll.
+
 ## Open questions for researchers
 
 - Where should contact form messages go: the study mailbox, a CLP Hub inbox, or
