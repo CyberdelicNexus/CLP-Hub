@@ -1617,6 +1617,68 @@ Known gaps, all visible to a non-Spanish reader:
 - The cookie table still calls section 3 «El qué» (and its translations), a name
   the page never shows as a heading.
 
+## D-064 · 2026-09-17 · The reading light starts on the hero, and the seam light waits for it
+
+Founder request against the mobile build: the stacked variant's reading light
+(D-061) started at the top of "El porqué", with nothing tying it to the hero
+above. It now starts on the hero photograph itself, at the body facing away
+from camera, and ends at the centre of the seam light (`.porque__light`,
+why-what.tsx), which starts breathing only once it arrives instead of always.
+
+**The anchor point is measured, not guessed**, the same discipline D-061 used
+for the hero crop. `hero-physical-v3.webp` was cropped with `sharp` around the
+foreground figure and re-inspected: the headset strap sits at roughly 68%/46%
+of the frame and the torso at roughly 68%/70%; the luminous layer's own
+brightest point (the same figure, undressed of the photograph) sits at
+67%/62%. `HERO_ANCHOR_Y = 0.6` in `reading-light.tsx` is the compromise, and
+no `--lx` is needed at all: on the mobile crop (right-anchored, D-061) that
+horizontal position resolves to within a percent of dead centre — the same
+50% the seam light already sits at — so only the vertical position travels.
+
+**`ReadingLight` now wraps the hero, not just the two sections after it**, so
+its track can measure both ends: `heroMedia.getBoundingClientRect()` for the
+start, `porque__light`'s own rect for the end, both read fresh every frame
+(scroll, not resize, is what moves them) the same way the existing focus-line
+math already re-reads the track's own rect each frame. The light's screen
+position is unchanged (pinned to `FOCUS = 38%` down the viewport while
+travelling) — only where that travel is clamped moved, from `[0, track
+height]` to `[hero anchor, seam centre]`.
+
+**Document order does the z-index work.** The light has to paint over the
+hero photograph but stay behind "El porqué" / "El qué" copy, as it always did
+(D-061's reasoning: in front of the copy it reads as a smudge over the
+words). Both are true of the same `z-index: 0` span for the same reason
+D-061 relied on already — position in the stacking order follows DOM order
+among un-indexed siblings — once the span sits between the hero (now a
+`hero` prop rendered first) and the copy sections (still `children`,
+rendered after). No conditional z-index, no second element.
+
+**The seam light's own breathing is now conditional**, which is new: it used
+to run unconditionally wherever `.porque__light` appeared, like every other
+`.signal--breath` instance on the page. `reading-light.tsx` sets
+`[data-arrived]` on it, once, the first frame the travelling light reaches its
+centre — sticky, per D-061's "lit is one way" rule, so scrolling back up does
+not stop it. `.porque__light.signal--breath` now starts
+`animation-play-state: paused` and only `[data-arrived]` sets it running; the
+existing `data-still` rule (`animation: none`) still wins over both, since the
+shorthand clears the animation name entirely. This is scoped to the class,
+not to `.signal--breath` itself, so every other light on the page (section 6's
+`join__light`, the participant and allocation signals) keeps breathing on load
+exactly as before.
+
+**No-JS consequence, accepted.** A visitor with motion allowed but scripting
+off never gets `[data-arrived]`, so the seam light would sit still instead of
+breathing — where before it always breathed. This matches how the rest of the
+reading light already behaves without JS (the copy shows finished, D-061); a
+static seam light is a smaller loss than the block-reveal choreography this
+component already forgoes for that visitor.
+
+Verified against the dev server with Playwright driving installed Chrome at a
+390×844 viewport: the light fades in exactly as the front-centre light body's
+own bright point crosses the focus line, tracks 1:1 with scroll, and comes to
+rest precisely centred inside `.porque__light`, matching the founder's two
+reference screenshots (the hero body, and the arrived orb).
+
 ## Open questions for researchers
 
 - Where should contact form messages go: the study mailbox, a CLP Hub inbox, or

@@ -66,10 +66,10 @@ export function Opening({ copy, lang }: { copy: LandingCopy; lang: string }) {
       </div>
 
       <div className="cl-stacked">
-        <Hero copy={copy} />
         {/* The stacked variant has no wipes, so a reading light carries the eye
-            through the same two sections instead (D-061). */}
-        <ReadingLight>
+            from the hero's own body of light down through the next two
+            sections instead (D-061). */}
+        <ReadingLight hero={<Hero copy={copy} />}>
           <Why copy={copy} />
           <What copy={copy} lang={lang} />
         </ReadingLight>

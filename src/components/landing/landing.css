@@ -201,6 +201,11 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (prefers-reduced-motion: no-preference) {
   .signal--breath { animation: cl-breath 7.6s var(--cl-ease-breath) infinite; }
   .cl[data-still] .signal--breath { animation: none; }
+  /* The seam light (why-what.tsx) is the one exception: it only starts
+     breathing once the stacked variant's travelling light has arrived at its
+     centre (reading-light.tsx sets [data-arrived]), instead of always. */
+  .porque__light.signal--breath { animation-play-state: paused; }
+  .porque__light.signal--breath[data-arrived] { animation-play-state: running; }
 }
 @keyframes cl-breath {
   0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1); }
@@ -384,12 +389,20 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 
 /* ------------------------------------------- 2 to 3 · the reading light
    Stacked variant only (reading-light.tsx, D-061). A small lavender light
-   travels the two sections with the reader and lights each block as it
-   reaches it. Nothing hides until the script sets [data-reading="live"], so
-   no-JS and pre-hydration readers see finished copy. */
+   starts on the hero photograph, at the body facing away from camera, travels
+   down with the reader lighting each block of "El porqué" as it reaches it,
+   and parks at the centre of the seam light shared with "El qué"
+   (.porque__light), which then starts breathing. Nothing hides until the
+   script sets [data-reading="live"], so no-JS and pre-hydration readers see
+   finished copy, and the hero (no [data-reading-block] of its own) is
+   untouched either way. */
 .reading { position: relative; }
-/* It passes BEHIND the copy (z-index 0, under both sections), so it reads as a
-   light moving under the page rather than a smudge over the words. */
+/* Document order (reading-light.tsx) puts it after the hero but before "El
+   porqué" / "El qué": with z-index 0 it paints OVER the hero photograph
+   (auto-stacked, no explicit z-index of its own) but still BEHIND those two
+   sections' copy (both z-indexed above it), so the same element reads as a
+   light glowing on the picture at first and moving under the page once it
+   reaches the copy. */
 .reading__light {
   --d: clamp(4rem, 14vw, 6rem);
   position: absolute;
