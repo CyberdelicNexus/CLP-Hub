@@ -1,6 +1,6 @@
 import { CookieSettingsButton } from "@/components/landing/consent";
 import { StillToggle } from "@/components/landing/still-toggle";
-import { INVITATION } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * The public site's footer, shared by the landing page and the legal pages
@@ -8,8 +8,8 @@ import { INVITATION } from "@/content/landing/clear-light";
  * settings and the pause control. In-page anchors get `/` prepended off the
  * landing page. `#contacto` stays a bare hash everywhere: ContactDialog opens on it.
  */
-export function SiteFooter({ rootId, onLanding }: { rootId: string; onLanding: boolean }) {
-  const f = INVITATION.footer;
+export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; rootId: string; onLanding: boolean }) {
+  const f = copy.INVITATION.footer;
   const href = (h: string) => (!onLanding && h.startsWith("#") && h !== "#contacto" ? `/${h}` : h);
   return (
     <footer className="foot">
@@ -20,7 +20,7 @@ export function SiteFooter({ rootId, onLanding }: { rootId: string; onLanding: b
           </a>
           <p className="foot__tagline">{f.tagline}</p>
         </div>
-        <nav className="foot__groups" aria-label="Pie de página">
+        <nav className="foot__groups" aria-label={f.navLabel}>
           {f.groups.map((g) => (
             <div key={g.heading} className="foot__group">
               <h2 className="foot__heading">{g.heading}</h2>
@@ -30,7 +30,7 @@ export function SiteFooter({ rootId, onLanding }: { rootId: string; onLanding: b
                     <a href={href(l.href)}>{l.label}</a>
                   </li>
                 ))}
-                {g.heading === "Legal" ? (
+                {g.links.some((l) => l.href === "/cookies") ? (
                   <li>
                     <CookieSettingsButton label={f.cookieSettings} />
                   </li>

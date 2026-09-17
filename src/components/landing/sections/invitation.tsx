@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Missing } from "@/components/landing/missing";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { ACTIONS, INVITATION } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 8. The restrained close: the founder's footer frame (six light bodies
@@ -13,7 +13,8 @@ import { ACTIONS, INVITATION } from "@/content/landing/clear-light";
  * study has a screening URL configured (studies.screening_url, D-031). The
  * contact action opens ContactDialog.
  */
-export function Invitation({ qualtricsUrl, rootId }: { qualtricsUrl: string | null; rootId: string }) {
+export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; qualtricsUrl: string | null; rootId: string }) {
+  const { ACTIONS, INVITATION } = copy;
   return (
     <section id="invitacion" className="invitacion" aria-labelledby="invitacion-title">
       <div className="invitacion__scene">
@@ -50,7 +51,7 @@ export function Invitation({ qualtricsUrl, rootId }: { qualtricsUrl: string | nu
         </div>
       </div>
 
-      <SiteFooter rootId={rootId} onLanding />
+      <SiteFooter copy={copy} rootId={rootId} onLanding />
     </section>
   );
 }

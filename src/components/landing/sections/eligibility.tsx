@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Signal } from "@/components/landing/signal";
-import { ELIGIBILITY } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 7. Eligibility and questions, combined. The documentary participant
@@ -15,7 +15,8 @@ import { ELIGIBILITY } from "@/content/landing/clear-light";
  * risk or contact. Their approval keys are not drawn as markers here (D-051)
  * but still block publication.
  */
-export function Eligibility() {
+export function Eligibility({ copy }: { copy: LandingCopy }) {
+  const { ELIGIBILITY } = copy;
   return (
     <section id="elegibilidad" className="elegibilidad" data-sc-act="flow" aria-labelledby="elig-title">
       <div className="elegibilidad__grid">

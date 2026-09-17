@@ -1,7 +1,8 @@
 # Recruitment landing page (aNUma Clear Light)
 
-The public route `/` is the Spanish recruitment landing page for the Clear Light
-randomized controlled trial. It is built from the V3 design handoff
+The public route `/` is the recruitment landing page for the Clear Light
+randomized controlled trial, in Spanish, with English and Galician translations
+the visitor can choose (D-063). It is built from the V3 design handoff
 (`claude-handoff-v3/`, tracked in this repository) and recorded in D-042.
 
 **Status: prototype.** The copy is working Spanish copy from the handoff content
@@ -51,7 +52,8 @@ publish while any remains (see "Publication gate").
 | Footer (landing and legal pages) | `src/components/landing/site-footer.tsx` |
 | Legal pages | `src/app/(public)/{aviso-legal,privacidad,cookies}/page.tsx` → `legal-page.tsx`; copy in `src/content/landing/legal.ts` |
 | Fonts | `src/components/landing/fonts.ts` (shared by the landing and legal pages) |
-| Copy | `src/content/landing/clear-light.ts` (typed, Spanish, with `Missing` markers) |
+| Copy | `src/content/landing/clear-light.ts` (typed, Spanish source, with `Missing` markers); translations `clear-light.en.ts`, `clear-light.gl.ts`, `legal.en.ts`, `legal.gl.ts`; `copy.ts` picks one per language |
+| Language switch | `language-switch.tsx` (in the bar and the legal pages' bar) → `src/app/(public)/idioma/[locale]/route.ts` |
 | Styles | `src/components/landing/landing.css` (page) over `scrollcraft.css` (vendored floor) |
 | Scroll engine | `public/landing/scrollcraft.js` (vendored from the scroll-craft skill, unmodified) |
 | Media | `public/landing/media/` (derivatives only; originals stay in the handoff) |
@@ -200,6 +202,25 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
 | No JavaScript | Layered still shows, people never revealed | Stacked list | Static |
 | Pause icon button (footer, "Pausar animación") | unaffected | the opening cuts between rests instead of playing | breathing, fire glow and shimmer stop |
 
+## Languages (D-063)
+
+- **ES · EN · GL** in the top bar of the landing page and the legal pages. Each
+  option is a plain link to `/idioma/[locale]?desde=<page>`, named in its own
+  language (`lang`, `aria-label` "Español", "English", "Galego"); the current one
+  is `aria-current`. The route sets `clp_public_locale` (12 months, technical)
+  and redirects 303 to the page, which reloads whole. `desde` must be one of the
+  four public pages; anything else goes to `/`.
+- **Spanish is the default** and the source text. The translations have the same
+  shape, and a test holds them to it: same keys and lengths, identical `href`,
+  `src`, sizes, codes, ids and slugs, and the same `Missing` marker objects, so
+  the publication gate is one list for every language.
+- **The translations are working drafts published without review** at the
+  founder's direction: no native editorial, clinical, legal or ethics review.
+  Markers (`FALTA CONTENIDO APROBADO`) stay in Spanish; they are for the team.
+- **Not translated:** the Qualtrics questionnaire (external, Spanish), `/participar`,
+  `/estudio` (study content, D-029) and the staff dashboard, which has no Galician.
+  Anchors (`#porque`, `#invitacion`) and routes keep their Spanish names.
+
 ## Footer, contact, consent and legal pages (D-052)
 
 - **Footer** (`site-footer.tsx`, shared with the legal pages): brand and
@@ -216,7 +237,8 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
   `#contacto` reaches section 7's "Contacto y registro" answer, which owns that
   id; the dialog is `#contacto-formulario`.
 - **Consent** (`consent.tsx`): the public pages set no cookie for an anonymous
-  visitor (verified). A banner offers "Rechazar" and "Aceptar" with identical
+  visitor (verified) until they pick a language (D-063), which sets
+  `clp_public_locale`; the cookie policy lists it. A banner offers "Rechazar" and "Aceptar" with identical
   styling; the choice is stored in localStorage (`cl-consent-v1`) for 12 months
   and reopened from "Configurar cookies". The only optional content is the
   section 3 YouTube film: without consent, pressing play asks in place and no
@@ -297,7 +319,8 @@ the legal pages draw their own keys.
 | `ENCARGADOS_TRATAMIENTO` | Processors, hosting region and international transfers |
 | `REVISION_LEGAL` | Legal review of the three legal pages, with a version date |
 
-Also pending, not rendered as markers: native Spanish editorial review, clinical
+Also pending, not rendered as markers: native editorial review of the English
+and Galician translations (D-063), native Spanish editorial review, clinical
 review of the mortality language, ethics approval of the copy, public-use
 rights for the generated hero participants and the Quest 3 depiction, approval
 and public-use rights for the generated images in sections 4 and 5 (the S0

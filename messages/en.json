@@ -118,10 +118,6 @@
     }
   },
   "public": {
-    "holding": {
-      "title": "Site in preparation",
-      "body": "The public study information will be published once it is approved."
-    },
     "apply": {
       "title": "Take part in the study",
       "intro": "If you are interested in taking part, the first step is a short initial questionnaire completed outside this site.",

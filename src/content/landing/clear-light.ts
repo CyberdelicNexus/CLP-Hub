@@ -11,12 +11,17 @@
  * participant content served under /estudio (D-029), and it must not move into
  * messages/*.json, which hold staff UI strings (D-009). See D-042.
  *
- * Copy rules enforced by tests/landing-content.test.ts: Spanish only, no em or
- * en dashes, exactly two randomized groups described identically, one label per
- * intent.
+ * Copy rules enforced by tests/landing-content.test.ts: no em or en dashes,
+ * exactly two randomized groups described identically, one label per intent.
+ *
+ * Spanish is the source text. English and Galician translations
+ * (clear-light.en.ts, clear-light.gl.ts, D-063) have the same shape, reuse
+ * these `Missing` markers and share their `href`, `src` and `id` values; the
+ * publication gate below is computed from this file alone, so it cannot differ
+ * by language.
  */
 
-import { LEGAL, legalMissing } from "@/content/landing/legal";
+import { LEGAL, legalMissing, type LegalCopy } from "@/content/landing/legal";
 
 export interface Missing {
   readonly missing: true;
@@ -351,6 +356,8 @@ export const INVITATION = {
   qualtricsUrl: missing("URL_QUALTRICS", "URL de producción del cuestionario Qualtrics (studies.screening_url)"),
   closed: "El cuestionario de interés no está disponible en este momento.",
   footer: {
+    /** Accessible name of the footer navigation. */
+    navLabel: "Pie de página",
     tagline: "Estudio de investigación sobre una experiencia grupal de realidad virtual.",
     groups: [
       {
@@ -417,8 +424,43 @@ export const CONSENT = {
 export const META = {
   title: "aNUma Clear Light · Estudio de investigación",
   description:
-    "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública en español para personas interesadas.",
+    "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
 } as const;
+
+/** The language switch (D-063). Language names are endonyms, in src/domain/locale.ts. */
+export const LANGUAGE = {
+  label: "Idioma",
+} as const;
+
+/** Shown in production instead of any public page while an approval is missing. */
+export const HOLDING = {
+  title: "Sitio en preparación",
+  body: "La información pública del estudio se publicará cuando esté aprobada.",
+} as const;
+
+/** The whole Spanish page, as one value of the shape every translation has. */
+export const LANDING_ES = {
+  ACTIONS,
+  NAV,
+  HERO,
+  WHY,
+  WHAT,
+  STAGES,
+  JOIN,
+  SPLIT,
+  ELIGIBILITY,
+  INVITATION,
+  CONTACT,
+  CONSENT,
+  META,
+  LANGUAGE,
+  HOLDING,
+} as const;
+
+/** `T` with every string literal widened to `string`, so a translation can type-check against it. */
+type Translatable<T> = T extends string ? string : T extends object ? { readonly [K in keyof T]: Translatable<T[K]> } : T;
+
+export type LandingCopy = Translatable<typeof LANDING_ES>;
 
 /**
  * Every unresolved value on the page, in one list. Rendered as placeholders in
@@ -447,8 +489,8 @@ export function missingContentList(resolved: { qualtricsUrl: string | null } = {
   return [...seen.values()];
 }
 
-/** Every visible string, for the copy tests. */
-export function visibleStrings(): readonly string[] {
+/** Every visible string of one language's page and legal texts, for the copy tests. */
+export function visibleStrings(copy: LandingCopy = LANDING_ES, legal: LegalCopy = LEGAL): readonly string[] {
   const out: string[] = [];
   const walk = (v: unknown) => {
     if (typeof v === "string") out.push(v);
@@ -461,6 +503,6 @@ export function visibleStrings(): readonly string[] {
       Object.values(v).forEach(walk);
     }
   };
-  walk({ ACTIONS, NAV, HERO, WHY, WHAT, STAGES, JOIN, SPLIT, ELIGIBILITY, INVITATION, CONTACT, CONSENT, META, LEGAL });
+  walk({ copy, legal });
   return out;
 }

@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { LEGAL } from "@/content/landing/legal";
+import { NextRequest } from "next/server";
+import { LANDING_COPY, LEGAL_COPY } from "@/content/landing/copy";
+import { LEGAL, legalPage } from "@/content/landing/legal";
+import { LOCALES, PUBLIC_LOCALES, parsePublicLocale } from "@/domain/locale";
+import { LOCALE_COOKIE, PUBLIC_LOCALE_COOKIE } from "@/i18n/cookies";
 import {
   ACTIONS,
   CONTACT,
@@ -290,10 +294,118 @@ describe("the landing page collects nothing", () => {
       "sections/split.tsx",
       "sections/eligibility.tsx",
       "sections/invitation.tsx",
+      "language-switch.tsx",
     ];
     for (const f of files) {
       const source = readFileSync(join(dir, f), "utf8");
       expect(source, f).not.toMatch(/<form|<input|<textarea|"use server"/);
     }
+  });
+});
+
+describe("the public site in Spanish, English and Galician (D-063)", () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+  const TRANSLATIONS = PUBLIC_LOCALES.filter((l) => l !== "es");
+  /** Fields that identify, link or size something: identical in every language. */
+  const FIXED = new Set(["href", "src", "width", "height", "code", "numeral", "id", "slug", "kind"]);
+
+  /** Walks a translation against the Spanish source and lists every structural difference. */
+  function differences(es: unknown, tr: unknown, path: string, out: string[]): string[] {
+    if (isMissing(es)) {
+      // The same marker object, so the gate cannot differ by language.
+      if (tr !== es) out.push(`${path}: not the Spanish marker`);
+    } else if (typeof es === "string") {
+      if (typeof tr !== "string" || tr.trim() === "") out.push(`${path}: missing text`);
+    } else if (Array.isArray(es)) {
+      if (!Array.isArray(tr) || tr.length !== es.length) out.push(`${path}: length differs`);
+      else es.forEach((v, i) => differences(v, tr[i], `${path}[${i}]`, out));
+    } else if (es && typeof es === "object") {
+      const t = tr as Record<string, unknown>;
+      if (!t || typeof t !== "object") return [...out, `${path}: not an object`];
+      const keys = Object.keys(es).sort();
+      if (keys.join() !== Object.keys(t).sort().join()) out.push(`${path}: keys differ`);
+      for (const k of keys) {
+        const v = (es as Record<string, unknown>)[k];
+        if (FIXED.has(k)) {
+          if (t[k] !== v) out.push(`${path}.${k}: must equal the Spanish value`);
+        } else differences(v, t[k], `${path}.${k}`, out);
+      }
+    } else if (tr !== es) out.push(`${path}: differs`);
+    return out;
+  }
+
+  it("offers Spanish first, and keeps Galician out of the staff UI", () => {
+    expect(PUBLIC_LOCALES[0]).toBe("es");
+    expect([...PUBLIC_LOCALES].sort()).toEqual(["en", "es", "gl"]);
+    expect(LOCALES).not.toContain("gl");
+    expect(PUBLIC_LOCALE_COOKIE).not.toBe(LOCALE_COOKIE);
+    expect(parsePublicLocale("fr")).toBe("es");
+    expect(parsePublicLocale(undefined)).toBe("es");
+  });
+
+  it.each(TRANSLATIONS)("%s has the Spanish shape, links, media and markers", (locale) => {
+    expect(differences(LANDING_COPY.es, LANDING_COPY[locale], "landing", [])).toEqual([]);
+    expect(differences(LEGAL_COPY.es, LEGAL_COPY[locale], "legal", [])).toEqual([]);
+  });
+
+  it.each(PUBLIC_LOCALES)("%s has no em or en dashes", (locale) => {
+    const offenders = visibleStrings(LANDING_COPY[locale], LEGAL_COPY[locale]).filter((s) => /[–—]/.test(s));
+    expect(offenders).toEqual([]);
+  });
+
+  it.each(TRANSLATIONS)("%s still says interest is not consent, benefit is not guaranteed, and the groups are random", (locale) => {
+    const c = LANDING_COPY[locale];
+    const expected = {
+      en: { consent: /not the same as giving consent/i, benefit: /not guaranteed/i, trial: /randomized controlled trial/i },
+      gl: { consent: /non equivale a dar consentimento/i, benefit: /non se garanten/i, trial: /ensaio controlado aleatorizado/i },
+    }[locale as "en" | "gl"];
+    expect(c.INVITATION.support).toMatch(expected.consent);
+    expect(c.ELIGIBILITY.requiredLine).toMatch(expected.benefit);
+    expect(c.SPLIT.body.join(" ")).toMatch(expected.trial);
+    expect(c.SPLIT.branches[0].lines).toHaveLength(c.SPLIT.branches[1].lines.length);
+  });
+
+  it("gates publication on the Spanish markers alone", () => {
+    // Every translation reuses them (checked above), so there is one list.
+    const keys = missingContentList().map((m) => m.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it.each(PUBLIC_LOCALES)("%s lists the language cookie in its cookie policy", (locale) => {
+    const cookies = legalPage("cookies", LEGAL_COPY[locale]);
+    const table = cookies.sections.flatMap((s) => s.blocks).find((b) => b.kind === "table");
+    expect(table?.kind === "table" && table.rows.some((r) => r[0].includes(PUBLIC_LOCALE_COOKIE))).toBe(true);
+  });
+
+  it("renders every section from the visitor's copy, never from a Spanish constant", () => {
+    const dir = "src/components/landing";
+    for (const f of ["sections/hero.tsx", "sections/why-what.tsx", "sections/stages.tsx", "sections/join.tsx", "sections/split.tsx", "sections/eligibility.tsx", "sections/invitation.tsx", "site-footer.tsx", "consent.tsx", "contact-dialog.tsx", "film-player.tsx", "clear-light-landing.tsx", "legal-page.tsx"]) {
+      const source = read(`${dir}/${f}`);
+      expect(source, f).not.toMatch(/import \{[^}]*\b(ACTIONS|NAV|HERO|WHY|WHAT|STAGES|JOIN|SPLIT|ELIGIBILITY|INVITATION|CONTACT|CONSENT|META|LEGAL)\b[^}]*\} from "@\/content\/landing/);
+      expect(source, f).not.toMatch(/lang="es"/);
+    }
+    expect(read("src/app/(public)/page.tsx")).not.toMatch(/lang="es"/);
+  });
+
+  it("switches language with a plain link that sets only the language cookie and returns to a public page", async () => {
+    const { GET } = await import("@/app/(public)/idioma/[locale]/route");
+    const call = (locale: string, query = "") =>
+      GET(new NextRequest(`https://example.org/idioma/${locale}${query}`), { params: Promise.resolve({ locale }) });
+
+    const ok = await call("gl", "?desde=%2Fprivacidad");
+    expect(ok.status).toBe(303);
+    expect(ok.headers.get("location")).toBe("https://example.org/privacidad");
+    expect(ok.cookies.get(PUBLIC_LOCALE_COOKIE)?.value).toBe("gl");
+    expect(ok.cookies.getAll()).toHaveLength(1);
+
+    // Anything but a public page goes home: the link is not an open redirect.
+    for (const from of ["https://evil.example", "//evil.example", "/equipo"]) {
+      const res = await call("en", `?desde=${encodeURIComponent(from)}`);
+      expect(res.headers.get("location")).toBe("https://example.org/");
+    }
+
+    const unknown = await call("fr");
+    expect(unknown.status).toBe(404);
+    expect(unknown.cookies.getAll()).toHaveLength(0);
   });
 });

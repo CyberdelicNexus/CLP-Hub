@@ -1,12 +1,14 @@
-import { getTranslations } from "next-intl/server";
 import { CookieBanner } from "@/components/landing/consent";
 import { ContactDialog } from "@/components/landing/contact-dialog";
 import { HOLDING_FONT_CLASS, PUBLIC_FONT_CLASS } from "@/components/landing/fonts";
+import { LanguageSwitch } from "@/components/landing/language-switch";
 import { Missing } from "@/components/landing/missing";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { isProduction } from "@/config/env";
 import { missingContentList } from "@/content/landing/clear-light";
-import { LEGAL, legalPage, type LegalBlock, type LegalPage } from "@/content/landing/legal";
+import { LANDING_COPY, LEGAL_COPY } from "@/content/landing/copy";
+import { legalPage, type LegalBlock, type LegalPage } from "@/content/landing/legal";
+import { getPublicLocale } from "@/i18n/public-locale";
 
 const ROOT_ID = "clear-light-legal";
 
@@ -73,21 +75,24 @@ function Block({ block }: { block: LegalBlock }) {
  * like the landing page itself.
  */
 export async function LegalPageView({ slug }: { slug: LegalPage["slug"] }) {
+  const locale = await getPublicLocale();
+  const copy = LANDING_COPY[locale];
+  const LEGAL = LEGAL_COPY[locale];
+
   if (isProduction() && missingContentList({ qualtricsUrl: null }).length > 0) {
-    const t = await getTranslations("public.holding");
     return (
-      <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang="es">
+      <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang={locale}>
         <div>
-          <h1 className="cl-title--md">{t("title")}</h1>
-          <p className="cl-lead">{t("body")}</p>
+          <h1 className="cl-title--md">{copy.HOLDING.title}</h1>
+          <p className="cl-lead">{copy.HOLDING.body}</p>
         </div>
       </main>
     );
   }
 
-  const page = legalPage(slug);
+  const page = legalPage(slug, LEGAL);
   return (
-    <div id={ROOT_ID} className={`cl legal ${PUBLIC_FONT_CLASS}`} lang="es">
+    <div id={ROOT_ID} className={`cl legal ${PUBLIC_FONT_CLASS}`} lang={locale}>
       <header className="legal__bar">
         {/* Full document loads, not <Link>: the landing's scroll engine is a
             plain script that mounts on page load (scrollcraft-mount.tsx). */}
@@ -95,10 +100,13 @@ export async function LegalPageView({ slug }: { slug: LegalPage["slug"] }) {
         <a href="/" className="bar__brand">
           aNUma
         </a>
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="cl-link">
-          {LEGAL.back}
-        </a>
+        <div className="legal__bar-end">
+          <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from={`/${slug}`} />
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className="cl-link">
+            {LEGAL.back}
+          </a>
+        </div>
       </header>
       <main id="main" className="legal__main">
         <p className="legal__draft" role="note">
@@ -114,9 +122,9 @@ export async function LegalPageView({ slug }: { slug: LegalPage["slug"] }) {
           </section>
         ))}
       </main>
-      <SiteFooter rootId={ROOT_ID} onLanding={false} />
-      <ContactDialog />
-      <CookieBanner />
+      <SiteFooter copy={copy} rootId={ROOT_ID} onLanding={false} />
+      <ContactDialog copy={copy.CONTACT} />
+      <CookieBanner copy={copy.CONSENT} />
     </div>
   );
 }

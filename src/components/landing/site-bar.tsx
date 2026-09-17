@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import clsx from "clsx";
 
 /**
  * Single-line recruitment navigation. Transparent over the hero, gains a dark
  * translucent ground once the page has scrolled. The scrolled state comes from
  * an IntersectionObserver on a sentinel at the top of the document, not from a
- * scroll listener.
+ * scroll listener. The language switch (D-063) sits between the links and the
+ * call to action.
  */
 export function SiteBar({
   brand,
   links,
   cta,
+  language,
 }: {
   brand: string;
   links: readonly { href: string; label: string }[];
   cta: { href: string; label: string };
+  language: ReactNode;
 }) {
   const sentinel = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -49,6 +52,7 @@ export function SiteBar({
             ))}
           </ul>
         </nav>
+        {language}
         <a href={cta.href} className="cl-link bar__cta">
           {cta.label}
         </a>

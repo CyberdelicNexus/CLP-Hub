@@ -3,6 +3,7 @@ import { LightSequence } from "@/components/landing/light-sequence";
 import { ReadingLight } from "@/components/landing/reading-light";
 import { Hero, HeroCopy, HeroMedia } from "@/components/landing/sections/hero";
 import { WhatCopy, WhatFilm, Why, WhyCopy, What } from "@/components/landing/sections/why-what";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Sections 1 to 3 as one opening sequence.
@@ -25,7 +26,7 @@ const ANCHOR_P = { inicio: 0, porque: 0.2, que: 0.7 } as const;
 
 const anchorTop = (p: number): CSSProperties => ({ top: `calc(${((SPAN - 1) * p).toFixed(3)} * 100svh)` });
 
-export function Opening() {
+export function Opening({ copy, lang }: { copy: LandingCopy; lang: string }) {
   return (
     <div className="opening" data-opening>
       <div className="cl-pinned opening__act" data-sc-act="pin" data-sc-span={SPAN}>
@@ -33,27 +34,27 @@ export function Opening() {
           <div className="op__panel op__hero" data-panel="inicio">
             <div className="hero__scrim" aria-hidden />
             <div className="hero__inner">
-              <HeroCopy />
+              <HeroCopy copy={copy} />
             </div>
           </div>
 
           {/* Here in document order so focus runs hero actions, then the film;
               it paints beneath the panels through z-index. */}
-          <HeroMedia sequence={<LightSequence src="/landing/media/light-sequence.mp4" />} />
+          <HeroMedia copy={copy} sequence={<LightSequence src="/landing/media/light-sequence.mp4" />} />
 
           <div className="op__panel op__why" data-panel="porque">
             <div className="op__reveal op__why-copy">
-              <WhyCopy />
+              <WhyCopy copy={copy} />
             </div>
           </div>
 
           <div className="op__panel op__what" data-panel="que">
             <div className="que__grid op__what-grid">
               <div className="op__reveal">
-                <WhatCopy />
+                <WhatCopy copy={copy} />
               </div>
               <div className="op__reveal">
-                <WhatFilm />
+                <WhatFilm copy={copy} lang={lang} />
               </div>
             </div>
           </div>
@@ -65,12 +66,12 @@ export function Opening() {
       </div>
 
       <div className="cl-stacked">
-        <Hero />
+        <Hero copy={copy} />
         {/* The stacked variant has no wipes, so a reading light carries the eye
             through the same two sections instead (D-061). */}
         <ReadingLight>
-          <Why />
-          <What />
+          <Why copy={copy} />
+          <What copy={copy} lang={lang} />
         </ReadingLight>
       </div>
     </div>

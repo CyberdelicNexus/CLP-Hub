@@ -6,7 +6,7 @@ One Next.js application, one Postgres database (Supabase), one scheduled-job mec
 
 ```
 Browser ──► Next.js (Vercel)
-              ├─ (public)   Spanish recruitment site + study content pages   [no auth]
+              ├─ (public)   recruitment site (ES/EN/GL) + study content pages   [no auth]
               └─ (team)     /equipo dashboard                                 [Supabase Auth]
                     │
                     ▼
@@ -50,7 +50,7 @@ Business logic must not live in components or route files.
 - Data access: server only, via `DATABASE_URL`. The anon/authenticated API keys are denied on every table (RLS enabled with no policies + explicit `REVOKE`). Browser code never queries the database.
 - Authorization: role → permission matrix in code (`docs/permissions.md`). Never trust client-provided roles or study ids.
 - Service-role key: scripts only. Not in the app env schema.
-- Cookies: `clp_locale`, `clp_study` are httpOnly preferences with no PII.
+- Cookies: `clp_locale`, `clp_study`, `clp_public_locale` are httpOnly preferences with no PII.
 - Logging: pino JSON with redaction of identity fields. No external error monitoring (D-002).
 - No PII in URLs, ever.
 
@@ -60,6 +60,7 @@ Hardening before real participant data (not done): dedicated least-privilege DB 
 
 - UI strings: `messages/es.json`, `messages/en.json` via next-intl, keyed (`t("nav.cohorts")`). Locale from the `clp_locale` cookie; default `es`; synced with `users.preferred_locale` at login and on change.
 - Study content: database, versioned, per locale (Phase 5). Never in the message files.
+- Public site (landing and legal pages): Spanish, English and Galician, chosen by the visitor through `/idioma/[locale]` and kept in the `clp_public_locale` cookie, separate from the staff `clp_locale`; default `es`. The copy is typed modules per language under `src/content/landing/`, not message files (D-042, D-063).
 
 ## Background work
 

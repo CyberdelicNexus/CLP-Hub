@@ -11,8 +11,12 @@
  * publication through `missingContentList()`.
  *
  * Statements here describe only what the code actually does: the landing page
- * sets no cookie of its own, stores one consent choice in the browser, loads
- * YouTube only with consent, and the contact form sends nothing yet.
+ * sets one cookie of its own only when the visitor picks a language (D-063),
+ * stores one consent choice in the browser, loads YouTube only with consent,
+ * and the contact form sends nothing yet.
+ *
+ * Spanish is the source text; legal.en.ts and legal.gl.ts translate it with
+ * the same shape and the same `Missing` markers (D-063).
  */
 import type { Missing } from "@/content/landing/clear-light";
 
@@ -36,6 +40,13 @@ export type LegalBlock =
   | { readonly kind: "table"; readonly head: readonly string[]; readonly rows: readonly (readonly string[])[] }
   | { readonly kind: "missing"; readonly item: Missing };
 
+export interface LegalCopy {
+  readonly draft: string;
+  readonly back: string;
+  readonly review: Missing;
+  readonly pages: readonly LegalPage[];
+}
+
 export interface LegalPage {
   readonly slug: "aviso-legal" | "privacidad" | "cookies";
   readonly title: string;
@@ -45,7 +56,10 @@ export interface LegalPage {
 
 const p = (text: string): LegalBlock => ({ kind: "p", text });
 
-export const LEGAL = {
+/** The markers the translations reuse, so every language gates on the same keys. */
+export const LEGAL_MISSING = { TITULAR, RESPONSABLE, DPO, BASE, PLAZO, ENCARGADOS, REVISION } as const;
+
+export const LEGAL: LegalCopy = {
   draft: "Borrador pendiente de revisión legal. Este texto no es definitivo.",
   back: "Volver al estudio",
   review: REVISION,
@@ -122,7 +136,7 @@ export const LEGAL = {
             {
               kind: "list",
               items: [
-                "Navegación por esta web: no usa cookies de análisis ni de publicidad y no crea perfiles. Solo guarda en tu navegador tu elección sobre el contenido de terceros.",
+                "Navegación por esta web: no usa cookies de análisis ni de publicidad y no crea perfiles. Solo guarda en tu navegador tu elección sobre el contenido de terceros y, si lo eliges, el idioma de la web.",
                 "Cuestionario de interés (Qualtrics): los datos que decidas compartir para valorar si el estudio encaja contigo. El cuestionario te informa y te pide consentimiento antes de recoger ningún dato.",
                 "Formulario de contacto: nombre, correo electrónico y mensaje, solo para responderte. El envío todavía no está disponible y hoy no se guarda nada.",
                 "Participación en el estudio: si participas, el equipo trata tus datos de contacto y la información necesaria para organizar el estudio, como el calendario y la entrega de las gafas, identificándote con un código. Las respuestas de investigación se guardan en sistemas aprobados por la institución, separadas de tus datos de contacto.",
@@ -188,6 +202,7 @@ export const LEGAL = {
               head: ["Nombre", "Titular", "Finalidad", "Tipo", "Duración"],
               rows: [
                 ["Preferencia de consentimiento", "Propio", "Recordar si aceptas o rechazas el contenido de terceros.", "Técnica, necesaria", "12 meses"],
+                ["Idioma (clp_public_locale)", "Propio", "Recordar el idioma que eliges para la web. Solo se crea si cambias de idioma.", "Técnica, necesaria", "12 meses"],
                 ["Vídeo de YouTube (youtube-nocookie.com)", "Google", "Reproducir el vídeo de la sección «El qué». YouTube puede guardar datos para el funcionamiento del reproductor.", "De terceros, solo si la aceptas", "Según la política de Google"],
                 ["Sesión del equipo", "Propio", "Mantener la sesión del personal del estudio. Solo en el área del equipo.", "Técnica, necesaria", "Mientras dura la sesión"],
               ],
@@ -203,11 +218,11 @@ export const LEGAL = {
         },
       ],
     },
-  ] as readonly LegalPage[],
-} as const;
+  ],
+};
 
-export function legalPage(slug: LegalPage["slug"]): LegalPage {
-  const page = LEGAL.pages.find((pg) => pg.slug === slug);
+export function legalPage(slug: LegalPage["slug"], legal: LegalCopy = LEGAL): LegalPage {
+  const page = legal.pages.find((pg) => pg.slug === slug);
   if (!page) throw new Error(`Unknown legal page: ${slug}`);
   return page;
 }

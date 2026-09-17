@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { setThirdPartyConsent, useThirdPartyConsent } from "@/components/landing/consent";
-import { CONSENT } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 3 film. Poster first; the visitor starts it. The clip itself is
@@ -19,12 +19,17 @@ export function FilmPlayer({
   alt,
   label,
   playLabel,
+  consent: CONSENT,
+  lang,
 }: {
   youtubeId: string;
   poster: string;
   alt: string;
   label: string;
   playLabel: string;
+  consent: LandingCopy["CONSENT"];
+  /** The page language, for YouTube's player interface and caption preference. */
+  lang: string;
 }) {
   const [requested, setRequested] = useState(false);
   const consent = useThirdPartyConsent();
@@ -46,7 +51,7 @@ export function FilmPlayer({
         {playing ? (
           <iframe
             className="film__embed"
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&cc_lang_pref=es&hl=es`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&cc_lang_pref=${lang}&hl=${lang}`}
             title={label}
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen

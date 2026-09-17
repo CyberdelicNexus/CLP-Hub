@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CONTACT } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * The contact dialog (D-052). Every `#contacto` link on the page opens it: a
@@ -15,7 +15,7 @@ import { CONTACT } from "@/content/landing/clear-light";
  * comes with it) is an open decision; `CONTACTO_FORMULARIO` blocks publication
  * until it is made. The health note follows docs/research-data-boundaries.md.
  */
-export function ContactDialog() {
+export function ContactDialog({ copy: CONTACT }: { copy: LandingCopy["CONTACT"] }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [notice, setNotice] = useState(false);
   const id = useId();

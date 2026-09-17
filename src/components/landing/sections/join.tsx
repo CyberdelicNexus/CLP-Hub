@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Signal } from "@/components/landing/signal";
-import { JOIN } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 5. How to join: questionnaire, conversation, cohort assignment.
@@ -26,7 +26,8 @@ const WINDOWS = [
   { from: 0.64, to: 2 },
 ] as const;
 
-export function Join() {
+export function Join({ copy }: { copy: LandingCopy }) {
+  const { JOIN } = copy;
   return (
     <section id="incorporarse" className="join" aria-label={JOIN.heading}>
       <div className="cl-pinned" data-sc-act="pin" data-sc-span="3.2">

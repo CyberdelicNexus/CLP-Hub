@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { HeroReveal } from "@/components/landing/hero-reveal";
-import { ACTIONS, HERO } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 1. Identifies the page as research in the first line, then the
@@ -13,7 +13,8 @@ import { ACTIONS, HERO } from "@/content/landing/clear-light";
  * The copy and media are shared by the desktop opening sequence (opening.tsx)
  * and the stacked flow variant below.
  */
-export function HeroCopy({ titleId }: { titleId?: string }) {
+export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
+  const { ACTIONS, HERO } = copy;
   return (
     <div className="hero__copy">
       <p className="cl-eyebrow">{HERO.eyebrow}</p>
@@ -34,7 +35,8 @@ export function HeroCopy({ titleId }: { titleId?: string }) {
 }
 
 /** `sequence` sits between the luminous still and the revealed people. */
-export function HeroMedia({ sequence }: { sequence?: ReactNode }) {
+export function HeroMedia({ copy, sequence }: { copy: LandingCopy; sequence?: ReactNode }) {
+  const { HERO } = copy;
   return (
     <HeroReveal>
       {/* Paint order: luminous ground, the opening sequence clip, then the
@@ -53,15 +55,15 @@ export function HeroMedia({ sequence }: { sequence?: ReactNode }) {
   );
 }
 
-export function Hero() {
+export function Hero({ copy }: { copy: LandingCopy }) {
   return (
     <section id="inicio" data-anchor-stacked="inicio" className="hero" aria-labelledby="hero-title">
       <div className="hero__scrim" aria-hidden />
       <div className="hero__inner">
-        <HeroCopy titleId="hero-title" />
+        <HeroCopy copy={copy} titleId="hero-title" />
       </div>
       {/* After the copy in document order so a phone reads copy first, media second. */}
-      <HeroMedia />
+      <HeroMedia copy={copy} />
     </section>
   );
 }

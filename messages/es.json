@@ -118,10 +118,6 @@
     }
   },
   "public": {
-    "holding": {
-      "title": "Sitio en preparación",
-      "body": "La información pública del estudio se publicará cuando esté aprobada."
-    },
     "apply": {
       "title": "Participar en el estudio",
       "intro": "Si te interesa participar, el primer paso es un breve cuestionario inicial que se completa fuera de esta web.",

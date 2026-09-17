@@ -1,5 +1,5 @@
 import { SplitStage } from "@/components/landing/split-stage";
-import { SPLIT } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 6. What a randomized controlled trial is, and why there are two
@@ -12,7 +12,8 @@ import { SPLIT } from "@/content/landing/clear-light";
  * publication gate (CONDICION_GRUPO_*, ETIQUETAS_GRUPOS) but are not drawn as
  * markers here, at the founder's direction.
  */
-export function Split() {
+export function Split({ copy }: { copy: LandingCopy }) {
+  const { SPLIT } = copy;
   return (
     <section id="asignacion" className="azar" aria-labelledby="azar-title">
       <div className="azar__head">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { CONSENT } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Consent for optional third-party content (D-052). The public site sets no
@@ -62,7 +62,7 @@ export function useThirdPartyConsent(): State {
   );
 }
 
-export function CookieBanner() {
+export function CookieBanner({ copy: CONSENT }: { copy: LandingCopy["CONSENT"] }) {
   const state = useThirdPartyConsent();
   const [reopened, setReopened] = useState(false);
 

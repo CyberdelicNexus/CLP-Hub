@@ -1560,6 +1560,63 @@ scroll-driven controller (`light-sequence.tsx`, `hero-reveal.tsx`,
 above: D-061's non-passive listeners were also only attached during a hold, and
 still are, so the rest of the page never waits on script to scroll.
 
+## D-063 · 2026-09-17 · The public site in Spanish, English and Galician
+
+The founder asked for a language switch on the site, Spanish, English and
+Galician, for accessibility. It covers the landing page and the legal pages,
+with their footer, contact dialog and cookie banner. It does not cover
+`/participar`, study content under `/estudio` (D-029) or the staff dashboard.
+
+**The visitor chooses; Spanish stays the default.** No detection from
+`Accept-Language`: the page is Spanish first (operating rule 7), and a visitor
+who wants another language picks it. `ES · EN · GL` sits in the top bar.
+
+**A cookie, as in D-007, but not the same cookie.** The switch sets
+`clp_public_locale`, not the staff `clp_locale`. A staff member reading the
+public site in Galician must not change their dashboard, and the staff UI has
+no Galician messages (the `ui_locale` enum is `es`/`en`). No `/en/` or `/gl/`
+prefixes: routes and anchors keep their Spanish names. The cookie is technical
+(it stores a choice the visitor made), is set only when they switch, and is
+listed in the cookie policy and the privacy text in all three languages.
+
+**Plain links to a route handler, not a form or a client toggle.**
+`/idioma/[locale]?desde=/privacidad` sets the cookie and redirects 303. It works
+without JavaScript, and it reloads the whole document, which the landing's
+vendored scroll engine needs (it mounts on load). `desde` is checked against the
+four public pages so the route cannot redirect elsewhere. The landing
+components still contain no form (the "collects nothing" test covers the
+switch).
+
+**Translations are typed modules beside the Spanish one** (`clear-light.en.ts`,
+`clear-light.gl.ts`, `legal.en.ts`, `legal.gl.ts`), not message files, for the
+same reason as D-042: they are recruitment material that must be diffable
+against approved wording. Components receive the copy as props instead of
+importing Spanish constants. A test holds each translation to the Spanish
+shape, including identical links, media and ids, and requires it to reuse the
+Spanish `Missing` objects, so the publication gate is computed once and cannot
+be satisfied in one language but not another. `public.holding` moved from
+`messages/*.json` into the modules so the holding page follows the visitor's
+language.
+
+**Published without review, at the founder's direction.** Asked whether the
+English and Galician drafts should stay hidden in production until approved,
+the founder chose to publish them on merge. They were drafted in this change,
+not by a native translator, and no editorial, clinical, legal or ethics
+reviewer has seen them. The production gate applies to every language exactly
+as before: nothing is public while a Spanish marker remains.
+
+Known gaps, all visible to a non-Spanish reader:
+
+- The Qualtrics questionnaire the CTA leads to is in Spanish.
+- One listed criterion is "Speak Spanish" / "Falar castelán", translated
+  faithfully. An English page may attract people that criterion excludes.
+- The legal texts are translations of drafts that name Spanish law; nothing says
+  which language version prevails.
+- `SUBTITULOS_VIDEO` concerns Spanish captions only; the YouTube player is asked
+  for the page language, which may have no captions.
+- The cookie table still calls section 3 «El qué» (and its translations), a name
+  the page never shows as a heading.
+
 ## Open questions for researchers
 
 - Where should contact form messages go: the study mailbox, a CLP Hub inbox, or
@@ -1596,6 +1653,10 @@ still are, so the rest of the page never waits on script to scroll.
   same hand-off? (D-042)
 - Should EN translations of study content be required, or is Spanish enough with
   EN only for staff preview (as D-009 implies)?
+- Do the English and Galician recruitment pages need ethics committee approval,
+  and who reviews them natively? Should the Spanish-language criterion be stated
+  earlier for non-Spanish readers? Which language version of the legal pages
+  prevails? (D-063)
 - Erasure vs. audit immutability: pseudonymization approach acceptable?
 - Audit retention period.
 - Should the flow-diagram figures suppress small counts before they can be

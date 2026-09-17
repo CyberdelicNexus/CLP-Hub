@@ -1,6 +1,6 @@
 import { FilmPlayer } from "@/components/landing/film-player";
 import { Signal } from "@/components/landing/signal";
-import { WHAT, WHY } from "@/content/landing/clear-light";
+import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Sections 2 and 3. Their copy is shared by the desktop opening sequence
@@ -12,7 +12,8 @@ import { WHAT, WHY } from "@/content/landing/clear-light";
 /* `data-reading-block` marks a block for the stacked variant's reading light
    (reading-light.tsx). It does nothing in the pinned opening sequence, whose
    own wipes reveal the same copy. */
-export function WhyCopy({ titleId }: { titleId?: string }) {
+export function WhyCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
+  const { WHY } = copy;
   return (
     <>
       <h2 id={titleId} className="cl-title" data-reading-block>
@@ -25,7 +26,8 @@ export function WhyCopy({ titleId }: { titleId?: string }) {
   );
 }
 
-export function WhatCopy({ titleId }: { titleId?: string }) {
+export function WhatCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
+  const { WHAT } = copy;
   return (
     <>
       <h2 id={titleId} className="cl-title" data-reading-block>
@@ -43,7 +45,8 @@ export function WhatCopy({ titleId }: { titleId?: string }) {
   );
 }
 
-export function WhatFilm() {
+export function WhatFilm({ copy, lang }: { copy: LandingCopy; lang: string }) {
+  const { WHAT } = copy;
   return (
     <FilmPlayer
       youtubeId="yCyCmNLmMd4"
@@ -51,30 +54,32 @@ export function WhatFilm() {
       alt={WHAT.film.posterAlt}
       label={WHAT.film.label}
       playLabel={WHAT.film.play}
+      consent={copy.CONSENT}
+      lang={lang}
     />
   );
 }
 
-export function Why() {
+export function Why({ copy }: { copy: LandingCopy }) {
   return (
     <section id="porque" data-anchor-stacked="porque" className="porque" aria-labelledby="porque-title">
       <div className="porque__inner">
-        <WhyCopy titleId="porque-title" />
+        <WhyCopy copy={copy} titleId="porque-title" />
       </div>
       <Signal className="porque__light" breath />
     </section>
   );
 }
 
-export function What() {
+export function What({ copy, lang }: { copy: LandingCopy; lang: string }) {
   return (
     <section id="que" data-anchor-stacked="que" className="que" aria-labelledby="que-title">
       <div className="que__grid">
         <div>
-          <WhatCopy titleId="que-title" />
+          <WhatCopy copy={copy} titleId="que-title" />
         </div>
         <div data-reading-block>
-          <WhatFilm />
+          <WhatFilm copy={copy} lang={lang} />
         </div>
       </div>
     </section>

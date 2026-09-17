@@ -246,10 +246,37 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 }
 .bar__link:hover { color: var(--sc-ink); background: color-mix(in oklab, var(--sc-ink) 7%, transparent); }
 .bar__cta { margin-left: auto; font-size: 0.95rem; white-space: nowrap; }
+.bar .lang { margin-left: auto; }
+.bar .lang + .bar__cta { margin-left: 0; }
 @media (max-width: 860px) {
+  .bar { gap: 0.75rem; }
   .bar__links { display: none; }
   .bar__brand { font-size: 1.15rem; }
   .bar__cta { font-size: 0.875rem; }
+}
+
+/* --------------------------------------------------- language switch (D-063) */
+.lang__list { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; }
+.lang__option {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--cl-pill);
+  color: var(--sc-ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: color var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.lang__option:hover { color: var(--sc-ink); background: color-mix(in oklab, var(--sc-ink) 7%, transparent); }
+.lang__option:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.lang__option[aria-current] { color: var(--sc-ink); box-shadow: inset 0 0 0 1px var(--cl-line); }
+@media (max-width: 480px) {
+  .lang__option { min-width: 2rem; font-size: 0.75rem; }
+  .bar__cta { white-space: normal; text-align: right; line-height: 1.2; max-width: 11rem; }
 }
 
 /* ------------------------------------------------------------------ hero */
@@ -1307,6 +1334,7 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   padding-inline: var(--sc-gutter);
   box-shadow: inset 0 -1px 0 var(--cl-line);
 }
+.legal__bar-end { display: flex; align-items: center; gap: 1rem; }
 .legal__main { flex: 1; width: 100%; max-width: 48rem; margin-inline: auto; padding: clamp(3rem, 7vw, 5rem) var(--sc-gutter) clamp(4rem, 8vw, 6rem); }
 .legal__draft { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; align-items: center; font-size: 0.85rem; color: var(--cl-accent-strong); }
 .legal__title { margin-top: 1.25rem; font-size: clamp(2rem, 4vw, 3rem); }

@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { Signal } from "@/components/landing/signal";
-import { STAGES } from "@/content/landing/clear-light";
+import { LANDING_ES, type LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 4. The programme stages S0 to S6, distinct from the onboarding steps
@@ -22,7 +22,8 @@ import { STAGES } from "@/content/landing/clear-light";
  * `DESCRIPCION_ETAPAS` is not drawn as a marker here (D-061, the founder's
  * request); it still blocks publication through `missingContentList()`.
  */
-const N = STAGES.items.length;
+/* Every translation has the same stages (tests/landing-content.test.ts). */
+const N = LANDING_ES.STAGES.items.length;
 const STEP = 1 / N;
 
 /**
@@ -50,7 +51,8 @@ const TEXT = 0.008;
 const nodeWindow = (k: number) =>
   ({ "--from": k === 0 ? -1 : k * STEP, "--to": k === N - 1 ? 2 : (k + 1) * STEP }) as CSSProperties;
 
-export function Stages() {
+export function Stages({ copy }: { copy: LandingCopy }) {
+  const { STAGES } = copy;
   return (
     <section id="etapas" className="etapas" aria-label={STAGES.heading}>
       <div className="cl-pinned" data-sc-act="pin" data-sc-span="4.5">
