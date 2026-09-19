@@ -539,8 +539,17 @@ export async function setApplicationStatus(params: {
   applicationId: string;
   actorId: string;
   status: ApplicationStatus;
+  /**
+   * True for a staff correction rather than ordinary triage (D-066): bypasses
+   * the forward-only transition graph and audits under a distinct action
+   * (`application.status_corrected`) so the two can never be mistaken for
+   * each other in the history. No reason text travels with it — free text
+   * does not go into an audit snapshot in this codebase (see
+   * `device_incident.reported` in services/logistics.ts, same rule).
+   */
+  correction?: boolean;
 }): Promise<void> {
-  const { studyId, applicationId, actorId, status } = params;
+  const { studyId, applicationId, actorId, status, correction = false } = params;
 
   await getDb().transaction(async (tx) => {
     const [current] = await tx
@@ -557,7 +566,7 @@ export async function setApplicationStatus(params: {
 
     if (!current) throw new Error(`Application ${applicationId} not found in study ${studyId}`);
     if (current.status === status) return;
-    if (!canTransitionApplication(current.status, status)) {
+    if (!correction && !canTransitionApplication(current.status, status)) {
       throw new InvalidTransitionError(current.status, status);
     }
 
@@ -566,7 +575,7 @@ export async function setApplicationStatus(params: {
     await recordAuditEvent(tx, {
       studyId,
       actor: { type: "STAFF", id: actorId },
-      action: "application.status_changed",
+      action: correction ? "application.status_corrected" : "application.status_changed",
       entityType: "application",
       entityId: applicationId,
       before: { status: current.status },

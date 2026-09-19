@@ -23,6 +23,7 @@ import {
   recordConsentDecision,
   scheduleScreening,
   setEnrollmentStatus,
+  setParticipantContactName,
   startConsent,
 } from "@/services/participant-ops";
 
@@ -194,6 +195,49 @@ export async function completeScreeningAction(_prev: OpState, formData: FormData
   return { error: null, ok: true };
 }
 
+const moveSchema = z.object({
+  participantId: uuid,
+  screeningId: uuid,
+  result: z.enum(["ELIGIBLE", "INELIGIBLE", "REVIEW_REQUIRED", "WAITLIST"]),
+});
+
+/**
+ * Same write as `completeScreeningAction`, called directly for the
+ * participantes kanban's drag-and-drop rather than bound to a `<form>`. The
+ * board only offers ELIGIBLE/WAITLIST as drop targets (see
+ * `participants-kanban.tsx`'s `isValidTarget`) because INELIGIBLE and
+ * REVIEW_REQUIRED require a reason a drag gesture cannot supply — but this
+ * still goes through the same `completeScreening` call, so that requirement
+ * is enforced here too, not just hinted at client-side.
+ */
+export async function moveParticipantEligibility(
+  participantId: string,
+  screeningId: string,
+  result: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { ok: false, error: "forbidden" };
+
+  const parsed = moveSchema.safeParse({ participantId, screeningId, result });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  try {
+    assertPermission(ctx, "screening.manage");
+    await completeScreening({
+      studyId: ctx.study.id,
+      screeningId: parsed.data.screeningId,
+      actorId: ctx.session.userId,
+      result: parsed.data.result,
+    });
+  } catch (err) {
+    const state = fail(err, "screening.kanban_move");
+    return { ok: false, error: state.error ?? "failed" };
+  }
+
+  revalidate(parsed.data.participantId);
+  return { ok: true };
+}
+
 const closeSchema = z.object({
   participantId: uuid,
   screeningId: uuid,
@@ -300,6 +344,46 @@ export async function recordConsentAction(_prev: OpState, formData: FormData): P
     });
   } catch (err) {
     return fail(err, "consent.decision");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+// --- Contact ------------------------------------------------------------
+
+const contactNameSchema = z.object({
+  participantId: uuid,
+  fullName: z.string().trim().max(200).optional().transform((v) => (v ? v : null)),
+});
+
+/**
+ * Set (or clear) a participant's name from the staff UI (2026-09-19: "bring
+ * back the ability to add names to the participants for the demo"). Gated
+ * on `participants.manage` like every other write here, not a new
+ * permission — this is the same contact data the application intake form
+ * already writes, just entered by hand instead of imported.
+ */
+export async function setContactNameAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = contactNameSchema.safeParse({
+    participantId: formData.get("participantId"),
+    fullName: formData.get("fullName") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "participants.manage");
+    await setParticipantContactName({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      fullName: parsed.data.fullName,
+    });
+  } catch (err) {
+    return fail(err, "participant.contact_name");
   }
 
   revalidate(parsed.data.participantId);

@@ -17,7 +17,9 @@ import { listOpenAssignments } from "@/services/logistics";
 import { countParticipantOps } from "@/services/participant-ops";
 
 /**
- * What needs a person today (Phase 4e).
+ * What needs a person today (Phase 4e), as a board of columns rather than a
+ * stacked list — this is the single "Requiere atención" panel; a smaller
+ * duplicate that used to sit above it on the overview page is gone.
  *
  * Three rules this panel follows, and the reason for each:
  *
@@ -32,11 +34,16 @@ import { countParticipantOps } from "@/services/participant-ops";
  *    device whose step is genuinely waiting on a person appear here — otherwise
  *    the panel becomes wallpaper.
  *
- * It shows counts and codes. No participant name appears, even for a viewer who
- * could read one: this is the screen most likely to be open on a shared monitor.
+ * NOTE ON NAMES (temporary, D-065): the logistics column shows a participant's
+ * name next to their code when the viewer holds `participants.contact.read`.
+ * This reverses D-040's blanket "codes only, even for an entitled viewer" rule
+ * for this demo build — that rule existed because this is the screen most
+ * likely to be left open on a shared monitor. The reversal is explicit and not
+ * a final decision.
  */
 export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
   const t = await getTranslations("attention");
+  const showNames = ctx.permissions.has("participants.contact.read");
 
   const canReadParticipants = ctx.permissions.has("participants.read");
   const canReadCohorts = ctx.permissions.has("cohorts.read");
@@ -68,160 +75,188 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
 
   const logisticsWorthSeeing = assignments.filter((a) => needsAttention(a.step));
 
-  const nothingToShow =
-    (!ops || (ops.reviewRequired === 0 && ops.waitingForAllocation === 0)) &&
-    cohortsWorthSeeing.length === 0 &&
-    logisticsWorthSeeing.length === 0 &&
-    openTasks === 0 &&
-    openAlerts === 0 &&
-    prepared.length === 0;
+  const columns: KanbanColumn[] = [];
+
+  if (openAlerts > 0) {
+    columns.push({
+      key: "alerts",
+      title: t("columnAlerts"),
+      tone: "warning",
+      cards: [
+        {
+          key: "alerts",
+          href: `${TEAM_BASE_PATH}/alertas?estado=OPEN`,
+          primary: t("openAlerts", { count: openAlerts }),
+        },
+      ],
+    });
+  }
+
+  if (prepared.length > 0) {
+    columns.push({
+      key: "prepared",
+      title: t("columnPreparedMessages"),
+      cards: [
+        {
+          key: "prepared",
+          href: `${TEAM_BASE_PATH}/comunicaciones`,
+          primary: t("preparedMessages", { count: prepared.length }),
+        },
+      ],
+    });
+  }
+
+  if (openTasks > 0) {
+    columns.push({
+      key: "tasks",
+      title: t("columnTasks"),
+      cards: [
+        {
+          key: "tasks",
+          href: `${TEAM_BASE_PATH}/tareas?estado=OPEN`,
+          primary: t("openTasks", { count: openTasks }),
+        },
+      ],
+    });
+  }
+
+  if (ops && ops.reviewRequired > 0) {
+    columns.push({
+      key: "review",
+      title: t("columnReviewRequired"),
+      tone: "warning",
+      cards: [
+        {
+          key: "review",
+          href: `${TEAM_BASE_PATH}/participantes?elegibilidad=REVIEW_REQUIRED`,
+          primary: t("reviewRequired", { count: ops.reviewRequired }),
+        },
+      ],
+    });
+  }
+
+  if (ops && ops.waitingForAllocation > 0) {
+    columns.push({
+      key: "waiting",
+      title: t("columnWaitingForAllocation"),
+      cards: [
+        {
+          key: "waiting",
+          href: `${TEAM_BASE_PATH}/participantes?elegibilidad=ELIGIBLE`,
+          primary: t("waitingForAllocation", { count: ops.waitingForAllocation }),
+        },
+      ],
+    });
+  }
+
+  if (cohortsWorthSeeing.length > 0) {
+    columns.push({
+      key: "cohorts",
+      title: t("cohorts"),
+      cards: cohortsWorthSeeing.map((c) => ({
+        key: c.id,
+        href: `${TEAM_BASE_PATH}/cohortes/${c.id}`,
+        primary: c.code,
+        secondary: (
+          <CohortOccupancy
+            size={c.size}
+            labels={{
+              under: t("cohortUnder", { needed: c.size.needed }),
+              over: t("cohortOver"),
+              remaining: t("cohortRemaining", { remaining: c.size.remaining ?? 0 }),
+            }}
+          />
+        ),
+      })),
+    });
+  }
+
+  if (logisticsWorthSeeing.length > 0) {
+    columns.push({
+      key: "logistics",
+      title: t("logistics"),
+      cards: logisticsWorthSeeing.slice(0, 8).map((a) => ({
+        key: a.assignment.id,
+        href: `${TEAM_BASE_PATH}/logistica-vr`,
+        primary: a.deviceCode,
+        secondary: showNames && a.participantName ? `${a.participantName} (${a.participantCode})` : a.participantCode,
+        badge: t(`logisticsStep.${a.step}`),
+      })),
+      overflow: logisticsWorthSeeing.length > 8 ? t("andMore", { count: logisticsWorthSeeing.length - 8 }) : null,
+    });
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
-        {nothingToShow ? <p className="text-sm text-muted-foreground">{t("empty")}</p> : null}
-
-        {/*
-          Alerts first, because an alert is the only row here that says something
-          may be wrong rather than merely outstanding.
-        */}
-        {openAlerts > 0 ? (
-          <Row
-            href={`${TEAM_BASE_PATH}/alertas?estado=OPEN`}
-            label={t("openAlerts", { count: openAlerts })}
-            tone="warning"
-          />
-        ) : null}
-
-        {prepared.length > 0 ? (
-          <Row
-            href={`${TEAM_BASE_PATH}/comunicaciones`}
-            label={t("preparedMessages", { count: prepared.length })}
-          />
-        ) : null}
-
-        {openTasks > 0 ? (
-          <Row
-            href={`${TEAM_BASE_PATH}/tareas?estado=OPEN`}
-            label={t("openTasks", { count: openTasks })}
-          />
-        ) : null}
-
-        {ops && ops.reviewRequired > 0 ? (
-          <Row
-            href={`${TEAM_BASE_PATH}/participantes?elegibilidad=REVIEW_REQUIRED`}
-            label={t("reviewRequired", { count: ops.reviewRequired })}
-            tone="warning"
-          />
-        ) : null}
-
-        {ops && ops.waitingForAllocation > 0 ? (
-          <Row
-            href={`${TEAM_BASE_PATH}/participantes?elegibilidad=ELIGIBLE`}
-            label={t("waitingForAllocation", { count: ops.waitingForAllocation })}
-          />
-        ) : null}
-
-        {cohortsWorthSeeing.length > 0 ? (
-          <section className="space-y-2">
-            <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {t("cohorts")}
-            </h3>
-            <ul className="space-y-1">
-              {cohortsWorthSeeing.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`${TEAM_BASE_PATH}/cohortes/${c.id}`}
-                    className="group flex flex-wrap items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    <span data-numeric className="font-medium">
-                      {c.code}
-                    </span>
-                    <CohortOccupancy
-                      size={c.size}
-                      labels={{
-                        under: t("cohortUnder", { needed: c.size.needed }),
-                        over: t("cohortOver"),
-                        remaining: t("cohortRemaining", { remaining: c.size.remaining ?? 0 }),
-                      }}
-                    />
-                    <ArrowRight
-                      className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                      aria-hidden
-                    />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {logisticsWorthSeeing.length > 0 ? (
-          <section className="space-y-2">
-            <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {t("logistics")}
-            </h3>
-            <ul className="space-y-1">
-              {logisticsWorthSeeing.slice(0, 8).map((a) => (
-                <li key={a.assignment.id}>
-                  <Link
-                    href={`${TEAM_BASE_PATH}/logistica-vr`}
-                    className="group flex flex-wrap items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    <span data-numeric className="font-medium">
-                      {a.deviceCode}
-                    </span>
-                    <span data-numeric className="text-xs text-muted-foreground">
-                      {a.participantCode}
-                    </span>
-                    <StatusBadge tone="warning">
-                      {t(`logisticsStep.${a.step}`)}
-                    </StatusBadge>
-                    <ArrowRight
-                      className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                      aria-hidden
-                    />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {logisticsWorthSeeing.length > 8 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("andMore", { count: logisticsWorthSeeing.length - 8 })}
-              </p>
-            ) : null}
-          </section>
-        ) : null}
+      <CardContent>
+        {columns.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("empty")}</p>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
+            {columns.map((col) => (
+              <Column key={col.key} column={col} />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function Row({
-  href,
-  label,
-  tone,
-}: {
+interface KanbanCard {
+  key: string;
   href: string;
-  label: string;
+  primary: string;
+  secondary?: React.ReactNode;
+  badge?: string;
+}
+
+interface KanbanColumn {
+  key: string;
+  title: string;
   tone?: "warning";
-}) {
+  cards: KanbanCard[];
+  overflow?: string | null;
+}
+
+function Column({ column }: { column: KanbanColumn }) {
   return (
-    <Link
-      href={href}
-      className="group flex items-center gap-2 rounded-lg text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-    >
-      {tone === "warning" ? (
-        <span className="size-1.5 shrink-0 rounded-full bg-[var(--status-warning-fg)]" aria-hidden />
-      ) : null}
-      <span>{label}</span>
-      <ArrowRight
-        className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-        aria-hidden
-      />
-    </Link>
+    <section className="flex flex-col gap-2 rounded-2xl bg-muted/40 p-3">
+      <h3 className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {column.tone === "warning" ? (
+          <span className="size-1.5 shrink-0 rounded-full bg-[var(--status-warning-fg)]" aria-hidden />
+        ) : null}
+        <span className="truncate">{column.title}</span>
+        <span className="bg-gradient-brand ml-auto shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold text-[oklch(0.2_0.02_265)]">
+          {column.cards.length}
+        </span>
+      </h3>
+      <ul className="flex flex-col gap-1.5">
+        {column.cards.map((card) => (
+          <li key={card.key}>
+            <Link
+              href={card.href}
+              className="group flex flex-col gap-1 rounded-xl bg-card p-2.5 shadow-soft transition-shadow duration-200 hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <span className="flex items-center gap-2 text-sm">
+                <span className="min-w-0 flex-1 truncate font-medium">{card.primary}</span>
+                <ArrowRight
+                  className="size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </span>
+              {card.secondary ? (
+                <span className="truncate text-xs text-muted-foreground">{card.secondary}</span>
+              ) : null}
+              {card.badge ? <StatusBadge tone="warning">{card.badge}</StatusBadge> : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {column.overflow ? <p className="text-xs text-muted-foreground">{column.overflow}</p> : null}
+    </section>
   );
 }

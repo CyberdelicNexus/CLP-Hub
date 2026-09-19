@@ -116,8 +116,14 @@ export function isQuestionType(value: unknown): value is QuestionType {
  * Allowed staff transitions between application states.
  *
  * Every transition is an explicit staff action with an audit row; nothing moves
- * on its own. Terminal states stay terminal — reopening is deliberately not
- * offered, so an application's history cannot be quietly rewritten.
+ * on its own. Terminal states stay terminal in the ordinary triage flow —
+ * reopening is not offered here, so day-to-day history reads as one forward
+ * path. `setApplicationStatus`'s `correction` flag (D-066) is the one escape
+ * valve: any status to any other, for a staff mistake rather than a triage
+ * step. It is not offered by bypassing this graph silently — it is always
+ * audited under its own action (`application.status_corrected`) so a
+ * correction never reads as an ordinary transition and history is corrected
+ * loudly, not quietly rewritten.
  */
 export const APPLICATION_STATUS_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
   SUBMITTED: ["IN_REVIEW", "ACCEPTED_FOR_SCREENING", "NOT_PURSUED", "WITHDRAWN"],

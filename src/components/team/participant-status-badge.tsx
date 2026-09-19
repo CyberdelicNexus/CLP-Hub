@@ -11,7 +11,7 @@ import type { ScreeningStatus } from "@/domain/screening";
  * is an ordinary outcome, and colouring it as an error would be wrong both
  * ethically and as an interface.
  */
-const ELIGIBILITY_TONES: Record<EligibilityStatus, StatusTone> = {
+export const ELIGIBILITY_TONES: Record<EligibilityStatus, StatusTone> = {
   PENDING: "neutral",
   ELIGIBLE: "success",
   INELIGIBLE: "neutral",
@@ -19,7 +19,7 @@ const ELIGIBILITY_TONES: Record<EligibilityStatus, StatusTone> = {
   WAITLIST: "info",
 };
 
-const ENROLLMENT_TONES: Record<EnrollmentStatus, StatusTone> = {
+export const ENROLLMENT_TONES: Record<EnrollmentStatus, StatusTone> = {
   CONSENT_PENDING: "warning",
   ENROLLED: "success",
   RANDOMIZED: "info",

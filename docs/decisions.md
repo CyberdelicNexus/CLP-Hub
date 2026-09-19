@@ -1679,7 +1679,1205 @@ own bright point crosses the focus line, tracks 1:1 with scroll, and comes to
 rest precisely centred inside `.porque__light`, matching the founder's two
 reference screenshots (the hero body, and the arrived orb).
 
+## D-065 · 2026-09-18 · Staff UI refresh: one attention board, brand gradient, glass sidebar, and a temporary PII rollback for the demo
+
+Founder request ahead of a team demo. Four changes, scoped to the staff
+dashboard chrome and the operational screens that already read participant
+data — nothing here touches randomization, eligibility, or Category C data.
+
+**One "Requiere atención" panel, not two.** The overview page
+(`src/app/(team)/equipo/(app)/page.tsx`) had a small card titled `attention`
+next to "Hoy", and the full `AttentionPanel` below it carrying the same title
+with richer content — a leftover from an earlier layout. The small card is
+gone; the "today" card stands alone. `AttentionPanel` itself now renders as a
+board of columns (alerts, prepared messages, open tasks, review required, no
+cohort assigned, cohorts near their limit, VR logistics) instead of stacked
+sections — each column a small stack of link-cards, closer to a kanban board
+of outstanding work than a list. The three governing rules from the original
+docstring (every row links to where the work happens, every section is gated
+by the permission that owns its data, nothing merely-in-progress appears)
+still hold; only the layout changed.
+
+**Brand gradient**, added as tokens rather than one-off colours:
+`--gradient-brand` (linear, `chart-1 → chart-2 → chart-3`) with two
+utilities, `.text-gradient-brand` and `.bg-gradient-brand`
+(`src/app/globals.css`). Used for the new dashboard greeting and a thin accent
+strip on the four stat tiles. Scoped to the team dashboard, not the landing
+page (D-042's system is locked and separate).
+
+**Glass sidebar and header**, `.glass-panel` / `.glass-panel-strong`
+utilities (translucent fill, hairline border, inset highlight,
+`backdrop-filter: blur()` behind an `@supports` + `prefers-reduced-transparency`
+guard) applied to the sidebar panel and the header bar — chrome only, not
+content `Card`s, per rule 2 (inspect before modifying, don't rewrite working
+architecture for stylistic preference). The sidebar also gained a collapse
+toggle (`SidebarShell`, `src/components/team/sidebar-shell.tsx`): an icon-rail
+collapsed state held in `localStorage`, the same device-local, unaudited
+pattern the theme preference already uses (see "Theming" in
+`docs/design-system.md`). Full detail in `docs/design-system.md`.
+
+**PII rollback for this demo build, temporary and explicitly not final.**
+D-038 and D-040 each held that an operations screen (VR logistics; the
+overview's attention panel) shows participant codes only, never a name, even
+for a viewer entitled to one — reasoning it is the screen most likely to be
+left open on a shared monitor. For this build, at the founder's explicit
+request (to keep the team's own follow-up workable without a second lookup)
+and with the trade-off named to them beforehand, that rule is reversed in
+both places, still gated by `participants.contact.read`:
+
+- `listOpenAssignments` (`src/services/logistics.ts`) now left-joins
+  `participant_contacts` and always selects `fullName` as `participantName` on
+  `AssignmentRow`; the query stays cheap to fetch, callers decide whether to
+  render it.
+- The VR logistics page and the attention board's logistics column show
+  `{name} ({code})` when the viewer holds `participants.contact.read`, and
+  fall back to the code alone otherwise — the permission gate itself is
+  unchanged, only the blanket suppression on top of it is gone.
+- `participantes` and `solicitudes` were not touched: they already showed
+  contact fields under the same permission (`includeContact`), so there was
+  nothing to roll back there.
+
+This is a per-build reversal, not a re-decision of D-038/D-040 — see the open
+question below. `RESEARCHER` continues to demonstrate what a viewer without
+`participants.contact.read` sees: codes only, unchanged.
+
+**Four named demo accounts.** `DEMO_STAFF` (`scripts/seed.ts`) keeps its five
+role-based emails (`demo.<role>@example.com`, unchanged — `docs/development.md`
+and README.md's facilitator-scoping walkthrough depend on the email staying
+stable) but four of five `displayName`s are now a person's first name —
+Cathy (ADMIN), Jose (STUDY_MANAGER), Joana (FACILITATOR), David (LOGISTICS) —
+so the new dashboard greeting ("Hola, {name}") reads naturally in a demo.
+RESEARCHER keeps a generic `Demo RESEARCHER (SINTÉTICO)` name: only four
+names were given for five roles. Still obviously fake per rule 9 — the
+`(SINTÉTICO)` suffix stays; the greeting shows only the first word of
+`displayName`, so it reads "Hola, Cathy" while the account menu still shows
+the full "Cathy (SINTÉTICO)".
+
+## D-066 · 2026-09-18 · Solicitud detail page: contact and answers in one accordion, and a status-correction escape valve
+
+Continuation of D-065's UI pass, now on the application detail page
+(`src/app/(team)/equipo/(app)/solicitudes/[id]/page.tsx`), at the founder's
+request.
+
+**Layout.** Contact details and the submitted answers used to be two
+separate cards (answers on the left spanning two columns, contact stacked
+above triage on the right). They are now one `Accordion`
+(`src/components/ui/accordion.tsx`, a thin wrapper over `@base-ui/react`'s
+Accordion — the first use of that primitive in this codebase, following the
+same wrapper convention as `sheet.tsx` and `dropdown-menu.tsx`) in the main
+column, both sections open by default and independently collapsible. The
+management controls (triage buttons, now including the correction control
+below) moved to their own card on the right, so the page reads as "what this
+person said" on the left and "what to do about it" on the right.
+
+**Status correction.** `APPLICATION_STATUS_TRANSITIONS` (domain/recruitment.ts)
+is deliberately forward-only and terminal states stay terminal — undocumented
+as a numbered decision before now, but explicit in the code's own comment.
+The founder asked for a way to fix a status set by mistake, terminal
+included. Rather than loosening the transition graph itself (which would
+make an ordinary triage action from a terminal state possible by mistake,
+exactly what the graph exists to prevent), `setApplicationStatus`
+(services/recruitment.ts) gained a `correction` flag: when true, it bypasses
+`canTransitionApplication` entirely — any status to any other — but writes
+its audit row under a **distinct action**, `application.status_corrected`
+rather than `application.status_changed`, so a correction is never
+indistinguishable from an ordinary transition in the history. The graph
+itself, and the ordinary `changeApplicationStatus` action, are unchanged.
+
+The UI control (`CorrectStatusForm`, `solicitudes/correct-status-form.tsx`)
+is deliberately not a peer of the normal triage buttons: collapsed behind a
+small "Corregir estado" disclosure, and picking a destination status takes a
+second confirming click before it submits. Two frictions, not one, because
+this bypasses a graph that exists specifically to make an accidental
+backward move impossible.
+
+**No reason field.** The founder's request didn't specify whether a
+correction needs a written reason, and the existing codebase has a clear,
+repeated answer for free text next to an audit row: it does not go into the
+audit snapshot (see `device_incident.reported` in `services/logistics.ts`,
+and D-035's visit-note reasoning) — before/after values there stay to fixed
+vocabulary. Adding a reason column to `applications` for this alone would be
+a schema change for one feature the founder did not ask to persist as
+searchable text. The distinct audit action plus the actor already on every
+audit row (who corrected what, and when) covers "what happened"; asking the
+person directly covers "why", the same way it would for any other action in
+this system. Revisit if the team wants a written reason kept — see open
+question below.
+
+## D-067 · 2026-09-18 · Kanban boards, an Evaluación dashboard, a Cohortes gallery, and the programme timeline
+
+Continuation of D-065/D-066's UI pass, at the founder's request, covering the
+rest of the original list: drag-and-drop views for solicitudes/participantes/
+tareas, a real dashboard for Evaluación, a gallery for Cohortes, and — the
+piece asked to get right — an interactive timeline of the programme's stages.
+Four changes, each with its own reasoning below.
+
+**Kanban boards (solicitudes, participantes, tareas).** `@dnd-kit/core` and
+`@dnd-kit/utilities` are new dependencies — nothing drag-and-drop existed in
+the codebase to reuse. One generic component, `src/components/team/kanban.tsx`,
+knows only about dragging, optimistic UI (`useOptimistic`) and a `readOnly`
+fallback for viewers without manage permission; each page supplies its own
+columns and its own `onMove`, which is always the **same server action the
+page's ordinary form already called** — `moveApplicationStatus` wraps
+`setApplicationStatus` exactly like `changeApplicationStatus` does,
+`moveTaskStatus` wraps `closeTask` exactly like `closeTaskAction` does, and
+`moveParticipantEligibility` wraps `completeScreening` exactly like
+`completeScreeningAction` does. A drop is not a second, looser path to a
+status change; it is the same permission check, the same domain validation,
+the same audit row, called a different way.
+
+One real constraint this surfaced: **participant eligibility is not a free
+enum a card can just be dragged to.** `completeScreening` requires an open
+screening (`screeningId`) and refuses INELIGIBLE/REVIEW_REQUIRED without a
+reason (D-030). The participantes board's `isValidTarget` therefore only
+allows dragging to ELIGIBLE/WAITLIST, and only for a participant who has an
+open screening — every other move stays on the detail page, where the reason
+picker and the "schedule a screening first" step actually live. This is not a
+missing feature; it is the board being honest about what a drag gesture can
+and cannot decide.
+
+Each board's view is a plain `?vista=kanban` URL param next to the existing
+list, toggled by a shared `ViewToggle` (`src/components/team/view-toggle.tsx`)
+— a link, not client state, so the view stays shareable. `sonner`'s `Toaster`
+(already vendored, never mounted) is now mounted in the root layout so a
+rejected drop can say why.
+
+**Evaluación becomes a dashboard, and gets the missing write path.** The page
+was, and remains, the screening queue plus `StudyFlowSummary` — that
+CONSORT-style table is deliberately numbers, not a diagram (its own doc
+comment explains why), and nothing about it changed. What's new: four
+gradient stat tiles at the top (reusing `countParticipantOps`, no new query),
+and — the actual gap the founder named — each queue row is now an
+`AccordionItem` (`src/components/ui/accordion.tsx`, a Base UI wrapper
+introduced in D-066, reused here) whose panel holds the exact same
+`CompleteScreeningForm`/`CloseScreeningForm` the participant page already
+used. Recording that Qualtrics (or wherever the study evaluates) said someone
+is eligible no longer requires leaving this page to find their profile.
+
+**Cohortes becomes a gallery, with a create modal and a stage chip.** The
+list is now a grid of cards (`grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]`)
+instead of a table, each with the same gradient accent strip the overview's
+stat tiles use. "Crear cohorte" opens `CreateCohortForm` — unchanged — inside
+a new `Dialog` (`src/components/ui/dialog.tsx`, the first centred-modal
+primitive in this codebase; `Sheet` already wrapped the same Base UI Dialog
+as a slide-over, this wraps it centred). On the cohort detail page, each
+member row gets a colour-and-shape chip for `enrollmentStatus`
+(`ENROLLMENT_TONES` for colour, a new per-status icon map in
+`cohortes/stage-icon.tsx` for shape — colour alone repeats, e.g. ENROLLED and
+COMPLETED are both "success"), and a new `AddMemberForm` lets staff add a
+participant to the cohort from the cohort's own page instead of only from the
+participant's page — the mirror of the existing `AssignCohortForm`, same
+`assignToCohortAction`, just the other direction. `getCohortDetail`'s member
+query now also selects `enrollmentStatus` (one added column, no new query
+shape).
+
+**The programme timeline — new schema, not a repurposed one.** The founder
+described seven named stages (Preparación, Orientación, Cuerpos de luz, Vida,
+Más allá del cuerpo, Ofrenda, Integración grupal) with a modality pattern
+(an opening pair on video, one in-person orientation, the rest in VR). THESE
+NAMES ARE THIS TRIAL'S PROGRAMME DESIGN, so they are configuration rows in a
+new `program_stages` table (migration 0016), not a hard-coded sequence — the
+same non-negotiable-6 reasoning `session_templates` already follows. This is
+deliberately a NEW table rather than reusing `CohortStatus` (PLANNING →
+RECRUITING → … → COMPLETED): that enum is a fixed, forward-only operational
+lifecycle already load-bearing elsewhere (size checks in D-033, assignment
+eligibility in D-023) and is not this trial's stage names — conflating the
+two would mean either inventing seven new `CohortStatus` values every trial
+reconfigures (impossible, it's a Postgres enum) or forcing the programme's
+stages into a code-fixed vocabulary, exactly what non-negotiable 6 forbids.
+
+`cohorts.current_stage_id` (nullable — null means the programme hasn't
+started for that cohort, a real state for one still in PLANNING/RECRUITING)
+records where a cohort is. Unlike the cohort status lifecycle, movement
+between stages is NOT forward-only: `setCohortStage`
+(`src/services/program-stages.ts`) allows any configured stage to any other,
+audited under `cohort.stage_changed` every time. The founder's own framing —
+"poder mover el cohorte a diferentes etapas" — reads as staff correcting or
+adjusting a record of where a cohort actually is, not advancing through a
+gate the way a cohort's operational status does; a wrong click costs one more
+click to fix, not a size-override confirmation.
+
+The timeline itself (`sesiones/program-timeline.tsx`) sits above the existing
+session list on the Sesiones page — unchanged below it — as a horizontal row
+of stage nodes (icon = modality: video camera for Zoom, pin for in-person,
+glasses for VR) with one progress row per visible cohort. Each stage is a
+button when the viewer holds `cohorts.manage`; clicking one is the whole
+interaction, calling `setCohortStageAction` directly, no confirmation step,
+because a stage is freely correctable by design (see above). Demo stages are
+seeded with the founder's real names, `(SINTÉTICA)`-suffixed like every other
+seed row (rule 9) — the structure is real, the seed data stays marked fake.
+
+**Explicitly not built, per the founder's own "podríamos incluso" framing**:
+merging Cohortes/Sesiones/Comunicaciones/Logística into one page. That was
+offered as an idea, not a requirement, and would be a much larger rewrite of
+already-working pages (rule 2) for a benefit the founder didn't ask to lock
+in yet. The timeline links out to each cohort's own page instead.
+
+## D-068 · 2026-09-18 · Cohortes/Sesiones/Comunicaciones/Contenido merge, ghost gradients, and a read-only Trello
+
+The founder's follow-up to D-067: merge the four pages, restyle Logística VR
+to match, add "ghost" gradient backgrounds, seed the full S0–S6 programme so
+the schedule-session dropdown isn't three generic entries, surface a
+session's content and communications where the cohort actually is in the
+programme, reframe tasks as per-cohort checklists, and connect Trello.
+
+**The merge, and what stayed separate.** `/equipo/cohortes` is now a
+master-detail workspace: a vertical stack of cohorts on the left
+(`?cohorte=<id>`, a link like every other filter here — shareable, no client
+state), the selected cohort's full picture on the right
+(`cohortes/cohort-panel.tsx`): lifecycle, staff, members with their stage
+chip (D-067), the programme timeline (reused from D-067 unchanged), every
+S0–S6 session as an accordion row, and its open tasks as a checklist.
+`/equipo/cohortes/[id]` and `/equipo/sesiones` are now thin redirects to it,
+kept only so old links don't break. `sessions`, `communications` and
+`content` are gone from `TEAM_NAV` — checked against the permission matrix
+first (`docs/permissions.md`'s grants): every role that could see one of
+those three already has `cohorts.read`, so nothing is stranded.
+
+**What did NOT move: authoring.** `/equipo/comunicaciones` (template
+management, send log) and `/equipo/contenido` (VR guides, FAQs, versioning)
+still exist, unlinked from top nav but reachable from inside a session's
+accordion panel ("Gestionar plantillas de comunicación"). Only ADMIN and
+STUDY_MANAGER hold `content.manage`, and both already have `cohorts.read` —
+so authoring was never in danger of being stranded either, it's just not a
+*per-cohort* action the way scheduling a session or completing a screening
+is. Rule 2 (don't rewrite working architecture) is why these stayed pages of
+their own instead of being folded in too: template/content CRUD is
+list-and-edit work across the whole study, not something that reads well
+nested three levels into one cohort's accordion.
+
+**Each session row pulls in exactly what already existed, nothing new
+computed.** `getPublishedForSession` (services/content.ts, unchanged) for the
+session template's published SESSION_PREPARATION content, rendered with the
+existing `ContentBlocks` component (`src/components/content/blocks.tsx`) —
+the same renderer `/estudio` already uses for participants, reused as-is
+since it's already a server component with no client dependencies.
+`listTemplates` (communications.ts, unchanged) grouped by `sessionTemplateId`
+in the page rather than adding a new service filter, since it was already a
+flat field on every row. The accordion item matching the cohort's
+`currentStageId` opens by default and gets an "Etapa actual" badge — the
+literal reading of "según el cohorte se mueve por las sesiones, deberíamos
+ver el contenido que esa sesión necesita compartir."
+
+**Session templates, seeded S0–S6.** `DEMO_SESSION_TEMPLATES` grew from three
+generic entries to seven, one per programme stage, each with a `stageCode`
+resolved to `session_templates.stage_id` (migration 0017, nullable FK to
+`program_stages`) at seed time. Existing codes (`demo_intro`, `demo_vr`,
+`demo_followup`) were kept stable — `DEMO_CONTENT` and
+`DEMO_CHANNEL_TEMPLATES` reference them by code — only names, order and
+timing changed to fit the sequence. This is what makes "Programar sesión"'s
+dropdown show the whole programme instead of three placeholders.
+
+**Ghost gradients.** The founder's clarification: gradients should also live
+on a div's *background*, not just as a thin accent strip, but faint enough
+not to compete with the content on top — "gradientes fantasma". New tokens
+`--gradient-brand-ghost` (light and dark, `globals.css`) mix each chart hue
+at 9–14% into `--card` via `color-mix()`, so it adapts to the surface it's
+drawn on automatically rather than needing separate light/dark stop lists.
+`.bg-gradient-brand-ghost` is applied to the dashboard and Evaluación stat
+tiles (alongside the existing accent strip) and to the selected cohort's row
+in the new stack — a wash, not a strip, and still comfortably clears the
+4.5:1 text-contrast rule the accent-surface tokens already follow.
+
+**Logística VR restyle.** The three sections (out / incidents / inventory)
+are now one `Accordion` (introduced D-066), all open by default with a count
+badge per section, plus ghost-gradient summary tiles — the same treatment
+Evaluación and the dashboard already had. No behavioural change, no data
+change.
+
+**Tasks as checklists, scoped to a cohort.** `tasks.cohortId` already existed
+(Phase 8) but nothing read it outside the flat Tareas list. The cohort
+panel's "Pendientes de esta cohorte" is the same open tasks, filtered to this
+cohort in the page (a `.filter()`, not a new query — `listTasks` already
+returns everything needed), rendered as a checkbox
+(`cohortes/task-checklist.tsx`) instead of the Tareas board's buttons. The
+checkbox calls the exact same `closeTaskAction` `CloseTaskForm` does — same
+permission, same audit row, only the control looks like a reminder instead
+of a task-manager row, matching "más como recordatorios de lo que hay que
+hacer."
+
+**Trello, read-only, and not connected in this build.** `src/services/trello.ts`
+follows the same shape as the Qualtrics integration (D-031): connection
+details are configuration (`TRELLO_API_KEY`/`TRELLO_TOKEN`/`TRELLO_BOARD_ID`,
+all optional env vars, `.env.example` documents them), and nothing writes
+back to Trello — the founder explicitly said updating Trello from here would
+be nice but is not this pass. Without credentials (which this environment
+does not have) the Tareas page shows a plain "not connected" card explaining
+what to set; once configured, it reads the board's lists and cards read-only
+via Trello's REST API and shows them as a static board, separate from this
+study's own operational task list below it. The founder's Trello board URL
+was given in conversation but is deliberately NOT hardcoded anywhere — same
+non-negotiable-6 reasoning as everything else here: which board to show is
+this team's own configuration, not a value in code.
+
+## D-069 · 2026-09-18 · D-068 follow-up: a real accent instead of a wash, collapsible detail, and per-session content slots
+
+Direct feedback on D-068's first pass, all in `cohortes/cohort-panel.tsx`
+and its neighbours unless noted.
+
+**Ghost gradients rejected — replaced with a border-and-highlight accent.**
+The founder rejected the D-068 background wash outright ("didnt like the
+ghost gradients") and pointed at a reference card whose only gradient is a
+thin left-edge highlight bar plus a faint gradient tint *in the border*, not
+the fill. `--gradient-brand-ghost` and `.bg-gradient-brand-ghost` are gone —
+confirmed zero references left in `src/`. In their place, `globals.css`
+defines `--gradient-brand-vertical` (the highlight bar) and
+`--gradient-brand-border` (each chart hue mixed toward `--border` via
+`color-mix()`, so it still adapts to the surface automatically like the
+ghost tokens did) and a `.card-accent` utility: a transparent-bordered card
+with a two-layer `background-image` (solid `--card` clipped to padding-box,
+gradient clipped to border-box) for the tinted outline, plus a `::before`
+3px rounded bar on the left edge for the highlight. Applied everywhere the
+ghost wash used to be (dashboard/Evaluación/Logística VR stat tiles, the
+selected cohort's row in the stack) — same set of surfaces, different
+treatment.
+
+**Trello: no API, a read-only iframe.** The founder's second correction:
+"forget the Trello API." `TRELLO_API_KEY`/`TRELLO_TOKEN`/`TRELLO_BOARD_ID`
+and the REST-fetching service D-068 described are gone, replaced by one
+`TRELLO_BOARD_URL` env var and a component that is just an `<iframe>`
+pointed at it (`tareas/trello-board.tsx`). This only works for a board with
+public link-sharing turned on (documented in `.env.example`) and is
+strictly less capable than the API version — no per-card data to react to,
+no way to ever add write-back later without reintroducing the API. Traded
+deliberately for the founder's stated preference and because nothing today
+reads individual card fields anyway; it was always a static read-only view.
+
+**Evaluación: the flow summary is now four collapsible groups, each row a
+bar.** `evaluacion/flow-summary.tsx` wraps its four sections (stages, not
+assessed, exclusions, allocation) in an `Accordion` (`multiple`, all open by
+default — nothing is hidden by default, just collapsible), and every row
+inside gets a proportional bar under the label/count, scaled to that
+section's own max value. The bar is explicitly `dl`/`dd` markup with a
+code comment that it is not a percentage or a computed statistic — same
+boundary D-024 already drew for this page (counts only, no derived rates),
+just easier to scan than the flat numbers D-067 shipped.
+
+**Cohortes list and workspace: smaller thumbnails, no re-asked
+information, collapsible sections.** Per the founder's list:
+- The stack's cards dropped `lg:grid-cols-[20rem_1fr]` to `[15rem_1fr]` and
+  the code/status row now leaves room for `CohortOccupancy` and a staff
+  count (`listCohorts` gained `staffCount`, a `count(*)` subquery on
+  `cohort_staff` rather than a second join, to avoid row fan-out) — status,
+  team size and participant count are visible without opening the cohort,
+  the stage name moved to its own line below rather than competing for the
+  same row.
+- `ScheduleSessionForm` no longer asks for a session name or modality — both
+  already exist on the template the caller picked (a fixed `AccordionItem`
+  in this workspace, never re-selected), so they now travel as hidden
+  inputs instead of empty fields staff had to fill in every time.
+- The remaining "Lugar o enlace" field is renamed to "Código de sesión o
+  enlace de Zoom" (`sessions.field.location`) — same field, clearer about
+  what actually goes in it for a VR or Zoom session.
+- Both "Sesiones del programa" and "Participantes" are now `<details>`-
+  wrapped cards (same collapsible pattern Logística VR already used,
+  D-068), open by default, with a `ChevronDown` that rotates via a
+  `group-open/section:rotate-180` Tailwind variant — no new JS, matching
+  every other collapsible section in this codebase.
+
+**Content: both slots per session, deep-linked into the (still separate)
+authoring page.** The founder asked for prep *and* integration content per
+session, and a way back into "add content, assign it to a session" without
+guessing what that page looks like today. Two changes:
+1. `cohort-panel.tsx` now calls `getPublishedForSession` twice per
+   template (`SESSION_PREPARATION` and `SESSION_INTEGRATION`, was prep
+   only) and renders both as side-by-side slots. An empty slot shows an
+   "Añadir contenido" link straight into `/equipo/contenido`, pre-filled via
+   `?sessionTemplateId=&type=#create` (both `content-forms.tsx`'s
+   `CreateContentForm` and the page now accept/validate these as optional
+   defaults — never trusted blindly, only used if they match a real
+   type/session). A filled slot shows an "Editar" link straight to that
+   content's own editor page instead, which needed `getPublishedForSession`
+   to start returning `contentId` (it previously returned only the
+   rendered body).
+2. The Sessions card header itself gained a "Gestionar contenido" link to
+   the plain `/equipo/contenido` index — this is also what makes the
+   `TEAM_NAV` comment from D-068 true; before this change nothing in the
+   merged workspace actually linked there despite the comment claiming it
+   did.
+
+   **Deliberately not done: hardcoding "S0 and S6 are exceptions."** The
+   founder described the pattern as "2 per session apart from S0 and S6" —
+   S0 (`demo_prep`, before the programme starts) plausibly has nothing to
+   *prepare for* before preparation itself, and S6 (`demo_followup`, after
+   the last VR session) plausibly has nothing left to *integrate* after
+   integration. But which sessions are S0/S6, and whether every study even
+   uses seven stages named this way, is exactly the kind of trial-specific
+   detail rule 6 puts in configuration, not code. So every template gets
+   both slots unconditionally; staff simply leave a slot empty where it
+   doesn't apply, same as any other optional field. No code encodes "S0
+   never gets a preparation slot."
+
+   **Editor recommendation: keep the block-JSON textarea, don't add
+   HTML.** Asked "what's the best way to edit this" — raw HTML input was
+   ruled out, not just deprioritized: `ContentBody` is a closed, Zod-
+   validated discriminated union of block types rendered through
+   `ContentBlocks`, deliberately with no markup escape hatch (`domain/
+   content.ts`'s comment: so nothing an author writes can become markup on
+   a public page). Raw HTML input would remove that guarantee outright. The
+   existing raw-JSON `VersionEditor` (`contenido/content-forms.tsx`) already
+   documents its own successor as a known follow-up (D-028): a form-per-
+   block-type UI over the *same* `ContentBody` schema, not a data-model
+   change. That follow-up is still open — this round only made the existing
+   editor reachable from where staff actually think about content (a
+   session's slot), it did not build the friendlier editor itself.
+
+## D-070 · 2026-09-19 · Cohort workspace layout pass, a block-based content editor, and sticky notes
+
+The founder's next round of feedback, spanning the whole staff UI. Grouped
+by area; each is a small, mostly independent change.
+
+**Global chrome.** `.card-accent`'s `::before` bar goes from a 10%-inset pill
+to `inset-block: 0`, and the utility now bakes in `overflow: hidden` so the
+card's own border-radius clips the bar's corners instead of the bar
+overhanging past them — "the left border should also touch the rounded
+corners." A new `--gradient-brand-fill` token (and its `.dark` twin) gives
+`.card-accent` a genuinely faint diagonal wash again — chart-1 (purple) into
+chart-2 (blue) at 5–10% into `--card` — reversing part of D-069's "no
+background wash" call at the founder's explicit request this round ("add a
+subtle dark blue and purple gradient in the bg"); the border ring and left
+bar stay as they were, this only adds a third, quieter layer under them. A
+sibling token, `--gradient-page`, puts the same two hues at 4–8% behind the
+whole page (`body`, `background-attachment: fixed`) so it reads as ambient
+light rather than a per-card decoration. `Button`'s `link` variant gained a
+hover colour shift (it previously only underlined); `default`/`outline`/
+`secondary` gained `hover:shadow-soft` for a bit more lift feedback. Every
+scrollbar now follows the theme (`scrollbar-color` for Firefox,
+`::-webkit-scrollbar*` for everything else) instead of the OS default.
+
+**"(SINTÉTICO)" removed from individual names.** The founder's read: the
+study is already unambiguously a demo (`Estudio de demostración (DATOS
+SINTÉTICOS)` in the header, `demo.*@example.com` addresses, `DEMO-`/`P-`
+prefixed codes) — repeating the suffix on every seeded name was noise, not
+signal. `scripts/seed.ts` had the suffix stripped from every display name
+(participants, staff, cohorts, session templates, devices, tasks, comms
+templates, eligibility reasons) via a scripted removal, keeping it only on
+the study's own title — that banner is now the single authoritative marker,
+still satisfying rule 9 ("seeds must be obviously fake") the way the rest of
+the naming already does. Rows seeded before this change needed a one-off
+direct SQL cleanup (not a new migration — display text, not schema) since
+`seed.ts`'s upserts don't touch every already-existing row's name columns.
+
+**Cohortes: sticky column, clearer at-a-glance icons, top stat cards.** The
+left stack gets `lg:sticky lg:top-6` so it stays visible while the right
+panel scrolls. Each compact card's occupancy/team-size numbers are now
+`IconChip`s — small coloured, outlined pills (reusing the pastel surface
+tokens) instead of plain gray icon+number pairs — plus a warning chip when a
+cohort's size is under/over. A new stat-tile row above the stack
+(`cohorts.glance.*`) mirrors the dashboard's own tiles: total cohorts,
+participants across all visible cohorts, how many have a programme stage
+set, how many need attention — computed from the same `listCohorts` rows
+already fetched, no new query.
+
+**Cohort workspace layout reordered and compacted.**
+- Status and team, previously a full two-card row near the bottom, are now
+  one compact `card-accent` row directly under the header. Status is
+  already effectively "just a button" (`AdvanceCohortForm` always was one
+  button plus a confirm step) — only the card chrome around it shrank. Team
+  is now name chips with an inline "Quitar" per person instead of a
+  bulleted list, same `RevokeStaffForm`/`AssignStaffForm` underneath.
+- Participants moved above the programme timeline and from a `<ul>` to a
+  responsive gallery grid (2/3/4 columns), each tile a `Link` straight to
+  the participant, with their enrollment-status icon and tone as the
+  visual anchor — "a grid of buttons, not a list."
+- A manual "Avanzar a: {next stage}" button now sits on the timeline card's
+  header, computed as `stages[currentIndex + 1]` and submitted through the
+  exact same `setCohortStageAction` the timeline's own per-stage buttons
+  use (a new single-argument wrapper, `advanceStageAction`, since a bare
+  `<form action={...}>` needs a one-argument action, not
+  `useActionState`'s two-argument shape) — this was already possible by
+  clicking a stage dot on the timeline; the button just makes the common
+  "move to the next one" case one click without picking a specific dot.
+- Each session's `AccordionTrigger` now carries `data-open:bg-muted/70` (a
+  direct state variant on the trigger itself, not `group-data-open:`,
+  since the trigger is the element the open state lives on) so the
+  expanded row is visually obvious, and a scheduled session's date/time now
+  shows in the row even while collapsed, not only inside the opened panel.
+- "Pendientes de esta cohorte" gained a second section underneath: sticky
+  notes (`cohort_notes`, migration 0018) — freeform, coloured (one of the
+  four pastel surface tones), create-and-delete only, gated on
+  `tasks.manage` like the checklist above it. Deliberately its own table
+  rather than a `tasks` row with a different shape: a sticky note has no
+  status, priority, assignment or due date, and a task is defined by having
+  exactly those. Every write is still audited (`cohort_note.created`/
+  `.deleted`) — no precedent anywhere in this codebase for an unaudited
+  mutation, sticky note or not, so this doesn't start one; the note's own
+  text is never in the audit snapshot, same free-text policy as everywhere
+  else (D-035).
+
+**Evaluación: donuts and stat tiles instead of length-bars, queue moved to
+the top.** The founder's complaint about the D-069 bar rows: "they don't
+mean anything." The real problem was conflating two different data shapes
+under one visual: `Etapas` and `Evaluaciones sin resultado` are a
+*sequential funnel* (applications → people → assessed → …), where a bar
+comparing two stages implies a proportion neither carries — these are now
+plain stat tiles (`StudyFlowSummary`'s new `Tiles`), one number each,
+nothing computed, still inside the same collapsible sections from D-069.
+`Motivos de exclusión` and `Asignación por grupo` ARE genuine
+part-of-a-whole breakdowns (each reason's share of all exclusions, each
+arm's share of allocations) — for those, a new hand-rolled SVG `Donut`
+component (`components/charts/donut.tsx`, no charting library, same
+reasoning as every other hand-rolled visual primitive here) states a real
+relationship instead of a misleading one. D-024's boundary is unchanged:
+still counts only, no percentages computed or displayed, no retention rate,
+no publication-ready diagram — a donut's *shape* implies proportion but the
+labels are still raw counts. Separately, the queue of pending evaluations
+moved from the bottom of the page to directly under the boundary notice,
+ahead of the stat tiles and the flow summary — "that's the most important
+action of this page, the rest is informational."
+
+**Content: back in the nav, a block-based editor, and content can move
+between sessions after creation.** Three related changes:
+1. `content` is back in `TEAM_NAV` (D-068 removed it when authoring was a
+   raw-JSON form buried behind a link; now that it's a real editor it earns
+   a destination of its own again — the nav comment there says so). A
+   `calendar` entry was added alongside it (see below).
+2. `contenido/content-forms.tsx`'s `VersionEditor` now edits `ContentBody`
+   through `BlockEditor` (`contenido/block-editor.tsx`) — one form per
+   block type (add/reorder/delete, live preview via the same `ContentBlocks`
+   the public pages use) instead of a raw JSON textarea. This is exactly the
+   "friendlier block-by-block editor" D-028 and D-069 both named as the
+   known follow-up, built now because the founder asked for "a markdown
+   editor just like Notion... images, videos, bookmarks, callouts."
+   Nothing about the schema changed to get there — `BlockEditor` serialises
+   to the identical typed shapes `blockSchema` already validated, so the "no
+   HTML escape hatch" guarantee (`domain/content.ts`) holds exactly as
+   before; a TEXT block's own field is still the same tiny Markdown subset,
+   not new rich-text markup. One new block type was added to get to
+   "bookmarks": `BOOKMARK` (`url`, `title`, optional `description`),
+   rendered as a link-preview card — same "link card, never an embed"
+   principle `VIDEO` already used, so this doesn't add a path for this app
+   to fetch and render a third party's page preview.
+3. `services/content.ts` gained `relinkContentSession` (audited as
+   `content.session_relinked`) and `listContentsByType`. Two UIs use them:
+   the content detail page now has a "Sesión asociada" field, editable at
+   any time, not just at creation (`content.field.session` — "add a
+   property that lets you relate content to the S0–S6 session list"); and
+   the cohort workspace's content slots gained a "Usar contenido existente"
+   toggle that lists all content of that slot's type and assigns the
+   chosen one to this session (reassigning moves it, a content row has one
+   session at a time). Once a slot has content, it shows three actions
+   instead of one: "Ver publicado" (opens the public page), "Copiar
+   enlace" (a small client component, `navigator.clipboard`), and "Editar"
+   — `getPublishedForSession` had to start returning `contentId` for the
+   edit link to be possible, same change D-069 already made.
+
+**Calendar: a new page, not a new query.** `/equipo/calendario`
+(`nav.calendar`, gated on `cohorts.read`) is every scheduled session across
+every visible cohort, grouped by day, as one chronological agenda —
+"keep track of all the important dates." Built as an agenda list rather
+than a day-grid calendar: the underlying data is sparse (a handful of
+sessions a week), and `listSessions(studyId, { scope })` with no
+`cohortId` already returns exactly this shape, sorted by date, respecting
+the same facilitator cohort-scoping every other session view uses — no new
+service function, just a new page grouping the existing rows by day.
+
+## D-071 · 2026-09-19 · D-070 follow-up: a corner-wrapped border, per-stage colour, and a real block editor
+
+Same-day follow-up to D-070, mostly refining what that round shipped
+against a reference image and hands-on testing. Two real bugs surfaced
+during that testing and are fixed here too.
+
+**Two bugs, both pre-existing, both from testing this round's own work.**
+- Base UI warned "MenuGroupContext is missing" — `Header`'s account menu
+  used `DropdownMenuLabel` directly inside `DropdownMenuContent`, never
+  wrapped in `DropdownMenuGroup`, which `MenuPrimitive.GroupLabel` requires.
+  Wrapped each label (and the sign-out item) in its own group.
+- Base UI warned about an Accordion "changing the default value state of an
+  uncontrolled Accordion after being initialized" — switching cohorts in
+  the workspace re-rendered the Sessions `Accordion` with a new
+  `defaultValue` (a different `currentTemplateId`) without remounting it,
+  since nothing gave it a `key`. Added `key={cohort.id}` so switching
+  cohorts is a fresh mount, not a prop change on a live uncontrolled
+  component.
+
+**`.card-accent`'s border, redone a third time.** The founder's reference
+image showed a glow that wraps a corner and fades along BOTH edges with
+distance — something a 135° linear gradient (D-069) or a conic gradient
+centred at the corner (tried first, this round) cannot produce: a conic
+gradient's colour only varies by angle, so every point on a straight edge
+sits at the same angle from the corner and cannot fade along that edge's
+length. `--gradient-brand-border` is now a `radial-gradient` ellipse
+anchored at the top-left corner (55% × 100%, taller than wide so the glow
+rides further down the left edge than across the top one) — a radial
+naturally fades with distance in every direction from its centre, which is
+what the reference actually shows. The separate left-edge `::before` bar
+from D-069/D-070 is gone; one radial layer now does what two used to.
+`--gradient-brand-fill` (the faint wash) was pointed at the same corner for
+the same reason — a card should read as one coherent glow, not two
+differently-centred effects.
+
+**Cohort workspace, compacted further.** The founder's screenshot: status
+and team were still a full card each. Status moved into the page header,
+right beside the `StatusBadge` it already had (`AdvanceCohortForm` was
+already effectively one button — only the card chrome around it is gone).
+Team is one line of name chips with a hover-revealed × per name
+(`RevokeStaffForm` gained an `iconOnly` prop for this) and a round dashed
+"+" at the end that opens `AssignStaffForm` in a `<details>` popover — same
+no-floating-library pattern the content/comms pickers already use.
+
+**Programme timeline: colour and shape by position, not by identity.**
+Each stage now gets its own two-hue gradient circle and one of seven
+generic shapes (`Circle`, `Square`, `Triangle`, `Diamond`, `Star`,
+`Hexagon`, `Octagon`), both assigned by the stage's INDEX in the array,
+never by its name or code — a stage's identity is configuration (rule 6),
+so nothing here may branch on what one is called; cycling a fixed
+palette/shape list by position still gives every stage a distinct look
+without the code knowing or caring what any of them mean. A cohort's PAST
+stage dots no longer keep their own colour — they render in a darkened
+shade of the CURRENT stage's colour (`color-mix(... 55%, black)`), so the
+trail visibly leads to wherever the cohort is now rather than each stop
+staying independently coloured.
+
+**Content slots: a bookmark, not an embedded page; a colour per slot type.**
+`ContentSlot` no longer renders the assigned content's full body inline —
+just an icon and its title, plus the View/Copy/Edit row — "don't preview
+the page in the box, just add a bookmark." The preparation and integration
+slots each carry a distinct tinted ring (mint / sky, the existing pastel
+surface tones) instead of a plain border. Communications got the identical
+treatment for the first time: `CommsSlot` (new) lists a session's assigned
+templates as the same kind of bookmark row, each with a "copy" action that
+puts the template's raw wording (placeholders intact) on the clipboard —
+still never a rendered message, still never a send (D-004/D-039 unchanged)
+— plus the same "pick an existing template" toggle content already had.
+That needed the same relation to become editable after creation that
+content got in D-070: `relinkTemplateSession` (new, `services/
+communications.ts`) reads a template's current wording and resubmits it
+with a new `sessionTemplateId` through the existing `updateTemplate`,
+because that function takes a full replace, not a patch — reassigning
+shouldn't require the caller to already know the template's own body. The
+whole communications block also gained a tinted (peach) outline, matching
+the founder's "add a colour outline box to distinguish that area."
+
+**Pending: tasks and notes as two tabs, plus a "new task" modal.** The
+founder's framing was explicit uncertainty ("we don't want more task
+management, Trello is the source... but maybe checkbox reminders per
+session or cohort") — resolved as the smallest useful thing: a
+`PendingToggle` (new) switches the existing task checklist and existing
+sticky notes between two tabs in the same card instead of always stacking
+both, and a "＋ tarea" button opens the exact same `CreateTaskForm` the
+Tareas page uses (which also moved into a `Dialog` there, from a standing
+card — "the new task should be a button that opens a modal") with the
+cohort pre-selected (`CreateTaskForm` gained an optional `defaultCohortId`).
+Nothing new was built for "assign a task to a participant" — `tasks.
+participantId` already existed (Phase 8) and the form already offered it;
+opening it from a cohort's own page just makes it reachable in fewer
+clicks. Deeper task/Trello integration (e.g. two-way sync) stayed
+explicitly out of scope, matching the founder's own hesitation.
+
+**The block editor: insert-anywhere, drag-to-reorder, and a selection
+toolbar.** Three changes to `BlockEditor` (`contenido/block-editor.tsx`):
+- The bottom row of ten always-visible "add block" buttons is gone,
+  replaced by a small "+" between (and above/below) every block — hover
+  reveals it, click opens a dropdown of the ten types (reusing
+  `DropdownMenu`, now that its Group bug above is fixed) — "with a plus
+  button you get the list of things you can add," Notion's own pattern. A
+  slash-command shortcut was NOT built (typing "/" inside a plain textarea
+  to summon a menu is materially more work than a hover button, and wasn't
+  separately asked for beyond "or a plus button") — the "+" is the only
+  entry point today.
+- Reordering is drag-and-drop (`@dnd-kit/sortable`, a new dependency — the
+  existing `@dnd-kit/core` this app already uses for its kanban boards
+  covers column-based dragging, not a plain reorderable list, so this is
+  the companion package built for exactly that). The up/down arrow buttons
+  stayed alongside it rather than being replaced, matching `components/
+  team/kanban.tsx`'s own stated position: a pointer drag has no equivalent
+  for a keyboard or screen-reader user, so it is additional, never the only
+  way. Blocks carry no id of their own (a stored block is just its typed
+  fields) — the editor mints one locally per block and keeps a parallel
+  `ids` array in lockstep with `blocks` through every add/remove/move/
+  insert, used only for React keys and drag identity; what actually saves
+  is still plain `ContentBlock[]`.
+- A small floating toolbar (Bold/Italic/Code/Link) appears above a
+  TEXT-bearing textarea's selection and wraps it in the corresponding
+  Markdown syntax — "when you highlight text you can format it." This is
+  NOT contentEditable and NOT rich text: it manipulates the plain
+  `<textarea>`'s value via `selectionStart`/`selectionEnd`, the same
+  mechanism any plain-text editor's "wrap selection" command uses. The
+  stored value is still the identical tiny Markdown subset `domain/
+  markdown.ts` already parses — the "no HTML escape hatch" guarantee is
+  untouched, this only saves typing `**`/`*`/`` ` `` by hand.
+
+**A cover image, and video that plays where it can.** `content_versions`
+gained `cover_image_url` (migration 0019) — a version-level field, not a
+block, shown above the title on the detail page's editor/previews and on
+both public page templates. The `VIDEO` block now plays natively
+(`<video controls>`) for a direct file URL (`.mp4`/`.webm`/`.ogg`/`.mov`,
+matched by extension) instead of always being a link-out card — "videos
+should be able to be played in the page." Anything else (a YouTube or
+Vimeo page, say) stays a link card: an iframe embed of THAT would hand a
+frame — and whatever it phones home — to that third party, exactly what
+`VIDEO`'s original design comment already refused to do, and nothing about
+this round's request changes that reasoning. `IMAGE` gained
+`aspect-video`/`object-cover` so a mis-sized or partially-broken source
+image can no longer distort the layout the way an unconstrained
+`w-full`/`h-auto` image could — the specific image the founder flagged as
+showing "a weird line" turned out to be a broken external URL from earlier
+manual testing (a `magnific.com` link that doesn't reliably resolve), not
+a rendering bug; it was swapped for a working placeholder.
+
+**Public content pages, widened and enlarged.** "Most users will be older
+adults" — the shared `/estudio` layout's column went from `max-w-2xl`
+(42rem) to `max-w-3xl` (48rem), and both page templates wrap their
+`ContentBlocks` in `text-lg` (was the ambient 1rem). Back-link and footer
+text sized up a step too.
+
+**Content list: status as a button, a popup to change it — scoped to this
+one list.** The founder's ask was explicit that this should "apply to all
+lists in the system." That did not happen this round: every other list
+(Solicitudes, Participantes, Tareas' own list view, and so on) already has
+its own bespoke inline editing pattern built around what that record's
+actual transitions are — converting all of them to one uniform
+click-cell-open-modal shape is a real redesign of each page, not a
+component to drop in, and was judged too large to fold into an
+already-large round. What DID ship: the Content list's "Publicada"/"En
+preparación" columns merged into one "Estado" column; for a manager it's
+now a button (`StatusPopup`, new) that opens the exact same status-change
+actions (`VersionStatusForm`/`PublishForm`/`NewDraftForm`) the detail page
+already had, without navigating there first. `listContents` had to start
+returning `workingVersionId`/`publishedVersionId` (previously only version
+NUMBERS) for the popup to have anything to submit against.
+
+**Calendar: a month grid alongside the agenda.** D-070 shipped the agenda
+only, reasoning the data was too sparse for a grid to earn its space; the
+founder asked for the grid too ("also a calendar where we can see the
+events"), so `MonthView` (new, same file) was added as a second view.
+Both are plain links (`?vista=mes`, `?mes=2026-09`), not client state —
+shareable, work without JS, same as this app's other view toggles
+(`ViewToggle`, D-053) — navigating months is `?mes=` arithmetic on the
+server, not a client-side calendar library.
+
+**Trello: the founder's real board URL is wired in, and it may not
+render.** `TRELLO_BOARD_URL` now points at the actual board
+(`.env.local`, never committed). Testing this surfaced something no
+amount of code here can fix: Trello's own `frame-ancestors`
+Content-Security-Policy only allow-lists a short list of Microsoft/
+Atlassian domains — it refuses to be iframed by an arbitrary third-party
+site, full stop, regardless of the board's own "anyone with the link"
+sharing setting. A blocked frame fails silently (nothing on this page can
+detect it and react), so `TrelloBoard` now always prints an "open in
+Trello" link beneath the iframe rather than only on an untriggerable error
+state — today, that link is not a fallback for an edge case, it is very
+likely the primary way anyone actually sees the board from here.
+
+## D-072 · 2026-09-19 · Trello's own embed script, a single-column Notion-style editor, and inline video
+
+Same-day follow-up to D-071, driven by hands-on feedback after that round's
+work was actually tried: the founder found Trello's documented embed
+mechanism, rejected the two-column editor outright, and asked for two
+presentation changes (inline video, a redesigned cover banner) that follow
+from "the editor should look like the real page."
+
+**Trello: the documented embed, not an iframe.** D-071 closed with an "open
+in Trello" fallback link beside an iframe that Trello's `frame-ancestors`
+CSP silently blocks for everyone (the underlying problem was diagnosed
+correctly there, just not yet solved). The founder found Atlassian's own
+guide (`developer.atlassian.com/cloud/trello/guides/embedding/
+embedding-boards/`): a board embeds via a `<blockquote
+class="trello-board-compact">` wrapping a plain link, upgraded client-side
+by `https://p.trellocdn.com/embed.min.js` (loaded with `next/script`,
+`strategy="afterInteractive"`) — Trello's own script controls the frame it
+creates, so it is exempt from the CSP that blocks a hand-written iframe.
+`TrelloBoard` (`tareas/trello-board.tsx`) is rewritten around this; the
+`blockedHelp` fallback text and prop are gone since there is no longer a
+known-blocked case to explain.
+
+**The content editor: single column, edit on the real page, Notion-style.**
+D-071's block editor put a form on the left and a live `ContentBlocks`
+preview on the right — the founder's response: *"instead of having two
+columns... we only should have one which is the actual page preview and
+you edit on the actual preview, just like Notion Pages."* The fix is not a
+tweak but a different editing model, so `block-editor.tsx` and
+`content-forms.tsx`'s `VersionEditor` are rewritten around it:
+- Every block renders in its near-final visual shape inline — a TEXT block
+  is an auto-growing, borderless textarea with a selection-triggered
+  Bold/Italic/Code/Link toolbar (string-splicing markdown into the same
+  value, still no HTML — the "no HTML escape hatch" invariant from D-028 is
+  unchanged); a CALLOUT is the actual tinted box with an editable title/body
+  and its tone swatches inline, not a form field describing one.
+- IMAGE/VIDEO/BOOKMARK blocks go further: they render through the real
+  public `ContentBlocks` component (`body={[block]}`), so what staff see
+  editing is pixel-for-pixel what a participant will see, including actual
+  inline video playback — not an approximation of it. A small toggleable
+  panel beneath (closed once a URL exists, open when empty) holds the
+  fields that don't have an obvious on-canvas home (URL, caption/alt).
+  Deliberately built as `useState`, not `<details open={hasUrl}>` — an
+  `open` prop reacting to every keystroke in the URL field would snap the
+  panel shut the moment the first character landed.
+- The up/down reorder buttons D-071 kept as an explicit non-drag path are
+  gone from the visible UI; `@dnd-kit`'s `SortableContext` (unchanged
+  since D-071) still registers a `KeyboardSensor` alongside the
+  `PointerSensor`, so reordering by keyboard remains possible, just no
+  longer has an on-screen button of its own. Flagged below as an open
+  discoverability question, not a lost capability.
+- The title is a seamless `text-3xl` input, the whole editor sits in one
+  card with the cover banner atop it, and "Guardar borrador" is the only
+  button below — no side-by-side preview to keep in sync, because there is
+  only the one surface now.
+
+**Video: named platforms embed inline; everything else still just links
+out.** *"Make sure video players appear on the page to play the video
+there, we don't want users to go to another page to watch the video"* — a
+repeat, more emphatic ask than D-070's original VIDEO block, which only
+played direct file URLs natively and showed a link-out card for anything
+else (YouTube/Vimeo included). `resolveVideoEmbed` (new,
+`src/domain/video.ts`) is a pure classifier: direct file extensions
+(mp4/webm/ogg/mov) still get a native `<video controls>`; recognized
+`youtube.com`/`youtu.be`/`vimeo.com`/`player.vimeo.com` URLs now resolve to
+a real `<iframe>` on `youtube-nocookie.com`/`player.vimeo.com`'s own embed
+paths; anything else still falls back to the existing link-card. This is a
+deliberate, narrow reversal of "never embed a third party's page" — scoped
+to two named video platforms chosen for having a privacy-respecting embed
+mode, not opened up to arbitrary hosts.
+
+**Cover image: a thin fading banner, not a photo block.** The founder's
+screenshot showed a cosmic newsletter page where the cover reads as an
+ambient backdrop behind the title — short, always centred, fading into the
+page background rather than ending on a hard edge — plus an explicit new
+ask: reposition the image on the Y axis. `contentVersions` gained
+`coverImagePosition` (`integer`, 0–100, default 50, `supabase/migrations/
+0020_content_cover_image_position.sql`, `check (... between 0 and 100)`)
+threaded through `services/content.ts` and the save action. Two components
+split the read/write concerns:
+- `CoverImage` (new, `src/components/content/cover-image.tsx`) — a plain
+  server component, `h-40 sm:h-52`, `object-position: center {position}%`
+  (horizontal is hard-coded to `center`, never adjustable — "keep the image
+  always centred" was explicit), with a `bg-gradient-to-b from-transparent
+  to-background` strip across its bottom edge. Shared by the editor's own
+  read-only paths, the published-version card, and both public page
+  templates (`estudio/[key]`, `estudio/sesiones/.../[part]`) — one shape,
+  four call sites, rather than four hand-rolled banners.
+- `CoverBanner` (new, `contenido/cover-banner.tsx`) — the editable version:
+  empty state is a small "+ Añadir portada" link that reveals an inline URL
+  input (Enter or blur commits); filled state is the same banner with a
+  hover-revealed Y-position range slider and a remove button layered on top.
+
+**Left orphaned rather than cleaned up, for time.** Several i18n keys the
+two-column editor used no longer have a caller:
+`content.field.coverImageHelp`, `content.blockEditor.add/moveUp/moveDown`,
+`content.blockField.tone`, `content.preview`, `content.previewEmpty` (both
+`messages/es.json` and `messages/en.json`). Unused, not wrong — safe to
+delete whenever someone next touches this area.
+
+**Verified this round:** `npm run typecheck`, `npm run lint`, `npm test`
+(375/375), and `npm run build` all clean; then a headless Playwright pass
+against the running dev server confirmed the single-column editor renders
+blocks in-place (including a real tinted CALLOUT with working tone
+swatches), that inserting a VIDEO block and pasting a YouTube URL produces
+a genuine inline `<iframe>` rather than a link card, and that no console or
+page errors were raised across the whole flow. The cover-image add/
+reposition flow was exercised the same way; the test image itself did not
+render in the sandboxed headless browser (no route to `picsum.photos`),
+but the component markup it produced — thin banner, centred crop, bottom
+fade — matches the source directly.
+
+## D-073 · 2026-09-19 · An accessibility toolbar, a full-bleed public hero, and a round of smaller fixes across Contenido, Cohortes, Sesiones, Tareas and the dashboard
+
+Same-day follow-up covering eleven separate asks in one message — most are
+independent, contained fixes; two (the public hero and the accessibility
+toolbar) share the same layout rework.
+
+**Public study pages: a full-bleed hero, always first on the page, plus an
+accessibility toolbar.** *"Update the cover to fill the whole page and
+always at the top of the page."* `CoverImage` (`src/components/content/
+cover-image.tsx`) gained a `variant: "card" | "hero"` prop — `"hero"` uses
+the standard `left-1/2 -mx-[50vw] w-screen` full-bleed trick (works nested
+inside a constrained column, since the offset is computed against the
+viewport, not the parent), taller (`h-56 sm:h-72 md:h-80`), same Y-position
+and bottom-fade as before. Getting it "always at the top" meant restructuring
+`estudio/layout.tsx`: `<main>` lost its own padding and `max-w-3xl` wrapper
+entirely (pushed down into each page component instead, so the cover can
+render before any padding constrains it), and the back-link/theme-toggle
+header became a floating `glass-panel` overlay (`fixed`, `pointer-events-none`
+on the wrapper, `pointer-events-auto` on the pill itself) rather than a
+block above the content — the same "chrome over content" pattern the team
+header already uses. A page with no cover clears the floating header via
+`pt-20` on its own content wrapper instead.
+
+Alongside that: *"Add accessibility tools on the right like increase text
+size and making the content wither."* `AccessibilityToolbar` (new,
+`src/components/accessibility-toolbar.tsx`) is a fixed, vertically-centred
+glass pill offering three independent, persisted (localStorage, the same
+module-level-store-plus-`useSyncExternalStore` pattern `sidebar-shell.tsx`
+already uses for its collapsed flag) preferences: three-step text size,
+"mute colour" ("wither" read as a plain-language ask for less visual
+intensity — implemented as `saturate(0.35)`, not grayscale, so imagery
+still reads as imagery), and looser line/letter spacing — plus a reset,
+shown only once any preference differs from default. `A11yContentWrapper`
+applies the resulting classes to whatever it wraps; the toolbar and the
+wrapper read the same store, so the two never need prop-drilling between
+them. Scoped to the public study pages only (not the whole site) — that's
+where the existing "this audience skews older adult" reasoning already
+lives (both page templates' `text-lg` body copy), not the marketing
+landing or staff pages.
+
+One bug this surfaced in testing: at ~390px the toolbar's fixed position
+ran text and a wide callout block underneath it. Fixed by giving each
+page's content wrapper `pr-14` (vs. the ordinary `pl-4`) below `sm:` —
+enough gutter to clear the toolbar's own footprint; from `sm:` up the
+reading column already has margin to spare on both sides.
+
+**Light mode's page gradient, strengthened.** *"Add a gradient bg to light
+mode, currently feels too white."* `--gradient-page` (`globals.css`) went
+from a 4-5% colour mix to 11-12%, plus a third low radial wash so it doesn't
+read as "coloured only in the top corners." Dark mode was already visible
+enough and is untouched.
+
+**Content editor: "Versión publicada" collapses by default.** A plain
+`<details>`/`<summary>` (JS-free, same pattern as the filter dropdowns
+elsewhere in this app) replaces the always-open `<Card>` on `contenido/
+[id]/page.tsx` — staff editing a draft don't need the published page open
+beside it by default; it's a reference they open on demand. Not `<Card>`
+itself: its own vertical padding would double up with the `<summary>`/
+`<CardContent>` padding this needed.
+
+**Cohort sidebar sticks 10px below the floating nav, not at the viewport
+edge.** The header is `mt-3` (0.75rem) + `h-14` (3.5rem) tall, bottom edge
+at 4.25rem; `lg:top-6` (1.5rem) let the cohort list's sticky sidebar slide
+up underneath it. Now `lg:top-[4.875rem]` (4.25rem + 10px).
+
+**Timeline colours: why they read as red, and the fix.** *"Not sure why the
+timeline colours became red."* `STAGE_HUES` (D-071's per-stage palette)
+cycled through all five `--chart-*` tokens, and `--chart-5`'s hue (~12-14°)
+reads as warm red/coral — the one hue this app's status vocabulary
+(`--destructive`, `--status-critical-*`) otherwise reserves for "something
+is wrong." Whichever stage landed on that index (mod 5) rendered as an
+alarm on a screen showing ordinary progress. Dropped to four hues
+(`--chart-1`..`--chart-4`). Separately, *"use in each stage the gradient
+you applied to the bg of the icon, and modulate brightness depending on the
+current stage"*: stage dots now render with the SAME two-hue gradient as
+their icon (previously a flat single hue for the current stage, and the
+ACTIVE stage's colour reused across every past stop, which is the other
+half of why the trail could turn uniformly red) — past stops keep their
+own identity gradient, dimmed by `filter: brightness()` scaled to how many
+steps behind the current stage they are, rather than converging on one
+borrowed colour.
+
+**Participant names, editable again for the demo.** *"Bring back the
+ability to add names to the participants for the demo."* There was no
+staff-facing way to set a participant's name by hand — `participant_contacts.
+full_name` only ever arrived via the (now-retired, D-031) public
+application form or the seed script's synthetic `DEMO_APPLICANTS`. Added
+`setParticipantContactName` (`services/participant-ops.ts`, upsert since a
+manually-created participant might have no contact row at all) and
+`ContactNameField` (`participantes/participant-forms.tsx`) — click a pencil
+next to the name on the participant detail page, type, Enter or the Save
+button commits, Escape cancels. Gated on `participants.manage`, same
+permission and audit (`participant.contact_name_set`) as every other
+write here — this is ordinary Category A contact data (docs/
+research-data-boundaries.md), not a new kind of field.
+
+**Tasks: kanban is now the default view.** `isKanban = params.vista !==
+"list"` (inverted from `=== "kanban"`) — `/equipo/tareas` with no query
+now opens the board. The status-filter chips (`Filtro` card, which only
+narrows the LIST) now link with `?vista=list&estado=...` explicitly, since
+they used to rely on "no `vista` param" meaning list.
+
+**Alerts moved into the horizontal nav as a bell with a badge.** *"Move
+alertas on the horizontal nav bar and add notification number icon on a
+dark red gradient."* `TeamShell` pulls the `alerts` nav entry out of the
+items list it hands to `SidebarNav` (desktop rail and the mobile Sheet
+alike) and passes it separately to `Header`, which renders a `Bell` link
+with a badge — `linear-gradient(135deg, oklch(0.5 0.19 25), oklch(0.34 0.15
+20))`, a dark red distinct from every other accent colour in this app,
+matching the ask. The badge count is `countUnresolvedAlerts` (OPEN +
+ACKNOWLEDGED) — the same "unresolved" the alerts page's own attention tile
+already uses — not a stricter "OPEN only" count, which a first pass got
+wrong and which testing caught: an acknowledged-but-not-yet-resolved alert
+still belongs on the badge.
+
+**Dashboard: two new cards tagged to the signed-in user.** *"Update the
+main dashboard with more relevant information and information tagged to
+the user."* The "Hoy" card was dead weight — permanently empty, no query
+behind it at all. Replaced (retitled "Próximas sesiones") with real
+upcoming-session data (`listSessions`, filtered client-side to `SCHEDULED`
+and in the future, since the service doesn't filter by time), each row
+badged "Tú facilitas" when the session's facilitator matches the viewer —
+compared by display name, not id, because `listSessions`'s query doesn't
+currently select `facilitatorId`; good enough for this demo, worth a real
+id comparison if this becomes load-bearing. Alongside it, a new "Tus
+tareas abiertas" card: `listTasks(..., { assignedTo: ctx.session.userId,
+status: "OPEN" })`, capped at 5 with a "ver todas" link — genuinely
+personal, unlike the existing study-wide `AttentionPanel` below it.
+
+**Mobile responsiveness: one real bug, everything else already worked.** A
+dedicated sweep (`general-purpose` subagent, full app) found the rest of
+the codebase already handled ~360-400px widths correctly — tables already
+wrapped in `overflow-x-auto`, the three kanban boards already scroll
+horizontally, forms already used the `sm:grid-cols-2` mobile-first
+pattern. One real fix: the cohort workspace's "assign staff" popover
+(`cohortes/cohort-panel.tsx`) was a fixed `w-72` box with no right-edge
+constraint — on a narrow phone, once the "+" trigger sits late in a
+wrapped chip row, the popover could run off the right edge entirely. Now
+`right-0` anchored with `max-w-[calc(100vw-2rem)]`. (The program timeline's
+own mobile fix — up to seven equal-width stage columns going illegible
+below `sm:` — was handled directly, in the same pass as the colour fix
+above: header row and every cohort row now share one `overflow-x-auto`
+wrapper with a shared `min-width` scaled to stage count, so columns stay
+aligned across rows while scrolling together.)
+
+**Verified this round:** `npm run typecheck`, `npm run lint`, `npm test`
+(375/375, after adding the missing `participant__contact_name_set` audit
+label both locales' action-label test requires), and `npm run build` all
+clean. Playwright passes at both 390px and 1440px confirmed: the hero
+cover and floating nav on a public page with no cover configured (clears
+correctly via `pt-20`), the accessibility toolbar's text-size cap and
+colour-mute both visibly working and no longer overlapping content once
+the gutter fix landed, the light-mode gradient now visible, Tareas opening
+straight to kanban, the timeline's four-hue palette with no red anywhere,
+"Versión publicada" collapsed by default, and the alert badge showing "1"
+once it was corrected to count ACKNOWLEDGED alongside OPEN.
+
+## D-074 · 2026-09-19 · A new SUPERVISOR role, an animated collapsed-sidebar tooltip, and real staff accounts
+
+Two independent pieces of same-day follow-up.
+
+**Collapsed sidebar: a name badge that slides out on hover, not an OS
+tooltip.** `SidebarNav` (`components/team/sidebar-nav.tsx`) previously gave
+a collapsed item a plain `title` attribute — an OS tooltip with its own
+timing and no animation. Replaced with Base UI's `Tooltip` (`@base-ui/react/
+tooltip`; a generated wrapper already existed at `components/ui/tooltip.tsx`
+but was unused anywhere — this is its first real usage, built here directly
+against the primitives rather than through that wrapper, so the wrapper
+stays a neutral, arrow-bearing system tooltip for whatever uses it next).
+The badge slides in from the left on hover/focus and slides back out to the
+left on release (`slide-in-from-left-2` / `slide-out-to-left-2`, from
+`tw-animate-css`, already imported), grouped under one `TooltipPrimitive.
+Provider` so sweeping across icons doesn't re-run the open delay for each
+one. Using a portal-based tooltip wasn't a style choice — it's the only way
+this works at all: the collapsed rail sits inside two nested
+`overflow-hidden` ancestors (`sidebar-shell.tsx`'s glass panel and its own
+scroll container), which would clip a plain `position: absolute` badge
+before it ever cleared the icon; Base UI's `Tooltip.Portal` renders to
+`document.body` instead.
+
+**A new SUPERVISOR role.** Setting up real staff accounts (below) surfaced
+two people ("Supervisor" of facilitators and sessions) who didn't fit any
+of the five existing roles. Rather than force-fit them into STUDY_MANAGER
+(too broad — full participant-pipeline management) or FACILITATOR (too
+narrow — cohort-scoped, no contact/screening/consent visibility), added
+`SUPERVISOR` as a genuine sixth role: study-wide visibility
+(`cohorts.read.all`, unlike FACILITATOR) plus running sessions/attendance
+across every cohort, with enough participant/screening/consent/
+randomization *read* access to oversee readiness — but no `.manage` on any
+of those, and none of applications/cohorts/logistics/communications
+management. See `src/domain/permissions.ts`'s `SUPERVISOR` entry and
+`docs/permissions.md` for the full reasoning; this is a first cut, not a
+settled design, and the founder should flag anything a real supervisor
+needs that this doesn't grant. Mechanically: `STAFF_ROLES` gained the
+value, migration `0021_supervisor_role.sql` runs `ALTER TYPE staff_role ADD
+VALUE` on its own (must not share a transaction with anything that USES the
+new value), and both message files gained a `roles.SUPERVISOR` label —
+"Supervisión" in Spanish, matching the existing abstract-noun style
+(Administración, Coordinación del estudio, ...) rather than the literal
+"Supervisor" the founder used conversationally.
+
+**Five real staff accounts, in both DEMO and a new real study.** The
+founder named five real people, their real emails, and — for two of them —
+a role ("Supervisor") this app didn't have yet. `scripts/provision-
+staff.ts` (new, one-off, NOT part of `seed.ts`'s synthetic data — rule 9 is
+about that script's demo content, not this) does three things: creates a
+real "Clear Light Program" study (code `CLP`, `DRAFT`, recruitment closed,
+timezone matching DEMO's `Europe/Madrid` — the app is Spanish-first and
+nothing said otherwise), creates five real Supabase Auth accounts (all on
+`SEED_STAFF_PASSWORD` from `.env.local`, per the founder's explicit choice
+to reuse it) and grants each their role in BOTH the DEMO and CLP studies,
+and revokes the DEMO study's `demo.<role>@example.com` placeholder grants
+whose roles didn't match what these real people actually do — a mismatch
+that existed because `DEMO_PERSON_NAMES` (D-065ish, giving the demo
+personas the founding team's first names so demos felt personal) was a
+guess made before real role assignments were known. Granting the SAME five
+people roles in two studies wasn't a UI feature to build: `Header` already
+renders a study-switcher `<select>` whenever `studies.length > 1`
+(`shell.tsx`'s `uniqueStudies`) — it just had never had a reason to show
+before, because no user held more than one membership.
+
+**Left as the founder's own follow-up, not done here:**
+- The `SEED_STAFF_PASSWORD` shared across all five real accounts —
+  including one ADMIN — is a real security trade-off the founder chose
+  explicitly ("use the numadelic.team password set in the .env.local")
+  over generating unique ones. Worth revisiting before this goes further
+  than internal testing: a leaked password compromises all five at once,
+  and there's no forced first-login change.
+- `scripts/provision-staff.ts` has five real people's real personal email
+  addresses hardcoded in it, unlike everything in `seed.ts`. It ran
+  successfully and is idempotent, so there's no need to run it again — the
+  founder may want to delete it, or scrub the addresses, before this
+  repository's history picks it up permanently.
+- The CLP study was created `DRAFT` with recruitment closed and no
+  screening URL — it exists so the five accounts have somewhere real to
+  land, not because it's ready to run. Configuring it for real use is
+  separate work.
+
+**Verified this round:** `npm run typecheck`, `npm run lint`, `npm test`
+(375/375), and `npm run build` all clean; `provision-staff.ts` run twice to
+confirm idempotence (second run granted nothing new and found nothing left
+to revoke); Playwright confirmed signing in as `jose@metanoic.vision`
+lands as ADMIN with 33 permissions, the study switcher shows both DEMO and
+CLP, and the DEMO study's team list now shows only the five real people —
+the old demo placeholders are gone from it, present only as still-valid,
+now-roleless Supabase accounts.
+
+**Same-day fix: a visible seam in `.bg-aurora`.** Spotted on the dashboard
+in dark mode, right through the new "Próximas sesiones"/"Tus tareas
+abiertas" row — a hard horizontal line where the background suddenly
+stopped fading. `.bg-aurora`'s third radial-gradient layer was anchored
+`at 50% 100%`, i.e. exactly on the bottom edge of whatever box paints it —
+a radial gradient's `0%` stop is its brightest point, so anchoring it
+exactly on a clipping edge (here, `TeamShell`'s fixed `h-96` aurora div)
+put that peak precisely on the clip boundary instead of fading into it,
+which read as a hard line rather than a glow. The two corner-anchored
+layers never had this problem because their centres sit safely inside the
+box. Moved the anchor to `50% 130%` (below the box, radii enlarged to
+compensate) so only its already-fading edge is ever visible — fixes every
+`.bg-aurora` use (dashboard, public study pages, the login page), not just
+the dashboard.
+
 ## Open questions for researchers
+
+- Should D-038 and D-040's "codes only, even for an entitled viewer" rule be
+  restored after this demo, kept as a permission-gated name display, or
+  something in between? The team asked to see it rolled back for one demo;
+  nothing here treats that as the final call, and the shared-monitor
+  re-identification risk the original decisions named still applies once this
+  becomes a day-to-day tool rather than a one-off presentation (D-065).
+- Should an application-status correction (D-066) carry a written reason, kept
+  somewhere durable and reviewable? Today it is audited (distinctly from an
+  ordinary transition) but with no free text, matching how this codebase
+  treats free text next to audit rows everywhere else — worth confirming that
+  is the right call for a correction specifically, since "why was this
+  changed" may matter more for a correction than for routine triage.
+- Should entering a programme stage (D-067) automatically surface — not send,
+  D-043 already forbids that — the communications and VR-logistics steps
+  relevant to that stage, the way the founder's "podríamos incluso" framing
+  suggested? Nothing does that yet; `setCohortStage` only records where a
+  cohort is. Worth deciding whether that belongs on the stage itself (a
+  `program_stages` row referencing templates/checklists) or stays a
+  navigation link to the existing Comunicaciones/Logística VR pages.
+- Program stage movement (D-067) is deliberately not forward-only, unlike
+  cohort status. Confirm that's right once this is more than a demo — a
+  cohort visibly "in Ofrenda" then "in Preparación" again may need to be
+  distinguishable from a same-named correction (e.g. a re-run) in the audit
+  trail, which today just shows two `cohort.stage_changed` rows.
+- Now that Sesiones and Comunicaciones are no longer their own nav entries
+  (D-068), is the cross-cohort view they used to offer (every session across
+  every cohort in one table; every prepared message across every cohort)
+  ever actually needed, or does "pick a cohort first" match how the team
+  really works? If it's needed, it belongs back as a page, not squeezed into
+  the workspace's left-hand stack.
+- Should Trello ever write back (D-068)? The founder named it as a possible
+  later step, explicitly not this one — today's integration only reads.
+  Writing back means deciding what "connect a Trello card to a study task"
+  even means (one-directional sync? which system wins a conflict?), which is
+  its own design question, not just a permission to add.
+- D-072's rewritten block editor dropped the visible up/down reorder
+  buttons; reordering is `@dnd-kit`'s `SortableContext` with both a
+  `PointerSensor` and a `KeyboardSensor` (`sortableKeyboardCoordinates`)
+  registered, so a keyboard-only path still exists (tab to a block's drag
+  handle, space to pick up, arrow keys to move, space to drop) — it is just
+  no longer visible as its own button. Whether that discoverability loss
+  is acceptable, or whether an on-screen affordance for the keyboard path
+  is still worth adding, is open.
 
 - Where should contact form messages go: the study mailbox, a CLP Hub inbox, or
   elsewhere? Each changes what the public site collects (D-052).
@@ -1770,3 +2968,62 @@ reference screenshots (the hero body, and the arrived orb).
 - Should revoking your own last grant be refused? It is permitted today: the
   grant is never deleted, so it can be restored, and a guard would have to
   decide what "locked out" means across five roles and several studies.
+- Is "every session template gets both a preparation and an integration
+  content slot, left empty where it doesn't apply" (D-069) the right default,
+  or should a study be able to declare per-stage which slots it actually
+  wants — closer to how `program_stages` already configures names and
+  modality? Today it's a UI convention staff follow, not a schema constraint.
+- D-070's block-by-block content editor (D-028's original follow-up) covers
+  the ten typed block shapes but not inline rich text within a TEXT block
+  beyond the existing tiny Markdown subset (bold/italic/code/links/lists) —
+  is that subset still enough now that authoring is friendlier, or does
+  "just like Notion" eventually mean headings and nested lists too?
+- Sticky notes (D-070) have no edit, only create/delete — is that the right
+  permanence for a team reminder, or should a mistyped note be correctable
+  in place rather than deleted and re-added?
+- Reassigning existing content to a different session (D-070's "usar
+  contenido existente" / the content detail page's session field) moves it
+  outright — the old session immediately loses it. Is a content item ever
+  legitimately shared across more than one session, or is one-session-at-a-
+  time always right for this study? D-071 gave communication templates the
+  identical move-not-copy behaviour, so this applies to both now.
+- D-071's "click a status badge to open a popup" pattern is scoped to the
+  Content list only. Extending it to Solicitudes/Participantes/Tareas'
+  own list view (the founder's original "apply this to all lists" ask) is
+  real, separate work — each has its own inline-edit pattern today built
+  around that record's own transitions.
+- Should the Trello board embed be dropped in favour of just a link, now
+  that testing shows Trello's CSP blocks the iframe for most viewers
+  (D-071)? The iframe still renders for whoever it does work for; removing
+  it would simplify the page for everyone else at the cost of that case.
+- `services/communications.ts`'s `relinkTemplateSession` (D-071) re-saves a
+  template's current wording verbatim to change only its session, bumping
+  `version` even though nothing about the message changed. Is that
+  version-number inflation worth a dedicated "relink only" column update
+  instead, or is treating every save as a version consistent enough with
+  how the rest of this table already works?
+- D-073's dashboard "Tú facilitas" badge compares a session's
+  `facilitatorName` against the viewer's own display name, because
+  `listSessions` doesn't currently select `facilitatorId` — two staff
+  members who happen to share a display name would each see the other's
+  session badged as their own. Worth adding `facilitatorId` to that query
+  and comparing ids instead, if this badge gets used for anything beyond a
+  glance.
+- D-073 gave participants an editable name field again ("for the demo"),
+  entered by hand rather than only arriving through the retired public
+  application form or the seed script. Is hand-entry meant to stay a
+  permanent capability, or was it explicitly scoped to demo use — and if
+  the latter, should it eventually be gated behind something narrower than
+  the standing `participants.manage` permission everyone with that role
+  already holds?
+- D-074's SUPERVISOR permission set is a first cut based on the label
+  "supervises facilitators and sessions" alone — no real usage has tested
+  it yet. Likely gaps once David and Joe actually use it: should a
+  supervisor be able to RECORD a screening/consent outcome (today:
+  read-only), or manage cohorts/applications at all?
+- D-074's five real staff accounts all share `SEED_STAFF_PASSWORD` — the
+  founder's explicit choice, but a real security trade-off (one leaked
+  password compromises all five, one of them ADMIN, with no forced
+  first-login change). Worth unique passwords, or at least a forced
+  password reset, before this study is anything more than internal
+  testing.

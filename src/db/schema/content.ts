@@ -49,6 +49,16 @@ export const contentVersions = pgTable(
     locale: uiLocaleEnum("locale").notNull().default("es"),
     versionNumber: integer("version_number").notNull(),
     title: text("title").notNull(),
+    /** An optional banner image for the public page (2026-09-19 request).
+     * A version-level field, not a block: it sits above the title, not in
+     * the body flow, and only one may exist per version. */
+    coverImageUrl: text("cover_image_url"),
+    /** Vertical crop focus as a 0-100 percentage (`object-position`'s Y
+     * axis) — "keep the image always centred [horizontally], but add an
+     * option to reposition in the Y axis" (2026-09-19 follow-up). 50 is
+     * centred top-to-bottom, the same default `object-position: center`
+     * already gave every cover image before this field existed. */
+    coverImagePosition: integer("cover_image_position").notNull().default(50),
     body: jsonb("body").$type<ContentBody>().notNull().default([]),
     status: contentStatusEnum("status").notNull().default("DRAFT"),
     createdBy: uuid("created_by").references(() => users.id),

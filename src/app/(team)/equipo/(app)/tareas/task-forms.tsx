@@ -36,6 +36,7 @@ export function CreateTaskForm({
   staff,
   participants,
   cohorts,
+  defaultCohortId,
 }: {
   labels: TaskLabels & {
     title: string;
@@ -53,6 +54,9 @@ export function CreateTaskForm({
   staff: { value: string; label: string }[];
   participants: { value: string; label: string }[];
   cohorts: { value: string; label: string }[];
+  /** Pre-selects the cohort field — opened from a specific cohort's own
+   * workspace (2026-09-19), it already knows which one this task is about. */
+  defaultCohortId?: string;
 }) {
   const [state, action, pending] = useActionState(createTaskAction, initial);
 
@@ -129,7 +133,7 @@ export function CreateTaskForm({
 
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="taskCohort">{labels.aboutCohort}</Label>
-        <select id="taskCohort" name="cohortId" defaultValue="" className={SELECT_CLASS}>
+        <select id="taskCohort" name="cohortId" defaultValue={defaultCohortId ?? ""} className={SELECT_CLASS}>
           <option value="">{labels.none}</option>
           {cohorts.map((c) => (
             <option key={c.value} value={c.value}>

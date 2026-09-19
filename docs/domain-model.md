@@ -195,6 +195,26 @@ No event carries a determination, an arm or a contact detail.
 `ELIGIBILITY_DETERMINED` records that a determination was made, never what it
 was. Full description in `docs/automations.md` and D-043.
 
+## Implemented (Phase 4f · migration 0016)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `program_stages` | The programme's named stages for a study | Configuration rows, same reasoning as `session_templates` (D-026): a stage called "Cuerpos de luz" is this trial's design, never a value in code. Reuses `session_modality` rather than a second enum |
+
+Adds two columns to `cohorts`: `current_stage_id` (nullable FK to
+`program_stages`, null = programme not started for this cohort) and
+`current_stage_entered_at`. Unlike `cohort_status`, there is no forward-only
+transition graph for a stage — `setCohortStage`
+(`src/services/program-stages.ts`) allows moving to any configured stage,
+audited under `cohort.stage_changed`, because the field is a record of where
+the cohort actually is rather than a one-way gate. See D-067.
+
+**Migration 0017** adds `session_templates.stage_id` (nullable FK to
+`program_stages`), so a session template can declare which stage it belongs
+to. The demo seed links all seven of its templates one-to-one with its seven
+stages (D-068), but the column is optional: an ad-hoc session, or a study
+that hasn't configured stages, is still a valid template without one.
+
 ## Planned by phase
 
 Every table in the original brief now exists. Further work is refinement of what

@@ -77,6 +77,7 @@ export interface SessionListRow {
   scheduledStart: Date;
   cohortId: string;
   cohortCode: string;
+  templateId: string | null;
   facilitatorName: string | null;
   expected: number;
 }
@@ -99,6 +100,7 @@ export async function listSessions(
       scheduledStart: cohortSessions.scheduledStart,
       cohortId: cohorts.id,
       cohortCode: cohorts.code,
+      templateId: cohortSessions.templateId,
       facilitatorName: users.displayName,
       expected: sql<number>`(
         select count(*) from session_attendance sa where sa.session_id = ${cohortSessions.id}

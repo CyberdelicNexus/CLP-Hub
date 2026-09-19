@@ -1055,3 +1055,60 @@ export async function setEnrollmentStatus(params: {
     });
   });
 }
+
+/**
+ * Set a participant's full name directly from the staff UI (2026-09-19
+ * request: "bring back the ability to add names to the participants for the
+ * demo"). Every DEMO_APPLICANTS row the seed script creates already carries
+ * a synthetic name; this exists for the case a staff member adds or
+ * corrects one by hand mid-demo, without re-running the seed. Category A
+ * contact data (docs/research-data-boundaries.md) — same table, same
+ * permission (`participants.contact.read`/`.manage`) as every other contact
+ * field, not a new kind of data.
+ *
+ * `upsert` because a participant created without a contact row at all (no
+ * application, e.g. a future manual-add path) would otherwise have nowhere
+ * for this to land.
+ */
+export async function setParticipantContactName(params: {
+  studyId: string;
+  participantId: string;
+  actorId: string;
+  fullName: string | null;
+}): Promise<void> {
+  const { studyId, participantId, actorId, fullName } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [participant] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    const [existing] = await tx
+      .select({ fullName: participantContacts.fullName })
+      .from(participantContacts)
+      .where(eq(participantContacts.participantId, participantId))
+      .limit(1);
+
+    if (existing) {
+      await tx
+        .update(participantContacts)
+        .set({ fullName, updatedAt: new Date() })
+        .where(eq(participantContacts.participantId, participantId));
+    } else {
+      await tx.insert(participantContacts).values({ participantId, studyId, fullName });
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "participant.contact_name_set",
+      entityType: "participant",
+      entityId: participantId,
+      before: { fullName: existing?.fullName ?? null },
+      after: { fullName, participantCode: participant.code },
+    });
+  });
+}

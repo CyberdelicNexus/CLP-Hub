@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
+import { A11yContentWrapper, AccessibilityToolbar } from "@/components/accessibility-toolbar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
@@ -10,6 +11,18 @@ import { ThemeToggle } from "@/components/theme-toggle";
  * reader (docs/research-data-boundaries.md, open item 5). There is no session,
  * no personalisation and nothing that varies by who is reading — which is what
  * makes it safe to hand the link out in an email or a WhatsApp message.
+ *
+ * `<main>` has no top padding and no max-width of its own (2026-09-19
+ * follow-up: "update the cover to fill the whole page and always at the top
+ * of the page") — a page's own cover, when it has one, needs to render
+ * full-bleed as the very first thing on the page, before any padding or
+ * column constrains it. That pushes the horizontal max-width and the
+ * padding down into each page component instead of centralising it here;
+ * both public page templates share the identical wrapper now. The back
+ * link and theme toggle become a floating overlay (`glass-panel`, same
+ * "chrome over content" pattern as the team header) rather than a block
+ * above the content, so nothing sits above the cover — and pages with no
+ * cover still clear it via top padding on their own content wrapper.
  */
 export default async function StudyContentLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations("public.study");
@@ -21,11 +34,11 @@ export default async function StudyContentLayout({ children }: { children: React
         className="bg-aurora pointer-events-none absolute inset-x-0 top-0 h-72 opacity-40 dark:opacity-20"
       />
 
-      <header className="relative px-4 pt-6 sm:px-6">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-20 px-4 pt-4 sm:px-6">
+        <div className="glass-panel pointer-events-auto mx-auto flex w-full max-w-3xl items-center justify-between rounded-2xl px-3 py-2">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 rounded-lg text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="inline-flex items-center gap-1.5 rounded-lg px-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <ArrowLeft className="size-4" aria-hidden />
             {t("backHome")}
@@ -34,13 +47,15 @@ export default async function StudyContentLayout({ children }: { children: React
         </div>
       </header>
 
-      <main id="main" className="relative flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <div className="mx-auto w-full max-w-2xl">{children}</div>
+      <AccessibilityToolbar />
+
+      <main id="main" className="relative flex-1">
+        <A11yContentWrapper>{children}</A11yContentWrapper>
       </main>
 
       <footer className="relative border-t border-border px-4 py-8 sm:px-6">
-        <div className="mx-auto w-full max-w-2xl">
-          <p className="text-xs leading-relaxed text-muted-foreground">{t("footerNote")}</p>
+        <div className="mx-auto w-full max-w-3xl">
+          <p className="text-sm leading-relaxed text-muted-foreground">{t("footerNote")}</p>
         </div>
       </footer>
     </div>

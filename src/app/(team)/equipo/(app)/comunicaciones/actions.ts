@@ -20,6 +20,7 @@ import {
   createTemplate,
   NotFoundError,
   recordSend,
+  relinkTemplateSession,
   TemplateError,
   updateTemplate,
 } from "@/services/communications";
@@ -183,6 +184,40 @@ export async function updateTemplateAction(
   }
 
   revalidate();
+  return { error: null, ok: true };
+}
+
+const relinkSchema = z.object({ templateId: uuid, sessionTemplateId: uuid });
+
+/** Assign an existing template to a session, from the cohort workspace's
+ * session view (2026-09-19 request) rather than only from this page. */
+export async function relinkTemplateSessionAction(
+  _prev: CommsState,
+  formData: FormData,
+): Promise<CommsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = relinkSchema.safeParse({
+    templateId: formData.get("templateId"),
+    sessionTemplateId: formData.get("sessionTemplateId"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "communications.manage");
+    await relinkTemplateSession({
+      studyId: ctx.study.id,
+      templateId: parsed.data.templateId,
+      actorId: ctx.session.userId,
+      sessionTemplateId: parsed.data.sessionTemplateId,
+    });
+  } catch (err) {
+    return fail(err, "template.relink");
+  }
+
+  revalidate();
+  revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
   return { error: null, ok: true };
 }
 

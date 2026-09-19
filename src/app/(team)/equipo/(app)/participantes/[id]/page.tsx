@@ -51,6 +51,7 @@ import {
   CloseScreeningForm,
   CompleteScreeningForm,
   ConsentDecisionForm,
+  ContactNameField,
   EnrollmentForm,
   ScheduleScreeningForm,
   StartConsentForm,
@@ -497,7 +498,22 @@ export default async function ParticipantDetailPage({
                 <p className="text-sm text-muted-foreground">{t("applications.contactHidden")}</p>
               ) : (
                 <dl className="space-y-3 text-sm">
-                  <Field label={t("applications.field.name")} value={contact?.fullName} />
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t("applications.field.name")}</dt>
+                    {canManageParticipant ? (
+                      <ContactNameField
+                        participantId={participant.id}
+                        fullName={contact?.fullName ?? null}
+                        labels={{
+                          ...formBase,
+                          empty: t("participants.contactName.empty"),
+                          edit: t("participants.contactName.edit"),
+                        }}
+                      />
+                    ) : (
+                      <dd className="break-words">{contact?.fullName ?? "—"}</dd>
+                    )}
+                  </div>
                   <Field label={t("applications.field.email")} value={contact?.email} />
                   <Field label={t("applications.field.phone")} value={contact?.phone} />
                 </dl>

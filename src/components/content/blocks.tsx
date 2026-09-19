@@ -1,7 +1,8 @@
 import { Fragment } from "react";
-import { CircleCheck, CircleHelp, Info, LifeBuoy, TriangleAlert } from "lucide-react";
+import { Bookmark, CircleCheck, CircleHelp, Info, LifeBuoy, TriangleAlert } from "lucide-react";
 import type { ContentBlock, ContentBody } from "@/domain/content";
 import { parseMarkdown, type Inline } from "@/domain/markdown";
+import { resolveVideoEmbed } from "@/domain/video";
 import { cn } from "@/lib/utils";
 
 /**
@@ -197,13 +198,16 @@ function Block({ block }: { block: ContentBlock }) {
       return (
         <figure className="flex flex-col gap-2">
           {/* Plain <img>: content images are author-supplied external URLs, which
-              next/image would need configured hosts for. */}
+              next/image would need configured hosts for. A fixed aspect-ratio
+              box with object-cover (2026-09-19) keeps a mis-sized or
+              partially-broken source image from distorting the layout the
+              way an unconstrained w-full/h-auto image could. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={block.url}
             alt={block.alt}
             loading="lazy"
-            className="w-full rounded-2xl ring-1 ring-foreground/10"
+            className="aspect-video w-full rounded-2xl object-cover ring-1 ring-foreground/10"
           />
           {block.caption ? (
             <figcaption className="text-sm text-muted-foreground">{block.caption}</figcaption>
@@ -211,9 +215,56 @@ function Block({ block }: { block: ContentBlock }) {
         </figure>
       );
 
-    case "VIDEO":
-      // Linked rather than embedded: an iframe would hand a third party a frame
-      // on a participant-facing page, and the study does not need that.
+    case "VIDEO": {
+      // Plays where it is, not on a page the reader has to navigate to
+      // (2026-09-19: "we don't want users to go to another page to watch
+      // the video"). Three cases, in `resolveVideoEmbed`: a direct media
+      // file gets a native <video> (a media element pointed at a URL, not
+      // an embed — no third party involved at all); a YouTube or Vimeo URL
+      // gets THEIR OWN iframe embed, on the privacy-leaning domain each
+      // offers where one exists (`youtube-nocookie.com`) — a deliberate
+      // reversal of the "never embed a third party" stance VIDEO/BOOKMARK
+      // held before this request, made because playing in place was asked
+      // for explicitly and repeatedly; an unrecognised host still falls
+      // back to a link card, since embedding an arbitrary page's iframe
+      // with no idea what it does is a different risk than a named,
+      // deliberately-chosen video host's own embed product.
+      const embed = resolveVideoEmbed(block.url);
+
+      if (embed.kind === "file") {
+        return (
+          <figure className="flex flex-col gap-2">
+            <video
+              src={block.url}
+              controls
+              preload="metadata"
+              className="aspect-video w-full rounded-2xl bg-black ring-1 ring-foreground/10"
+            />
+            {block.caption ? (
+              <figcaption className="text-sm text-muted-foreground">{block.caption}</figcaption>
+            ) : null}
+          </figure>
+        );
+      }
+
+      if (embed.kind === "youtube" || embed.kind === "vimeo") {
+        return (
+          <figure className="flex flex-col gap-2">
+            <iframe
+              src={embed.embedUrl}
+              title={block.caption ?? "Video"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+              className="aspect-video w-full rounded-2xl bg-black ring-1 ring-foreground/10"
+            />
+            {block.caption ? (
+              <figcaption className="text-sm text-muted-foreground">{block.caption}</figcaption>
+            ) : null}
+          </figure>
+        );
+      }
+
       return (
         <figure className="flex flex-col gap-2">
           <a
@@ -230,6 +281,28 @@ function Block({ block }: { block: ContentBlock }) {
             <span className="min-w-0 font-medium">{block.caption ?? block.url}</span>
           </a>
         </figure>
+      );
+    }
+
+    case "BOOKMARK":
+      // Same "link card, never an embed" principle as VIDEO — no fetched
+      // third-party preview image either, since that would mean this app
+      // calling out to whatever the author linked just to render a page.
+      return (
+        <a
+          href={block.url}
+          rel="noopener noreferrer"
+          className="flex items-start gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-shadow hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          <Bookmark className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <div className="min-w-0">
+            <p className="font-medium">{block.title}</p>
+            {block.description ? (
+              <p className="mt-0.5 text-sm text-muted-foreground">{block.description}</p>
+            ) : null}
+            <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{block.url}</p>
+          </div>
+        </a>
       );
   }
 }

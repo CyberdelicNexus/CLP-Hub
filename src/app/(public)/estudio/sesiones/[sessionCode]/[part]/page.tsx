@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ContentBlocks } from "@/components/content/blocks";
+import { CoverImage } from "@/components/content/cover-image";
 import type { ContentType } from "@/domain/content";
 import { parseLocale } from "@/domain/locale";
 import { getPublishedForSession } from "@/services/content";
@@ -50,20 +51,29 @@ export default async function SessionContentPage({ params }: { params: Promise<P
   const t = await getTranslations("public.study");
 
   return (
-    <article className="flex flex-col gap-8">
-      <header className="flex flex-col gap-3">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {page.sessionName} · {t(`part.${part}`)}
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {page.title}
-        </h1>
-        <p data-numeric className="text-xs text-muted-foreground">
-          {t("updated", { date: formatDate(page.updatedAt) })}
-        </p>
-      </header>
+    <article className="flex flex-col">
+      <CoverImage url={page.coverImageUrl} position={page.coverImagePosition} variant="hero" />
+      {/* pt-20 / pr-14: see [key]/page.tsx's identical wrapper for why. */}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 pt-20 pr-14 pb-10 pl-4 sm:px-6 sm:pb-14">
+        <header className="flex flex-col gap-3">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {page.sessionName} · {t(`part.${part}`)}
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            {page.title}
+          </h1>
+          <p data-numeric className="text-xs text-muted-foreground">
+            {t("updated", { date: formatDate(page.updatedAt) })}
+          </p>
+        </header>
 
-      <ContentBlocks body={page.body} />
+        {/* text-lg: this audience skews older adult (2026-09-19 request) —
+            the 1rem default read too small for a page meant to be read once
+            and acted on, not skimmed. */}
+        <div className="text-lg">
+          <ContentBlocks body={page.body} />
+        </div>
+      </div>
     </article>
   );
 }

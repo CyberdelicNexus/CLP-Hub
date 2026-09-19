@@ -4,37 +4,37 @@ Source of truth: `src/domain/permissions.ts`. Tests: `tests/permissions.test.ts`
 
 Roles are **study-scoped** (`user_roles`). A user may hold several roles in one study. Permissions are the union of their roles' permissions. Feature code checks permissions, never role names.
 
-| Permission | ADMIN | STUDY_MANAGER | FACILITATOR | RESEARCHER | LOGISTICS |
-|---|:-:|:-:|:-:|:-:|:-:|
-| study.settings.manage | ✓ | | | | |
-| team.read | ✓ | ✓ | | | |
-| team.manage | ✓ | | | | |
-| audit.read | ✓ | ✓ | | | |
-| applications.read / manage | ✓ | ✓ | | | |
-| participants.read | ✓ | ✓ | ✓ | ✓ | ✓ |
-| participants.manage | ✓ | ✓ | | | |
-| participants.contact.read | ✓ | ✓ | | | ✓ |
-| screening.read | ✓ | ✓ | | ✓ | |
-| screening.manage | ✓ | ✓ | | | |
-| consent.read | ✓ | ✓ | | ✓ | |
-| consent.manage | ✓ | ✓ | | | |
-| randomization.read | ✓ | ✓ | | ✓ | |
-| randomization.manage | ✓ | ✓ | | | |
-| cohorts.read | ✓ | ✓ | ✓ | ✓ | ✓ |
-| cohorts.read.all | ✓ | ✓ | | ✓ | ✓ |
-| cohorts.manage | ✓ | ✓ | | | |
-| sessions.read | ✓ | ✓ | ✓ | ✓ | |
-| sessions.manage | ✓ | ✓ | ✓ | | |
-| attendance.manage | ✓ | ✓ | ✓ | | |
-| content.read | ✓ | ✓ | ✓ | ✓ | |
-| content.manage / publish | ✓ | ✓ | | | |
-| logistics.read / manage | ✓ | ✓ | | | ✓ |
-| communications.read | ✓ | ✓ | ✓ | | |
-| communications.manage | ✓ | ✓ | | | |
-| communications.approve | ✓ | ✓ | | | |
-| tasks.read / manage | ✓ | ✓ | ✓ | | ✓ |
-| alerts.read | ✓ | ✓ | ✓ | | ✓ |
-| exports.research | ✓ | | | ✓ | |
+| Permission | ADMIN | STUDY_MANAGER | FACILITATOR | RESEARCHER | LOGISTICS | SUPERVISOR |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| study.settings.manage | ✓ | | | | | |
+| team.read | ✓ | ✓ | | | | |
+| team.manage | ✓ | | | | | |
+| audit.read | ✓ | ✓ | | | | |
+| applications.read / manage | ✓ | ✓ | | | | |
+| participants.read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| participants.manage | ✓ | ✓ | | | | |
+| participants.contact.read | ✓ | ✓ | | | ✓ | ✓ |
+| screening.read | ✓ | ✓ | | ✓ | | ✓ |
+| screening.manage | ✓ | ✓ | | | | |
+| consent.read | ✓ | ✓ | | ✓ | | ✓ |
+| consent.manage | ✓ | ✓ | | | | |
+| randomization.read | ✓ | ✓ | | ✓ | | ✓ |
+| randomization.manage | ✓ | ✓ | | | | |
+| cohorts.read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| cohorts.read.all | ✓ | ✓ | | ✓ | ✓ | ✓ |
+| cohorts.manage | ✓ | ✓ | | | | |
+| sessions.read | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| sessions.manage | ✓ | ✓ | ✓ | | | ✓ |
+| attendance.manage | ✓ | ✓ | ✓ | | | ✓ |
+| content.read | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| content.manage / publish | ✓ | ✓ | | | | |
+| logistics.read / manage | ✓ | ✓ | | | ✓ | |
+| communications.read | ✓ | ✓ | ✓ | | | ✓ |
+| communications.manage | ✓ | ✓ | | | | |
+| communications.approve | ✓ | ✓ | | | | |
+| tasks.read / manage | ✓ | ✓ | ✓ | | ✓ | ✓ |
+| alerts.read | ✓ | ✓ | ✓ | | ✓ | ✓ |
+| exports.research | ✓ | | | ✓ | | |
 
 ## Field-level rules (to enforce as tables arrive)
 
@@ -46,6 +46,12 @@ Roles are **study-scoped** (`user_roles`). A user may hold several roles in one 
   `ctx.cohortScope`, and an out-of-scope cohort returns 404.
 - RESEARCHER sees status fields and `external_record_id`, never contact data or logistics.
 - LOGISTICS sees contact + shipping data, never screening/consent/randomization detail.
+- SUPERVISOR (added 2026-09-19, for two real team members overseeing
+  facilitators and sessions study-wide) sees everything FACILITATOR does but
+  without the `cohort_staff` narrowing, plus screening/consent/randomization
+  *status* for oversight — it does not gain `.manage` on any of those, on
+  cohorts, on applications, or on communications/logistics. A starting
+  point, not a settled design.
 
 ## What each key gates today
 

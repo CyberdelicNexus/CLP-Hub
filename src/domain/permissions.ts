@@ -153,6 +153,36 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "tasks.manage",
     "alerts.read",
   ],
+
+  /**
+   * Added 2026-09-19 for two real team members overseeing facilitators and
+   * sessions study-wide — a tier between FACILITATOR (narrowed to their own
+   * cohorts, no contact/screening/consent visibility) and STUDY_MANAGER
+   * (manages the participant pipeline itself). A supervisor sees the whole
+   * study (`cohorts.read.all`, unlike FACILITATOR) and runs sessions and
+   * attendance across every cohort, plus enough participant/screening/
+   * consent visibility to oversee readiness — but does not RECORD screening
+   * or consent outcomes, manage cohorts, or handle applications/logistics/
+   * communications; those stay with STUDY_MANAGER. This is a starting
+   * point, not a settled design — adjust as real use surfaces gaps.
+   */
+  SUPERVISOR: [
+    "participants.read",
+    "participants.contact.read",
+    "screening.read",
+    "consent.read",
+    "randomization.read",
+    "cohorts.read",
+    "cohorts.read.all",
+    "sessions.read",
+    "sessions.manage",
+    "attendance.manage",
+    "content.read",
+    "communications.read",
+    "tasks.read",
+    "tasks.manage",
+    "alerts.read",
+  ],
 };
 
 export function permissionsForRoles(roles: readonly StaffRole[]): Set<Permission> {

@@ -11,6 +11,7 @@ import {
 import { cohorts, studyArms } from "./cohorts";
 import { attendanceStatusEnum, sessionModalityEnum, sessionStatusEnum } from "./enums";
 import { participants } from "./participants";
+import { programStages } from "./program-stages";
 import { studies } from "./studies";
 import { users } from "./users";
 
@@ -30,6 +31,12 @@ export const sessionTemplates = pgTable(
       .notNull()
       .references(() => studies.id),
     armId: uuid("arm_id").references(() => studyArms.id),
+    /**
+     * The programme stage this session belongs to (Phase 4f, 2026-09-18
+     * request) — nullable: an ad-hoc extra session, or a study that hasn't
+     * configured stages, is still a valid template without one.
+     */
+    stageId: uuid("stage_id").references(() => programStages.id),
     code: text("code").notNull(),
     nameEs: text("name_es").notNull(),
     nameEn: text("name_en"),

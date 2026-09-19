@@ -6,6 +6,7 @@ export * from "./audit-events";
 export * from "./participants";
 export * from "./applications";
 export * from "./participant-ops";
+export * from "./program-stages";
 export * from "./cohorts";
 export * from "./sessions";
 export * from "./content";

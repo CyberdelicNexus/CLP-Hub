@@ -20,7 +20,7 @@ Environment variables are validated with Zod in `src/config/env.ts`; the app fai
 
 ## Seeding
 
-`npm run db:seed` creates the `DEMO` study and five staff accounts (`demo.<role>@example.com`) with `SEED_STAFF_PASSWORD`. It uses the service-role key to create Supabase Auth users and is idempotent. Names and emails are deliberately fake.
+`npm run db:seed` creates the `DEMO` study and five staff accounts (`demo.<role>@example.com`) with `SEED_STAFF_PASSWORD`. It uses the service-role key to create Supabase Auth users and is idempotent. Names and emails are deliberately fake — four of the five display names are the founding team's own first names (see the table in README.md), so the dashboard greeting reads naturally in a demo; emails stay role-based.
 
 Since Phase 5 the seed also publishes three Spanish study pages — `/estudio/preparacion-vr`, `/estudio/ayuda` and `/estudio/sesiones/demo_intro/preparacion` — so the public content surface is browsable immediately.
 

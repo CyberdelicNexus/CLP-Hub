@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronDown, ExternalLink } from "lucide-react";
 import { getStudyContext } from "@/auth/study-context";
 import { NoAccess } from "@/components/team/no-access";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentBlocks } from "@/components/content/blocks";
-import { isEditable, parseBody, publicPathFor, type ContentStatus } from "@/domain/content";
+import { isEditable, isSessionContentType, parseBody, publicPathFor, type ContentStatus } from "@/domain/content";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { getContentDetail } from "@/services/content";
-import { NewDraftForm, PublishForm, VersionEditor, VersionStatusForm } from "../content-forms";
+import { listSessionTemplates } from "@/services/sessions";
+import { NewDraftForm, PublishForm, RelinkSessionForm, VersionEditor, VersionStatusForm } from "../content-forms";
+import { CoverImage } from "@/components/content/cover-image";
 import { contentTone } from "../tone";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,6 +44,9 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
   const canManage = ctx.permissions.has("content.manage");
   const canPublish = ctx.permissions.has("content.publish");
   const { content, versions } = detail;
+
+  const isSessionContent = isSessionContentType(content.type);
+  const sessions = isSessionContent && canManage ? await listSessionTemplates(ctx.study.id) : [];
 
   const working = versions.find((v) => isEditable(v.status as ContentStatus));
   const published = versions.find((v) => v.status === "PUBLISHED");
@@ -103,6 +108,30 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
         <StatusBadge tone="info">{t(`content.type.${content.type}`)}</StatusBadge>
       </header>
 
+      {isSessionContent ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("content.field.session")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {canManage ? (
+              <RelinkSessionForm
+                contentId={content.id}
+                sessionTemplateId={content.sessionTemplateId}
+                sessions={sessions.map((s) => ({ id: s.id, label: s.nameEs }))}
+                labels={{
+                  ...base,
+                  submit: t("content.relinkSubmit"),
+                  field: t("content.field.session"),
+                }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{content.sessionCode ?? "—"}</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Working version -------------------------------------------------- */}
       {working ? (
         <Card>
@@ -121,19 +150,65 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
                 versionId={working.id}
                 initialTitle={working.title}
                 initialBody={workingBody}
+                initialCoverImageUrl={working.coverImageUrl}
+                initialCoverImagePosition={working.coverImagePosition}
                 labels={{
                   ...base,
                   submit: t("content.saveDraft"),
                   title: t("content.field.title"),
-                  body: t("content.field.body"),
-                  bodyHelp: t("content.field.bodyHelp"),
-                  preview: t("content.preview"),
-                  previewEmpty: t("content.previewEmpty"),
-                  valid: t("content.bodyValid"),
+                }}
+                coverLabels={{
+                  add: t("content.field.coverImageAdd"),
+                  url: t("content.field.coverImage"),
+                  position: t("content.field.coverImagePosition"),
+                  remove: t("content.field.coverImageRemove"),
+                }}
+                editorLabels={{
+                  empty: t("content.blockEditor.empty"),
+                  remove: t("content.blockEditor.remove"),
+                  drag: t("content.blockEditor.drag"),
+                  insert: t("content.blockEditor.insert"),
+                  done: t("content.blockEditor.done"),
+                  addMedia: t("content.blockEditor.addMedia"),
+                  blockType: {
+                    TEXT: t("content.blockType.TEXT"),
+                    VIDEO: t("content.blockType.VIDEO"),
+                    IMAGE: t("content.blockType.IMAGE"),
+                    BOOKMARK: t("content.blockType.BOOKMARK"),
+                    CHECKLIST: t("content.blockType.CHECKLIST"),
+                    CALLOUT: t("content.blockType.CALLOUT"),
+                    CONTEMPLATION: t("content.blockType.CONTEMPLATION"),
+                    BUTTON: t("content.blockType.BUTTON"),
+                    TECHNICAL_STEP: t("content.blockType.TECHNICAL_STEP"),
+                    SUPPORT_BOX: t("content.blockType.SUPPORT_BOX"),
+                  },
+                  calloutTone: {
+                    INFO: t("content.calloutTone.INFO"),
+                    WARNING: t("content.calloutTone.WARNING"),
+                    SUPPORT: t("content.calloutTone.SUPPORT"),
+                  },
+                  field: {
+                    md: t("content.blockField.md"),
+                    url: t("content.blockField.url"),
+                    caption: t("content.blockField.caption"),
+                    alt: t("content.blockField.alt"),
+                    title: t("content.blockField.title"),
+                    description: t("content.blockField.description"),
+                    items: t("content.blockField.items"),
+                    addItem: t("content.blockField.addItem"),
+                    removeItem: t("content.blockField.removeItem"),
+                    step: t("content.blockField.step"),
+                    label: t("content.blockField.label"),
+                    contactLabel: t("content.blockField.contactLabel"),
+                    contactUrl: t("content.blockField.contactUrl"),
+                  },
                 }}
               />
             ) : (
-              <ContentBlocks body={workingBody} />
+              <>
+                <CoverImage url={working.coverImageUrl} position={working.coverImagePosition} bleed={false} />
+                <ContentBlocks body={workingBody} />
+              </>
             )}
 
             <div className="flex flex-wrap items-end gap-6 border-t border-border pt-5">
@@ -169,15 +244,30 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
 
       {/* Live version ------------------------------------------------------ */}
       {published ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex flex-wrap items-center gap-2">
+        // Collapsed by default (2026-09-19 request) — staff editing a draft
+        // don't need the published page open beside it every time; it's a
+        // reference they open on demand, not something that belongs on screen
+        // by default. A plain <details>, same JS-free pattern as the filter
+        // dropdowns elsewhere in this app — not <Card>, whose own vertical
+        // padding would double up with the <summary>/<CardContent> here.
+        <details className="group/live overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-4">
+            <span className="flex flex-wrap items-center gap-2 font-heading text-base leading-snug font-medium">
               {t("content.live")}
               <StatusBadge tone="success">v{published.versionNumber}</StatusBadge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-2xl bg-background p-5 ring-1 ring-foreground/10">
+            </span>
+            <ChevronDown
+              className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open/live:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <CardContent className="space-y-5 pb-4">
+            <div className="rounded-2xl bg-background p-6 ring-1 ring-foreground/10">
+              {published.coverImageUrl ? (
+                <div className="mb-4">
+                  <CoverImage url={published.coverImageUrl} position={published.coverImagePosition} />
+                </div>
+              ) : null}
               <h2 className="mb-4 text-xl font-semibold">{published.title}</h2>
               <ContentBlocks body={publishedBody} />
             </div>
@@ -193,7 +283,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
               />
             ) : null}
           </CardContent>
-        </Card>
+        </details>
       ) : null}
 
       {/* History ----------------------------------------------------------- */}

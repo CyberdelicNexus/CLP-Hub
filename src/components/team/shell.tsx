@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import type { StudyContext } from "@/auth/study-context";
 import { TEAM_NAV, TEAM_BASE_PATH } from "@/domain/navigation";
+import { countUnresolvedAlerts } from "@/services/automation";
 import { SidebarNav, type NavItem } from "./sidebar-nav";
+import { SidebarShell } from "./sidebar-shell";
 import { Header } from "./header";
 
 /**
@@ -20,6 +22,16 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
     label: t(`nav.${s.key}`),
   }));
 
+  // Alerts moved into the horizontal nav bar as its own bell icon
+  // (2026-09-19 request), so it's pulled out of the vertical sidebar list
+  // rather than appearing in both places.
+  const alertsItem = items.find((i) => i.key === "alerts") ?? null;
+  const sidebarItems = items.filter((i) => i.key !== "alerts");
+  // "Unresolved" (OPEN + ACKNOWLEDGED), the same definition the alerts page's
+  // own attention tile uses — an acknowledged-but-not-resolved alert is still
+  // something the badge should count, not just a brand-new OPEN one.
+  const openAlertCount = alertsItem ? await countUnresolvedAlerts(ctx.study.id) : null;
+
   const studies = uniqueStudies(ctx);
 
   return (
@@ -36,21 +48,18 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
         {t("common.skipToContent")}
       </a>
 
-      <aside className="hidden w-64 shrink-0 p-3 lg:block">
-        <div className="sticky top-3 flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-2xl bg-sidebar ring-1 ring-foreground/10">
-          <div className="flex h-14 items-center gap-2 px-5">
-            <span aria-hidden className="size-6 rounded-[7px] bg-primary ring-1 ring-foreground/10" />
-            <span className="text-sm font-semibold tracking-tight">{t("common.appName")}</span>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <SidebarNav items={items} />
-          </div>
-        </div>
-      </aside>
+      <SidebarShell
+        appName={t("common.appName")}
+        collapseLabel={t("team.sidebar.collapse")}
+        expandLabel={t("team.sidebar.expand")}
+      >
+        <SidebarNav items={sidebarItems} />
+      </SidebarShell>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header
-          items={items}
+          items={sidebarItems}
+          alerts={alertsItem ? { href: alertsItem.href, label: alertsItem.label, count: openAlertCount ?? 0 } : null}
           studies={studies}
           activeStudyId={ctx.study.id}
           user={{ name: ctx.session.displayName, email: ctx.session.email }}

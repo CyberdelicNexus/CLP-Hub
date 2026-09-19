@@ -74,6 +74,11 @@ export interface ContentListRow {
   /** A draft or in-review version waiting for attention. */
   workingStatus: ContentStatus | null;
   workingVersion: number | null;
+  /** The working version's own id — lets the list open a status-change popup
+   * directly, without a trip to the detail page first (2026-09-19 request:
+   * "make them buttons and a pop-up appears with the options to change"). */
+  workingVersionId: string | null;
+  publishedVersionId: string | null;
 }
 
 export async function listContents(studyId: string, locale: Locale): Promise<ContentListRow[]> {
@@ -96,6 +101,7 @@ export async function listContents(studyId: string, locale: Locale): Promise<Con
 
   const versions = await db
     .select({
+      id: contentVersions.id,
       contentId: contentVersions.contentId,
       status: contentVersions.status,
       versionNumber: contentVersions.versionNumber,
@@ -124,8 +130,22 @@ export async function listContents(studyId: string, locale: Locale): Promise<Con
       publishedVersion: published?.versionNumber ?? null,
       workingStatus: (working?.status as ContentStatus | undefined) ?? null,
       workingVersion: working?.versionNumber ?? null,
+      workingVersionId: working?.id ?? null,
+      publishedVersionId: published?.id ?? null,
     };
   });
+}
+
+/** `listContents` filtered to one session-content type — for a picker that lets
+ * staff assign an EXISTING content item to a session slot (2026-09-19), rather
+ * than only ever authoring a new one. */
+export async function listContentsByType(
+  studyId: string,
+  locale: Locale,
+  type: Extract<ContentType, "SESSION_PREPARATION" | "SESSION_INTEGRATION">,
+): Promise<ContentListRow[]> {
+  const rows = await listContents(studyId, locale);
+  return rows.filter((r) => r.type === type);
 }
 
 export interface ContentDetail {
@@ -183,11 +203,20 @@ export async function getVersion(
 export async function getPublishedByKey(params: {
   key: string;
   locale: Locale;
-}): Promise<{ title: string; body: ContentBody; updatedAt: Date; key: string } | null> {
+}): Promise<{
+  title: string;
+  body: ContentBody;
+  coverImageUrl: string | null;
+  coverImagePosition: number;
+  updatedAt: Date;
+  key: string;
+} | null> {
   const [row] = await getDb()
     .select({
       title: contentVersions.title,
       body: contentVersions.body,
+      coverImageUrl: contentVersions.coverImageUrl,
+      coverImagePosition: contentVersions.coverImagePosition,
       updatedAt: contentVersions.publishedAt,
       key: contents.key,
       type: contents.type,
@@ -205,7 +234,14 @@ export async function getPublishedByKey(params: {
 
   if (!row || !isPublicContentType(row.type) || isSessionContentType(row.type)) return null;
   const { blocks } = parseBody(row.body);
-  return { title: row.title, body: blocks, updatedAt: row.updatedAt ?? new Date(), key: row.key };
+  return {
+    title: row.title,
+    body: blocks,
+    coverImageUrl: row.coverImageUrl,
+    coverImagePosition: row.coverImagePosition,
+    updatedAt: row.updatedAt ?? new Date(),
+    key: row.key,
+  };
 }
 
 /** The live preparation or integration page for a session, by session code. */
@@ -213,11 +249,22 @@ export async function getPublishedForSession(params: {
   sessionCode: string;
   type: Extract<ContentType, "SESSION_PREPARATION" | "SESSION_INTEGRATION">;
   locale: Locale;
-}): Promise<{ title: string; body: ContentBody; sessionName: string; updatedAt: Date } | null> {
+}): Promise<{
+  contentId: string;
+  title: string;
+  body: ContentBody;
+  coverImageUrl: string | null;
+  coverImagePosition: number;
+  sessionName: string;
+  updatedAt: Date;
+} | null> {
   const [row] = await getDb()
     .select({
+      contentId: contents.id,
       title: contentVersions.title,
       body: contentVersions.body,
+      coverImageUrl: contentVersions.coverImageUrl,
+      coverImagePosition: contentVersions.coverImagePosition,
       updatedAt: contentVersions.publishedAt,
       sessionName: sessionTemplates.nameEs,
     })
@@ -237,8 +284,11 @@ export async function getPublishedForSession(params: {
   if (!row) return null;
   const { blocks } = parseBody(row.body);
   return {
+    contentId: row.contentId,
     title: row.title,
     body: blocks,
+    coverImageUrl: row.coverImageUrl,
+    coverImagePosition: row.coverImagePosition,
     sessionName: row.sessionName,
     updatedAt: row.updatedAt ?? new Date(),
   };
@@ -336,6 +386,53 @@ export async function createContent(params: {
   });
 }
 
+/**
+ * Change which session a piece of session-content (preparation or
+ * integration) belongs to — the property the founder asked for so an
+ * existing content item can be assigned to, or moved between, the S0–S6
+ * slots after it was created rather than only at creation time (2026-09-19).
+ * Only session-typed content has this relation; anything else is a
+ * programming error, not a user-facing one, so it throws rather than
+ * silently no-opping.
+ */
+export async function relinkContentSession(params: {
+  studyId: string;
+  contentId: string;
+  actorId: string;
+  sessionTemplateId: string;
+}): Promise<void> {
+  const { studyId, contentId, actorId, sessionTemplateId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [content] = await tx
+      .select({ id: contents.id, type: contents.type, key: contents.key, sessionTemplateId: contents.sessionTemplateId })
+      .from(contents)
+      .where(and(eq(contents.id, contentId), eq(contents.studyId, studyId)))
+      .limit(1);
+    if (!content) throw new NotFoundError("content", contentId);
+    if (!isSessionContentType(content.type)) throw new ConflictError("noSession");
+
+    const [template] = await tx
+      .select({ id: sessionTemplates.id, code: sessionTemplates.code })
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.id, sessionTemplateId), eq(sessionTemplates.studyId, studyId)))
+      .limit(1);
+    if (!template) throw new NotFoundError("session template", sessionTemplateId);
+
+    await tx.update(contents).set({ sessionTemplateId }).where(eq(contents.id, contentId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "content.session_relinked",
+      entityType: "content",
+      entityId: contentId,
+      before: { sessionTemplateId: content.sessionTemplateId },
+      after: { sessionTemplateId, sessionCode: template.code, key: content.key },
+    });
+  });
+}
+
 /** Save a draft body. Refuses on a published or archived version. */
 export async function saveVersion(params: {
   studyId: string;
@@ -343,6 +440,14 @@ export async function saveVersion(params: {
   actorId: string;
   title: string;
   body: unknown;
+  /** Optional banner image. The editor always resubmits this field, so
+   * `null` (cleared) and a URL are the only two states this ever sees. */
+  coverImageUrl: string | null;
+  /** Vertical crop focus, 0-100. Meaningless without a cover image but kept
+   * even when `coverImageUrl` is null — clearing the image and clearing the
+   * position are two separate acts, and there is no reason to force one to
+   * imply the other. */
+  coverImagePosition: number;
 }): Promise<void> {
   const { studyId, versionId, actorId } = params;
 
@@ -355,7 +460,12 @@ export async function saveVersion(params: {
 
     await tx
       .update(contentVersions)
-      .set({ title: params.title.trim(), body: parsed.data })
+      .set({
+        title: params.title.trim(),
+        body: parsed.data,
+        coverImageUrl: params.coverImageUrl,
+        coverImagePosition: params.coverImagePosition,
+      })
       .where(eq(contentVersions.id, versionId));
 
     await recordAuditEvent(tx, {
@@ -503,6 +613,8 @@ export async function createDraftFrom(params: {
         versionNumber: Number(max) + 1,
         title: source.title,
         body: source.body,
+        coverImageUrl: source.coverImageUrl,
+        coverImagePosition: source.coverImagePosition,
         status: "DRAFT",
         createdBy: actorId,
       })
@@ -630,6 +742,8 @@ async function loadVersion(tx: DbExecutor, studyId: string, versionId: string) {
       versionNumber: contentVersions.versionNumber,
       title: contentVersions.title,
       body: contentVersions.body,
+      coverImageUrl: contentVersions.coverImageUrl,
+      coverImagePosition: contentVersions.coverImagePosition,
       status: contentVersions.status,
     })
     .from(contentVersions)

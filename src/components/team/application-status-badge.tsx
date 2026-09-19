@@ -8,7 +8,7 @@ import type { ApplicationStatus, RecruitmentStatus } from "@/domain/recruitment"
  * Note the tones are operational, not evaluative: NOT_PURSUED is neutral, not
  * "critical". Nothing here implies an eligibility judgement about a person.
  */
-const APPLICATION_TONES: Record<ApplicationStatus, StatusTone> = {
+export const APPLICATION_TONES: Record<ApplicationStatus, StatusTone> = {
   SUBMITTED: "info",
   IN_REVIEW: "warning",
   ACCEPTED_FOR_SCREENING: "success",

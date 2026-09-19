@@ -130,6 +130,39 @@ export async function closeTaskAction(_prev: TaskState, formData: FormData): Pro
   return { error: null, ok: true };
 }
 
+/**
+ * Same close/cancel as `closeTaskAction`, called directly for the kanban
+ * board's drag-and-drop. `closeTask` only moves an OPEN task to DONE or
+ * CANCELLED (both terminal) and no-ops otherwise, so this never needs to
+ * reject a move the service wouldn't already ignore.
+ */
+export async function moveTaskStatus(
+  taskId: string,
+  status: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { ok: false, error: "forbidden" };
+
+  const parsed = closeSchema.safeParse({ taskId, status });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  try {
+    assertPermission(ctx, "tasks.manage");
+    await closeTask({
+      studyId: ctx.study.id,
+      taskId: parsed.data.taskId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+    });
+  } catch (err) {
+    const state = fail(err, "task.kanban_move");
+    return { ok: false, error: state.error ?? "failed" };
+  }
+
+  revalidate();
+  return { ok: true };
+}
+
 const assignSchema = z.object({
   taskId: uuid,
   assignedTo: z.union([uuid, z.literal("")]),

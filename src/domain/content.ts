@@ -117,6 +117,7 @@ export const BLOCK_TYPES = [
   "TEXT",
   "VIDEO",
   "IMAGE",
+  "BOOKMARK",
   "CHECKLIST",
   "CALLOUT",
   "CONTEMPLATION",
@@ -140,7 +141,7 @@ export const CALLOUT_TONES = ["INFO", "WARNING", "SUPPORT"] as const;
 export type CalloutTone = (typeof CALLOUT_TONES)[number];
 
 /**
- * The nine block types. Each is a closed shape validated on save AND on render,
+ * The ten block types. Each is a closed shape validated on save AND on render,
  * so a row that somehow acquired an unknown block cannot reach a page.
  */
 export const blockSchema = z.discriminatedUnion("type", [
@@ -156,6 +157,12 @@ export const blockSchema = z.discriminatedUnion("type", [
     /** Required: a decorative-only image has no place in participant guidance. */
     alt: z.string().trim().min(1).max(300),
     caption: z.string().trim().max(300).optional(),
+  }),
+  z.object({
+    type: z.literal("BOOKMARK"),
+    url: SAFE_URL,
+    title: z.string().trim().min(1).max(200),
+    description: z.string().trim().max(300).optional(),
   }),
   z.object({
     type: z.literal("CHECKLIST"),

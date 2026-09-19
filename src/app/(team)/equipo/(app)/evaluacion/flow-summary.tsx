@@ -1,20 +1,25 @@
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle } from "lucide-react";
+import { Accordion, AccordionItem, AccordionPanel, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Donut } from "@/components/charts/donut";
 import { countExclusionsWithoutReason, getStudyFlowCounts } from "@/services/study-flow";
 
 /**
- * The study flow, as numbers (Phase 4a).
- *
- * This is the data a CONSORT diagram is drawn from, shown as a table rather than
- * as a drawn diagram: the figures are what staff need day to day, and a diagram
- * that looked publication-ready would invite someone to paste it into a paper
- * before the numbers have been checked against the approved system.
- *
- * Deliberately absent: percentages, retention rates, and any per-person detail.
- * The first two would fold categories together into a figure that reads as a
- * claim (the argument of D-024); the third would turn an aggregate view into a
- * re-identification surface in a study this small.
+ * The study flow, as numbers (Phase 4a), in collapsible sections
+ * (2026-09-18 request). The per-row length bars from that pass were
+ * replaced (2026-09-19: "the progress bars don't mean anything") with two
+ * different honest shapes for two different kinds of data:
+ *   - Etapas / evaluaciones sin resultado are a funnel of SEQUENTIAL counts
+ *     (applications -> people -> assessed -> ...) — a bar comparing them
+ *     implies a proportion that isn't there, so these are now plain stat
+ *     tiles, one number each, nothing computed.
+ *   - Motivos de exclusión / asignación por grupo ARE genuine
+ *     part-of-a-whole breakdowns (each reason's share of all exclusions,
+ *     each arm's share of allocations), where a donut chart states a real
+ *     relationship instead of a misleading one.
+ * Percentages, retention rates and a publication-ready CONSORT diagram are
+ * still deliberately absent (D-024).
  */
 export async function StudyFlowSummary({ studyId }: { studyId: string }) {
   const t = await getTranslations("flow");
@@ -41,12 +46,15 @@ export async function StudyFlowSummary({ studyId }: { studyId: string }) {
     { key: "stillScheduled", value: counts.notAssessed.stillScheduled },
   ];
 
+  const exclusionTotal = counts.exclusionsByReason.reduce((sum, r) => sum + r.count, 0);
+  const allocationTotal = counts.allocation.reduce((sum, a) => sum + a.allocated, 0);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         <p className="text-xs leading-relaxed text-muted-foreground">{t("note")}</p>
 
         {/*
@@ -65,71 +73,83 @@ export async function StudyFlowSummary({ studyId }: { studyId: string }) {
           </p>
         ) : null}
 
-        <Section title={t("stages")}>
-          {stages.map((s) => (
-            <Row key={s.key} label={t(`stage.${s.key}`)} value={s.value} />
-          ))}
-        </Section>
+        <Accordion
+          defaultValue={["stages", "notAssessed", "exclusions", "allocation"]}
+          multiple
+          className="-mx-1"
+        >
+          <AccordionItem value="stages">
+            <AccordionTrigger>{t("stages")}</AccordionTrigger>
+            <AccordionPanel>
+              <Tiles items={stages} labelFor={(key) => t(`stage.${key}`)} />
+            </AccordionPanel>
+          </AccordionItem>
 
-        <Section title={t("notAssessed")}>
-          {notAssessed.map((s) => (
-            <Row key={s.key} label={t(`notAssessedReason.${s.key}`)} value={s.value} />
-          ))}
-        </Section>
+          <AccordionItem value="notAssessed">
+            <AccordionTrigger>{t("notAssessed")}</AccordionTrigger>
+            <AccordionPanel>
+              <Tiles items={notAssessed} labelFor={(key) => t(`notAssessedReason.${key}`)} />
+            </AccordionPanel>
+          </AccordionItem>
 
-        <Section title={t("exclusions")}>
-          {counts.exclusionsByReason.length === 0 ? (
-            <p className="py-2 text-sm text-muted-foreground">{t("noExclusions")}</p>
-          ) : (
-            counts.exclusionsByReason.map((r) => (
-              <Row
-                key={r.reasonId}
-                label={r.labelEs}
-                hint={t(`category.${r.category}`)}
-                value={r.count}
-              />
-            ))
-          )}
-        </Section>
+          <AccordionItem value="exclusions">
+            <AccordionTrigger>{t("exclusions")}</AccordionTrigger>
+            <AccordionPanel>
+              {counts.exclusionsByReason.length === 0 ? (
+                <p className="py-2 text-sm text-muted-foreground">{t("noExclusions")}</p>
+              ) : (
+                <Donut
+                  segments={counts.exclusionsByReason.map((r) => ({
+                    label: `${r.labelEs} · ${t(`category.${r.category}`)}`,
+                    value: r.count,
+                  }))}
+                  centerLabel={t("exclusionsTotal")}
+                  centerValue={exclusionTotal}
+                />
+              )}
+            </AccordionPanel>
+          </AccordionItem>
 
-        <Section title={t("allocation")}>
-          {counts.allocation.length === 0 ? (
-            <p className="py-2 text-sm text-muted-foreground">{t("noArms")}</p>
-          ) : (
-            counts.allocation.map((a) => (
-              <Row
-                key={a.armId}
-                label={a.armNameEs}
-                hint={t("inCohort", { count: a.inCohort })}
-                value={a.allocated}
-              />
-            ))
-          )}
-        </Section>
+          <AccordionItem value="allocation">
+            <AccordionTrigger>{t("allocation")}</AccordionTrigger>
+            <AccordionPanel>
+              {counts.allocation.length === 0 ? (
+                <p className="py-2 text-sm text-muted-foreground">{t("noArms")}</p>
+              ) : (
+                <Donut
+                  segments={counts.allocation.map((a) => ({
+                    label: `${a.armNameEs} · ${t("inCohort", { count: a.inCohort })}`,
+                    value: a.allocated,
+                  }))}
+                  centerLabel={t("allocationTotal")}
+                  centerValue={allocationTotal}
+                />
+              )}
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Tiles({
+  items,
+  labelFor,
+}: {
+  items: { key: string; value: number }[];
+  labelFor: (key: string) => string;
+}) {
   return (
-    <section className="space-y-1">
-      <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</h3>
-      <dl className="divide-y divide-border">{children}</dl>
-    </section>
-  );
-}
-
-function Row({ label, value, hint }: { label: string; value: number; hint?: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
-      <dt className="text-sm">
-        {label}
-        {hint ? <span className="ml-2 text-xs text-muted-foreground">{hint}</span> : null}
-      </dt>
-      <dd data-numeric className="text-sm font-medium tabular-nums">
-        {value}
-      </dd>
+    <div className="grid grid-cols-2 gap-2 py-1 sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.key} className="rounded-xl bg-muted/40 p-3">
+          <p className="text-xs text-muted-foreground">{labelFor(item.key)}</p>
+          <p data-numeric className="mt-0.5 text-xl font-semibold">
+            {item.value}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

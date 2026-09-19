@@ -8,6 +8,7 @@ import { COHORT_CODE_PATTERN, COHORT_NAME_MAX_LENGTH, COHORT_STATUSES } from "@/
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import { logger } from "@/lib/logger";
+import { NOTE_COLORS } from "@/domain/cohort-note";
 import {
   advanceCohortStatus,
   assignCohortStaff,
@@ -15,6 +16,8 @@ import {
   CohortSizeError,
   ConflictError,
   createCohort,
+  createCohortNote,
+  deleteCohortNote,
   InvalidTransitionError,
   NotFoundError,
   recordRandomization,
@@ -22,6 +25,10 @@ import {
   revokeCohortStaff,
   transferToCohort,
 } from "@/services/cohorts";
+import {
+  setCohortStage,
+  NotFoundError as StageNotFoundError,
+} from "@/services/program-stages";
 
 /**
  * Phase 3a staff actions. Each resolves the study server-side, asserts its own
@@ -76,7 +83,7 @@ function fail(err: unknown, event: string): CohortState {
     logger.warn({ event: `${event}.forbidden` }, "action refused");
     return { error: "forbidden" };
   }
-  if (err instanceof NotFoundError) return { error: "notFound" };
+  if (err instanceof NotFoundError || err instanceof StageNotFoundError) return { error: "notFound" };
   if (err instanceof InvalidTransitionError) return { error: "invalid" };
   if (err instanceof ConflictError) return { error: err.reason };
   if (err instanceof CohortSizeError) {
@@ -209,6 +216,61 @@ export async function advanceCohortAction(
   }
 
   revalidate(`${TEAM_BASE_PATH}/cohortes/${parsed.data.cohortId}`);
+  return { error: null, ok: true };
+}
+
+// --- Programme stage (Phase 4f) ----------------------------------------------
+
+const stageSchema = z.object({
+  cohortId: uuid,
+  // Empty string clears the stage back to "programme not started".
+  stageId: z.union([uuid, z.literal("")]),
+});
+
+/**
+ * Move a cohort to a programme stage — any configured stage to any other, not
+ * a forward-only lifecycle like `advanceCohortAction`'s cohort status. See
+ * `setCohortStage` (services/program-stages.ts) for why.
+ */
+/**
+ * The same move as `setCohortStageAction`, as a plain single-argument action
+ * for the "advance to next stage" button (2026-09-19 request) — that button
+ * is a bare `<form action={...}>` with no client state to track (no confirm
+ * step, no error UI beyond the redirect), so it doesn't need
+ * `useActionState`'s two-argument shape the way the timeline's per-stage
+ * buttons do.
+ */
+export async function advanceStageAction(formData: FormData): Promise<void> {
+  await setCohortStageAction({ error: null }, formData);
+}
+
+export async function setCohortStageAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = stageSchema.safeParse({
+    cohortId: formData.get("cohortId"),
+    stageId: formData.get("stageId") ?? "",
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await setCohortStage({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+      stageId: parsed.data.stageId || null,
+    });
+  } catch (err) {
+    return fail(err, "cohort.stage_change");
+  }
+
+  revalidate(`${TEAM_BASE_PATH}/cohortes/${parsed.data.cohortId}`);
+  revalidatePath(`${TEAM_BASE_PATH}/sesiones`);
   return { error: null, ok: true };
 }
 
@@ -429,5 +491,74 @@ export async function transferCohortAction(
   }
 
   revalidate(`${TEAM_BASE_PATH}/participantes/${parsed.data.participantId}`);
+  return { error: null, ok: true };
+}
+
+// --- Sticky notes (2026-09-19 request) ---------------------------------------
+
+const createNoteSchema = z.object({
+  cohortId: uuid,
+  color: z.enum(NOTE_COLORS),
+  body: z.string().trim().min(1).max(280),
+});
+
+export async function createCohortNoteAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = createNoteSchema.safeParse({
+    cohortId: formData.get("cohortId"),
+    color: formData.get("color"),
+    body: formData.get("body"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "tasks.manage");
+    await createCohortNote({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+      color: parsed.data.color,
+      body: parsed.data.body,
+    });
+  } catch (err) {
+    return fail(err, "cohort_note.create");
+  }
+
+  revalidate(`${TEAM_BASE_PATH}/cohortes/${parsed.data.cohortId}`);
+  return { error: null, ok: true };
+}
+
+const deleteNoteSchema = z.object({ noteId: uuid, cohortId: uuid });
+
+export async function deleteCohortNoteAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = deleteNoteSchema.safeParse({
+    noteId: formData.get("noteId"),
+    cohortId: formData.get("cohortId"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "tasks.manage");
+    await deleteCohortNote({
+      studyId: ctx.study.id,
+      noteId: parsed.data.noteId,
+      actorId: ctx.session.userId,
+    });
+  } catch (err) {
+    return fail(err, "cohort_note.delete");
+  }
+
+  revalidate(`${TEAM_BASE_PATH}/cohortes/${parsed.data.cohortId}`);
   return { error: null, ok: true };
 }

@@ -72,6 +72,96 @@ export async function changeApplicationStatus(
   return { error: null, ok: true };
 }
 
+/**
+ * Correct a mistaken status, bypassing the forward-only transition graph
+ * `changeApplicationStatus` enforces (D-066). Same permission, same schema —
+ * the only difference is `correction: true`, which the service audits under
+ * a distinct action so a correction never reads as an ordinary triage step.
+ */
+export async function correctApplicationStatus(
+  _prev: StatusActionState,
+  formData: FormData,
+): Promise<StatusActionState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = schema.safeParse({
+    applicationId: formData.get("applicationId"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "applications.manage");
+    await setApplicationStatus({
+      studyId: ctx.study.id,
+      applicationId: parsed.data.applicationId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+      correction: true,
+    });
+  } catch (err) {
+    if (err instanceof AuthorizationError) {
+      logger.warn(
+        { event: "application.status_correction_forbidden", studyId: ctx.study.id },
+        "status correction refused",
+      );
+      return { error: "forbidden" };
+    }
+    logger.error(
+      {
+        event: "application.status_correction_failed",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "status correction failed",
+    );
+    return { error: "failed" };
+  }
+
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes/${parsed.data.applicationId}`);
+  return { error: null, ok: true };
+}
+
+/**
+ * Same triage move as `changeApplicationStatus`, called directly rather than
+ * bound to a `<form>` — for the kanban board's drag-and-drop, which has no
+ * FormData to parse. Same permission, same transition check, same audit
+ * action; only the calling convention differs.
+ */
+export async function moveApplicationStatus(
+  applicationId: string,
+  status: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { ok: false, error: "forbidden" };
+
+  const parsed = schema.safeParse({ applicationId, status });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  try {
+    assertPermission(ctx, "applications.manage");
+    await setApplicationStatus({
+      studyId: ctx.study.id,
+      applicationId: parsed.data.applicationId,
+      actorId: ctx.session.userId,
+      status: parsed.data.status,
+    });
+  } catch (err) {
+    if (err instanceof AuthorizationError) return { ok: false, error: "forbidden" };
+    if (err instanceof InvalidTransitionError) return { ok: false, error: "invalid" };
+    logger.error(
+      { event: "application.status_move_failed", err: err instanceof Error ? err.message : String(err) },
+      "kanban status move failed",
+    );
+    return { ok: false, error: "failed" };
+  }
+
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes/${parsed.data.applicationId}`);
+  return { ok: true };
+}
+
 // --- Qualtrics intake -------------------------------------------------------
 
 export type IntakeActionState = {

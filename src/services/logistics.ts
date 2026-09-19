@@ -9,6 +9,7 @@ import {
   deviceIncidents,
   devices,
   participantCohortAssignments,
+  participantContacts,
   participantResponsibilities,
   participants,
   users,
@@ -40,6 +41,12 @@ import {
  * - **The next session** comes from `cohort_sessions` via the participant's
  *   cohort. Copied onto the assignment it would go stale the moment a session
  *   moved.
+ *
+ * `listOpenAssignments` also joins `participant_contacts.full_name`. It is
+ * always selected — callers gate whether they render it on
+ * `participants.contact.read` — which supersedes D-038's blanket "codes only,
+ * even for an entitled viewer" rule for this build (D-065, temporary, pending
+ * the team's decision on shared-monitor exposure).
  *
  * And one it never computes: `readiness` is reported, never inferred (D-003).
  */
@@ -116,6 +123,12 @@ export interface AssignmentRow {
   deviceStatus: DeviceStatus;
   participantId: string;
   participantCode: string;
+  /**
+   * From participant_contacts. Always selected; callers gate whether they
+   * render it on the viewer's own `participants.contact.read` permission
+   * (D-065 superseded D-038's blanket code-only rule for this build).
+   */
+  participantName: string | null;
   cohortCode: string | null;
   /** From participant_responsibilities, not from a column here (D-038). */
   responsibleName: string | null;
@@ -138,6 +151,7 @@ export async function listOpenAssignments(studyId: string): Promise<AssignmentRo
       deviceStatus: devices.status,
       participantId: participants.id,
       participantCode: participants.code,
+      participantName: participantContacts.fullName,
       cohortCode: cohorts.code,
       responsibleName: users.displayName,
       openIncidents: sql<number>`(
@@ -148,6 +162,7 @@ export async function listOpenAssignments(studyId: string): Promise<AssignmentRo
     .from(deviceAssignments)
     .innerJoin(devices, eq(devices.id, deviceAssignments.deviceId))
     .innerJoin(participants, eq(participants.id, deviceAssignments.participantId))
+    .leftJoin(participantContacts, eq(participantContacts.participantId, participants.id))
     .leftJoin(
       participantCohortAssignments,
       and(
@@ -174,6 +189,7 @@ export async function listOpenAssignments(studyId: string): Promise<AssignmentRo
     deviceStatus: r.deviceStatus,
     participantId: r.participantId,
     participantCode: r.participantCode,
+    participantName: r.participantName,
     cohortCode: r.cohortCode,
     responsibleName: r.responsibleName,
     openIncidents: Number(r.openIncidents),

@@ -10,15 +10,18 @@ import {
   RecruitmentStatusBadge,
 } from "@/components/team/application-status-badge";
 import { NoAccess } from "@/components/team/no-access";
+import { Accordion, AccordionItem, AccordionPanel, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import {
+  APPLICATION_STATUSES,
   APPLICATION_STATUS_TRANSITIONS,
   type ApplicationStatus,
   type RecruitmentStatus,
 } from "@/domain/recruitment";
 import { getApplicationDetail } from "@/services/recruitment";
 import { StatusForm, type StatusOption } from "../status-form";
+import { CorrectStatusForm } from "../correct-status-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("applications");
@@ -60,6 +63,13 @@ export default async function ApplicationDetailPage({
       }))
     : [];
 
+  // Every status, for the correction escape valve (D-066) — unlike `options`
+  // above, not limited to what APPLICATION_STATUS_TRANSITIONS allows from here.
+  const correctionOptions: StatusOption[] = APPLICATION_STATUSES.map((s) => ({
+    value: s,
+    label: t(`applications.action.${s}`),
+  }));
+
   return (
     <div className="space-y-6">
       <Link
@@ -93,56 +103,58 @@ export default async function ApplicationDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{t("applications.answers")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {detail.answers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("applications.noAnswers")}</p>
-            ) : (
-              <dl className="divide-y divide-border">
-                {detail.answers.map((answer) => (
-                  <div key={answer.questionId} className="grid gap-1 py-3 sm:grid-cols-3 sm:gap-4">
-                    <dt className="text-sm text-muted-foreground">
-                      {(locale === "en" && answer.labelEn) || answer.labelEs}
-                    </dt>
-                    <dd className="text-sm sm:col-span-2">
-                      {formatAnswer(answer.value, answer.options, locale, {
-                        yes: t("common.yes"),
-                        no: t("common.no"),
-                      })}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+          <CardContent className="p-0">
+            <Accordion defaultValue={["contact", "answers"]} multiple className="px-4">
+              <AccordionItem value="contact">
+                <AccordionTrigger>{t("applications.contact")}</AccordionTrigger>
+                <AccordionPanel>
+                  {!includeContact ? (
+                    <p className="text-sm text-muted-foreground">{t("applications.contactHidden")}</p>
+                  ) : (
+                    <dl className="grid gap-3 text-sm sm:grid-cols-3">
+                      <Field label={t("applications.field.name")} value={detail.contact?.fullName} />
+                      <Field label={t("applications.field.email")} value={detail.contact?.email} />
+                      <Field label={t("applications.field.phone")} value={detail.contact?.phone} />
+                    </dl>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+
+              <AccordionItem value="answers">
+                <AccordionTrigger>{t("applications.answers")}</AccordionTrigger>
+                <AccordionPanel>
+                  {detail.answers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t("applications.noAnswers")}</p>
+                  ) : (
+                    <dl className="divide-y divide-border">
+                      {detail.answers.map((answer) => (
+                        <div key={answer.questionId} className="grid gap-1 py-3 sm:grid-cols-3 sm:gap-4">
+                          <dt className="text-sm text-muted-foreground">
+                            {(locale === "en" && answer.labelEn) || answer.labelEs}
+                          </dt>
+                          <dd className="text-sm sm:col-span-2">
+                            {formatAnswer(answer.value, answer.options, locale, {
+                              yes: t("common.yes"),
+                              no: t("common.no"),
+                            })}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("applications.contact")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!includeContact ? (
-                <p className="text-sm text-muted-foreground">{t("applications.contactHidden")}</p>
-              ) : (
-                <dl className="space-y-3 text-sm">
-                  <Field label={t("applications.field.name")} value={detail.contact?.fullName} />
-                  <Field label={t("applications.field.email")} value={detail.contact?.email} />
-                  <Field label={t("applications.field.phone")} value={detail.contact?.phone} />
-                </dl>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("applications.triage")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {canManage ? (
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle>{t("applications.triage")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {canManage ? (
+              <>
                 <StatusForm
                   applicationId={detail.application.id}
                   options={options}
@@ -158,12 +170,29 @@ export default async function ApplicationDetailPage({
                     },
                   }}
                 />
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("applications.readOnly")}</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <CorrectStatusForm
+                  applicationId={detail.application.id}
+                  currentStatus={status}
+                  options={correctionOptions}
+                  labels={{
+                    trigger: t("applications.correctStatus"),
+                    help: t("applications.correctStatusHelp"),
+                    confirm: t("applications.correctStatusConfirm"),
+                    cancel: t("applications.correctStatusCancel"),
+                    submitting: t("common.loading"),
+                    errors: {
+                      forbidden: t("common.noAccess"),
+                      invalid: t("applications.error.invalid"),
+                      failed: t("applications.error.failed"),
+                    },
+                  }}
+                />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("applications.readOnly")}</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

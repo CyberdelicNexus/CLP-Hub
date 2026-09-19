@@ -42,7 +42,17 @@ npm run dev                     # http://localhost:3000/equipo/login
 
 The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/participar` and `/equipo/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
 
-Demo logins after seeding: `demo.admin@example.com`, `demo.study-manager@example.com`, `demo.facilitator@example.com`, `demo.researcher@example.com`, `demo.logistics@example.com`, password = `SEED_STAFF_PASSWORD`.
+Demo logins after seeding, password = `SEED_STAFF_PASSWORD`:
+
+| Person (display name) | Role | Email |
+|---|---|---|
+| Cathy | ADMIN | `demo.admin@example.com` |
+| Jose | STUDY_MANAGER | `demo.study-manager@example.com` |
+| Joana | FACILITATOR | `demo.facilitator@example.com` |
+| David | LOGISTICS | `demo.logistics@example.com` |
+| Demo RESEARCHER | RESEARCHER | `demo.researcher@example.com` |
+
+Emails stay role-based (unchanged); only the display name is a person's name, so the facilitator-scoping walkthrough below still resolves to the same account.
 
 ## Scripts
 

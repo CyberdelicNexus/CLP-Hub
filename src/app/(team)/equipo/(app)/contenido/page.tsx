@@ -11,6 +11,7 @@ import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { listContents } from "@/services/content";
 import { listSessionTemplates } from "@/services/sessions";
 import { CreateContentForm } from "./content-forms";
+import { StatusPopup } from "./status-popup";
 import { contentTone } from "./tone";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,7 +23,11 @@ export async function generateMetadata(): Promise<Metadata> {
  * Study content index. Shows what is live, what is being worked on, and where
  * each page can be read publicly.
  */
-export default async function ContentPage() {
+export default async function ContentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sessionTemplateId?: string; type?: string }>;
+}) {
   const ctx = await getStudyContext();
   if (!ctx) return null;
 
@@ -32,11 +37,20 @@ export default async function ContentPage() {
   }
 
   const canManage = ctx.permissions.has("content.manage");
+  const canPublish = ctx.permissions.has("content.publish");
   // Spanish is authoritative for study content (D-009).
   const [rows, sessions] = await Promise.all([
     listContents(ctx.study.id, "es"),
     canManage ? listSessionTemplates(ctx.study.id) : [],
   ]);
+
+  // Deep-linked from a session's empty content slot in the cohort workspace —
+  // only honored when it names a real type/session, never trusted blindly.
+  const { sessionTemplateId, type: requestedType } = await searchParams;
+  const defaultType = AUTHORABLE_CONTENT_TYPES.find((t) => t === requestedType);
+  const defaultSessionTemplateId = sessions.some((s) => s.id === sessionTemplateId)
+    ? sessionTemplateId
+    : undefined;
 
   const errors = {
     forbidden: t("common.noAccess"),
@@ -77,8 +91,7 @@ export default async function ContentPage() {
                 <tr className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                   <th scope="col" className="px-4 py-3">{t("content.table.title")}</th>
                   <th scope="col" className="px-4 py-3">{t("content.table.type")}</th>
-                  <th scope="col" className="px-4 py-3">{t("content.table.live")}</th>
-                  <th scope="col" className="px-4 py-3">{t("content.table.working")}</th>
+                  <th scope="col" className="px-4 py-3">{t("content.table.status")}</th>
                   <th scope="col" className="px-4 py-3">{t("content.table.page")}</th>
                   <th scope="col" className="px-4 py-3">
                     <span className="sr-only">{t("content.table.open")}</span>
@@ -110,21 +123,49 @@ export default async function ContentPage() {
                         {t(`content.type.${row.type}`)}
                       </td>
                       <td className="px-4 py-3">
-                        {row.publishedVersion ? (
-                          <StatusBadge tone="success">
-                            {t("content.status.PUBLISHED")} · v{row.publishedVersion}
-                          </StatusBadge>
+                        {canManage ? (
+                          <StatusPopup
+                            contentId={row.id}
+                            row={row}
+                            canPublish={canPublish}
+                            labels={{
+                              title: row.publishedTitle ?? row.key,
+                              live: t("content.status.PUBLISHED"),
+                              none: t("content.table.noVersions"),
+                              submit: t("common.save"),
+                              submitting: t("common.loading"),
+                              errors,
+                              statusLabel: {
+                                DRAFT: t("content.status.DRAFT"),
+                                REVIEW: t("content.status.REVIEW"),
+                                PUBLISHED: t("content.status.PUBLISHED"),
+                                ARCHIVED: t("content.status.ARCHIVED"),
+                              },
+                              action: { DRAFT: t("content.action.DRAFT"), REVIEW: t("content.action.REVIEW") },
+                              publish: t("content.publish"),
+                              publishNote: row.publishedVersion
+                                ? t("content.publishReplaces", { version: row.publishedVersion })
+                                : t("content.publishFirst"),
+                              newDraft: t("content.newDraft"),
+                              newDraftNote: t("content.newDraftNote"),
+                            }}
+                          />
                         ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {row.workingStatus ? (
-                          <StatusBadge tone={contentTone(row.workingStatus)}>
-                            {t(`content.status.${row.workingStatus}`)} · v{row.workingVersion}
-                          </StatusBadge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {row.publishedVersion ? (
+                              <StatusBadge tone="success">
+                                {t("content.status.PUBLISHED")} · v{row.publishedVersion}
+                              </StatusBadge>
+                            ) : null}
+                            {row.workingStatus ? (
+                              <StatusBadge tone={contentTone(row.workingStatus)}>
+                                {t(`content.status.${row.workingStatus}`)} · v{row.workingVersion}
+                              </StatusBadge>
+                            ) : null}
+                            {!row.publishedVersion && !row.workingStatus ? (
+                              <span className="text-muted-foreground">—</span>
+                            ) : null}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -161,7 +202,7 @@ export default async function ContentPage() {
       )}
 
       {canManage ? (
-        <Card>
+        <Card id="create">
           <CardHeader>
             <CardTitle>{t("content.createTitle")}</CardTitle>
           </CardHeader>
@@ -173,6 +214,8 @@ export default async function ContentPage() {
                 needsSession: isSessionContentType(type),
               }))}
               sessions={sessions.map((s) => ({ id: s.id, label: s.nameEs }))}
+              defaultType={defaultType}
+              defaultSessionTemplateId={defaultSessionTemplateId}
               labels={{
                 submit: t("content.create"),
                 submitting: t("common.loading"),

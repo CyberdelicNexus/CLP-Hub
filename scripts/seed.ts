@@ -36,10 +36,27 @@ const DEMO_STUDY = {
   screeningUrl: "https://example.com/demo-screening-sintetico",
 } as const;
 
+/**
+ * Named demo personas (2026-09-18 request), so the founding team can present
+ * with people they recognize instead of `Demo ADMIN`. The email keeps the
+ * role-based pattern (`demo.<role>@example.com`) documented in README.md and
+ * relied on in docs/development.md's facilitator-scoping walkthrough — only
+ * `displayName` changes. RESEARCHER keeps a generic name: only four names
+ * were given for five roles.
+ */
+const DEMO_PERSON_NAMES: Partial<Record<StaffRole, string>> = {
+  ADMIN: "Cathy",
+  STUDY_MANAGER: "Jose",
+  FACILITATOR: "Joana",
+  LOGISTICS: "David",
+};
+
 const DEMO_STAFF: ReadonlyArray<{ email: string; displayName: string; role: StaffRole }> = STAFF_ROLES.map(
   (role) => ({
     email: `demo.${role.toLowerCase().replace("_", "-")}@example.com`,
-    displayName: `Demo ${role.replace("_", " ")} (SINTÉTICO)`,
+    displayName: DEMO_PERSON_NAMES[role]
+      ? `${DEMO_PERSON_NAMES[role]}`
+      : `Demo ${role.replace("_", " ")}`,
     role,
   }),
 );
@@ -152,8 +169,8 @@ const DEMO_QUESTIONS: ReadonlyArray<typeof schema.applicationQuestions.$inferIns
 const DEMO_ARMS = [
   {
     code: "DEMO-A",
-    nameEs: "Rama A (SINTÉTICA)",
-    nameEn: "Arm A (SYNTHETIC)",
+    nameEs: "Rama A",
+    nameEn: "Arm A",
     position: 10,
     // Configuration, not a rule in code: this arm's participants also sign in
     // person at the initial visit (D-032). The app never decides this.
@@ -161,8 +178,8 @@ const DEMO_ARMS = [
   },
   {
     code: "DEMO-B",
-    nameEs: "Rama B (SINTÉTICA)",
-    nameEn: "Arm B (SYNTHETIC)",
+    nameEs: "Rama B",
+    nameEn: "Arm B",
     position: 20,
     requiresPhysicalConsent: false,
   },
@@ -177,14 +194,14 @@ const DEMO_ARMS = [
 const DEMO_CONSENT_SCOPES = [
   {
     code: "ENTREVISTA",
-    labelEs: "Autoriza una entrevista grabada (SINTÉTICO)",
-    labelEn: "Authorizes a recorded interview (SYNTHETIC)",
+    labelEs: "Autoriza una entrevista grabada",
+    labelEn: "Authorizes a recorded interview",
     position: 10,
   },
   {
     code: "DOCUMENTAL",
-    labelEs: "Autoriza aparecer en el documental (SINTÉTICO)",
-    labelEn: "Authorizes appearing in the documentary (SYNTHETIC)",
+    labelEs: "Autoriza aparecer en el documental",
+    labelEn: "Authorizes appearing in the documentary",
     position: 20,
   },
 ] as const;
@@ -197,7 +214,7 @@ const DEMO_CONSENT_SCOPES = [
  */
 const DEMO_COHORT = {
   code: "DEMO-C1",
-  name: "Cohorte de demostración (SINTÉTICA)",
+  name: "Cohorte de demostración",
   armCode: "DEMO-A",
   minSize: 6,
   maxSize: 8,
@@ -208,11 +225,48 @@ const DEMO_COHORT = {
  * is exactly where a real trial's session names would live, never in code
  * (non-negotiable 6). `armId` is left null: these apply to every arm.
  */
+/**
+ * Synthetic programme stages (Phase 4f, 2026-09-18 request). Stage names and
+ * their order are CONFIGURATION rows — this is exactly where a real trial's
+ * programme design would live, never in code (non-negotiable 6). The modality
+ * pattern (an opening pair on video, one in-person orientation, the rest in
+ * VR) is this demo's own shape; a real study configures its own.
+ */
+const DEMO_PROGRAM_STAGES = [
+  { code: "preparacion", nameEs: "Preparación", nameEn: "Preparation", position: 10, modality: "ZOOM" as const },
+  { code: "orientacion", nameEs: "Orientación", nameEn: "Orientation", position: 20, modality: "IN_PERSON" as const },
+  { code: "cuerpos-de-luz", nameEs: "Cuerpos de luz", nameEn: "Bodies of light", position: 30, modality: "VR" as const },
+  { code: "vida", nameEs: "Vida", nameEn: "Life", position: 40, modality: "VR" as const },
+  { code: "mas-alla-del-cuerpo", nameEs: "Más allá del cuerpo", nameEn: "Beyond the body", position: 50, modality: "VR" as const },
+  { code: "ofrenda", nameEs: "Ofrenda", nameEn: "Offering", position: 60, modality: "VR" as const },
+  { code: "integracion-grupal", nameEs: "Integración grupal", nameEn: "Group integration", position: 70, modality: "ZOOM" as const },
+] as const;
+
+/**
+ * Synthetic session templates, one per programme stage (S0–S6, 2026-09-18
+ * request) so the "Programar sesión" dropdown shows the whole programme
+ * instead of three generic entries. `stageCode` resolves to `stage_id` at
+ * insert time (`stageIdByCode`, built right after DEMO_PROGRAM_STAGES is
+ * written). Codes `demo_intro`/`demo_vr`/`demo_followup` are kept stable —
+ * DEMO_CONTENT and DEMO_CHANNEL_TEMPLATES below reference them by code — only
+ * their names, order and timing changed to fit the seven-stage sequence.
+ */
 const DEMO_SESSION_TEMPLATES = [
   {
+    code: "demo_prep",
+    stageCode: "preparacion",
+    nameEs: "S0 · Preparación",
+    nameEn: "S0 · Preparation",
+    position: 5,
+    modality: "ZOOM" as const,
+    durationMinutes: 60,
+    dayOffset: -7,
+  },
+  {
     code: "demo_intro",
-    nameEs: "Sesión 1 · Introducción (SINTÉTICA)",
-    nameEn: "Session 1 · Introduction (SYNTHETIC)",
+    stageCode: "orientacion",
+    nameEs: "S1 · Orientación",
+    nameEn: "S1 · Orientation",
     position: 10,
     modality: "IN_PERSON" as const,
     durationMinutes: 90,
@@ -220,21 +274,53 @@ const DEMO_SESSION_TEMPLATES = [
   },
   {
     code: "demo_vr",
-    nameEs: "Sesión 2 · Práctica en RV (SINTÉTICA)",
-    nameEn: "Session 2 · VR practice (SYNTHETIC)",
+    stageCode: "cuerpos-de-luz",
+    nameEs: "S2 · Cuerpos de luz",
+    nameEn: "S2 · Bodies of light",
     position: 20,
     modality: "VR" as const,
     durationMinutes: 60,
     dayOffset: 7,
   },
   {
-    code: "demo_followup",
-    nameEs: "Sesión 3 · Seguimiento (SINTÉTICA)",
-    nameEn: "Session 3 · Follow-up (SYNTHETIC)",
+    code: "demo_vida",
+    stageCode: "vida",
+    nameEs: "S3 · Vida",
+    nameEn: "S3 · Life",
     position: 30,
+    modality: "VR" as const,
+    durationMinutes: 60,
+    dayOffset: 14,
+  },
+  {
+    code: "demo_mas_alla",
+    stageCode: "mas-alla-del-cuerpo",
+    nameEs: "S4 · Más allá del cuerpo",
+    nameEn: "S4 · Beyond the body",
+    position: 40,
+    modality: "VR" as const,
+    durationMinutes: 60,
+    dayOffset: 21,
+  },
+  {
+    code: "demo_ofrenda",
+    stageCode: "ofrenda",
+    nameEs: "S5 · Ofrenda",
+    nameEn: "S5 · Offering",
+    position: 50,
+    modality: "VR" as const,
+    durationMinutes: 60,
+    dayOffset: 28,
+  },
+  {
+    code: "demo_followup",
+    stageCode: "integracion-grupal",
+    nameEs: "S6 · Integración grupal",
+    nameEn: "S6 · Group integration",
+    position: 60,
     modality: "ZOOM" as const,
     durationMinutes: 45,
-    dayOffset: 21,
+    dayOffset: 35,
   },
 ] as const;
 
@@ -343,48 +429,48 @@ const DEMO_REASONS: ReadonlyArray<{
   {
     code: "NO_CUMPLE_CRITERIOS",
     category: "DID_NOT_MEET_CRITERIA",
-    labelEs: "No cumple un criterio de inclusión (SINTÉTICO)",
-    labelEn: "Does not meet an inclusion criterion (SYNTHETIC)",
+    labelEs: "No cumple un criterio de inclusión",
+    labelEn: "Does not meet an inclusion criterion",
     appliesTo: ["INELIGIBLE"],
     position: 10,
   },
   {
     code: "DECLINA_PARTICIPAR",
     category: "DECLINED",
-    labelEs: "Prefiere no participar (SINTÉTICO)",
-    labelEn: "Prefers not to take part (SYNTHETIC)",
+    labelEs: "Prefiere no participar",
+    labelEn: "Prefers not to take part",
     appliesTo: ["INELIGIBLE"],
     position: 20,
   },
   {
     code: "SIN_CONTACTO",
     category: "UNREACHABLE",
-    labelEs: "No se ha podido contactar (SINTÉTICO)",
-    labelEn: "Could not be reached (SYNTHETIC)",
+    labelEs: "No se ha podido contactar",
+    labelEn: "Could not be reached",
     appliesTo: ["INELIGIBLE", "REVIEW_REQUIRED"],
     position: 30,
   },
   {
     code: "DISPONIBILIDAD",
     category: "LOGISTICS",
-    labelEs: "Disponibilidad incompatible con el calendario (SINTÉTICO)",
-    labelEn: "Availability does not fit the schedule (SYNTHETIC)",
+    labelEs: "Disponibilidad incompatible con el calendario",
+    labelEn: "Availability does not fit the schedule",
     appliesTo: ["INELIGIBLE", "WAITLIST"],
     position: 40,
   },
   {
     code: "FALTA_INFORMACION",
     category: "OTHER",
-    labelEs: "Falta información para decidir (SINTÉTICO)",
-    labelEn: "Missing information to decide (SYNTHETIC)",
+    labelEs: "Falta información para decidir",
+    labelEn: "Missing information to decide",
     appliesTo: ["REVIEW_REQUIRED"],
     position: 50,
   },
   {
     code: "SIN_PLAZA",
     category: "STUDY_CAPACITY",
-    labelEs: "Sin plaza en la cohorte actual (SINTÉTICO)",
-    labelEn: "No place in the current cohort (SYNTHETIC)",
+    labelEs: "Sin plaza en la cohorte actual",
+    labelEn: "No place in the current cohort",
     appliesTo: ["WAITLIST"],
     position: 60,
   },
@@ -408,19 +494,19 @@ const DEMO_QUALTRICS_MAPPINGS: ReadonlyArray<{
     sourceField: "ResponseId",
     sourceClass: "ANONYMOUS_ID",
     target: "participant.externalRef",
-    notes: "Referencia anónima de la respuesta (SINTÉTICO). Desactivado.",
+    notes: "Referencia anónima de la respuesta. Desactivado.",
   },
   {
     sourceField: "consentAccepted",
     sourceClass: "OPERATIONAL",
     target: "consent.digitalStatus",
-    notes: "Solo el estado del consentimiento, nunca su contenido (SINTÉTICO). Desactivado.",
+    notes: "Solo el estado del consentimiento, nunca su contenido. Desactivado.",
   },
   {
     sourceField: "finishedAt",
     sourceClass: "OPERATIONAL",
     target: "screening.completedAt",
-    notes: "Marca temporal de finalización (SINTÉTICO). Desactivado.",
+    notes: "Marca temporal de finalización. Desactivado.",
   },
 ];
 
@@ -470,9 +556,9 @@ const DEMO_QUALTRICS_INTAKE: ReadonlyArray<{
  * holds nothing about any participant.
  */
 const DEMO_DEVICES = [
-  { code: "VR-DEMO-01", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0001" },
-  { code: "VR-DEMO-02", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0002" },
-  { code: "VR-DEMO-03", model: "Visor de demostración (SINTÉTICO)", serial: "SN-DEMO-0003" },
+  { code: "VR-DEMO-01", model: "Visor de demostración", serial: "SN-DEMO-0001" },
+  { code: "VR-DEMO-02", model: "Visor de demostración", serial: "SN-DEMO-0002" },
+  { code: "VR-DEMO-03", model: "Visor de demostración", serial: "SN-DEMO-0003" },
 ] as const;
 
 /**
@@ -489,61 +575,61 @@ const DEMO_TEMPLATES = [
   {
     key: "confirmacion-solicitud",
     stage: "APPLICATION_RECEIVED" as const,
-    nameEs: "Confirmación de solicitud (SINTÉTICA)",
+    nameEs: "Confirmación de solicitud",
     bodyEs: "Hola {{nombre}}:\n\nHemos recibido tu solicitud para el estudio. Tu referencia es {{codigo}}.\n\nTe escribiremos en los próximos días. Gracias por tu interés.\n\n(Mensaje sintético de demostración.)",
   },
   {
     key: "programar-evaluacion",
     stage: "SCREENING_SCHEDULING" as const,
-    nameEs: "Programación de evaluación (SINTÉTICA)",
+    nameEs: "Programación de evaluación",
     bodyEs: "Hola {{nombre}}:\n\nQueremos concertar tu entrevista de evaluación. Te proponemos el {{fecha}} a las {{hora}}.\n\nDinos si te viene bien. (Mensaje sintético.)",
   },
   {
     key: "informacion-pendiente",
     stage: "INFO_REQUEST" as const,
-    nameEs: "Solicitud de información pendiente (SINTÉTICA)",
+    nameEs: "Solicitud de información pendiente",
     bodyEs: "Hola {{nombre}}:\n\nNos falta un dato para seguir adelante: {{instrucciones}}\n\nGracias. (Mensaje sintético.)",
   },
   {
     key: "confirmacion-elegibilidad",
     stage: "ELIGIBILITY_CONFIRMED" as const,
-    nameEs: "Confirmación de elegibilidad (SINTÉTICA)",
+    nameEs: "Confirmación de elegibilidad",
     bodyEs: "Hola {{nombre}}:\n\nYa tenemos el resultado de tu evaluación y puedes continuar en el estudio. Te contactará {{responsable}} para los siguientes pasos.\n\n(Mensaje sintético.)",
   },
   {
     key: "lista-de-espera",
     stage: "WAITLIST" as const,
-    nameEs: "Lista de espera (SINTÉTICA)",
+    nameEs: "Lista de espera",
     bodyEs: "Hola {{nombre}}:\n\nDe momento no tenemos plaza disponible, así que quedas en lista de espera. Te avisaremos en cuanto se abra un hueco.\n\n(Mensaje sintético.)",
   },
   {
     key: "programar-sesion-inicial",
     stage: "INITIAL_SESSION_SCHEDULING" as const,
-    nameEs: "Programación de sesión inicial (SINTÉTICA)",
+    nameEs: "Programación de sesión inicial",
     bodyEs: "Hola {{nombre}}:\n\nTu primera sesión sería el {{fecha}} a las {{hora}} en {{lugar}}. Te acompañará {{responsable}}.\n\nConfírmanos si te encaja. (Mensaje sintético.)",
   },
   {
     key: "recordatorio-sesion",
     stage: "SESSION_REMINDER" as const,
-    nameEs: "Recordatorio de sesión (SINTÉTICA)",
+    nameEs: "Recordatorio de sesión",
     bodyEs: "Hola {{nombre}}:\n\nTe recordamos la sesión del {{fecha}} a las {{hora}} en {{lugar}}.\n\nSi no puedes venir, avísanos. (Mensaje sintético.)",
   },
   {
     key: "instrucciones-gafas",
     stage: "VR_INSTRUCTIONS" as const,
-    nameEs: "Instrucciones sobre las gafas (SINTÉTICA)",
+    nameEs: "Instrucciones sobre las gafas",
     bodyEs: "Hola {{nombre}}:\n\nAquí tienes la guía para preparar las gafas: {{enlace}}\n\nSi algo no funciona, escríbenos y lo vemos juntos. No es un fallo tuyo.\n\n(Mensaje sintético.)",
   },
   {
     key: "seguimiento",
     stage: "FOLLOW_UP" as const,
-    nameEs: "Seguimiento (SINTÉTICA)",
+    nameEs: "Seguimiento",
     bodyEs: "Hola {{nombre}}:\n\nQueríamos saber cómo te va tras la sesión. Cuando puedas, cuéntanos.\n\n(Mensaje sintético.)",
   },
   {
     key: "cierre-devolucion",
     stage: "CLOSING" as const,
-    nameEs: "Cierre y devolución (SINTÉTICA)",
+    nameEs: "Cierre y devolución",
     bodyEs: "Hola {{nombre}}:\n\nHemos llegado al final de tu participación. Para devolver el equipo, {{instrucciones}}\n\nGracias por participar. (Mensaje sintético.)",
   },
 ] as const;
@@ -572,7 +658,7 @@ const DEMO_TEMPLATES = [
 const DEMO_RULES = [
   {
     key: "demo-confirmar-solicitud",
-    nameEs: "Confirmar la solicitud (SINTÉTICA)",
+    nameEs: "Confirmar la solicitud",
     eventType: "APPLICATION_SUBMITTED" as const,
     actionKind: "MESSAGE" as const,
     // Straight away: the anchor is the moment the application arrived.
@@ -582,7 +668,7 @@ const DEMO_RULES = [
   },
   {
     key: "demo-recordatorio-vispera",
-    nameEs: "Recordatorio la víspera de la sesión (SINTÉTICA)",
+    nameEs: "Recordatorio la víspera de la sesión",
     eventType: "SESSION_SCHEDULED" as const,
     actionKind: "MESSAGE" as const,
     // 24 h before the session STARTS, because the event's anchor is the
@@ -595,7 +681,7 @@ const DEMO_RULES = [
   },
   {
     key: "demo-preparar-visor",
-    nameEs: "Preparar el visor antes de la visita (SINTÉTICA)",
+    nameEs: "Preparar el visor antes de la visita",
     eventType: "VISIT_SCHEDULED" as const,
     actionKind: "TASK" as const,
     offsetMinutes: -2880,
@@ -605,7 +691,7 @@ const DEMO_RULES = [
   },
   {
     key: "demo-config-rv-sin-confirmar",
-    nameEs: "Avisar si la configuración de RV sigue sin confirmar (SINTÉTICA)",
+    nameEs: "Avisar si la configuración de RV sigue sin confirmar",
     eventType: "SESSION_SCHEDULED" as const,
     actionKind: "ALERT" as const,
     offsetMinutes: -2880,
@@ -628,19 +714,19 @@ const DEMO_RULES = [
  */
 const DEMO_TASKS = [
   {
-    titleEs: "Revisar el inventario de visores antes de la próxima cohorte (SINTÉTICA)",
+    titleEs: "Revisar el inventario de visores antes de la próxima cohorte",
     detail: "Comprobar carga, limpieza y versión de software de los tres equipos.",
     priority: "HIGH" as const,
     dueInDays: 3,
   },
   {
-    titleEs: "Confirmar la sala para las sesiones presenciales (SINTÉTICA)",
+    titleEs: "Confirmar la sala para las sesiones presenciales",
     detail: "Reservar y confirmar por escrito con el centro.",
     priority: "NORMAL" as const,
     dueInDays: 7,
   },
   {
-    titleEs: "Repasar las plantillas de mensajes con el equipo de facilitación (SINTÉTICA)",
+    titleEs: "Repasar las plantillas de mensajes con el equipo de facilitación",
     detail: null,
     priority: "LOW" as const,
     dueInDays: null,
@@ -652,50 +738,60 @@ const DEMO_CHANNEL_TEMPLATES = [
     key: "canal-bienvenida",
     stage: "INITIAL_SESSION_SCHEDULING" as const,
     sessionCode: null,
-    nameEs: "Bienvenida al canal de la cohorte (SINTÉTICA)",
+    nameEs: "Bienvenida al canal de la cohorte",
     bodyEs: "¡Hola a todas y todos!\n\nEste es el canal de la cohorte {{cohorte}}. Aquí iremos compartiendo fechas, recordatorios y material.\n\nCualquier duda, escribid a {{responsable}}. (Mensaje sintético.)",
   },
   {
     key: "canal-recordatorio-intro",
     stage: "SESSION_REMINDER" as const,
     sessionCode: "demo_intro",
-    nameEs: "Recordatorio · Sesión 1 (SINTÉTICA)",
+    nameEs: "Recordatorio · Sesión 1",
     bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa primera sesión es el {{fecha}} a las {{hora}} en {{lugar}}.\n\nSi alguien no puede venir, que nos avise. (Mensaje sintético.)",
   },
   {
     key: "canal-recordatorio-vr",
     stage: "SESSION_REMINDER" as const,
     sessionCode: "demo_vr",
-    nameEs: "Recordatorio · Sesión 2 (SINTÉTICA)",
+    nameEs: "Recordatorio · Sesión 2",
     bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa sesión de práctica en RV es el {{fecha}} a las {{hora}}.\n\nTraed el visor cargado. (Mensaje sintético.)",
   },
   {
     key: "canal-recordatorio-seguimiento",
     stage: "SESSION_REMINDER" as const,
     sessionCode: "demo_followup",
-    nameEs: "Recordatorio · Sesión 3 (SINTÉTICA)",
+    nameEs: "Recordatorio · Sesión 3",
     bodyEs: "Recordatorio para la cohorte {{cohorte}}:\n\nLa sesión de seguimiento es el {{fecha}} a las {{hora}}. Nos conectamos por videollamada.\n\n(Mensaje sintético.)",
   },
   {
     key: "canal-instrucciones-gafas",
     stage: "VR_INSTRUCTIONS" as const,
     sessionCode: "demo_vr",
-    nameEs: "Instrucciones de las gafas · Sesión 2 (SINTÉTICA)",
+    nameEs: "Instrucciones de las gafas · Sesión 2",
     bodyEs: "Antes de la sesión del {{fecha}}, dejad el visor listo siguiendo esta guía: {{enlace}}\n\nSi a alguien no le funciona, que escriba a {{responsable}}. No es un fallo vuestro y lo resolvemos.\n\n(Mensaje sintético.)",
   },
   {
     key: "canal-cierre",
     stage: "CLOSING" as const,
     sessionCode: null,
-    nameEs: "Cierre de la cohorte (SINTÉTICA)",
+    nameEs: "Cierre de la cohorte",
     bodyEs: "Hemos llegado al final del programa de la cohorte {{cohorte}}.\n\nPara devolver el equipo: {{instrucciones}}\n\nGracias por vuestra participación. (Mensaje sintético.)",
   },
 ] as const;
 
-/** Obviously fake applicants. Names and addresses are clearly synthetic. */
+/**
+ * Obviously fake applicants. Names are the same four first names as
+ * `DEMO_PERSON_NAMES` above (2026-09-18 request) — a demo participant and a
+ * demo staff account can share a first name here without meaning anything:
+ * both are synthetic. The per-name "(SINTÉTICO)" suffix that used to mark
+ * that was removed everywhere except the study's own title (2026-09-19
+ * request: "we know it's a demo, no need to put it all over") — obviousness
+ * now comes from the whole shape of the data instead (demo.*@example.com
+ * addresses, DEMO-prefixed codes, the study banner itself), same rule 9
+ * ("seeds must be obviously fake"), a quieter way to meet it.
+ */
 const DEMO_APPLICANTS = [
   {
-    fullName: "Persona Sintética Uno (DEMO)",
+    fullName: "Cathy",
     email: "demo.aplicante1@example.com",
     phone: "+34 600 000 001",
     city: "Ciudad Ficticia",
@@ -706,7 +802,7 @@ const DEMO_APPLICANTS = [
     ops: null,
   },
   {
-    fullName: "Persona Sintética Dos (DEMO)",
+    fullName: "Jose",
     email: "demo.aplicante2@example.com",
     phone: "+34 600 000 002",
     city: "Villa Ejemplo",
@@ -717,7 +813,7 @@ const DEMO_APPLICANTS = [
     ops: null,
   },
   {
-    fullName: "Persona Sintética Tres (DEMO)",
+    fullName: "Joana",
     email: "demo.aplicante3@example.com",
     phone: null,
     city: "Pueblo Prueba",
@@ -729,7 +825,7 @@ const DEMO_APPLICANTS = [
     ops: { screening: "SCHEDULED" as const, result: null, consent: null },
   },
   {
-    fullName: "Persona Sintética Cuatro (DEMO)",
+    fullName: "David",
     email: "demo.aplicante4@example.com",
     phone: "+34 600 000 004",
     city: "Aldea Simulada",
@@ -737,9 +833,15 @@ const DEMO_APPLICANTS = [
     referral: "professional",
     notes: null,
     status: "ACCEPTED_FOR_SCREENING" as const,
-    // Screened and consented, so the enrolled path has an example too.
+    // Screened, consented and placed in the demo cohort, so the fully
+    // enrolled path — and the cohort gallery's member list — has an example.
     // The external references are obviously fake and carry no clinical content.
-    ops: { screening: "COMPLETED" as const, result: "ELIGIBLE" as const, consent: "CONSENTED" as const },
+    ops: {
+      screening: "COMPLETED" as const,
+      result: "ELIGIBLE" as const,
+      consent: "CONSENTED" as const,
+      assignToCohort: true as const,
+    },
   },
 ];
 
@@ -918,11 +1020,37 @@ async function main() {
       }
     }
 
+    // Programme stages (Phase 4f). Stage names live here, not in code. Seeded
+    // before session templates, which reference a stage by code below.
+    for (const stage of DEMO_PROGRAM_STAGES) {
+      await db
+        .insert(schema.programStages)
+        .values({ ...stage, studyId: study.id })
+        .onConflictDoUpdate({
+          target: [schema.programStages.studyId, schema.programStages.code],
+          set: {
+            nameEs: stage.nameEs,
+            nameEn: stage.nameEn,
+            position: stage.position,
+            modality: stage.modality,
+            active: true,
+          },
+        });
+    }
+    console.log(`stages  ${DEMO_PROGRAM_STAGES.length} programme stages`);
+
+    const stageRows = await db
+      .select({ id: schema.programStages.id, code: schema.programStages.code })
+      .from(schema.programStages)
+      .where(eq(schema.programStages.studyId, study.id));
+    const stageIdByCode = new Map(stageRows.map((s) => [s.code, s.id]));
+
     // Programme definition (Phase 3b). Session names live here, not in code.
     for (const tpl of DEMO_SESSION_TEMPLATES) {
+      const stageId = stageIdByCode.get(tpl.stageCode) ?? null;
       await db
         .insert(schema.sessionTemplates)
-        .values({ ...tpl, studyId: study.id })
+        .values({ ...tpl, stageId, studyId: study.id })
         .onConflictDoUpdate({
           target: [schema.sessionTemplates.studyId, schema.sessionTemplates.code],
           set: {
@@ -932,6 +1060,7 @@ async function main() {
             modality: tpl.modality,
             durationMinutes: tpl.durationMinutes,
             dayOffset: tpl.dayOffset,
+            stageId,
             active: true,
           },
         });
@@ -1143,6 +1272,49 @@ async function main() {
               .set({ enrollmentStatus: "ENROLLED" })
               .where(eq(schema.participants.id, participant.id));
           }
+
+          // Placed in the demo cohort (2026-09-18 request), the same shape
+          // `assignToCohort` (services/cohorts.ts) writes — this script never
+          // calls that service directly (see its own env/db setup above), so
+          // the insert, the enrollment cascade and both audit rows are
+          // hand-written here to match it.
+          if (ops.assignToCohort) {
+            const [assignment] = await tx
+              .insert(schema.participantCohortAssignments)
+              .values({
+                studyId: study.id,
+                cohortId: cohort.id,
+                participantId: participant.id,
+                assignedBy: staffIds.get("STUDY_MANAGER") ?? null,
+              })
+              .returning({ id: schema.participantCohortAssignments.id });
+
+            await recordAuditEvent(tx, {
+              studyId: study.id,
+              actor: { type: "SYSTEM" },
+              action: "cohort_assignment.created",
+              entityType: "participant_cohort_assignment",
+              entityId: assignment.id,
+              after: { participantCode: code, cohortCode: cohort.code },
+              metadata: { source: "seed", demo: true },
+            });
+
+            await tx
+              .update(schema.participants)
+              .set({ enrollmentStatus: "COHORT_ASSIGNED" })
+              .where(eq(schema.participants.id, participant.id));
+
+            await recordAuditEvent(tx, {
+              studyId: study.id,
+              actor: { type: "SYSTEM" },
+              action: "participant.enrollment_changed",
+              entityType: "participant",
+              entityId: participant.id,
+              before: { enrollmentStatus: "ENROLLED" },
+              after: { enrollmentStatus: "COHORT_ASSIGNED", participantCode: code },
+              metadata: { source: "seed", demo: true },
+            });
+          }
         }
 
         await recordAuditEvent(tx, {
@@ -1347,7 +1519,7 @@ async function main() {
               participantId: demoEligible.id,
               status: "SCHEDULED",
               scheduledAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-              location: "Sala Demo 1 (SINTÉTICA)",
+              location: "Sala Demo 1",
               notes: "Nota sintética de logística. Sin información clínica.",
               recordedBy: coordinatorId,
             })

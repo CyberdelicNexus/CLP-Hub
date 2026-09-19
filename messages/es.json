@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CLP Hub",
+    "appName": "Clear Light Hub",
     "loading": "Cargando…",
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -9,7 +9,9 @@
     "yes": "Sí",
     "no": "No",
     "all": "Todas",
-    "none": "Ninguno"
+    "none": "Ninguno",
+    "viewList": "Lista",
+    "viewKanban": "Kanban"
   },
   "locale": {
     "label": "Idioma",
@@ -30,6 +32,7 @@
     "cohorts": "Cohortes",
     "sessions": "Sesiones",
     "communications": "Comunicaciones",
+    "calendar": "Calendario",
     "logistics": "Logística VR",
     "content": "Contenido",
     "tasks": "Tareas",
@@ -42,7 +45,8 @@
     "STUDY_MANAGER": "Coordinación del estudio",
     "FACILITATOR": "Facilitación",
     "RESEARCHER": "Investigación",
-    "LOGISTICS": "Logística"
+    "LOGISTICS": "Logística",
+    "SUPERVISOR": "Supervisión"
   },
   "auth": {
     "login": {
@@ -67,16 +71,20 @@
       "openMenu": "Abrir menú",
       "account": "Cuenta"
     },
+    "sidebar": {
+      "collapse": "Ocultar barra lateral",
+      "expand": "Mostrar barra lateral"
+    },
     "noStudy": {
       "title": "Sin estudios asignados",
       "description": "Tu cuenta existe pero no tiene roles en ningún estudio. Pide a la administración que te asigne uno."
     },
     "overview": {
       "title": "Resumen",
-      "today": "Hoy",
-      "todayEmpty": "No hay eventos programados para hoy.",
-      "attention": "Requiere atención",
-      "attentionEmpty": "Nada requiere atención en este momento.",
+      "greeting": "Hola, {name}",
+      "today": "Próximas sesiones",
+      "todayEmpty": "No hay sesiones próximas programadas.",
+      "facilitating": "Tú facilitas",
       "stats": {
         "applications": "Solicitudes",
         "screeningPending": "Evaluaciones pendientes",
@@ -84,8 +92,9 @@
         "enrolled": "Inscritos"
       },
       "noData": "Sin datos",
-      "foundationNote": "Fase 1: reclutamiento. Las evaluaciones, cohortes y comunicaciones llegarán en fases posteriores.",
-      "attentionApplications": "{count, plural, one {# solicitud sin revisar} other {# solicitudes sin revisar}}"
+      "myTasksTitle": "Tus tareas abiertas",
+      "myTasksEmpty": "No tienes tareas abiertas asignadas.",
+      "viewAll": "Ver todas"
     },
     "yourRoles": "Tus roles",
     "subtitle": "Quién está en el estudio y qué puede hacer.",
@@ -143,6 +152,14 @@
         "preparacion": "Preparación",
         "integracion": "Integración"
       }
+    },
+    "a11y": {
+      "label": "Herramientas de accesibilidad",
+      "increaseText": "Aumentar el tamaño del texto",
+      "decreaseText": "Reducir el tamaño del texto",
+      "muteColor": "Atenuar los colores",
+      "spacing": "Aumentar el espaciado del texto",
+      "reset": "Restablecer"
     }
   },
   "applications": {
@@ -159,6 +176,10 @@
     "triage": "Gestión",
     "terminal": "Esta solicitud está en un estado final.",
     "readOnly": "Solo lectura: no puedes cambiar el estado de esta solicitud.",
+    "correctStatus": "Corregir estado",
+    "correctStatusHelp": "Solo si el estado se guardó por error. Queda registrado de forma distinta a un cambio de gestión normal.",
+    "correctStatusConfirm": "Confirmar",
+    "correctStatusCancel": "Cancelar corrección",
     "emptyTitle": "Sin solicitudes",
     "emptyDescription": "Todavía no se ha recibido ninguna solicitud con este filtro.",
     "status": {
@@ -218,6 +239,10 @@
     "backToList": "Volver a participantes",
     "detailTitle": "Participante",
     "contactHidden": "No tienes permiso para ver los datos de contacto.",
+    "contactName": {
+      "empty": "Sin nombre",
+      "edit": "Editar nombre"
+    },
     "emptyTitle": "Sin participantes",
     "emptyDescription": "Todavía no hay ninguna persona registrada con este filtro.",
     "screening": "Evaluación",
@@ -326,7 +351,9 @@
     "boundary": "Esta aplicación solo registra la cita y el resultado. Las respuestas de la evaluación se guardan en el sistema autorizado del centro.",
     "when": "Fecha prevista",
     "emptyTitle": "Sin evaluaciones pendientes",
-    "emptyDescription": "No hay ninguna evaluación programada en este momento."
+    "emptyDescription": "No hay ninguna evaluación programada en este momento.",
+    "queueTitle": "Evaluaciones pendientes",
+    "waitingForAllocation": "Elegibles sin asignación"
   },
   "cohorts": {
     "subtitle": "Grupos de participantes que realizan el programa juntos.",
@@ -340,6 +367,8 @@
     "emptyScoped": "No tienes ninguna cohorte asignada.",
     "members": "Participantes",
     "noMembers": "Esta cohorte todavía no tiene participantes.",
+    "addMember": "Añadir participante",
+    "noAddable": "No hay personas elegibles sin cohorte para añadir.",
     "staff": "Equipo de la cohorte",
     "noStaff": "Nadie asignado todavía.",
     "assignStaff": "Asignar al equipo",
@@ -389,6 +418,7 @@
       "start": "Inicio previsto",
       "end": "Fin previsto",
       "person": "Persona",
+      "participant": "Participante",
       "minSize": "Mínimo de participantes",
       "maxSize": "Máximo de participantes",
       "sizeHelp": "Configuración de esta cohorte. No impide asignar participantes: solo se comprueba al activarla.",
@@ -410,9 +440,29 @@
       "sizeUnder": "La cohorte está por debajo del mínimo configurado.",
       "sizeOver": "La cohorte está por encima del máximo configurado."
     },
+    "glance": {
+      "title": "De un vistazo",
+      "total": "Cohortes",
+      "participants": "Participantes en cohortes",
+      "inProgress": "Programa iniciado",
+      "needsAttention": "Necesitan atención"
+    },
+    "nextStage": "Avanzar a: {stage}",
+    "programComplete": "Ha llegado a la última etapa",
+    "notes": {
+      "title": "Notas del equipo",
+      "tasksTab": "Tareas",
+      "notesTab": "Notas",
+      "empty": "Sin notas todavía.",
+      "placeholder": "Escribe un recordatorio para el equipo…",
+      "add": "Añadir nota",
+      "remove": "Eliminar nota",
+      "color": "Color"
+    },
     "size": {
       "under": "Faltan {needed}",
       "underShort": "Incompleta",
+      "needsAttention": "Necesita atención",
       "over": "Excedida",
       "remaining": "{remaining} plazas libres",
       "warnUnder": "Tiene {members} participantes y el mínimo configurado es {min}.",
@@ -430,6 +480,31 @@
   "sessions": {
     "subtitle": "Sesiones programadas de las cohortes.",
     "scopedNotice": "Ves únicamente las sesiones de las cohortes que facilitas.",
+    "timelineTitle": "Línea del tiempo del programa",
+    "timelineEmpty": "Este estudio todavía no tiene etapas de programa configuradas.",
+    "timelineNotStarted": "Programa sin empezar",
+    "currentStage": "Etapa actual",
+    "programTitle": "Sesiones del programa",
+    "notScheduled": "Sin programar",
+    "contentTitle": "Contenido para compartir",
+    "contentPrepTitle": "Preparación",
+    "contentIntegrationTitle": "Integración",
+    "noContent": "No hay contenido publicado para esta sesión todavía.",
+    "noContentPrep": "Sin contenido de preparación todavía.",
+    "noContentIntegration": "Sin contenido de integración todavía.",
+    "addContent": "Crear contenido nuevo",
+    "editContent": "Editar",
+    "contentView": "Ver publicado",
+    "contentCopyLink": "Copiar enlace",
+    "contentLinkCopied": "Copiado",
+    "contentPick": "Usar contenido existente",
+    "contentPickPlaceholder": "Elige contenido…",
+    "contentPickError": "No se pudo asignar ese contenido.",
+    "contentAssign": "Asignar",
+    "commsTitle": "Comunicaciones",
+    "noComms": "No hay plantillas configuradas para esta sesión.",
+    "manageComms": "Gestionar plantillas de comunicación",
+    "manageContent": "Gestionar contenido",
     "backToList": "Volver a sesiones",
     "detailTitle": "Sesión",
     "scheduleTitle": "Programar sesión",
@@ -488,19 +563,27 @@
       "open": "Abrir sesión"
     },
     "field": {
-      "name": "Nombre de la sesión",
-      "modality": "Modalidad",
       "when": "Fecha y hora",
       "duration": "Duración (min)",
-      "location": "Lugar o enlace",
-      "template": "Plantilla",
-      "templateHelp": "Opcional. Las plantillas definen el programa del estudio."
+      "location": "Código de sesión o enlace de Zoom"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",
       "notFound": "No se ha encontrado la sesión.",
       "failed": "No se pudo guardar el cambio. Inténtalo de nuevo."
     }
+  },
+  "calendar": {
+    "subtitle": "Todas las sesiones programadas, de todas las cohortes que puedes ver, en una sola agenda.",
+    "emptyTitle": "Sin fechas próximas",
+    "emptyDescription": "No hay sesiones programadas todavía.",
+    "pastToggle": "{count} sesiones pasadas",
+    "viewAgenda": "Agenda",
+    "viewMonth": "Mes",
+    "prevMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "more": "+{count} más",
+    "weekdays": ["L", "M", "X", "J", "V", "S", "D"]
   },
   "content": {
     "subtitle": "Páginas del estudio que leen las personas participantes.",
@@ -523,6 +606,7 @@
     "publishReplaces": "Sustituirá a la versión v{version}, que quedará archivada.",
     "newDraft": "Crear nueva versión",
     "newDraftNote": "Copia la versión publicada en un borrador nuevo. La versión publicada no se modifica nunca.",
+    "relinkSubmit": "Actualizar sesión",
     "publishedOn": "Publicada el {date}",
     "notLive": "sin publicar",
     "notPublic": "No es una página pública",
@@ -550,6 +634,8 @@
       "type": "Tipo",
       "live": "Publicada",
       "working": "En preparación",
+      "status": "Estado",
+      "noVersions": "Sin versiones",
       "page": "Página pública",
       "open": "Abrir contenido"
     },
@@ -558,9 +644,57 @@
       "key": "Clave",
       "keyHelp": "Se usa en la dirección pública, por ejemplo /estudio/preparacion-vr.",
       "title": "Título",
-      "session": "Sesión del programa",
+      "session": "Sesión asociada",
+      "coverImage": "Imagen de portada",
+      "coverImageAdd": "Añadir portada",
+      "coverImagePosition": "Posición",
+      "coverImageRemove": "Quitar portada",
       "body": "Bloques",
       "bodyHelp": "Lista de bloques en formato JSON. Los bloques de texto admiten **negrita**, *cursiva*, `código` y enlaces."
+    },
+    "blockEditor": {
+      "add": "Pasa el ratón entre bloques y pulsa + para añadir uno ahí. Arrastra el icono ⠿ para reordenar.",
+      "empty": "Todavía no hay bloques. Añade el primero abajo.",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "remove": "Eliminar bloque",
+      "drag": "Arrastrar para reordenar",
+      "insert": "Añadir bloque aquí",
+      "done": "Listo",
+      "addMedia": "Haz clic para añadir"
+    },
+    "blockType": {
+      "TEXT": "Texto",
+      "VIDEO": "Vídeo",
+      "IMAGE": "Imagen",
+      "BOOKMARK": "Marcador",
+      "CHECKLIST": "Lista de comprobación",
+      "CALLOUT": "Destacado",
+      "CONTEMPLATION": "Contemplación",
+      "BUTTON": "Botón",
+      "TECHNICAL_STEP": "Paso técnico",
+      "SUPPORT_BOX": "Ayuda"
+    },
+    "calloutTone": {
+      "INFO": "Información",
+      "WARNING": "Aviso",
+      "SUPPORT": "Apoyo"
+    },
+    "blockField": {
+      "md": "Texto (admite **negrita**, *cursiva*, `código` y enlaces)",
+      "url": "Enlace",
+      "caption": "Pie de foto",
+      "alt": "Texto alternativo",
+      "title": "Título",
+      "description": "Descripción",
+      "items": "Elementos",
+      "addItem": "Añadir elemento",
+      "removeItem": "Quitar elemento",
+      "tone": "Tono",
+      "step": "Paso",
+      "label": "Etiqueta",
+      "contactLabel": "Etiqueta de contacto",
+      "contactUrl": "Enlace de contacto"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",
@@ -583,6 +717,8 @@
     "noExclusions": "Todavía no hay exclusiones registradas.",
     "noArms": "No hay grupos configurados en este estudio.",
     "inCohort": "{count} en cohorte",
+    "exclusionsTotal": "Exclusiones",
+    "allocationTotal": "Asignados",
     "stage": {
       "applicationsReceived": "Solicitudes recibidas",
       "peopleApplied": "Personas distintas",
@@ -678,16 +814,20 @@
       "alert__raised": "Alerta detectada",
       "alert__resolved": "Alerta resuelta",
       "application__status_changed": "Cambio de estado de la solicitud",
+      "application__status_corrected": "Corrección del estado de la solicitud",
       "application__submitted": "Solicitud registrada",
       "attendance__recorded": "Asistencia registrada",
       "automation_rule__activated": "Regla de automatización activada",
       "automation_rule__created": "Regla de automatización creada",
       "automation_rule__deactivated": "Regla de automatización desactivada",
       "cohort__created": "Cohorte creada",
+      "cohort__stage_changed": "Cambio de etapa del programa",
       "cohort__status_changed": "Cambio de estado de la cohorte",
       "cohort_assignment__created": "Asignación a cohorte",
       "cohort_assignment__moved": "Traslado de cohorte",
       "cohort_assignment__removed": "Salida de la cohorte",
+      "cohort_note__created": "Nota añadida",
+      "cohort_note__deleted": "Nota eliminada",
       "cohort_staff__assigned": "Personal asignado a la cohorte",
       "cohort_staff__revoked": "Personal retirado de la cohorte",
       "communication__recorded": "Envío registrado por una persona",
@@ -697,6 +837,7 @@
       "consent__started": "Consentimiento iniciado",
       "consent__superseded": "Consentimiento sustituido",
       "content__created": "Contenido creado",
+      "content__session_relinked": "Sesión asociada al contenido cambiada",
       "content_assignment__pinned": "Contenido fijado a la sesión",
       "content_version__archived": "Versión archivada",
       "content_version__drafted": "Nuevo borrador",
@@ -714,6 +855,7 @@
       "initial_visit__closed": "Visita inicial cerrada",
       "initial_visit__notes_updated": "Notas de la visita actualizadas",
       "initial_visit__scheduled": "Visita inicial programada",
+      "participant__contact_name_set": "Nombre de contacto actualizado",
       "participant__created": "Participante creado",
       "participant__eligibility_changed": "Cambio de elegibilidad",
       "participant__enrollment_changed": "Cambio de estado de inclusión",
@@ -930,6 +1072,11 @@
   "attention": {
     "title": "Requiere atención",
     "empty": "No hay nada pendiente ahora mismo.",
+    "columnAlerts": "Alertas",
+    "columnPreparedMessages": "Mensajes preparados",
+    "columnTasks": "Tareas abiertas",
+    "columnReviewRequired": "Revisión requerida",
+    "columnWaitingForAllocation": "Sin asignación de grupo",
     "reviewRequired": "{count, plural, one {# participante requiere revisión} other {# participantes requieren revisión}}",
     "waitingForAllocation": "{count, plural, one {# persona elegible sin asignación de grupo} other {# personas elegibles sin asignación de grupo}}",
     "cohorts": "Cohortes",
@@ -955,6 +1102,13 @@
   },
   "tasks": {
     "subtitle": "Lo que alguien tiene que hacer. Creado a mano o por una regla del estudio.",
+    "checklistTitle": "Pendientes de esta cohorte",
+    "checklistEmpty": "Nada pendiente para esta cohorte ahora mismo.",
+    "viewAll": "Ver todas las tareas",
+    "trelloTitle": "Trello · Tareas del proyecto",
+    "trelloNotConnected": "Trello no está conectado.",
+    "trelloNotConnectedHelp": "Añade TRELLO_BOARD_URL (la URL de un tablero con enlace público activado) a las variables de entorno para verlo aquí. Es solo una vista — no se actualiza nada en Trello desde esta aplicación.",
+    "trelloOpen": "Ver el tablero en Trello",
     "open": "Abiertas",
     "overdue": "Vencidas",
     "done": "Hechas",

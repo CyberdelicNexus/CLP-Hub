@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ContentBlocks } from "@/components/content/blocks";
+import { CoverImage } from "@/components/content/cover-image";
 import { CONTENT_KEY_PATTERN } from "@/domain/content";
 import { parseLocale } from "@/domain/locale";
 import { getPublishedByKey } from "@/services/content";
@@ -38,17 +39,32 @@ export default async function StudyPage({ params }: { params: Promise<{ key: str
   const t = await getTranslations("public.study");
 
   return (
-    <article className="flex flex-col gap-8">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {page.title}
-        </h1>
-        <p data-numeric className="text-xs text-muted-foreground">
-          {t("updated", { date: formatDate(page.updatedAt) })}
-        </p>
-      </header>
+    <article className="flex flex-col">
+      <CoverImage url={page.coverImageUrl} position={page.coverImagePosition} variant="hero" />
+      {/* pt-20 clears the floating back-link/theme-toggle header when there's
+          no cover to push content below it (see layout.tsx); when there IS a
+          cover, its own height already does that, and this just adds a
+          little breathing room before the title. pr-14 (vs. pl-4) reserves
+          room below `sm:` for the fixed AccessibilityToolbar riding the
+          right edge, so a wide block (e.g. a callout) never runs under it —
+          from `sm:` up the column has margin to spare either side already. */}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 pt-20 pr-14 pb-10 pl-4 sm:px-6 sm:pb-14">
+        <header className="flex flex-col gap-3">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            {page.title}
+          </h1>
+          <p data-numeric className="text-xs text-muted-foreground">
+            {t("updated", { date: formatDate(page.updatedAt) })}
+          </p>
+        </header>
 
-      <ContentBlocks body={page.body} />
+        {/* text-lg: this audience skews older adult (2026-09-19 request) —
+            the 1rem default read too small for a page meant to be read once
+            and acted on, not skimmed. */}
+        <div className="text-lg">
+          <ContentBlocks body={page.body} />
+        </div>
+      </div>
     </article>
   );
 }

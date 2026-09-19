@@ -17,11 +17,16 @@ export const TEAM_NAV: readonly NavSection[] = [
   { key: "applications", path: "solicitudes", permissions: ["applications.read"] },
   { key: "participants", path: "participantes", permissions: ["participants.read"] },
   { key: "screening", path: "evaluacion", permissions: ["screening.read"] },
+  // Sessions and communications stay folded into the cohort workspace
+  // (D-068, 2026-09-18) — every role that could see either also has
+  // cohorts.read, so nothing is stranded there. Content came back as its own
+  // entry (2026-09-19 request: "bring back the content tab") once authoring
+  // it grew into a real editor rather than a raw-JSON form — worth its own
+  // destination again, not just a link buried in a session's accordion.
   { key: "cohorts", path: "cohortes", permissions: ["cohorts.read"] },
-  { key: "sessions", path: "sesiones", permissions: ["sessions.read"] },
-  { key: "communications", path: "comunicaciones", permissions: ["communications.read"] },
-  { key: "logistics", path: "logistica-vr", permissions: ["logistics.read"] },
   { key: "content", path: "contenido", permissions: ["content.read"] },
+  { key: "calendar", path: "calendario", permissions: ["cohorts.read"] },
+  { key: "logistics", path: "logistica-vr", permissions: ["logistics.read"] },
   { key: "tasks", path: "tareas", permissions: ["tasks.read"] },
   { key: "alerts", path: "alertas", permissions: ["alerts.read"] },
   { key: "team", path: "equipo", permissions: ["team.read"] },

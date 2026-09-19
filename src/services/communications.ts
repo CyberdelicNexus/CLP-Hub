@@ -496,6 +496,37 @@ export async function updateTemplate(params: {
 }
 
 /**
+ * Move an existing template to a different session — the same "pick from
+ * the list instead of only ever authoring new" pattern D-070 gave content
+ * (`relinkContentSession`), applied to message templates from the cohort
+ * workspace's session view (2026-09-19). Reads the template's own current
+ * wording first so the caller only has to name the template and the new
+ * session, not resupply the body `updateTemplate` otherwise requires.
+ */
+export async function relinkTemplateSession(params: {
+  studyId: string;
+  templateId: string;
+  actorId: string;
+  sessionTemplateId: string;
+}): Promise<void> {
+  const { studyId, templateId, actorId, sessionTemplateId } = params;
+
+  const current = await getTemplate(studyId, templateId);
+  if (!current) throw new NotFoundError("template", templateId);
+
+  await updateTemplate({
+    studyId,
+    templateId,
+    actorId,
+    nameEs: current.nameEs,
+    bodyEs: current.bodyEs,
+    bodyEn: current.bodyEn,
+    sessionTemplateId,
+    active: current.active,
+  });
+}
+
+/**
  * Record that a human sent a message, or deliberately did not.
  *
  * THIS IS A RECORD, NOT A SEND. By the time it is called the message has already

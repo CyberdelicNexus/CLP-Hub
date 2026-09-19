@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import {
   completeScreeningAction,
   recordConsentAction,
   scheduleScreeningAction,
+  setContactNameAction,
   setEnrollmentAction,
   startConsentAction,
   type OpState,
@@ -31,6 +33,75 @@ function ErrorLine({ state, errors }: { state: OpState; errors: Record<string, s
     <p role="alert" className="text-sm text-destructive">
       {errors[state.error] ?? state.error}
     </p>
+  );
+}
+
+/**
+ * A participant's name, editable inline — click the pencil, type, Enter or
+ * blur to save (2026-09-19: "bring back the ability to add names to the
+ * participants for the demo"). Same pattern as `CoverBanner`'s inline URL
+ * field: no separate edit page for one text value.
+ */
+export function ContactNameField({
+  participantId,
+  fullName,
+  labels,
+}: {
+  participantId: string;
+  fullName: string | null;
+  labels: FormLabels & { empty: string; edit: string };
+}) {
+  const [state, action, pending] = useActionState(setContactNameAction, initial);
+  const [editing, setEditing] = useState(false);
+
+  // Drop back to the read view once a save lands — adjusted during render
+  // (comparing against the previous `state` object) rather than in an
+  // effect, per React's guidance on deriving state from a prop/state change
+  // without the extra render an effect-based setState would cost.
+  const [prevState, setPrevState] = useState(state);
+  if (state !== prevState) {
+    setPrevState(state);
+    if (state.ok) setEditing(false);
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <dd className="break-words">{fullName || labels.empty}</dd>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label={labels.edit}
+          className="inline-flex rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          <Pencil className="size-3" aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className="flex items-center gap-1.5">
+      <input type="hidden" name="participantId" value={participantId} />
+      <Input
+        name="fullName"
+        autoFocus
+        defaultValue={fullName ?? ""}
+        maxLength={200}
+        className="h-7 flex-1 text-sm"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setEditing(false);
+        }}
+      />
+      <Button type="submit" size="sm" variant="outline" className="h-7 rounded-lg px-2 text-xs" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+      {state.error ? (
+        <span role="alert" className="text-xs text-destructive">
+          {labels.errors[state.error] ?? state.error}
+        </span>
+      ) : null}
+    </form>
   );
 }
 

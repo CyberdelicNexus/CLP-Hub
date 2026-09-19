@@ -26,6 +26,13 @@ const envSchema = z.object({
    * when it is unset, so an unconfigured deployment is closed, not open.
    */
   CRON_SECRET: z.string().min(16).optional(),
+  /**
+   * Trello, read-only iframe embed (2026-09-18 request — simpler than the
+   * API approach this replaced: the board must have public sharing enabled
+   * for Trello to allow framing it at all). Optional: unset means "not
+   * connected", not an error — see src/services/trello.ts.
+   */
+  TRELLO_BOARD_URL: z.string().url().optional(),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;

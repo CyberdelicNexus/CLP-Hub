@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SESSION_LOCATION_MAX_LENGTH, SESSION_NAME_MAX_LENGTH } from "@/domain/session";
+import { SESSION_LOCATION_MAX_LENGTH } from "@/domain/session";
 import {
   recordAttendanceAction,
   refreshRegisterAction,
@@ -34,87 +34,51 @@ function ErrorLine({ state, errors }: { state: SessionState; errors: Record<stri
   );
 }
 
+/**
+ * Schedule an instance of ONE specific session template for ONE specific
+ * cohort — both fixed by the caller (the cohort workspace, which already
+ * knows which cohort and which S0–S6 row this is), not re-picked here. The
+ * name and modality already exist on the template (2026-09-18 request: "get
+ * rid of the name/modality fields, we already know that"), so they travel as
+ * hidden inputs rather than editable ones — `scheduleSessionAction` still
+ * requires both, this only stops asking the user to retype what the template
+ * already says.
+ */
 export function ScheduleSessionForm({
-  cohorts,
-  templates,
-  modalities,
+  cohort,
+  template,
   labels,
 }: {
-  cohorts: { id: string; label: string }[];
-  templates: { id: string; label: string }[];
-  modalities: { value: string; label: string }[];
+  cohort: { id: string; label: string };
+  template: { id: string; name: string; modality: string };
   labels: Labels & {
-    cohort: string;
-    name: string;
-    modality: string;
     when: string;
     duration: string;
     location: string;
-    template: string;
-    templateHelp: string;
-    none: string;
   };
 }) {
   const [state, action, pending] = useActionState(scheduleSessionAction, initial);
-  if (cohorts.length === 0) return <p className="text-sm text-muted-foreground">{labels.none}</p>;
 
   return (
     <form key={state.ok ? "done" : "new"} action={action} className="grid gap-3 sm:grid-cols-2">
+      <input type="hidden" name="cohortId" value={cohort.id} />
+      <input type="hidden" name="templateId" value={template.id} />
+      <input type="hidden" name="name" value={template.name} />
+      <input type="hidden" name="modality" value={template.modality} />
+
       <div className="space-y-1.5">
-        <Label htmlFor="cohortId">{labels.cohort}</Label>
-        <select id="cohortId" name="cohortId" required defaultValue="" className={SELECT_CLASS}>
-          <option value="" disabled />
-          {cohorts.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+        <Label htmlFor={`when-${template.id}`}>{labels.when}</Label>
+        <Input id={`when-${template.id}`} name="scheduledStart" type="datetime-local" required />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="templateId">{labels.template}</Label>
-        <select id="templateId" name="templateId" defaultValue="" className={SELECT_CLASS}>
-          <option value="">—</option>
-          {templates.map((tpl) => (
-            <option key={tpl.id} value={tpl.id}>
-              {tpl.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-muted-foreground">{labels.templateHelp}</p>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="name">{labels.name}</Label>
-        <Input id="name" name="name" required maxLength={SESSION_NAME_MAX_LENGTH} />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="modality">{labels.modality}</Label>
-        <select id="modality" name="modality" required defaultValue="" className={SELECT_CLASS}>
-          <option value="" disabled />
-          {modalities.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="scheduledStart">{labels.when}</Label>
-        <Input id="scheduledStart" name="scheduledStart" type="datetime-local" required />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="durationMinutes">{labels.duration}</Label>
-        <Input id="durationMinutes" name="durationMinutes" type="number" min={1} />
+        <Label htmlFor={`duration-${template.id}`}>{labels.duration}</Label>
+        <Input id={`duration-${template.id}`} name="durationMinutes" type="number" min={1} />
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">
-        <Label htmlFor="location">{labels.location}</Label>
-        <Input id="location" name="location" maxLength={SESSION_LOCATION_MAX_LENGTH} />
+        <Label htmlFor={`location-${template.id}`}>{labels.location}</Label>
+        <Input id={`location-${template.id}`} name="location" maxLength={SESSION_LOCATION_MAX_LENGTH} />
       </div>
 
       <div className="sm:col-span-2">

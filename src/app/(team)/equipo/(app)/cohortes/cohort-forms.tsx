@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import {
   advanceCohortAction,
@@ -268,23 +270,45 @@ export function AssignStaffForm({
   );
 }
 
+/**
+ * `iconOnly` swaps the labelled button for a small × — the team line's
+ * hover-to-remove chip (2026-09-19 request) — with `labels.submit` moved to
+ * `aria-label` so it stays announced despite losing its visible text.
+ */
 export function RevokeStaffForm({
   cohortId,
   userId,
   labels,
+  iconOnly,
+  className,
 }: {
   cohortId: string;
   userId: string;
   labels: Labels;
+  iconOnly?: boolean;
+  className?: string;
 }) {
   const [state, action, pending] = useActionState(revokeStaffAction, initial);
   return (
     <form action={action} className="inline">
       <input type="hidden" name="cohortId" value={cohortId} />
       <input type="hidden" name="userId" value={userId} />
-      <Button type="submit" variant="ghost" size="xs" className="rounded-md" disabled={pending}>
-        {pending ? labels.submitting : labels.submit}
-      </Button>
+      {iconOnly ? (
+        <Button
+          type="submit"
+          variant="ghost"
+          size="icon-xs"
+          className={cn("rounded-full", className)}
+          disabled={pending}
+          aria-label={labels.submit}
+        >
+          <X className="size-3" aria-hidden />
+        </Button>
+      ) : (
+        <Button type="submit" variant="ghost" size="xs" className="rounded-md" disabled={pending}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+      )}
       <ErrorLine state={state} errors={labels.errors} />
     </form>
   );
@@ -369,6 +393,50 @@ export function AssignCohortForm({
       <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
         {pending ? labels.submitting : labels.submit}
       </Button>
+    </form>
+  );
+}
+
+/**
+ * The cohort-centric mirror of `AssignCohortForm`: pick a participant to add
+ * to THIS cohort, rather than picking a cohort for a given participant. Same
+ * action (`assignToCohortAction`, same schema, same server-side checks —
+ * arm compatibility and cohort acceptance are enforced there, not duplicated
+ * here), just the other direction, so adding someone from the cohort page
+ * doesn't need a detour through their own page.
+ */
+export function AddMemberForm({
+  cohortId,
+  participants,
+  labels,
+}: {
+  cohortId: string;
+  participants: { id: string; label: string }[];
+  labels: Labels & { participant: string; none: string };
+}) {
+  const [state, action, pending] = useActionState(assignToCohortAction, initial);
+  if (participants.length === 0) return <p className="text-sm text-muted-foreground">{labels.none}</p>;
+
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-2">
+      <input type="hidden" name="cohortId" value={cohortId} />
+      <div className="min-w-48 flex-1 space-y-1.5">
+        <Label htmlFor="member-participantId">{labels.participant}</Label>
+        <select id="member-participantId" name="participantId" required defaultValue="" className={SELECT_CLASS}>
+          <option value="" disabled />
+          {participants.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+      <div className="w-full">
+        <ErrorLine state={state} errors={labels.errors} />
+      </div>
     </form>
   );
 }

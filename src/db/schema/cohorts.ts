@@ -9,8 +9,9 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { allocationMethodEnum, cohortStatusEnum } from "./enums";
+import { allocationMethodEnum, cohortNoteColorEnum, cohortStatusEnum } from "./enums";
 import { participants } from "./participants";
+import { programStages } from "./program-stages";
 import { studies } from "./studies";
 import { users } from "./users";
 
@@ -87,6 +88,16 @@ export const cohorts = pgTable(
      */
     minSize: integer("min_size"),
     maxSize: integer("max_size"),
+    /**
+     * Where the cohort sits in the programme timeline (Phase 4f). Null means
+     * the programme has not started for this cohort yet — a real, honest
+     * state for a cohort still in PLANNING or RECRUITING, not a missing
+     * value. Moving it is always an explicit staff action (services/cohorts.ts,
+     * `advanceProgramStage`), audited like every other cohort change; nothing
+     * infers or advances it on its own.
+     */
+    currentStageId: uuid("current_stage_id").references(() => programStages.id),
+    currentStageEnteredAt: timestamp("current_stage_entered_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -178,3 +189,28 @@ export const randomizations = pgTable(
 );
 
 export type Randomization = typeof randomizations.$inferSelect;
+
+/**
+ * A sticky note on a cohort's workspace — a team reminder, not a research or
+ * permission-relevant record (2026-09-19 request). Deliberately simple:
+ * create and delete only, no status/priority/assignment like `tasks`.
+ */
+export const cohortNotes = pgTable(
+  "cohort_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    color: cohortNoteColorEnum("color").notNull().default("LILAC"),
+    body: text("body").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("cohort_notes_cohort_idx").on(t.cohortId, t.createdAt)],
+);
+
+export type CohortNote = typeof cohortNotes.$inferSelect;

@@ -46,6 +46,7 @@ import {
   INTEGRATION_MODES,
   QUALTRICS_FIELD_CLASSES,
 } from "@/domain/intake";
+import { NOTE_COLORS } from "@/domain/cohort-note";
 
 // Postgres enum names must match supabase/migrations/0001_foundation.sql
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
@@ -122,3 +123,6 @@ export const taskOriginEnum = pgEnum("task_origin", TASK_ORIGINS);
 export const alertKindEnum = pgEnum("alert_kind", ALERT_KINDS);
 export const alertSeverityEnum = pgEnum("alert_severity", ALERT_SEVERITIES);
 export const alertStatusEnum = pgEnum("alert_status", ALERT_STATUSES);
+
+// Cohort sticky notes (2026-09-19 request, migration 0018)
+export const cohortNoteColorEnum = pgEnum("cohort_note_color", NOTE_COLORS);

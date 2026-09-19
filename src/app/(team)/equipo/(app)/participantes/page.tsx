@@ -8,6 +8,7 @@ import {
   EligibilityBadge,
   EnrollmentBadge,
 } from "@/components/team/participant-status-badge";
+import { ViewToggle } from "@/components/team/view-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { NextStepBadge } from "@/components/team/next-step-badge";
@@ -17,10 +18,12 @@ import {
   ENROLLMENT_STATUSES,
   isEligibilityStatus,
   isEnrollmentStatus,
+  type EligibilityStatus,
 } from "@/domain/participant-state";
-import { listParticipants } from "@/services/participant-ops";
+import { listParticipants, listOpenScreenings } from "@/services/participant-ops";
 import { listCohorts, listStudyArms } from "@/services/cohorts";
 import { listResponsibleCandidates } from "@/services/participant-care";
+import { ParticipantsKanban } from "./participants-kanban";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -40,6 +43,7 @@ export default async function ParticipantsPage({
     cohorte?: string;
     grupo?: string;
     responsable?: string;
+    vista?: string;
   }>;
 }) {
   const ctx = await getStudyContext();
@@ -53,12 +57,17 @@ export default async function ParticipantsPage({
   const params = await searchParams;
   const eligibility = isEligibilityStatus(params.elegibilidad) ? params.elegibilidad : undefined;
   const enrollment = isEnrollmentStatus(params.estado) ? params.estado : undefined;
+  const isKanban = params.vista === "kanban";
   const includeContact = ctx.permissions.has("participants.contact.read");
+  const canManageScreening = ctx.permissions.has("screening.manage");
 
-  const [rows, cohortOptions, armOptions, staffOptions] = await Promise.all([
+  const [rows, cohortOptions, armOptions, staffOptions, openScreenings] = await Promise.all([
     listParticipants(ctx.study.id, {
       includeContact,
-      eligibility,
+      // The kanban lays every eligibility status out as its own column, same
+      // reasoning as the solicitudes kanban: a single-status filter would just
+      // empty every column but one.
+      eligibility: isKanban ? undefined : eligibility,
       enrollment,
       cohortId: params.cohorte,
       armId: params.grupo,
@@ -75,9 +84,19 @@ export default async function ParticipantsPage({
     ctx.permissions.has("participants.manage")
       ? listResponsibleCandidates(ctx.study.id)
       : Promise.resolve([]),
+    // Only fetched for the kanban, to know which participants have an open
+    // screening a drag-to-ELIGIBLE/WAITLIST can complete.
+    isKanban && canManageScreening
+      ? listOpenScreenings(ctx.study.id, { includeContact: false })
+      : Promise.resolve([]),
   ]);
 
+  const openScreeningByParticipant = Object.fromEntries(
+    openScreenings.map((s) => [s.participantId, s.id]),
+  );
+
   const base = `${TEAM_BASE_PATH}/participantes`;
+  const viewHref = (v: "list" | "kanban") => (v === "list" ? base : `${base}?vista=kanban`);
 
   /**
    * A next step is only shown when the viewer can see the whole picture.
@@ -106,23 +125,33 @@ export default async function ParticipantsPage({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("nav.participants")}</h1>
-        <p className="text-sm text-muted-foreground">{t("participants.subtitle")}</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">{t("nav.participants")}</h1>
+          <p className="text-sm text-muted-foreground">{t("participants.subtitle")}</p>
+        </div>
+        <ViewToggle
+          current={isKanban ? "kanban" : "list"}
+          hrefFor={viewHref}
+          labels={{ list: t("common.viewList"), kanban: t("common.viewKanban") }}
+        />
       </header>
 
       <div className="space-y-3">
-        <nav aria-label={t("participants.filterLabel")} className="flex flex-wrap gap-2">
-          <FilterChip href={base} active={!eligibility && !enrollment} label={t("participants.all")} />
-          {ELIGIBILITY_STATUSES.map((st) => (
-            <FilterChip
-              key={st}
-              href={withParam("elegibilidad", eligibility === st ? undefined : st)}
-              active={eligibility === st}
-              label={t(`participants.eligibility.${st}`)}
-            />
-          ))}
-        </nav>
+        {/* Hidden in kanban view, which already segments by eligibility visually. */}
+        {isKanban ? null : (
+          <nav aria-label={t("participants.filterLabel")} className="flex flex-wrap gap-2">
+            <FilterChip href={base} active={!eligibility && !enrollment} label={t("participants.all")} />
+            {ELIGIBILITY_STATUSES.map((st) => (
+              <FilterChip
+                key={st}
+                href={withParam("elegibilidad", eligibility === st ? undefined : st)}
+                active={eligibility === st}
+                label={t(`participants.eligibility.${st}`)}
+              />
+            ))}
+          </nav>
+        )}
 
         <nav aria-label={t("participants.filterEnrollment")} className="flex flex-wrap gap-2">
           {ENROLLMENT_STATUSES.map((st) => (
@@ -189,6 +218,23 @@ export default async function ParticipantsPage({
             <p className="text-sm text-muted-foreground">{t("participants.emptyDescription")}</p>
           </CardContent>
         </Card>
+      ) : isKanban ? (
+        <ParticipantsKanban
+          rows={rows}
+          includeContact={includeContact}
+          readOnly={!canManageScreening}
+          openScreeningByParticipant={openScreeningByParticipant}
+          statusLabels={Object.fromEntries(
+            ELIGIBILITY_STATUSES.map((s) => [s, t(`participants.eligibility.${s}`)]),
+          ) as Record<EligibilityStatus, string>}
+          errorLabels={{
+            forbidden: t("common.noAccess"),
+            invalid: t("participants.error.invalid"),
+            notFound: t("participants.error.notFound"),
+            failed: t("participants.error.failed"),
+            reasonRequired: t("participants.error.reasonRequired"),
+          }}
+        />
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10">
           <div className="overflow-x-auto">

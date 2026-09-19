@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CLP Hub",
+    "appName": "Clear Light Hub",
     "loading": "Loading…",
     "save": "Save",
     "cancel": "Cancel",
@@ -9,7 +9,9 @@
     "yes": "Yes",
     "no": "No",
     "all": "All",
-    "none": "None"
+    "none": "None",
+    "viewList": "List",
+    "viewKanban": "Kanban"
   },
   "locale": {
     "label": "Language",
@@ -30,6 +32,7 @@
     "cohorts": "Cohorts",
     "sessions": "Sessions",
     "communications": "Communications",
+    "calendar": "Calendar",
     "logistics": "VR Logistics",
     "content": "Content",
     "tasks": "Tasks",
@@ -42,7 +45,8 @@
     "STUDY_MANAGER": "Study manager",
     "FACILITATOR": "Facilitator",
     "RESEARCHER": "Researcher",
-    "LOGISTICS": "Logistics"
+    "LOGISTICS": "Logistics",
+    "SUPERVISOR": "Supervisor"
   },
   "auth": {
     "login": {
@@ -67,16 +71,20 @@
       "openMenu": "Open menu",
       "account": "Account"
     },
+    "sidebar": {
+      "collapse": "Hide sidebar",
+      "expand": "Show sidebar"
+    },
     "noStudy": {
       "title": "No studies assigned",
       "description": "Your account exists but has no roles in any study. Ask an administrator to assign one."
     },
     "overview": {
       "title": "Overview",
-      "today": "Today",
-      "todayEmpty": "No events scheduled for today.",
-      "attention": "Needs attention",
-      "attentionEmpty": "Nothing needs attention right now.",
+      "greeting": "Hi, {name}",
+      "today": "Upcoming sessions",
+      "todayEmpty": "No upcoming sessions scheduled.",
+      "facilitating": "You're facilitating",
       "stats": {
         "applications": "Applications",
         "screeningPending": "Screenings pending",
@@ -84,8 +92,9 @@
         "enrolled": "Enrolled"
       },
       "noData": "No data",
-      "foundationNote": "Phase 1: recruitment. Screening, cohorts and communications arrive in later phases.",
-      "attentionApplications": "{count, plural, one {# application awaiting review} other {# applications awaiting review}}"
+      "myTasksTitle": "Your open tasks",
+      "myTasksEmpty": "You have no open tasks assigned.",
+      "viewAll": "View all"
     },
     "yourRoles": "Your roles",
     "subtitle": "Who is on the study and what they can do.",
@@ -143,6 +152,14 @@
         "preparacion": "Preparation",
         "integracion": "Integration"
       }
+    },
+    "a11y": {
+      "label": "Accessibility tools",
+      "increaseText": "Increase text size",
+      "decreaseText": "Decrease text size",
+      "muteColor": "Mute colours",
+      "spacing": "Increase text spacing",
+      "reset": "Reset"
     }
   },
   "applications": {
@@ -159,6 +176,10 @@
     "triage": "Triage",
     "terminal": "This application is in a final state.",
     "readOnly": "Read only: you cannot change this application's status.",
+    "correctStatus": "Correct status",
+    "correctStatusHelp": "Only if the status was saved by mistake. Recorded differently from a normal triage change.",
+    "correctStatusConfirm": "Confirm",
+    "correctStatusCancel": "Cancel correction",
     "emptyTitle": "No applications",
     "emptyDescription": "No application has been received with this filter yet.",
     "status": {
@@ -218,6 +239,10 @@
     "backToList": "Back to participants",
     "detailTitle": "Participant",
     "contactHidden": "You do not have permission to view contact details.",
+    "contactName": {
+      "empty": "No name",
+      "edit": "Edit name"
+    },
     "emptyTitle": "No participants",
     "emptyDescription": "Nobody is registered with this filter yet.",
     "screening": "Screening",
@@ -326,7 +351,9 @@
     "boundary": "This application records only the appointment and its result. Screening answers are kept in the institution's approved system.",
     "when": "Scheduled for",
     "emptyTitle": "No screenings pending",
-    "emptyDescription": "There is no screening scheduled at the moment."
+    "emptyDescription": "There is no screening scheduled at the moment.",
+    "queueTitle": "Pending screenings",
+    "waitingForAllocation": "Eligible with no allocation"
   },
   "cohorts": {
     "subtitle": "Groups of participants who go through the programme together.",
@@ -340,6 +367,8 @@
     "emptyScoped": "You have no cohorts assigned.",
     "members": "Participants",
     "noMembers": "This cohort has no participants yet.",
+    "addMember": "Add participant",
+    "noAddable": "No eligible people without a cohort to add.",
     "staff": "Cohort team",
     "noStaff": "Nobody assigned yet.",
     "assignStaff": "Assign to team",
@@ -389,6 +418,7 @@
       "start": "Planned start",
       "end": "Planned end",
       "person": "Person",
+      "participant": "Participant",
       "minSize": "Minimum participants",
       "maxSize": "Maximum participants",
       "sizeHelp": "Configuration for this cohort. It never refuses an assignment: it is checked when the cohort is activated.",
@@ -410,9 +440,29 @@
       "sizeUnder": "The cohort is below its configured minimum.",
       "sizeOver": "The cohort is above its configured maximum."
     },
+    "glance": {
+      "title": "At a glance",
+      "total": "Cohorts",
+      "participants": "Participants in cohorts",
+      "inProgress": "Programme started",
+      "needsAttention": "Need attention"
+    },
+    "nextStage": "Advance to: {stage}",
+    "programComplete": "Already at the last stage",
+    "notes": {
+      "title": "Team notes",
+      "tasksTab": "Tasks",
+      "notesTab": "Notes",
+      "empty": "No notes yet.",
+      "placeholder": "Write a reminder for the team…",
+      "add": "Add note",
+      "remove": "Remove note",
+      "color": "Colour"
+    },
     "size": {
       "under": "{needed} short",
       "underShort": "Under",
+      "needsAttention": "Needs attention",
       "over": "Over",
       "remaining": "{remaining} places left",
       "warnUnder": "It has {members} participants and the configured minimum is {min}.",
@@ -430,6 +480,31 @@
   "sessions": {
     "subtitle": "Scheduled cohort sessions.",
     "scopedNotice": "You see only the sessions of cohorts you facilitate.",
+    "timelineTitle": "Programme timeline",
+    "timelineEmpty": "This study has no programme stages configured yet.",
+    "timelineNotStarted": "Programme not started",
+    "currentStage": "Current stage",
+    "programTitle": "Programme sessions",
+    "notScheduled": "Not scheduled",
+    "contentTitle": "Content to share",
+    "contentPrepTitle": "Preparation",
+    "contentIntegrationTitle": "Integration",
+    "noContent": "No published content for this session yet.",
+    "noContentPrep": "No preparation content yet.",
+    "noContentIntegration": "No integration content yet.",
+    "addContent": "Create new content",
+    "editContent": "Edit",
+    "contentView": "View published",
+    "contentCopyLink": "Copy link",
+    "contentLinkCopied": "Copied",
+    "contentPick": "Use existing content",
+    "contentPickPlaceholder": "Choose content…",
+    "contentPickError": "That content could not be assigned.",
+    "contentAssign": "Assign",
+    "commsTitle": "Communications",
+    "noComms": "No templates configured for this session.",
+    "manageComms": "Manage communication templates",
+    "manageContent": "Manage content",
     "backToList": "Back to sessions",
     "detailTitle": "Session",
     "scheduleTitle": "Schedule a session",
@@ -488,19 +563,27 @@
       "open": "Open session"
     },
     "field": {
-      "name": "Session name",
-      "modality": "Modality",
       "when": "Date and time",
       "duration": "Duration (min)",
-      "location": "Place or link",
-      "template": "Template",
-      "templateHelp": "Optional. Templates define the study programme."
+      "location": "Session code or Zoom link"
     },
     "error": {
       "invalid": "That change is not allowed.",
       "notFound": "The session was not found.",
       "failed": "The change could not be saved. Please try again."
     }
+  },
+  "calendar": {
+    "subtitle": "Every scheduled session, across every cohort you can see, in one agenda.",
+    "emptyTitle": "No upcoming dates",
+    "emptyDescription": "No sessions are scheduled yet.",
+    "pastToggle": "{count} past sessions",
+    "viewAgenda": "Agenda",
+    "viewMonth": "Month",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "more": "+{count} more",
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   },
   "content": {
     "subtitle": "Study pages that participants read.",
@@ -523,6 +606,7 @@
     "publishReplaces": "This replaces v{version}, which will be archived.",
     "newDraft": "Create a new version",
     "newDraftNote": "Copies the published version into a new draft. The published version is never modified.",
+    "relinkSubmit": "Update session",
     "publishedOn": "Published {date}",
     "notLive": "not published",
     "notPublic": "Not a public page",
@@ -550,6 +634,8 @@
       "type": "Type",
       "live": "Published",
       "working": "In progress",
+      "status": "Status",
+      "noVersions": "No versions",
       "page": "Public page",
       "open": "Open content"
     },
@@ -558,9 +644,57 @@
       "key": "Key",
       "keyHelp": "Used in the public address, for example /estudio/preparacion-vr.",
       "title": "Title",
-      "session": "Programme session",
+      "session": "Related session",
+      "coverImage": "Cover image",
+      "coverImageAdd": "Add cover",
+      "coverImagePosition": "Position",
+      "coverImageRemove": "Remove cover",
       "body": "Blocks",
       "bodyHelp": "A JSON list of blocks. Text blocks accept **bold**, *italic*, `code` and links."
+    },
+    "blockEditor": {
+      "add": "Hover between blocks and press + to add one there. Drag the ⠿ handle to reorder.",
+      "empty": "No blocks yet. Add the first one below.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove block",
+      "drag": "Drag to reorder",
+      "insert": "Add a block here",
+      "done": "Done",
+      "addMedia": "Click to add"
+    },
+    "blockType": {
+      "TEXT": "Text",
+      "VIDEO": "Video",
+      "IMAGE": "Image",
+      "BOOKMARK": "Bookmark",
+      "CHECKLIST": "Checklist",
+      "CALLOUT": "Callout",
+      "CONTEMPLATION": "Contemplation",
+      "BUTTON": "Button",
+      "TECHNICAL_STEP": "Technical step",
+      "SUPPORT_BOX": "Support box"
+    },
+    "calloutTone": {
+      "INFO": "Info",
+      "WARNING": "Warning",
+      "SUPPORT": "Support"
+    },
+    "blockField": {
+      "md": "Text (accepts **bold**, *italic*, `code` and links)",
+      "url": "Link",
+      "caption": "Caption",
+      "alt": "Alt text",
+      "title": "Title",
+      "description": "Description",
+      "items": "Items",
+      "addItem": "Add item",
+      "removeItem": "Remove item",
+      "tone": "Tone",
+      "step": "Step",
+      "label": "Label",
+      "contactLabel": "Contact label",
+      "contactUrl": "Contact link"
     },
     "error": {
       "invalid": "That change is not allowed.",
@@ -583,6 +717,8 @@
     "noExclusions": "No exclusions recorded yet.",
     "noArms": "No arms are configured for this study.",
     "inCohort": "{count} in a cohort",
+    "exclusionsTotal": "Exclusions",
+    "allocationTotal": "Allocated",
     "stage": {
       "applicationsReceived": "Applications received",
       "peopleApplied": "Distinct people",
@@ -678,16 +814,20 @@
       "alert__raised": "Alert raised",
       "alert__resolved": "Alert resolved",
       "application__status_changed": "Application status changed",
+      "application__status_corrected": "Application status corrected",
       "application__submitted": "Application recorded",
       "attendance__recorded": "Attendance recorded",
       "automation_rule__activated": "Automation rule activated",
       "automation_rule__created": "Automation rule created",
       "automation_rule__deactivated": "Automation rule deactivated",
       "cohort__created": "Cohort created",
+      "cohort__stage_changed": "Programme stage changed",
       "cohort__status_changed": "Cohort status changed",
       "cohort_assignment__created": "Assigned to a cohort",
       "cohort_assignment__moved": "Moved between cohorts",
       "cohort_assignment__removed": "Removed from a cohort",
+      "cohort_note__created": "Note added",
+      "cohort_note__deleted": "Note removed",
       "cohort_staff__assigned": "Staff assigned to the cohort",
       "cohort_staff__revoked": "Staff removed from the cohort",
       "communication__recorded": "Send recorded by a person",
@@ -697,6 +837,7 @@
       "consent__started": "Consent started",
       "consent__superseded": "Consent superseded",
       "content__created": "Content created",
+      "content__session_relinked": "Content's session relinked",
       "content_assignment__pinned": "Content pinned to the session",
       "content_version__archived": "Version archived",
       "content_version__drafted": "New draft",
@@ -714,6 +855,7 @@
       "initial_visit__closed": "Initial visit closed",
       "initial_visit__notes_updated": "Visit notes updated",
       "initial_visit__scheduled": "Initial visit scheduled",
+      "participant__contact_name_set": "Contact name updated",
       "participant__created": "Participant created",
       "participant__eligibility_changed": "Eligibility changed",
       "participant__enrollment_changed": "Enrollment status changed",
@@ -930,6 +1072,11 @@
   "attention": {
     "title": "Needs attention",
     "empty": "Nothing is outstanding right now.",
+    "columnAlerts": "Alerts",
+    "columnPreparedMessages": "Prepared messages",
+    "columnTasks": "Open tasks",
+    "columnReviewRequired": "Review required",
+    "columnWaitingForAllocation": "No cohort assigned",
     "reviewRequired": "{count, plural, one {# participant needs review} other {# participants need review}}",
     "waitingForAllocation": "{count, plural, one {# eligible person with no arm allocation} other {# eligible people with no arm allocation}}",
     "cohorts": "Cohorts",
@@ -955,6 +1102,13 @@
   },
   "tasks": {
     "subtitle": "What somebody has to do. Created by hand or by a study rule.",
+    "checklistTitle": "This cohort's open items",
+    "checklistEmpty": "Nothing pending for this cohort right now.",
+    "viewAll": "View all tasks",
+    "trelloTitle": "Trello · Project tasks",
+    "trelloNotConnected": "Trello is not connected.",
+    "trelloNotConnectedHelp": "Add TRELLO_BOARD_URL (a board's URL with public link sharing turned on) to the environment variables to see it here. It's a view only — nothing in Trello is updated from this application.",
+    "trelloOpen": "View the board on Trello",
     "open": "Open",
     "overdue": "Overdue",
     "done": "Done",

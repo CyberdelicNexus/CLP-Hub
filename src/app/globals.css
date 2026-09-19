@@ -147,6 +147,65 @@
   --sidebar-accent-foreground: oklch(0.26 0.03 285);
   --sidebar-border: oklch(0.922 0.006 265);
   --sidebar-ring: oklch(0.62 0.13 285);
+
+  /* Glass chrome (nav surfaces only — see docs/design-system.md). */
+  --glass-bg: oklch(1 0 0 / 0.55);
+  --glass-bg-strong: oklch(1 0 0 / 0.72);
+  --glass-border: oklch(1 0 0 / 0.5);
+  --glass-highlight: oklch(1 0 0 / 0.85);
+
+  /* Brand gradient, built from the chart series so it stays legible and
+   * paired between light and dark rather than introducing new hues. */
+  --gradient-brand: linear-gradient(135deg, var(--chart-1) 0%, var(--chart-2) 55%, var(--chart-3) 100%);
+  /* .card-accent's border (2026-09-19, second pass): a radial glow anchored
+   * at the top-left corner, not a straight diagonal — an ellipse taller than
+   * it is wide so the colour rides further down the left edge than across
+   * the top one before fading to plain --border, the way the founder's
+   * reference card wraps its corner rather than crossing the card on a
+   * straight line. A conic gradient was tried first and rejected: centred at
+   * a corner, a conic gradient's colour only varies by ANGLE, so it cannot
+   * fade along the length of a straight edge — every point on the left edge
+   * sits at the same angle from that corner. A radial ellipse fades with
+   * DISTANCE from the corner in every direction at once, which is what
+   * actually produces the wrap-and-fade look. */
+  --gradient-brand-border: radial-gradient(
+    55% 100% at 0% 0%,
+    color-mix(in oklch, var(--chart-1) 75%, var(--border)) 0%,
+    color-mix(in oklch, var(--chart-2) 55%, var(--border)) 28%,
+    var(--border) 62%
+  );
+  /* .card-accent's fill (2026-09-19 follow-up: "a subtle dark blue and
+   * purple gradient in the bg" — a deliberate return of a wash, this time
+   * kept faint enough to sit well under the border+highlight from the
+   * rejected 2026-09-18 version rather than replacing it). chart-1 is the
+   * purple hue, chart-2 the blue. */
+  --gradient-brand-fill: radial-gradient(
+    80% 90% at 0% 0%,
+    color-mix(in oklch, var(--chart-1) 7%, var(--card)) 0%,
+    color-mix(in oklch, var(--chart-2) 5%, var(--card)) 45%,
+    var(--card) 80%
+  );
+  /* Page background (2026-09-19, strengthened same-day: "feels too white" —
+   * the original 4-5% mix read as almost nothing against a near-white
+   * --background). Same two hues, still fixed to the viewport so it reads as
+   * ambient light rather than a per-page tile, just carried at a fraction
+   * that actually shows up in light mode; a third wash low on the page keeps
+   * it from reading as "light only in the top corners." */
+  --gradient-page: radial-gradient(
+      130% 100% at 15% -10%,
+      color-mix(in oklch, var(--chart-1) 12%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      120% 100% at 100% 0%,
+      color-mix(in oklch, var(--chart-2) 11%, transparent) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      90% 70% at 50% 100%,
+      color-mix(in oklch, var(--chart-3) 8%, transparent) 0%,
+      transparent 70%
+    );
 }
 
 .dark {
@@ -207,6 +266,37 @@
   --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.3), 0 4px 16px -4px oklch(0 0 0 / 0.4);
   --shadow-lift: 0 2px 4px oklch(0 0 0 / 0.35), 0 12px 32px -8px oklch(0 0 0 / 0.5);
   --shadow-float: 0 8px 40px -12px oklch(0 0 0 / 0.6);
+
+  --glass-bg: oklch(0.24 0.017 268 / 0.55);
+  --glass-bg-strong: oklch(0.24 0.017 268 / 0.75);
+  --glass-border: oklch(1 0 0 / 0.09);
+  --glass-highlight: oklch(1 0 0 / 0.14);
+
+  --gradient-brand: linear-gradient(135deg, var(--chart-1) 0%, var(--chart-2) 55%, var(--chart-3) 100%);
+  --gradient-brand-border: radial-gradient(
+    55% 100% at 0% 0%,
+    color-mix(in oklch, var(--chart-1) 80%, var(--border)) 0%,
+    color-mix(in oklch, var(--chart-2) 62%, var(--border)) 28%,
+    var(--border) 62%
+  );
+  /* Dark mode carries the wash at a slightly higher mix — the same faint
+   * fraction reads lighter against a dark card than a light one. */
+  --gradient-brand-fill: radial-gradient(
+    80% 90% at 0% 0%,
+    color-mix(in oklch, var(--chart-1) 10%, var(--card)) 0%,
+    color-mix(in oklch, var(--chart-2) 8%, var(--card)) 45%,
+    var(--card) 80%
+  );
+  --gradient-page: radial-gradient(
+      130% 100% at 15% -10%,
+      color-mix(in oklch, var(--chart-1) 8%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      120% 100% at 100% 0%,
+      color-mix(in oklch, var(--chart-2) 7%, transparent) 0%,
+      transparent 60%
+    );
 }
 
 @layer base {
@@ -215,10 +305,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: var(--gradient-page);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+  }
+  /* Scrollbars that follow the theme instead of the OS default (2026-09-19).
+   * Firefox via the two-value shorthand; everything else via ::-webkit-*. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+    background-clip: padding-box;
   }
   /* Metrics and identifiers must not jitter as their values change. */
   [data-numeric] {
@@ -235,11 +350,92 @@
 
 @layer utilities {
   /* Ambient pastel wash behind the shell background and the landing hero. */
+  /* The third layer's anchor sits BELOW the box (130%, not 100%) rather than
+   * exactly on its bottom edge (2026-09-19 fix: "a line that cuts" on the
+   * dashboard). A radial-gradient's 0%-colour point is its brightest —
+   * anchoring it exactly at 100% put that peak precisely on the edge of
+   * whatever fixed-height box this class paints (`TeamShell`'s h-96 aurora
+   * div), which clips there, so the peak became a visible hard edge instead
+   * of fading out like the other two corner-anchored layers do. Anchoring
+   * below the box means only its already-fading outer edge ever shows. */
   .bg-aurora {
     background-image:
       radial-gradient(58% 48% at 8% 0%, var(--surface-peach) 0%, transparent 62%),
       radial-gradient(50% 46% at 96% 4%, var(--surface-lilac) 0%, transparent 64%),
-      radial-gradient(46% 40% at 50% 100%, var(--surface-sky) 0%, transparent 66%);
+      radial-gradient(60% 55% at 50% 130%, var(--surface-sky) 0%, transparent 70%);
+  }
+
+  /* Brand gradient — text and background variants, built from the chart
+   * series (see :root) so it stays paired between light and dark. */
+  .text-gradient-brand {
+    background-image: var(--gradient-brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  /* A quieter way to mark a card as "notable" than the old background wash:
+   * a gradient-tinted border that glows from the top-left corner and wraps
+   * both edges (`--gradient-brand-border`, second pass 2026-09-19 — see its
+   * own comment for why a radial ellipse replaced both the original 135°
+   * diagonal border AND the separate left-edge bar this card used to also
+   * draw: one radial glow now does what two layers did, and it actually
+   * fades along an edge's length the way the founder's reference wraps a
+   * corner, which neither earlier version did), plus a very faint gradient
+   * fill behind it all (`--gradient-brand-fill`). `overflow: hidden` is
+   * baked in here (not left to call sites) so the border is clipped by the
+   * card's own rounded corners cleanly. */
+  .card-accent {
+    position: relative;
+    overflow: hidden;
+    border: 1.5px solid transparent;
+    background-image:
+      var(--gradient-brand-fill),
+      var(--gradient-brand-border);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+  .bg-gradient-brand-soft {
+    background-image: linear-gradient(
+      135deg,
+      var(--surface-lilac) 0%,
+      var(--surface-sky) 55%,
+      var(--surface-mint) 100%
+    );
+  }
+
+  /* Glass chrome, reserved for navigation surfaces (sidebar, header) per the
+   * founder's liquid-glass reference — content cards stay the flat "soft
+   * modern" surfaces defined above. Blur is dropped under
+   * prefers-reduced-transparency and where backdrop-filter is unsupported,
+   * falling back to the opaque --sidebar surface underneath. */
+  .glass-panel {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      var(--shadow-soft);
+  }
+  .glass-panel-strong {
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      var(--shadow-lift);
+  }
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    @media (prefers-reduced-transparency: no-preference) {
+      .glass-panel {
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+      }
+      .glass-panel-strong {
+        backdrop-filter: blur(26px) saturate(180%);
+        -webkit-backdrop-filter: blur(26px) saturate(180%);
+      }
+    }
   }
   /* Scroll reveal. The .is-visible class is applied by <Reveal>.
    * Scoped to `scripting: enabled` so that with JavaScript disabled the

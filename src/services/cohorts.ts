@@ -5,6 +5,7 @@ import { recordStudyEvent } from "./automation";
 import type { CohortScope } from "@/auth/cohort-scope";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
+  cohortNotes,
   cohortStaff,
   cohorts,
   consents,
@@ -16,8 +17,10 @@ import {
   userRoles,
   users,
   type Cohort,
+  type CohortNote,
   type StudyArm,
 } from "@/db/schema";
+import type { NoteColor } from "@/domain/cohort-note";
 import {
   acceptsAssignments,
   assessCohortSize,
@@ -28,7 +31,7 @@ import {
   type CohortSize,
   type CohortStatus,
 } from "@/domain/cohort";
-import { canTransitionEnrollment } from "@/domain/participant-state";
+import { canTransitionEnrollment, type EnrollmentStatus } from "@/domain/participant-state";
 import { manualEntryProvider } from "@/domain/randomization";
 
 /**
@@ -107,6 +110,10 @@ function scopeFilter(scope: CohortScope) {
 
 export interface CohortListRow extends Cohort {
   memberCount: number;
+  /** Active `cohort_staff` rows — a subquery, not a second join, so it can't
+   * fan out `memberCount`'s single-join count (2026-09-18 request: surface
+   * team size on the cohort stack's compact card). */
+  staffCount: number;
   /** Members against configured bounds. Never a judgement, just arithmetic. */
   size: CohortSize;
   armCode: string | null;
@@ -122,6 +129,10 @@ export async function listCohorts(
     .select({
       cohort: cohorts,
       memberCount: count(participantCohortAssignments.id),
+      staffCount: sql<number>`(
+        select count(*)::int from cohort_staff cs
+        where cs.cohort_id = ${cohorts.id} and cs.revoked_at is null
+      )`,
       armCode: studyArms.code,
     })
     .from(cohorts)
@@ -140,6 +151,7 @@ export async function listCohorts(
   return rows.map((r) => ({
     ...r.cohort,
     memberCount: Number(r.memberCount),
+    staffCount: Number(r.staffCount),
     armCode: r.armCode,
     size: assessCohortSize({
       members: Number(r.memberCount),
@@ -158,6 +170,7 @@ export interface CohortDetail {
     fullName: string | null;
     assignedAt: Date;
     armCode: string | null;
+    enrollmentStatus: EnrollmentStatus | null;
   }[];
 }
 
@@ -199,6 +212,7 @@ export async function getCohortDetail(
         fullName: options.includeContact ? participantContacts.fullName : sql<null>`null`,
         assignedAt: participantCohortAssignments.assignedAt,
         armCode: studyArms.code,
+        enrollmentStatus: participants.enrollmentStatus,
       })
       .from(participantCohortAssignments)
       .innerJoin(participants, eq(participants.id, participantCohortAssignments.participantId))
@@ -943,6 +957,89 @@ export async function listAssignableStaff(
     .where(eq(users.active, true))
     .orderBy(asc(users.displayName));
   return rows;
+}
+
+// ---------------------------------------------------------------------------
+// Sticky notes (2026-09-19 request)
+// ---------------------------------------------------------------------------
+
+export async function listCohortNotes(
+  studyId: string,
+  cohortId: string,
+): Promise<(CohortNote & { authorName: string | null })[]> {
+  const rows = await getDb()
+    .select({ note: cohortNotes, authorName: users.displayName })
+    .from(cohortNotes)
+    .leftJoin(users, eq(users.id, cohortNotes.createdBy))
+    .where(and(eq(cohortNotes.studyId, studyId), eq(cohortNotes.cohortId, cohortId)))
+    .orderBy(desc(cohortNotes.createdAt));
+  return rows.map((r) => ({ ...r.note, authorName: r.authorName }));
+}
+
+export async function createCohortNote(params: {
+  studyId: string;
+  cohortId: string;
+  actorId: string;
+  color: NoteColor;
+  body: string;
+}): Promise<string> {
+  const { studyId, cohortId, actorId, color } = params;
+  const body = params.body.trim();
+
+  return getDb().transaction(async (tx) => {
+    const [cohort] = await tx
+      .select({ id: cohorts.id })
+      .from(cohorts)
+      .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!cohort) throw new NotFoundError("cohort", cohortId);
+
+    const [created] = await tx
+      .insert(cohortNotes)
+      .values({ studyId, cohortId, color, body, createdBy: actorId })
+      .returning({ id: cohortNotes.id });
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort_note.created",
+      entityType: "cohort_note",
+      entityId: created.id,
+      // The note text itself is not audited (free text is never stored in a
+      // snapshot in this codebase) — only that one was added, and its colour.
+      after: { cohortId, color, length: body.length },
+    });
+
+    return created.id;
+  });
+}
+
+export async function deleteCohortNote(params: {
+  studyId: string;
+  noteId: string;
+  actorId: string;
+}): Promise<void> {
+  const { studyId, noteId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [note] = await tx
+      .select({ id: cohortNotes.id, cohortId: cohortNotes.cohortId })
+      .from(cohortNotes)
+      .where(and(eq(cohortNotes.id, noteId), eq(cohortNotes.studyId, studyId)))
+      .limit(1);
+    if (!note) throw new NotFoundError("cohort note", noteId);
+
+    await tx.delete(cohortNotes).where(eq(cohortNotes.id, noteId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort_note.deleted",
+      entityType: "cohort_note",
+      entityId: noteId,
+      before: { cohortId: note.cohortId },
+    });
+  });
 }
 
 /** Counts for the overview. */

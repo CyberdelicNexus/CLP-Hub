@@ -10,6 +10,7 @@ import {
   AUTHORABLE_CONTENT_TYPES,
   bodySchema,
 } from "@/domain/content";
+import { isSafeHref } from "@/domain/markdown";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
 import {
@@ -19,6 +20,7 @@ import {
   InvalidTransitionError,
   NotFoundError,
   publishVersion,
+  relinkContentSession,
   saveVersion,
   setVersionStatus,
 } from "@/services/content";
@@ -129,6 +131,14 @@ const saveSchema = z.object({
   versionId: uuid,
   title: z.string().trim().min(1).max(CONTENT_TITLE_MAX_LENGTH),
   body: z.string(),
+  coverImageUrl: z
+    .string()
+    .trim()
+    .max(600)
+    .refine((v) => v === "" || isSafeHref(v))
+    .optional()
+    .transform((v) => (v ? v : null)),
+  coverImagePosition: z.coerce.number().int().min(0).max(100).default(50),
 });
 
 export async function saveVersionAction(
@@ -143,6 +153,8 @@ export async function saveVersionAction(
     versionId: formData.get("versionId"),
     title: formData.get("title"),
     body: formData.get("body"),
+    coverImageUrl: formData.get("coverImageUrl") ?? undefined,
+    coverImagePosition: formData.get("coverImagePosition") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -171,6 +183,8 @@ export async function saveVersionAction(
       actorId: ctx.session.userId,
       title: parsed.data.title,
       body: checked.data,
+      coverImageUrl: parsed.data.coverImageUrl,
+      coverImagePosition: parsed.data.coverImagePosition,
     });
   } catch (err) {
     return fail(err, "content.save");
@@ -244,6 +258,45 @@ export async function publishVersionAction(
   }
 
   revalidate(parsed.data.contentId);
+  return { error: null, ok: true };
+}
+
+const relinkSchema = z.object({ contentId: uuid, sessionTemplateId: uuid });
+
+/**
+ * Assign an existing piece of session content (preparation or integration)
+ * to a session template — either from the content detail page's own
+ * relation field, or from the cohort workspace's "pick from existing
+ * content" toggle on a session's content slot (2026-09-19 request). Both
+ * call this one action.
+ */
+export async function relinkSessionAction(
+  _prev: ContentActionState,
+  formData: FormData,
+): Promise<ContentActionState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = relinkSchema.safeParse({
+    contentId: formData.get("contentId"),
+    sessionTemplateId: formData.get("sessionTemplateId"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "content.manage");
+    await relinkContentSession({
+      studyId: ctx.study.id,
+      contentId: parsed.data.contentId,
+      actorId: ctx.session.userId,
+      sessionTemplateId: parsed.data.sessionTemplateId,
+    });
+  } catch (err) {
+    return fail(err, "content.relink");
+  }
+
+  revalidate(parsed.data.contentId);
+  revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
   return { error: null, ok: true };
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
@@ -24,7 +25,7 @@ export default async function LoginPage() {
 
       <div className="relative w-full max-w-sm space-y-6 rounded-2xl bg-card p-8 shadow-lift ring-1 ring-foreground/10">
         <div className="space-y-2">
-          <span aria-hidden className="block size-8 rounded-[10px] bg-primary ring-1 ring-foreground/10" />
+          <Image src="/brand/logo.png" alt="" width={36} height={36} className="size-9" priority />
           <p className="pt-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {tCommon("appName")}
           </p>
