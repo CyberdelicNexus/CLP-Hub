@@ -2833,6 +2833,88 @@ compensate) so only its already-fading edge is ever visible — fixes every
 `.bg-aurora` use (dashboard, public study pages, the login page), not just
 the dashboard.
 
+## D-075 · 2026-09-19 · The real mobile overflow bug: two CSS traps a visual audit can't see
+
+The founder tested Cohortes on an actual phone and had to zoom out to see
+it — direct evidence that D-073's mobile-responsiveness sweep missed
+something real, even though it reported everything (bar one popover)
+already working. It had a structural blind spot: it audited pages
+visually/by inspection, on a study (CLP, freshly created that same round)
+that had no cohorts, no participants, no content — every list page it
+looked at was rendering its EMPTY state. This round re-audited
+mechanically instead of visually: a Playwright script that logs in,
+switches to the DEMO study (which has real data), and at each route reads
+`document.documentElement.scrollWidth` against the viewport width — the
+actual signal a mobile browser uses to decide whether to zoom out, not
+something a screenshot reliably shows. That found four real regressions,
+none of them things a visual pass would have caught, because all four are
+INVISIBLE:
+
+**Root cause 1 — an invisible `.sr-only` label escaping its table's
+scroll clipping.** Solicitudes, Participantes and Contenido's list tables
+each end their header row with `<th><span className="sr-only">{...}</span
+></th>` — the accessible name for the "open record" column, which has no
+visible header text. Tailwind's `.sr-only` is `position: absolute` with no
+inset values; with no POSITIONED ancestor between it and `<body>` (a
+`<th>` is not positioned by default, and neither is the `overflow-x-auto`
+div wrapping the table), its containing block became the document root.
+Its "static position" — where the browser computes an unpositioned
+element would sit, which absolute positioning then uses as the default —
+was calculated from the FULL, unscrolled table width (up to 891px for
+Participantes' widest table), and that computed position escaped the
+table's own `overflow-x-auto` clipping entirely. The element is still
+1×1px and invisible (`clip: rect(0,0,0,0)`) — nothing was ever visibly
+wrong — but its layout box still counted toward `document.documentElement.
+scrollWidth`, which is exactly the signal that makes a mobile browser
+render the page pre-zoomed-out to fit it. Fixed by adding `relative` to
+each of the three `<th>` elements, giving the span a nearby containing
+block that's already inside the properly-clipping scroll region.
+
+**Root cause 2 — a CSS Grid item with no `min-w-0`.** Cohortes' two-column
+layout (`grid ... lg:grid-cols-[15rem_1fr]`) had no `min-w-0` on either
+child. A grid item's default `min-width` is `auto` — its content's own
+min-content size — not `0`, so below `lg:` (where the explicit column
+template stops applying and the layout should just stack to one column)
+the sidebar column still refused to shrink past whatever its widest piece
+of content needed, and the column — and the whole page — grew wider than
+the viewport instead of that content wrapping or truncating. This is the
+grid equivalent of the well-known flexbox `min-width: auto` trap; `shell.
+tsx`'s own top-level flex row already had `min-w-0` (D-05x era), which is
+presumably why THAT layer never showed this symptom, but nothing carried
+it into this page's own grid. Fixed by adding `min-w-0` to both grid
+children.
+
+**Root cause 3 — a popover's positioned ancestor wasn't actually catching
+it.** The cohort workspace's "assign staff" popover (`right-0` on a div
+inside a `<details className="relative">`) was still landing off its
+trigger — its measured position matched neither "flush against the
+`<details>` element's right edge" (what `position:relative` + `right:0`
+should produce) nor anything else predictable. The likely cause: modern
+Chromium's `<details>` rendering wraps non-`<summary>` children in an
+internal `::details-content` box, which may not hand off as a normal
+containing block. Fixed by moving `position: relative` off `<details>`
+entirely and onto a plain wrapping `<span>` around it — CSS containing-block
+resolution walks up past any unpositioned ancestor to find the nearest
+positioned one, so the span catches it regardless of `<details>`'s own
+internals.
+
+**What this means for D-073's sweep going forward:** a visual/inspection-based
+mobile audit cannot catch either of these classes of bug — both produce
+zero visible symptoms in a screenshot and only show up as a numeric
+`scrollWidth` mismatch or an actual on-device pinch-to-zoom. Any future
+mobile-responsiveness pass on this app should measure
+`document.documentElement.scrollWidth` against real data (not an empty
+study), not eyeball screenshots.
+
+**Verified this round:** the same scrollWidth-measuring script re-run
+against all 25 routes (every team page, every detail page, the public
+study page, every marketing/legal page) with DEMO's real data active —
+all 25 report `scrollWidth` exactly matching the 390px viewport, zero
+overflow. The assign-staff popover was additionally checked open and
+closed at 360px (narrower than the main sweep) with no change in
+scrollWidth either way. `npm run typecheck`, `npm run lint`, `npm test`
+(375/375), and `npm run build` all clean.
+
 ## Open questions for researchers
 
 - Should D-038 and D-040's "codes only, even for an entitled viewer" rule be

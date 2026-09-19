@@ -236,29 +236,38 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
             </span>
           ))}
           {canManage ? (
-            <details className="relative">
-              <summary
-                aria-label={t("cohorts.assignStaff")}
-                className="flex size-6 cursor-pointer list-none items-center justify-center rounded-full border border-dashed border-input text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&::-webkit-details-marker]:hidden"
-              >
-                <Plus className="size-3.5" aria-hidden />
-              </summary>
-              {/* w-72 can run past the right edge on a narrow phone when the
-                  "+" sits late in a wrapped chip row; capped to the viewport
-                  rather than the trigger's own width (2026-09-19 mobile pass). */}
-              <div className="absolute right-0 z-10 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-card p-3 shadow-lift">
-                <AssignStaffForm
-                  cohortId={cohort.id}
-                  staff={assignable.filter((s) => !assignedIds.has(s.id))}
-                  labels={{
-                    ...base,
-                    submit: t("cohorts.assignStaff"),
-                    person: t("cohorts.field.person"),
-                    note: t("cohorts.staffVisibilityNote"),
-                  }}
-                />
-              </div>
-            </details>
+            // `position: relative` lives on this wrapping <span>, not on the
+            // <details> itself (2026-09-19 fix) — Chromium's newer <details>
+            // rendering (the internal ::details-content box) was not acting
+            // as the popover's containing block the way a plain positioned
+            // element does, so `right-0` on the popover measured against
+            // something else entirely and the popover landed off-screen on
+            // a narrow phone instead of flush against its own trigger.
+            <span className="relative inline-block">
+              <details>
+                <summary
+                  aria-label={t("cohorts.assignStaff")}
+                  className="flex size-6 cursor-pointer list-none items-center justify-center rounded-full border border-dashed border-input text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&::-webkit-details-marker]:hidden"
+                >
+                  <Plus className="size-3.5" aria-hidden />
+                </summary>
+                {/* w-72 can run past the right edge on a narrow phone when the
+                    "+" sits late in a wrapped chip row; capped to the viewport
+                    rather than the trigger's own width (2026-09-19 mobile pass). */}
+                <div className="absolute right-0 z-10 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-card p-3 shadow-lift">
+                  <AssignStaffForm
+                    cohortId={cohort.id}
+                    staff={assignable.filter((s) => !assignedIds.has(s.id))}
+                    labels={{
+                      ...base,
+                      submit: t("cohorts.assignStaff"),
+                      person: t("cohorts.field.person"),
+                      note: t("cohorts.staffVisibilityNote"),
+                    }}
+                  />
+                </div>
+              </details>
+            </span>
           ) : null}
         </div>
       </header>

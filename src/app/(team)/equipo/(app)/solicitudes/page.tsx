@@ -154,7 +154,11 @@ export default async function ApplicationsPage({
                   ) : null}
                   <th scope="col" className="px-4 py-3">{t("applications.table.status")}</th>
                   <th scope="col" className="px-4 py-3">{t("applications.table.submitted")}</th>
-                  <th scope="col" className="px-4 py-3">
+                  {/* `relative`: see contenido/page.tsx's identical <th> for why
+                      this matters, not just styles — an un-anchored `.sr-only`
+                      span here was escaping this table's overflow-x-auto
+                      clipping and forcing the whole page to zoom out on mobile. */}
+                  <th scope="col" className="relative px-4 py-3">
                     <span className="sr-only">{t("applications.table.open")}</span>
                   </th>
                 </tr>

@@ -159,12 +159,19 @@ export default async function CohortsPage({
             ))}
           </section>
 
-          <div className="grid gap-4 lg:grid-cols-[15rem_1fr] lg:items-start">
+          {/* `min-w-0` on both children matters, not just tidiness: a CSS
+              grid item's default `min-width` is `auto` — its content's own
+              min-content size — so without it, this column refuses to
+              shrink below the widest thing inside a cohort card (a badge, an
+              unbroken name) and the whole page overflows on mobile instead
+              of that content wrapping/truncating (2026-09-19 report: "have
+              to zoom out to see"). */}
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[15rem_1fr] lg:items-start">
             {/* Sticks 10px below the floating horizontal nav bar (2026-09-19
                 request), not at the viewport edge: the header is `mt-3` (0.75rem)
                 plus `h-14` (3.5rem) tall, so its bottom edge sits at 4.25rem —
                 +10px (0.625rem) lands the offset at 4.875rem. */}
-            <div className="flex flex-col gap-2 lg:sticky lg:top-[4.875rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-2">
+            <div className="flex min-w-0 flex-col gap-2 lg:sticky lg:top-[4.875rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-2">
               {rows.map((row) => {
                 const active = row.id === selectedId;
                 const stage = row.currentStageId ? stageById.get(row.currentStageId) : null;
@@ -216,7 +223,7 @@ export default async function CohortsPage({
               })}
             </div>
 
-            <div>{selectedId ? <CohortPanel ctx={ctx} cohortId={selectedId} /> : null}</div>
+            <div className="min-w-0">{selectedId ? <CohortPanel ctx={ctx} cohortId={selectedId} /> : null}</div>
           </div>
         </>
       )}

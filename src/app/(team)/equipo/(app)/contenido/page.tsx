@@ -93,7 +93,15 @@ export default async function ContentPage({
                   <th scope="col" className="px-4 py-3">{t("content.table.type")}</th>
                   <th scope="col" className="px-4 py-3">{t("content.table.status")}</th>
                   <th scope="col" className="px-4 py-3">{t("content.table.page")}</th>
-                  <th scope="col" className="px-4 py-3">
+                  {/* `relative` matters here, not just styling: Tailwind's
+                      `.sr-only` is `position: absolute` with no inset values,
+                      so without a positioned ancestor its containing block
+                      becomes the document root — its (invisible) layout box
+                      then escapes this table's `overflow-x-auto` clipping
+                      entirely and widens `document.documentElement.
+                      scrollWidth`, which is what was forcing mobile browsers
+                      to zoom the whole page out (2026-09-19 report). */}
+                  <th scope="col" className="relative px-4 py-3">
                     <span className="sr-only">{t("content.table.open")}</span>
                   </th>
                 </tr>
