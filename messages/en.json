@@ -243,6 +243,14 @@
       "empty": "No name",
       "edit": "Edit name"
     },
+    "contactEmail": {
+      "empty": "No email",
+      "edit": "Edit email"
+    },
+    "contactPhone": {
+      "empty": "No phone",
+      "edit": "Edit phone"
+    },
     "emptyTitle": "No participants",
     "emptyDescription": "Nobody is registered with this filter yet.",
     "screening": "Screening",
@@ -325,7 +333,8 @@
       "reasonNotApplicable": "That reason cannot be used with this outcome.",
       "noteTooLong": "The note is too long or contains line breaks.",
       "scopesNotAllowed": "A digital consent cannot carry additional authorizations.",
-      "unknownScope": "One of the authorizations is not configured for this study."
+      "unknownScope": "One of the authorizations is not configured for this study.",
+      "duplicateEmail": "Another participant in this study already uses this email."
     },
     "reason": "Reason",
     "reasonRequiredHint": "Required for “Not eligible” and “Needs review”.",
@@ -855,7 +864,9 @@
       "initial_visit__closed": "Initial visit closed",
       "initial_visit__notes_updated": "Visit notes updated",
       "initial_visit__scheduled": "Initial visit scheduled",
+      "participant__contact_email_set": "Contact email updated",
       "participant__contact_name_set": "Contact name updated",
+      "participant__contact_phone_set": "Contact phone updated",
       "participant__created": "Participant created",
       "participant__eligibility_changed": "Eligibility changed",
       "participant__enrollment_changed": "Enrollment status changed",

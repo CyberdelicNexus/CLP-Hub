@@ -51,7 +51,7 @@ import {
   CloseScreeningForm,
   CompleteScreeningForm,
   ConsentDecisionForm,
-  ContactNameField,
+  ContactField,
   EnrollmentForm,
   ScheduleScreeningForm,
   StartConsentForm,
@@ -195,6 +195,7 @@ export default async function ParticipantDetailPage({
     armMismatch: t("cohorts.error.armMismatch"),
     armNotRecorded: t("cohorts.error.armNotRecorded"),
     sameCohort: t("cohorts.error.sameCohort"),
+    duplicateEmail: t("participants.error.duplicateEmail"),
   };
   const formBase = { submit: t("common.save"), submitting: t("common.loading"), errors: errorLabels };
 
@@ -501,9 +502,10 @@ export default async function ParticipantDetailPage({
                   <div>
                     <dt className="text-xs text-muted-foreground">{t("applications.field.name")}</dt>
                     {canManageParticipant ? (
-                      <ContactNameField
+                      <ContactField
+                        field="fullName"
                         participantId={participant.id}
-                        fullName={contact?.fullName ?? null}
+                        value={contact?.fullName ?? null}
                         labels={{
                           ...formBase,
                           empty: t("participants.contactName.empty"),
@@ -514,8 +516,44 @@ export default async function ParticipantDetailPage({
                       <dd className="break-words">{contact?.fullName ?? "—"}</dd>
                     )}
                   </div>
-                  <Field label={t("applications.field.email")} value={contact?.email} />
-                  <Field label={t("applications.field.phone")} value={contact?.phone} />
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t("applications.field.email")}</dt>
+                    {canManageParticipant ? (
+                      <ContactField
+                        field="email"
+                        inputType="email"
+                        maxLength={254}
+                        participantId={participant.id}
+                        value={contact?.email ?? null}
+                        labels={{
+                          ...formBase,
+                          empty: t("participants.contactEmail.empty"),
+                          edit: t("participants.contactEmail.edit"),
+                        }}
+                      />
+                    ) : (
+                      <dd className="break-words">{contact?.email ?? "—"}</dd>
+                    )}
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t("applications.field.phone")}</dt>
+                    {canManageParticipant ? (
+                      <ContactField
+                        field="phone"
+                        inputType="tel"
+                        maxLength={40}
+                        participantId={participant.id}
+                        value={contact?.phone ?? null}
+                        labels={{
+                          ...formBase,
+                          empty: t("participants.contactPhone.empty"),
+                          edit: t("participants.contactPhone.edit"),
+                        }}
+                      />
+                    ) : (
+                      <dd className="break-words">{contact?.phone ?? "—"}</dd>
+                    )}
+                  </div>
                 </dl>
               )}
             </CardContent>
@@ -670,15 +708,6 @@ export default async function ParticipantDetailPage({
           timezone={ctx.study.timezone}
         />
       ) : null}
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="break-words">{value ?? "—"}</dd>
     </div>
   );
 }

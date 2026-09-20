@@ -42,7 +42,7 @@ import {
   type EligibilityStatus,
   type EnrollmentStatus,
 } from "@/domain/participant-state";
-import type { RecruitmentStatus } from "@/domain/recruitment";
+import { normalizeEmail, type RecruitmentStatus } from "@/domain/recruitment";
 import {
   canTransitionScreening,
   RECRUITMENT_STATUS_WHEN_SCHEDULED,
@@ -1109,6 +1109,136 @@ export async function setParticipantContactName(params: {
       entityId: participantId,
       before: { fullName: existing?.fullName ?? null },
       after: { fullName, participantCode: participant.code },
+    });
+  });
+}
+
+/**
+ * A study already has a different participant using this normalized email
+ * (docs/research-data-boundaries.md's D-013 duplicate-detection key). Caught
+ * at the application layer so an edit fails with a clear message instead of
+ * the partial unique index (`participant_contacts_email_unique`) surfacing
+ * as a raw constraint violation.
+ */
+export class DuplicateContactEmailError extends Error {
+  constructor() {
+    super("A participant in this study already uses this email");
+    this.name = "DuplicateContactEmailError";
+  }
+}
+
+/**
+ * Set a participant's email directly from the staff UI (2026-09-20
+ * request: "I need to be able to edit the person name, email and phone...
+ * we do need to know who is the participant... in case we need to reach
+ * out directly"). Same upsert shape as `setParticipantContactName`, plus
+ * the email-specific normalization and duplicate check every OTHER path
+ * that writes an email already goes through.
+ */
+export async function setParticipantContactEmail(params: {
+  studyId: string;
+  participantId: string;
+  actorId: string;
+  email: string | null;
+}): Promise<void> {
+  const { studyId, participantId, actorId, email } = params;
+  const emailNormalized = email ? normalizeEmail(email) : null;
+
+  await getDb().transaction(async (tx) => {
+    const [participant] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    if (emailNormalized) {
+      const [conflict] = await tx
+        .select({ participantId: participantContacts.participantId })
+        .from(participantContacts)
+        .where(
+          and(
+            eq(participantContacts.studyId, studyId),
+            eq(participantContacts.emailNormalized, emailNormalized),
+          ),
+        )
+        .limit(1);
+      if (conflict && conflict.participantId !== participantId) throw new DuplicateContactEmailError();
+    }
+
+    const [existing] = await tx
+      .select({ email: participantContacts.email })
+      .from(participantContacts)
+      .where(eq(participantContacts.participantId, participantId))
+      .limit(1);
+
+    if (existing) {
+      await tx
+        .update(participantContacts)
+        .set({ email, emailNormalized, updatedAt: new Date() })
+        .where(eq(participantContacts.participantId, participantId));
+    } else {
+      await tx.insert(participantContacts).values({ participantId, studyId, email, emailNormalized });
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "participant.contact_email_set",
+      entityType: "participant",
+      entityId: participantId,
+      before: { email: existing?.email ?? null },
+      after: { email, participantCode: participant.code },
+    });
+  });
+}
+
+/**
+ * Set a participant's phone directly from the staff UI — see
+ * `setParticipantContactEmail`'s doc comment for the request this answers.
+ * No normalization: phone formats vary too much across countries/providers
+ * to canonicalize safely, and nothing keys off it for deduplication the way
+ * email does.
+ */
+export async function setParticipantContactPhone(params: {
+  studyId: string;
+  participantId: string;
+  actorId: string;
+  phone: string | null;
+}): Promise<void> {
+  const { studyId, participantId, actorId, phone } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [participant] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    const [existing] = await tx
+      .select({ phone: participantContacts.phone })
+      .from(participantContacts)
+      .where(eq(participantContacts.participantId, participantId))
+      .limit(1);
+
+    if (existing) {
+      await tx
+        .update(participantContacts)
+        .set({ phone, updatedAt: new Date() })
+        .where(eq(participantContacts.participantId, participantId));
+    } else {
+      await tx.insert(participantContacts).values({ participantId, studyId, phone });
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "participant.contact_phone_set",
+      entityType: "participant",
+      entityId: participantId,
+      before: { phone: existing?.phone ?? null },
+      after: { phone, participantCode: participant.code },
     });
   });
 }

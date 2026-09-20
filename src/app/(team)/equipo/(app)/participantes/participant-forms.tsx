@@ -12,7 +12,9 @@ import {
   completeScreeningAction,
   recordConsentAction,
   scheduleScreeningAction,
+  setContactEmailAction,
   setContactNameAction,
+  setContactPhoneAction,
   setEnrollmentAction,
   startConsentAction,
   type OpState,
@@ -36,22 +38,43 @@ function ErrorLine({ state, errors }: { state: OpState; errors: Record<string, s
   );
 }
 
+const CONTACT_FIELD_ACTIONS = {
+  fullName: setContactNameAction,
+  email: setContactEmailAction,
+  phone: setContactPhoneAction,
+} as const;
+
 /**
- * A participant's name, editable inline — click the pencil, type, Enter or
- * blur to save (2026-09-19: "bring back the ability to add names to the
- * participants for the demo"). Same pattern as `CoverBanner`'s inline URL
- * field: no separate edit page for one text value.
+ * One field of a participant's contact info (name, email, or phone),
+ * editable inline — click the pencil, type, Enter or blur to save
+ * (2026-09-19: name only, "bring back the ability to add names to the
+ * participants for the demo"; extended 2026-09-20 to email and phone: "I
+ * need to be able to edit the person name, email and phone... we do need
+ * to know who is the participant... in case we need to reach out
+ * directly"). Same pattern as `CoverBanner`'s inline URL field: no
+ * separate edit page for one text value.
+ *
+ * Every call site already gates rendering this at all on
+ * `participants.manage` (ADMIN/STUDY_MANAGER only) — `participants.
+ * contact.read` alone (also held by LOGISTICS, for shipping) shows the
+ * read-only value elsewhere, never this editable one.
  */
-export function ContactNameField({
+export function ContactField({
+  field,
   participantId,
-  fullName,
+  value,
+  inputType = "text",
+  maxLength = 200,
   labels,
 }: {
+  field: keyof typeof CONTACT_FIELD_ACTIONS;
   participantId: string;
-  fullName: string | null;
+  value: string | null;
+  inputType?: "text" | "email" | "tel";
+  maxLength?: number;
   labels: FormLabels & { empty: string; edit: string };
 }) {
-  const [state, action, pending] = useActionState(setContactNameAction, initial);
+  const [state, action, pending] = useActionState(CONTACT_FIELD_ACTIONS[field], initial);
   const [editing, setEditing] = useState(false);
 
   // Drop back to the read view once a save lands — adjusted during render
@@ -67,7 +90,7 @@ export function ContactNameField({
   if (!editing) {
     return (
       <div className="flex items-center gap-1.5">
-        <dd className="break-words">{fullName || labels.empty}</dd>
+        <dd className="break-words">{value || labels.empty}</dd>
         <button
           type="button"
           onClick={() => setEditing(true)}
@@ -84,10 +107,11 @@ export function ContactNameField({
     <form action={action} className="flex items-center gap-1.5">
       <input type="hidden" name="participantId" value={participantId} />
       <Input
-        name="fullName"
+        name={field}
+        type={inputType}
         autoFocus
-        defaultValue={fullName ?? ""}
-        maxLength={200}
+        defaultValue={value ?? ""}
+        maxLength={maxLength}
         className="h-7 flex-1 text-sm"
         onKeyDown={(e) => {
           if (e.key === "Escape") setEditing(false);

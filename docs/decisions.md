@@ -2915,6 +2915,51 @@ closed at 360px (narrower than the main sweep) with no change in
 scrollWidth either way. `npm run typecheck`, `npm run lint`, `npm test`
 (375/375), and `npm run build` all clean.
 
+## D-076 · 2026-09-20 · Contact email and phone editable, same two roles as name
+
+*"I need to be able to edit the person name, email and phone for demo
+purposes... this is an internal tool, we do need to know who is the
+participant and their details in case we need to reach out directly."*
+
+D-073 made `fullName` editable inline on the participant detail page,
+gated on `participants.manage`. Extended the same pattern to `email` and
+`phone`, generalizing `ContactNameField` into `ContactField`
+(`participantes/participant-forms.tsx`) — one component parameterized by
+`field`/`inputType`/`maxLength`/`action`, since the three fields are
+otherwise identical (click the pencil, type, Enter or the button saves,
+Escape cancels). Two new service functions
+(`setParticipantContactEmail`/`Phone`, `services/participant-ops.ts`)
+mirror `setParticipantContactName`'s upsert-plus-audit shape; email
+additionally normalizes (`normalizeEmail`, the same D-013 canonical form
+every other email-writing path uses) and checks for a collision with a
+DIFFERENT participant's email in the study before writing, throwing a new
+`DuplicateContactEmailError` rather than letting the partial unique index
+(`participant_contacts_email_unique`) surface as a raw constraint failure.
+
+**On "lower that security" — nothing in the permission model actually
+changed.** The founder asked to scope this to "2 account levels, admin and
+coordination, the rest can't see it," which turned out to already be
+exactly what `participants.manage` grants — ADMIN and STUDY_MANAGER only,
+per the existing matrix (`docs/permissions.md`), unchanged since D-04x.
+`participants.contact.read` (ADMIN, STUDY_MANAGER, and LOGISTICS — the
+last for shipping VR equipment to a real address) still only shows the
+value; holding it alone does not grant the pencil. So: FACILITATOR/
+RESEARCHER/SUPERVISOR see nothing (no `contact.read` at all), LOGISTICS
+sees but cannot edit, ADMIN/STUDY_MANAGER see and edit — exactly the two
+levels asked for, with LOGISTICS's existing view-only access left alone
+since removing it would break their actual ability to ship a device
+(not something this request was about, and not mentioned as a target).
+
+**Verified this round:** `npm run typecheck`, `npm run lint`, `npm test`
+(375/375, after adding `participant__contact_email_set`/
+`participant__contact_phone_set` audit labels in both locales), and
+`npm run build` all clean. Playwright confirmed editing email and phone
+on a real DEMO participant, reloading, and seeing both values persist
+(the phone edit initially looked like it hadn't saved in one run — a
+test-script race, submitting two edits 600ms apart, not a bug: re-tested
+phone alone, with the actual server response awaited, and it persisted
+correctly).
+
 ## Open questions for researchers
 
 - Should D-038 and D-040's "codes only, even for an entitled viewer" rule be

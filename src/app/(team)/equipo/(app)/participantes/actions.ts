@@ -16,6 +16,7 @@ import { logger } from "@/lib/logger";
 import {
   closeScreening,
   completeScreening,
+  DuplicateContactEmailError,
   InvalidTransitionError,
   NotFoundError,
   ReasonError,
@@ -23,7 +24,9 @@ import {
   recordConsentDecision,
   scheduleScreening,
   setEnrollmentStatus,
+  setParticipantContactEmail,
   setParticipantContactName,
+  setParticipantContactPhone,
   startConsent,
 } from "@/services/participant-ops";
 
@@ -53,6 +56,7 @@ export type OpState = {
     | "noteTooLong"
     | "scopesNotAllowed"
     | "unknownScope"
+    | "duplicateEmail"
     | null;
   ok?: boolean;
 };
@@ -85,6 +89,7 @@ function fail(err: unknown, event: string): OpState {
   }
   if (err instanceof NotFoundError) return { error: "notFound" };
   if (err instanceof InvalidTransitionError) return { error: "invalid" };
+  if (err instanceof DuplicateContactEmailError) return { error: "duplicateEmail" };
   // Surfaced verbatim so the form can say which of the four reason problems it
   // was; none of them carry participant data.
   if (err instanceof ReasonError) return { error: err.problem };
@@ -384,6 +389,86 @@ export async function setContactNameAction(_prev: OpState, formData: FormData): 
     });
   } catch (err) {
     return fail(err, "participant.contact_name");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const contactEmailSchema = z.object({
+  participantId: uuid,
+  email: z
+    .string()
+    .trim()
+    .max(254)
+    .optional()
+    .transform((v) => (v ? v : null))
+    .refine((v) => v === null || z.string().email().safeParse(v).success, "invalid email"),
+});
+
+/**
+ * Set (or clear) a participant's email from the staff UI (2026-09-20:
+ * "I need to be able to edit the person name, email and phone... we do
+ * need to know who is the participant... in case we need to reach out
+ * directly"). Gated on `participants.manage` — ADMIN and STUDY_MANAGER
+ * only, the same two roles that can already edit anything else about a
+ * participant. `participants.contact.read` (also held by LOGISTICS, for
+ * shipping) still only shows this field; it does not gain the ability to
+ * change it.
+ */
+export async function setContactEmailAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = contactEmailSchema.safeParse({
+    participantId: formData.get("participantId"),
+    email: formData.get("email") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "participants.manage");
+    await setParticipantContactEmail({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      email: parsed.data.email,
+    });
+  } catch (err) {
+    return fail(err, "participant.contact_email");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const contactPhoneSchema = z.object({
+  participantId: uuid,
+  phone: z.string().trim().max(40).optional().transform((v) => (v ? v : null)),
+});
+
+/** Set (or clear) a participant's phone — see `setContactEmailAction`'s doc
+ * comment for the request and permission scope this answers. */
+export async function setContactPhoneAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = contactPhoneSchema.safeParse({
+    participantId: formData.get("participantId"),
+    phone: formData.get("phone") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "participants.manage");
+    await setParticipantContactPhone({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      phone: parsed.data.phone,
+    });
+  } catch (err) {
+    return fail(err, "participant.contact_phone");
   }
 
   revalidate(parsed.data.participantId);

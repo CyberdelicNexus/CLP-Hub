@@ -243,6 +243,14 @@
       "empty": "Sin nombre",
       "edit": "Editar nombre"
     },
+    "contactEmail": {
+      "empty": "Sin correo",
+      "edit": "Editar correo"
+    },
+    "contactPhone": {
+      "empty": "Sin teléfono",
+      "edit": "Editar teléfono"
+    },
     "emptyTitle": "Sin participantes",
     "emptyDescription": "Todavía no hay ninguna persona registrada con este filtro.",
     "screening": "Evaluación",
@@ -325,7 +333,8 @@
       "reasonNotApplicable": "Ese motivo no se puede usar con este resultado.",
       "noteTooLong": "La nota es demasiado larga o contiene saltos de línea.",
       "scopesNotAllowed": "El consentimiento digital no admite autorizaciones adicionales.",
-      "unknownScope": "Alguna autorización no está configurada en este estudio."
+      "unknownScope": "Alguna autorización no está configurada en este estudio.",
+      "duplicateEmail": "Otro participante de este estudio ya usa este correo."
     },
     "reason": "Motivo",
     "reasonRequiredHint": "Obligatorio para «No elegible» y «Requiere revisión».",
@@ -855,7 +864,9 @@
       "initial_visit__closed": "Visita inicial cerrada",
       "initial_visit__notes_updated": "Notas de la visita actualizadas",
       "initial_visit__scheduled": "Visita inicial programada",
+      "participant__contact_email_set": "Correo de contacto actualizado",
       "participant__contact_name_set": "Nombre de contacto actualizado",
+      "participant__contact_phone_set": "Teléfono de contacto actualizado",
       "participant__created": "Participante creado",
       "participant__eligibility_changed": "Cambio de elegibilidad",
       "participant__enrollment_changed": "Cambio de estado de inclusión",
