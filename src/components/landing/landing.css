@@ -1,5 +1,5 @@
 /* ============================================================================
-   aNUma Clear Light recruitment landing page.
+   Clear Light recruitment landing page.
 
    scrollcraft.css (vendored, unmodified) is the floor: tokens, devices, browser
    surfaces, reduced motion. This file themes it with the RCT design-system
@@ -81,7 +81,16 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (min-width: 861px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
   .cl-pinned { display: block; }
   .cl-stacked { display: none; }
+  /* "El porqué" fades in over the first 10% of the pin (why-what.tsx FADE_IN,
+     100vh of travel), so an anchor jump lands just past it, fully readable. */
+  .porque-que { scroll-margin-top: -12vh; }
 }
+
+/* Interactive starfield (D-078), a quiet background rather than a scrubbed
+   animation: fixed behind everything, `main` pulled into its own stacking
+   context above it so no section needs a z-index of its own to clear it. */
+.star-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.cl > main { position: relative; z-index: 1; }
 
 .cl-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -201,11 +210,6 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (prefers-reduced-motion: no-preference) {
   .signal--breath { animation: cl-breath 7.6s var(--cl-ease-breath) infinite; }
   .cl[data-still] .signal--breath { animation: none; }
-  /* The seam light (why-what.tsx) is the one exception: it only starts
-     breathing once the stacked variant's travelling light has arrived at its
-     centre (reading-light.tsx sets [data-arrived]), instead of always. */
-  .porque__light.signal--breath { animation-play-state: paused; }
-  .porque__light.signal--breath[data-arrived] { animation-play-state: running; }
 }
 @keyframes cl-breath {
   0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1); }
@@ -299,6 +303,12 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    so a hover anywhere else on the hero reaches the reveal. */
 .hero__copy :is(a, button) { pointer-events: auto; }
 .hero__copy { max-width: 40rem; }
+/* The eyebrow grew from a short tag into a full sentence (study design copy,
+   D-081). The all-caps, wide-tracked treatment that suits a two-or-three-word
+   label reads as shouting over two lines of running text, so this instance
+   drops both and reads as a quiet sentence instead, still in the shared
+   accent colour. */
+.hero__eyebrow { text-transform: none; letter-spacing: 0.01em; font-family: var(--sc-font-text); font-weight: 500; font-size: clamp(0.95rem, 1.15vw, 1.05rem); line-height: 1.5; max-width: 32ch; }
 /* Slightly smaller and narrower than the shared .cl-title scale, so the
    longest lines clear the light bodies on the right instead of sitting on them. */
 .hero__title { margin-top: 1.25rem; max-width: 20ch; font-size: clamp(1.85rem, 3.35vw, 3.15rem); }
@@ -370,69 +380,29 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   .hero__layer img { object-position: 100% 50%; }
 }
 
-/* ------------------------------------------------------------ 2 · porqué */
+/* ------------------------------------------------------------ 2 · porqué
+   Stacked (mobile/reduced-motion/no-JS) variant only, D-079: the desktop
+   pinned crossfade is `.porque-que__panel--why` below. No seam light here
+   any more (removed D-079, team feedback) so the padding is ordinary section
+   spacing, not room reserved for a light that no longer exists. */
 .porque {
   position: relative;
-  z-index: 2;
   min-height: 100svh;
   display: grid;
   place-items: center;
   text-align: center;
-  padding: calc(var(--cl-nav-h) + 3rem) var(--sc-gutter) calc(var(--cl-light) / 2 + 3rem);
+  padding: calc(var(--cl-nav-h) + 3rem) var(--sc-gutter) var(--sc-section);
 }
 .porque__inner { max-width: 44rem; }
+/* Fade only: the engine's flow reveal also lifts a block 14px, which reads as
+   text arriving from below. Higher specificity than `[data-sc-in]`. */
+.porque__inner[data-sc-in] { transform: none; }
 .porque__body { margin-top: 1.5rem; max-width: 52ch; margin-inline: auto; }
-/* The one light. It rests half outside the bottom centre of section 2, which
-   is exactly half outside the top centre of section 3: one element, one size,
-   both states. */
-.porque__light { left: 50%; bottom: 0; --tx: -50%; --ty: 50%; transform: translate(-50%, 50%); }
 
-/* ------------------------------------------- 2 to 3 · the reading light
-   Stacked variant only (reading-light.tsx, D-061). A small lavender light
-   starts on the hero photograph, at the body facing away from camera, travels
-   down with the reader lighting each block of "El porqué" as it reaches it,
-   and parks at the centre of the seam light shared with "El qué"
-   (.porque__light), which then starts breathing. Nothing hides until the
-   script sets [data-reading="live"], so no-JS and pre-hydration readers see
-   finished copy, and the hero (no [data-reading-block] of its own) is
-   untouched either way. */
-.reading { position: relative; }
-/* Document order (reading-light.tsx) puts it after the hero but before "El
-   porqué" / "El qué": with z-index 0 it paints OVER the hero photograph
-   (auto-stacked, no explicit z-index of its own) but still BEHIND those two
-   sections' copy (both z-indexed above it), so the same element reads as a
-   light glowing on the picture at first and moving under the page once it
-   reaches the copy. */
-.reading__light {
-  --d: clamp(4rem, 14vw, 6rem);
-  position: absolute;
-  left: 50%;
-  top: var(--ly, 0px);
-  width: var(--d);
-  height: var(--d);
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(circle,
-    rgb(232 222 255 / 0.85) 0%,
-    rgb(183 156 255 / 0.5) 28%,
-    rgb(150 116 246 / 0.2) 54%,
-    transparent 76%);
-  filter: blur(calc(var(--d) * 0.16));
-}
-.reading[data-reading="live"] .reading__light { opacity: var(--lo, 0); transition: opacity 500ms var(--cl-ease-presence); }
-.reading[data-reading="live"] [data-reading-block] {
-  opacity: 0;
-  transform: translate3d(0, 1.1rem, 0);
-  filter: blur(6px);
-  transition: opacity 760ms var(--cl-ease-presence), transform 760ms var(--cl-ease-presence), filter 760ms var(--cl-ease-presence);
-}
-.reading[data-reading="live"] [data-reading-block][data-lit] { opacity: 1; transform: none; filter: none; }
-
-/* --------------------------------------------------------------- 3 · qué */
-.que { position: relative; padding: calc(var(--cl-light) / 2 + 4rem) var(--sc-gutter) var(--sc-section); }
+/* --------------------------------------------------------------- 3 · qué
+   Stacked variant only, D-079; the pinned crossfade is
+   `.porque-que__panel--what` below. */
+.que { position: relative; padding: var(--sc-section) var(--sc-gutter); }
 .que__grid {
   max-width: var(--cl-container);
   margin-inline: auto;
@@ -521,104 +491,29 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .film__embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
 @media (max-width: 860px) {
-  .que { padding-top: calc(var(--cl-light) / 2 + 2.5rem); }
   .que__grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .film { max-width: 34rem; }
 }
 
-/* --------------------------------------------------- 1 to 3 · opening sequence
-   One pinned stage (opening.tsx, light-sequence.tsx). The stage's data-state
-   follows the clip's playhead, not the wheel: inicio, bajada (the light
-   sinking), porque, subida (rising), que, and transito during a dip to dark.
-   No `position` on the stage: it is sticky (see the note above stage--join). */
-@property --reg { syntax: "<number>"; inherits: false; initial-value: 1; }
-@property --wipe { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
-
-.opening__act { position: relative; }
-.opening[data-fallback] .cl-pinned { display: none !important; }
-.opening[data-fallback] .cl-stacked { display: block !important; }
-.op__anchor { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-margin-top: 0; }
-.stage--opening { height: 100svh; }
-.stage--opening .hero__media { container-type: size; }
-
-/* The still holds the hero until the clip is showing, then steps aside, so a
-   dip between the later states goes to dark instead of flashing the bodies. */
-.stage--opening .hero__layer--luminous { transition: opacity 360ms var(--sc-ease-out); }
-.stage--opening[data-moved] .hero__layer--luminous { opacity: 0; transition-delay: 340ms; }
-
-/* Registered to the still: the clip's first frame measured against the still
-   by its seven heart lights is 1.57% wider, 1.55% shorter and shifted, which
-   `--reg: 1` undoes (translate and scale about the rendered 16:9 frame, in
-   container units so it holds for any cover crop). Once the bodies start to
-   move, --reg eases to 0 and the clip plays untransformed. */
-.op__video {
+/* ----------------------------------------------------- 2 to 3 · pinned crossfade
+   D-079: one pinned stage (opening.tsx → why-what.tsx `WhyWhat`), "El porqué"
+   and "El qué" sharing the same screen position. Both panels are absolutely
+   positioned over the same stage box; the engine (`data-sc-cue`) writes each
+   panel's own `opacity` and toggles its `pointer-events`, so the plain
+   `position: absolute; inset: 0` here is the whole of what this file owns —
+   no wipe, no transform, `data-sc-rise="0"` on both panels in the markup
+   already told the engine to skip its default vertical drift. */
+.porque-que__panel {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 42%;
-  opacity: 0;
-  transform-origin: 50% calc((100cqh - max(100cqh, 56.25cqw)) * 0.42);
-  transform:
-    translateX(calc(var(--reg) * 0.0191 * max(100cqw, 177.78cqh)))
-    scale(calc(1 + 0.0157 * var(--reg)), calc(1 - 0.0155 * var(--reg)));
-  transition: opacity 320ms var(--sc-ease-out), --reg 1400ms var(--cl-ease-breath) 150ms;
-}
-.stage--opening[data-moved] .op__video { opacity: 1; --reg: 0; }
-.stage--opening[data-dip] .op__video { opacity: 0; transition-duration: 300ms, 0ms; }
-
-/* The revealed people belong to the still; they never show over the clip. */
-.stage--opening:is([data-moved], :not([data-state="inicio"])) :is(.hero__layer--physical, .hero__layer--haze) { opacity: 0; }
-
-.op__panel {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 380ms var(--sc-ease-out);
-}
-.stage--opening[data-state="inicio"] .op__hero,
-.stage--opening[data-state="porque"] .op__why,
-.stage--opening[data-state="que"] .op__what { opacity: 1; transition-duration: 700ms; }
-.op__what :is(a, button, iframe) { pointer-events: auto; }
-.stage--opening:not([data-state="inicio"]) .op__hero :is(a, button),
-.stage--opening:not([data-state="que"]) .op__what :is(a, button, iframe) { pointer-events: none; }
-
-.op__hero { display: grid; align-items: center; padding: calc(var(--cl-nav-h) + 2rem) var(--sc-gutter) 6rem; }
-
-/* Directional reveals with a feathered edge, animated in time rather than
-   scrubbed: top-down for "El porqué", bottom-up for "El qué". */
-.op__reveal {
-  -webkit-mask-image: linear-gradient(var(--dir, to bottom), #000 calc(var(--wipe) - 30%), transparent var(--wipe));
-  mask-image: linear-gradient(var(--dir, to bottom), #000 calc(var(--wipe) - 30%), transparent var(--wipe));
-  transition: --wipe 1300ms var(--cl-ease-presence);
-}
-.stage--opening[data-state="porque"] .op__why .op__reveal,
-.stage--opening[data-state="que"] .op__what .op__reveal { --wipe: 130%; }
-
-/* The light rests half outside the bottom: the copy sits above it. */
-.op__why {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: var(--cl-nav-h) var(--sc-gutter) 42svh;
+  padding: calc(var(--cl-nav-h) + 2rem) var(--sc-gutter);
 }
-.op__why-copy { --dir: to bottom; max-width: 44rem; }
-.op__why .porque__body { margin-inline: auto; }
+.porque-que__panel--why { text-align: center; }
+.porque-que__panel--what .que__grid { width: 100%; }
 
-/* The light rests half outside the top: the copy and film sit below it. */
-.op__what {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 37svh var(--sc-gutter) 4svh;
-}
-.op__what-grid { width: 100%; }
-.op__what .op__reveal { --dir: to top; }
-.op__what .op__reveal + .op__reveal { transition-delay: 160ms; }
 /* ------------------------------------------------------------- 4 · etapas */
 .etapas { position: relative; }
 .stage--etapas {
@@ -729,7 +624,11 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 
 /* ---------------------------------------------------------- 5 · incorporarse */
 /* No `position` here: .sc-stage is sticky and an author rule would un-pin it. */
-.stage--join { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); height: 100svh; }
+/* 6fr/7fr rather than the original 5fr/7fr (D-081): step 01's body grew to a
+   full paragraph (consent + review, not just the questionnaire link) and
+   needed more of the column's width to keep its line count sane in a
+   fixed-height pinned section. */
+.stage--join { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); height: 100svh; }
 .join__media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .join__visual { position: absolute; inset: 0; }
 /* Each photograph keeps its subject on the right; anchoring the crop there
@@ -807,7 +706,10 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   --ramp: 0.08;
   --a: clamp(0, min(calc((var(--sc-p, 1) - var(--from)) / var(--ramp)), calc((var(--to) - var(--sc-p, 1)) / var(--ramp))), 1);
   grid-area: 1 / 1;
-  max-width: 34ch;
+  /* Widened with the column above it (D-081): step 01's longer paragraph now
+     wraps to fewer lines instead of stretching this shared slot (and the
+     pinned section's fixed height) tall. */
+  max-width: 44ch;
   color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
   line-height: 1.6;
 }
@@ -842,13 +744,13 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
     linear-gradient(to top, var(--sc-canvas) 0%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 34%, transparent 78%),
     linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 72%, transparent) 0%, transparent 62%);
 }
-.join-list__copy { max-width: 32ch; }
+.join-list__copy { max-width: 38ch; }
 .join-list__item .step__num { display: block; font-size: 0.95rem; letter-spacing: 0.06em; }
 .join-list__item h3 { margin-top: 0.15rem; font-size: 1.3rem; letter-spacing: -0.015em; }
 .join-list__item p { margin-top: 0.45rem; font-size: 0.95rem; line-height: 1.5; color: var(--sc-ink-soft); }
 @media (min-width: 640px) {
   .join-list__item { min-height: 20rem; }
-  .join-list__copy { max-width: 36ch; }
+  .join-list__copy { max-width: 42ch; }
 }
 
 /* ----------------------------------------------------------- 6 · al azar */
@@ -866,7 +768,10 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 /* The diagram and the text columns share one width, so each column's centre
    is exactly its light's centre (25% and 75%). split-stage.tsx measures this
    box and places the lights and lines in its pixels. */
-.azar__stage { width: min(100%, 52rem); margin: clamp(2.5rem, 5vw, 3.5rem) auto 0; }
+/* Widened from 52rem (D-081): the comparison group's line now runs
+   noticeably longer than the programme group's, and the extra width lets it
+   wrap into fewer lines so the two columns read as closer in weight. */
+.azar__stage { width: min(100%, 64rem); margin: clamp(2.5rem, 5vw, 3.5rem) auto 0; }
 .azar__diagram { position: relative; aspect-ratio: 16 / 7; }
 .azar__paths { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .azar__path { fill: none; stroke-width: 2; stroke-linecap: round; opacity: var(--line, 1); }
@@ -1166,6 +1071,58 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .invitacion__support { margin-top: 1rem; }
 .invitacion__cta { margin-top: 2.25rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
 .invitacion__closed { color: var(--cl-muted); font-size: 0.95rem; }
+
+/* --------------------------------------------------------- research partners
+   D-077. An institutional credibility band, not one of the locked eight
+   sections: logos and names only, between the invitation and the footer. Logo
+   files are dropped in unfiltered on a dark ground, so this dims and
+   brightens them rather than reintroducing colour of its own (`opacity`
+   because the marks are flat art, not photographs, so no wash is needed). */
+.partners {
+  border-top: 1px solid var(--cl-line);
+  padding: clamp(3.5rem, 6vw, 5rem) var(--sc-gutter) clamp(4rem, 7vw, 5.5rem);
+  max-width: var(--cl-container);
+  margin-inline: auto;
+  text-align: center;
+}
+.partners__heading {
+  font-family: var(--cl-font-label);
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cl-accent-soft);
+}
+.partners__list {
+  list-style: none;
+  margin: clamp(2.5rem, 4vw, 3.5rem) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+.partners__logo {
+  /* D-080, saved from a DevTools edit: bigger and at full strength, not
+     dimmed — the marks read as too small and too faint at the original
+     size/opacity. */
+  height: clamp(3rem, 6vw, 4.5rem);
+  width: auto;
+  max-width: 16rem;
+  object-fit: contain;
+}
+.partners__funding { margin-top: clamp(4.5rem, 8vw, 6.5rem); }
+.partners__funding-logo {
+  /* next/image renders a block-level <img>, so the ancestor's text-align
+     does nothing here (D-079, team feedback: it wasn't centred) — margin
+     auto is the actual centring mechanism for a block box. */
+  margin: clamp(2.25rem, 3.5vw, 3rem) auto 0;
+  height: clamp(3.5rem, 7.5vw, 5.5rem);
+  width: auto;
+  max-width: 20rem;
+  object-fit: contain;
+}
 
 /* ----------------------------------------------------------------- footer */
 .foot {

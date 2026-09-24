@@ -1,23 +1,21 @@
-import type { ReactNode } from "react";
 import Image from "next/image";
 import { HeroReveal } from "@/components/landing/hero-reveal";
 import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
- * Section 1. Identifies the page as research in the first line, then the
- * question. Seven soft light bodies sit in a shallow arc behind the copy; the
- * physical people (Quest 3 headsets and controllers) are revealed through a
- * feathered window. Both layers are the same 3344x1882 frame, so they share
- * one box, one crop and one object-position.
- *
- * The copy and media are shared by the desktop opening sequence (opening.tsx)
- * and the stacked flow variant below.
+ * Section 1 (recentred and video-free, D-077 — the pinned clip that used to
+ * sit here is gone). Identifies the page as research in the first line, then
+ * the question, centred on both axes rather than banded to one side. Six
+ * soft light bodies sit behind the copy; the physical people, seated on
+ * chairs with Quest 3 headsets and controllers, are revealed through the
+ * pointer's feathered window. Both layers are 3344x1882, so they share one
+ * box, one crop and one object-position.
  */
 export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
   const { ACTIONS, HERO } = copy;
   return (
-    <div className="hero__copy">
-      <p className="cl-eyebrow">{HERO.eyebrow}</p>
+    <div className="hero__copy" data-sc-in>
+      <p className="cl-eyebrow hero__eyebrow">{HERO.eyebrow}</p>
       <h1 id={titleId} className="cl-title hero__title">
         {HERO.headline}
       </h1>
@@ -34,19 +32,17 @@ export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: strin
   );
 }
 
-/** `sequence` sits between the luminous still and the revealed people. */
-export function HeroMedia({ copy, sequence }: { copy: LandingCopy; sequence?: ReactNode }) {
+export function HeroMedia({ copy }: { copy: LandingCopy }) {
   const { HERO } = copy;
   return (
     <HeroReveal>
-      {/* Paint order: luminous ground, the opening sequence clip, then the
-          masked physical people, then the masked haze copy screened over them. */}
+      {/* Paint order: luminous ground, then the masked physical people, then
+          the masked haze copy screened over them. */}
       <div className="hero__layer hero__layer--luminous">
         <Image src="/landing/media/hero-luminous-hd.webp" alt={HERO.reveal.luminousAlt} fill sizes="100vw" quality={90} priority />
       </div>
-      {sequence ? <div className="hero__layer hero__layer--sequence">{sequence}</div> : null}
       <div className="hero__layer hero__layer--physical">
-        <Image src="/landing/media/hero-physical-v3.webp" alt={HERO.reveal.physicalAlt} fill sizes="100vw" quality={90} />
+        <Image src="/landing/media/hero-physical-v4.webp" alt={HERO.reveal.physicalAlt} fill sizes="100vw" quality={90} />
       </div>
       <div className="hero__layer hero__layer--haze" aria-hidden>
         <Image src="/landing/media/hero-luminous-hd.webp" alt="" fill sizes="100vw" quality={90} />

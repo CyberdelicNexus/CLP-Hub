@@ -20,19 +20,19 @@ export const LANDING_GL: LandingCopy = {
     { href: "#elegibilidad", label: "Preguntas" },
   ],
   HERO: {
-    eyebrow: "Estudo de investigación · Realidade virtual compartida",
+    eyebrow: "Estudo de investigación con asignación ao azar sobre unha experiencia grupal de realidade virtual.",
     headline: "Pode unha experiencia inmersiva transformar como nos relacionamos coa mortalidade?",
     support:
-      "Este estudo investiga se é posible reducir a ansiedade ante a morte e aumentar a aceptación deste proceso universal.",
+      "Este estudo investiga como unha experiencia inmersiva e compartida inflúe na saúde mental e no benestar de persoas que viven cunha enfermidade grave.",
     reveal: {
-      luminousAlt: "Sete presenzas de luz azul violeta, difusas, sentadas nun arco pouco profundo sobre un fondo escuro.",
+      luminousAlt: "Seis presenzas de luz azul violeta, difusas, dispostas en círculo sobre un fondo escuro.",
       physicalAlt:
-        "Sete persoas sentadas en círculo nunha sala cálida, cada unha cunhas gafas Meta Quest 3 e dous mandos nas mans.",
+        "Seis persoas sentadas en cadeiras formando un círculo nunha sala cálida, cada unha cunhas gafas Meta Quest 3 e dous mandos nas mans.",
     },
   },
   WHY: {
-    headline: "Mirar de fronte o que nos transforma.",
-    body: "Unha enfermidade que ameaza a vida pode cambiar a nosa relación co corpo, o tempo e con quen amamos. Este estudo explora se unha experiencia compartida pode abrir un espazo de presenza, conexión e sentido.",
+    headline: "Cando unha enfermidade grave o cambia todo.",
+    body: "Unha enfermidade grave pode cambiar a relación co corpo, co tempo e con quen amamos. Este estudo explora se unha experiencia compartida pode abrir un espazo de presenza, conexión e sentido ante este proceso natural.",
   },
   WHAT: {
     headline: "Unha experiencia guiada para explorar xuntos.",
@@ -59,7 +59,7 @@ export const LANDING_GL: LandingCopy = {
           src: "/landing/media/etapa-s0.webp",
           width: 1536,
           height: 1024,
-          alt: "Un portátil cunha videochamada de grupo que comparte a presentación «Como prepararse para o programa?».",
+          alt: "Unhas mans entregan a outras unhas gafas de realidade virtual.",
         },
       },
       {
@@ -70,7 +70,7 @@ export const LANDING_GL: LandingCopy = {
           src: "/landing/media/etapa-s1.webp",
           width: 1536,
           height: 1024,
-          alt: "Unhas mans entregan a outras unhas gafas de realidade virtual.",
+          alt: "Un portátil cunha videochamada de grupo que comparte a presentación «Como prepararse para o programa?».",
         },
       },
       {
@@ -136,7 +136,7 @@ export const LANDING_GL: LandingCopy = {
       {
         numeral: "01",
         label: "Responde o cuestionario",
-        body: "Comparte o teu interese mediante o formulario de Qualtrics. Envialo non te compromete a participar.",
+        body: "Comparte o teu interese mediante o formulario de Qualtrics. Envialo non te compromete a participar. Nese primeiro cuestionario recibirás toda a información e deberás asinar o consentimento informado. O equipo ten que revisar primeiro as túas respostas para ver se este estudo é adecuado para ti.",
         visual: {
           src: "/landing/media/join-responde-v2.webp",
           alt: "Unha muller responde un cuestionario nunha tableta, sentada á mesa da súa casa ao anoitecer.",
@@ -145,7 +145,7 @@ export const LANDING_GL: LandingCopy = {
       {
         numeral: "02",
         label: "Fala co equipo",
-        body: "O equipo revisará contigo os requisitos, resolverá as túas dúbidas e explicará o estudo.",
+        body: "Se o estudo é adecuado para ti, o equipo revisará contigo os requisitos, resolverá as túas dúbidas e explicarache o estudo.",
         visual: {
           src: "/landing/media/join-habla.webp",
           alt: "Unha muller conversa por videochamada cunha profesional desde un portátil na súa casa.",
@@ -164,21 +164,21 @@ export const LANDING_GL: LandingCopy = {
     supporting: "Amosar interese non te compromete a participar.",
   },
   SPLIT: {
-    eyebrow: "Por que hai dous grupos",
+    eyebrow: "Os dous grupos do estudo",
     heading: "A asignación realízase ao azar.",
     body: [
-      "Este estudo é un ensaio controlado aleatorizado. Formamos dous grupos parecidos: un participa no programa Clear Light e o outro nunha experiencia similar. Ao final comparamos como está cada grupo.",
-      "Así podemos saber que cambios se deben ao programa e non a outros factores. Para que a comparación sexa xusta, ninguén elixe o seu grupo: decídeo o azar.",
+      "Este estudo é un ensaio controlado aleatorizado: para saber se un programa funciona hai que comparar. Formamos dous grupos con persoas nunha situación parecida e é o azar quen decide en cal está cada unha. Ao final do estudo comparamos como está cada grupo.",
+      "Así podemos distinguir que cambios se deben ao programa e cales terían ocorrido de todos os xeitos. Para que a comparación sexa xusta, ninguén elixe o seu grupo.",
     ],
     branches: [
       {
         label: "Grupo do programa",
-        lines: ["Participa no programa Clear Light.", "Móstranos que cambia coa experiencia."],
+        lines: ["Participa no programa Clear Light durante o estudo.", "Continúa co seu seguimento médico habitual. Completa as mesmas avaliacións ca o outro grupo."],
         condition: ES.SPLIT.branches[0].condition,
       },
       {
-        label: "Grupo control",
-        lines: ["Recibe unha experiencia similar para comparar.", "Permítenos medir os resultados con rigor."],
+        label: "Grupo de comparación",
+        lines: ["Continúa co seu seguimento médico habitual.", "Completa as mesmas avaliacións ca o outro grupo. Ao rematar a súa participación, ofreceráselle de forma opcional un PDF cos resultados e acceso á realidade virtual de Clear Light Solo."],
         condition: ES.SPLIT.branches[1].condition,
       },
     ],
@@ -189,11 +189,10 @@ export const LANDING_GL: LandingCopy = {
     heading: "Este estudo pode ser para min?",
     intro: "A elixibilidade confírmase co equipo. Aquí podes revisar os criterios aprobados e as preguntas máis frecuentes.",
     criteriaHeading: "Criterios de participación",
-    criteriaItems: ["Ter unha enfermidade que ameaza a vida.", "Falar castelán."],
+    criteriaItems: ["Ter unha enfermidade grave ou avanzada.", "Falar castelán."],
     criteriaText:
       "Na chamada co equipo revisaremos xuntos se o estudo encaixa contigo, segundo todos os criterios aprobados para o estudo.",
     criteria: ES.ELIGIBILITY.criteria,
-    requiredLine: "Non se garanten beneficios persoais.",
     registry: ES.ELIGIBILITY.registry,
     investigator: ES.ELIGIBILITY.investigator,
     participantAlt:
@@ -203,7 +202,7 @@ export const LANDING_GL: LandingCopy = {
         id: "participar",
         topic: "Que implica participar",
         statements: [
-          "O programa ten sete etapas: preparación, encontros por videochamada e sesións de realidade virtual. Explicarémosche a duración e o calendario antes de comezar.",
+          "O programa ten varias etapas: preparación, encontros por videochamada e sesións de realidade virtual. Explicarémosche a duración e o calendario antes de comezar.",
           "A participación é voluntaria.",
         ],
         pending: ES.ELIGIBILITY.faq[0].pending,
@@ -212,8 +211,8 @@ export const LANDING_GL: LandingCopy = {
         id: "beneficios",
         topic: "Posibles beneficios e riscos",
         statements: [
-          "Non se espera que obteñas ningún beneficio directo por participar no estudo. A participación é voluntaria e non será remunerada.",
-          "A investigación pretende descubrir aspectos descoñecidos ou pouco claros sobre o potencial do uso da realidade virtual na saúde mental e no benestar en persoas con diagnóstico de enfermidade ameazante para a vida. Esta información poderá ser de utilidade nun futuro para outras persoas.",
+          "Aínda que estudos previos suxiren que esta experiencia podería resultar beneficiosa, non se garanten beneficios persoais: non é posible asegurar que participar che achegue un beneficio directo.",
+          "A participación é voluntaria e non será remunerada.",
           "Antes de decidir, o equipo explicarache con detalle os posibles beneficios, riscos e molestias.",
         ],
         pending: ES.ELIGIBILITY.faq[1].pending,
@@ -222,8 +221,9 @@ export const LANDING_GL: LandingCopy = {
         id: "grupos",
         topic: "Que recibe cada grupo",
         statements: [
-          "A asignación realízase ao azar. Non podes elixir o grupo.",
-          "O grupo do programa participa en Clear Light. O grupo control recibe unha experiencia similar para poder comparar.",
+          "A asignación realízase ao azar: non podes elixir o teu grupo e o equipo tampouco o decide.",
+          "Os dous grupos completan as mesmas avaliacións ao longo do estudo e continúan co seu seguimento médico habitual.",
+          "O grupo do programa participa en Clear Light e o grupo de comparación, ao final da súa participación, recibe un PDF cos resultados e acceso a Clear Light Solo.",
         ],
         pending: ES.ELIGIBILITY.faq[2].pending,
       },
@@ -231,7 +231,8 @@ export const LANDING_GL: LandingCopy = {
         id: "gafas",
         topic: "Uso das gafas de realidade virtual",
         statements: [
-          "Unha persoa do equipo entrégache as gafas na casa e explícache como usalas.",
+          "Se te asignan ao grupo do programa, unha persoa do equipo entrégache as gafas na casa e explícache como usalas.",
+          "Participas en todo o programa desde a casa.",
           "Se tes dúbidas durante o estudo, o equipo axúdate.",
         ],
         pending: ES.ELIGIBILITY.faq[3].pending,
@@ -242,6 +243,7 @@ export const LANDING_GL: LandingCopy = {
         statements: [
           "Podes facer preguntas antes de decidir.",
           "Podes deixar o estudo en calquera momento, sen ter que dar explicacións.",
+          "Para participar, deberás asinar un consentimento informado no que se che facilita toda a información.",
         ],
         pending: ES.ELIGIBILITY.faq[4].pending,
       },
@@ -260,11 +262,24 @@ export const LANDING_GL: LandingCopy = {
         topic: "Contacto e rexistro do estudo",
         statements: [
           "Cando completes o cuestionario, o equipo porase en contacto contigo.",
-          "Publicaremos aquí o rexistro do estudo e os datos de contacto.",
         ],
         pending: ES.ELIGIBILITY.faq[6].pending,
       },
     ],
+  },
+  PARTNERS: {
+    heading: "Colaboran neste estudo",
+    items: [
+      { name: ES.PARTNERS.items[0].name, logo: ES.PARTNERS.items[0].logo },
+      { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },
+      { name: ES.PARTNERS.items[2].name, logo: ES.PARTNERS.items[2].logo },
+      { name: ES.PARTNERS.items[3].name, logo: ES.PARTNERS.items[3].logo },
+    ],
+    funding: {
+      heading: "Coa financiación de",
+      name: ES.PARTNERS.funding.name,
+      logo: ES.PARTNERS.funding.logo,
+    },
   },
   INVITATION: {
     heading: "Decide con toda a información.",
@@ -273,7 +288,7 @@ export const LANDING_GL: LandingCopy = {
     closed: "O cuestionario de interese non está dispoñible neste momento.",
     footer: {
       navLabel: "Pé de páxina",
-      tagline: "Estudo de investigación sobre unha experiencia grupal de realidade virtual.",
+      tagline: "Estudo de investigación sobre un programa grupal de realidade virtual.",
       groups: [
         {
           heading: "O estudo",
@@ -324,7 +339,7 @@ export const LANDING_GL: LandingCopy = {
     filmAccept: "Aceptar e reproducir",
   },
   META: {
-    title: "aNUma Clear Light · Estudo de investigación",
+    title: "Clear Light · Estudo de investigación",
     description:
       "Estudo de investigación con asignación ao azar sobre unha experiencia grupal de realidade virtual. Información pública para persoas interesadas.",
   },

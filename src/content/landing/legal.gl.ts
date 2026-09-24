@@ -17,7 +17,7 @@ export const LEGAL_GL: LegalCopy = {
     {
       slug: "aviso-legal",
       title: "Aviso legal e condicións de uso",
-      description: "Titular do sitio web e condicións de uso da información pública do estudo aNUma Clear Light.",
+      description: "Titular do sitio web e condicións de uso da información pública do estudo Clear Light.",
       sections: [
         {
           heading: "Titular do sitio web",
@@ -29,7 +29,7 @@ export const LEGAL_GL: LegalCopy = {
         {
           heading: "Obxecto do sitio",
           blocks: [
-            p("Este sitio ofrece información pública sobre o estudo de investigación aNUma Clear Light e dá acceso ao cuestionario de interese. Non é un servizo de atención sanitaria."),
+            p("Este sitio ofrece información pública sobre o estudo de investigación Clear Light e dá acceso ao cuestionario de interese. Non é un servizo de atención sanitaria."),
           ],
         },
         {
@@ -66,7 +66,7 @@ export const LEGAL_GL: LegalCopy = {
     {
       slug: "privacidad",
       title: "Política de privacidade",
-      description: "Como se tratan os datos persoais na web e no estudo aNUma Clear Light.",
+      description: "Como se tratan os datos persoais na web e no estudo Clear Light.",
       sections: [
         {
           heading: "Responsable do tratamento",
@@ -136,7 +136,7 @@ export const LEGAL_GL: LegalCopy = {
     {
       slug: "cookies",
       title: "Política de cookies",
-      description: "Que cookies e almacenamento do navegador usa a web do estudo aNUma Clear Light.",
+      description: "Que cookies e almacenamento do navegador usa a web do estudo Clear Light.",
       sections: [
         {
           heading: "Que son as cookies",

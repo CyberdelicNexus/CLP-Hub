@@ -16,7 +16,7 @@ export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; roo
       <div className="foot__inner">
         <div className="foot__brandcol">
           <a href={onLanding ? "#inicio" : "/"} className="foot__brand">
-            aNUma
+            Clear Light
           </a>
           <p className="foot__tagline">{f.tagline}</p>
         </div>

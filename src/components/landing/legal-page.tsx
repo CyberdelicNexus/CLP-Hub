@@ -98,7 +98,7 @@ export async function LegalPageView({ slug }: { slug: LegalPage["slug"] }) {
             plain script that mounts on page load (scrollcraft-mount.tsx). */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="bar__brand">
-          aNUma
+          Clear Light
         </a>
         <div className="legal__bar-end">
           <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from={`/${slug}`} />

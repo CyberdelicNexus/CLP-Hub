@@ -11,7 +11,7 @@ import "@/components/landing/scrollcraft.css";
 import "@/components/landing/landing.css";
 
 /**
- * Public recruitment landing page for the aNUma Clear Light trial.
+ * Public recruitment landing page for the Clear Light trial.
  *
  * Spanish first, with English and Galician translations chosen by the visitor
  * (D-063); one locked dark theme, eight sections in the order fixed by the

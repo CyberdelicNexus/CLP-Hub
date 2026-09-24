@@ -1,9 +1,26 @@
-# Recruitment landing page (aNUma Clear Light)
+# Recruitment landing page (Clear Light)
 
 The public route `/` is the recruitment landing page for the Clear Light
 randomized controlled trial, in Spanish, with English and Galician translations
 the visitor can choose (D-063). It is built from the V3 design handoff
 (`claude-handoff-v3/`, tracked in this repository) and recorded in D-042.
+
+**D-077 to D-079 (2026-09-23) simplified the opening for patients**, at the
+team's request, in three rounds the same day. D-077 removed the hero's pinned
+scroll-jacked clip, removed the "aNUma" brand name (now just "Clear Light"
+everywhere), and added a research partners / funding-credit band above the
+footer. D-078 reverted the hero's recentring ("it works better" the way it
+was), replaced the travelling reading light through sections 2 and 3 with a
+plain per-block fade, added an interactive starfield background, and swapped
+which image illustrates S0 and S1. D-079 then replaced that per-block fade
+itself: "El porqué" and "El qué" are pinned again, sharing one screen
+position and crossfading between them rather than scrolling past ("it should
+stay put and only gets revealed and dissolved"), the seam light that used to
+sit between them is gone, and the funding logo's centring was fixed. Most of
+"How the scroll works" below, and every verification entry dated before
+2026-09-23, describes mechanisms these rounds removed; kept as a historical
+record of what was built and why, not as current behaviour. See D-077 to
+D-079 in `docs/decisions.md` for the current state.
 
 **Status: prototype.** The copy is working Spanish copy from the handoff content
 model and has not had native editorial, clinical or ethics review. Every
@@ -15,7 +32,8 @@ publish while any remains (see "Publication gate").
 
 - Eight sections in a locked order: hero, El porqué, El qué, Etapas del Programa
   (S0 to S6), Cómo incorporarse al estudio, Asignación al azar, Elegibilidad y
-  preguntas, Invitación final.
+  preguntas, Invitación final. A ninth, unlocked band (research partners and
+  funding credit, D-077) sits between the invitation and the footer.
 - One locked dark theme on a true black ground (`--sc-canvas: #000`, D-047),
   lavender as the interface accent, as a gradient on buttons and link
   highlights (D-052, replacing Living Teal), Manrope for the interface, Poppins
@@ -31,11 +49,26 @@ publish while any remains (see "Publication gate").
   opens a large feathered window without an edge. There is no explicit toggle
   (D-054): keyboard-only and reduced-motion visitors see only the light bodies,
   never the people.
-- The opening sequence (D-046): on desktop the hero and sections 2 and 3 are one
-  pinned stage. The first scroll plays the clip of the seven bodies gathering
-  into one light, registered exactly over the hero still; the light sinks and
-  "El porqué" wipes in top-down; the next scroll lifts it and "El qué" with its
-  film wipes in bottom-up. Scroll starts each event; it never scrubs frames.
+- **No hero video, no hero scroll-jacking (D-077).** The pinned, clip-driven
+  stage that used to hold the hero, "El porqué" and "El qué" together is gone.
+  The hero itself is plain document flow, left-anchored exactly as it read
+  before D-077, and fades in on load (`data-sc-in`).
+- **"El porqué" and "El qué" are a pinned, video-free crossfade (D-079,
+  replacing D-078's plain flow, which itself replaced D-077's pinned clip).**
+  One pinned stage (`sections/why-what.tsx` → `WhyWhat`) holds both in the
+  same screen position; the reader's scroll picks which is on top via the
+  vendored engine's own cue windows (`data-sc-cue`, the same primitive Stages
+  already uses for its own crossfade), opacity only, no vertical drift
+  (`data-sc-rise="0"`) — "it should stay put and only gets revealed and
+  dissolved." No seam light between them any more either (D-079): the small
+  breathing orb that used to rest half in each section was removed outright,
+  not relocated.
+- **An interactive starfield (D-078, `star-field.tsx`).** A canvas behind the
+  whole page, fixed, stars twinkling in place with a few pixels of pointer
+  parallax; offered as the interactive touch to replace the travelling light,
+  not required by the brief. Off entirely under reduced motion (stars placed
+  once, never move) and frozen along with everything else under "Pausar
+  animación" (`data-still`).
 - The page collects nothing it stores. Its only outbound *link* is the
   Qualtrics screening link, read from `studies.screening_url` of the study
   open for recruitment (D-031); without one, the CTA renders inert. Section 3's
@@ -47,8 +80,8 @@ publish while any remains (see "Publication gate").
 | Concern | Path |
 |---|---|
 | Route | `src/app/(public)/page.tsx` (fonts, DB read, publication gate) |
-| Sections | `src/components/landing/sections/*.tsx` |
-| Client islands | `hero-reveal.tsx`, `light-sequence.tsx`, `reading-light.tsx`, `split-stage.tsx`, `film-player.tsx`, `site-bar.tsx`, `still-toggle.tsx`, `contact-dialog.tsx`, `consent.tsx`, `scrollcraft-mount.tsx` |
+| Sections | `src/components/landing/sections/*.tsx` (includes `partners.tsx`, D-077) |
+| Client islands | `hero-reveal.tsx`, `star-field.tsx` (D-078), `split-stage.tsx`, `film-player.tsx`, `site-bar.tsx`, `still-toggle.tsx`, `contact-dialog.tsx`, `consent.tsx`, `scrollcraft-mount.tsx` |
 | Footer (landing and legal pages) | `src/components/landing/site-footer.tsx` |
 | Legal pages | `src/app/(public)/{aviso-legal,privacidad,cookies}/page.tsx` → `legal-page.tsx`; copy in `src/content/landing/legal.ts` |
 | Fonts | `src/components/landing/fonts.ts` (shared by the landing and legal pages) |
@@ -69,15 +102,43 @@ the CSS custom property `--sc-p` on the act element. Everything bespoke is CSS
 `calc()` against that variable (the timeline waypoint and its active node, the
 heart dissolve, the step-rail colours) or a small client island that reads
 scroll position in an animation frame while its section is near the viewport
-(the opening sequence, section 6's split). The only window scroll listener in
-page code is the opening's threshold hold, attached only while it stands (D-062).
+(section 6's split).
 
-Three acts pin (the opening, 4 and 5). They are rendered only under
+Three acts pin (sections 2 to 3 combined, 4, and 5). They are rendered only
+under
 `(min-width: 861px) and (prefers-reduced-motion: no-preference) and (scripting: enabled)`;
-everywhere else a stacked document-flow variant with the same content is shown.
-Nothing essential lives only in a pinned state.
+everywhere else a stacked document-flow variant with the same content is
+shown. Nothing essential lives only in a pinned state. The hero (section 1)
+is not part of this: it is one plain flow, the same at every viewport, fading
+in on its own via `data-sc-in`.
 
-### The opening sequence
+### The porqué/qué crossfade (D-079)
+
+`sections/why-what.tsx`'s `WhyWhat` pins "El porqué" and "El qué" as two
+panels absolutely positioned over the same stage box (span 2). Each panel
+carries its own `data-sc-cue` window — the same mechanism `stages.tsx` uses
+for its active image/text — with `data-sc-rise="0"` so the engine writes only
+`opacity`, never its default small vertical drift: "El porqué" fades in over
+the first 10% of the pin (D-083; progress is 0 during the entry slide, so an
+opaque panel would be seen rising from below before it pins; the `#porque`
+anchor is offset `-12vh` so a jump to it lands past the fade), then
+dissolves out over the middle 28% of the
+act's progress as "El qué" dissolves in over the same stretch, and "El qué"
+then holds to the end. No video, no scroll hold: the engine just reads scroll
+position every frame and writes `opacity`/`pointer-events` on each panel,
+exactly as it already does for Stages' seven images. The stacked variant
+(mobile, reduced motion, no-JS) renders both as ordinary flow sections, each
+fading up as a whole block via `data-sc-in` rather than per line; "El porqué"'s
+block fades only, with the engine's 14px lift cancelled (D-083).
+
+### The opening sequence (removed, D-077 — kept as history)
+
+**This subsection describes a mechanism that no longer exists.** The team
+asked for it removed so the site would read more simply to patients: no more
+scroll-jacked clip, no video in the hero. It is left below so the reasoning
+behind the original build, and what a future "bring back the pinned intro"
+request would be reopening, is not lost. Current behaviour for sections 1 to 3
+is the few paragraphs above this box, not what follows.
 
 `opening.tsx` renders one pinned act (span 3.2) holding the hero, "El porqué"
 and "El qué" as panels over the hero media, plus the same three sections as
@@ -135,9 +196,16 @@ in. A reader who never reaches the wall never feels it.
   listeners are added when the wall is armed and removed when it lifts, so the
   rest of the page scrolls without waiting on script.
 
-### The reading light (stacked sections 2 and 3)
+### The reading light (removed, D-078 — kept as history)
 
-`reading-light.tsx` is the stacked variant's answer to the wipes above: a small
+**This subsection also describes a mechanism that no longer exists.** It
+outlived the pinned opening sequence above by one round: D-077 promoted it
+from the mobile/reduced-motion fallback to the only variant, and the team
+then asked for it removed on its own terms ("not a fan of the light traveling
+down"). Current behaviour is the plain per-block `data-sc-in` fade described
+higher up this document.
+
+`reading-light.tsx` was the stacked variant's answer to the wipes above: a small
 lavender light travels the two sections with the reader and lights each
 `[data-reading-block]` as it reaches it, passing behind the copy rather than
 over it. Copy only takes its pre-reveal state under `[data-reading="live"]`,
@@ -253,8 +321,7 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
 
 Derivatives are generated by `node scripts/landing-media.mjs` from the handoff
 package. Nothing is sharpened or upscaled; images are full-resolution masters
-that `next/image` resizes. The one clip (the opening sequence) is silent and
-sits on the hero still, which serves as its poster.
+that `next/image` resizes.
 
 A derivative whose content changes gets a new file name. `next/image` and
 browsers cache optimized images by URL, so replacing bytes under an existing
@@ -265,12 +332,12 @@ name keeps serving the old image for hours.
 | `hero-luminous-hd.webp` | hero-reveal PNG (Numadelic Circle Upscaled), 3344x1882, full-resolution master at WebP 95, served through `next/image` at quality 90 | Hero luminous (ground) layer |
 | `hero-physical-v3.webp` | the founder's `hero-circle-humans-enhanced.png`, re-rendered twice (D-059 at 5460x3072, then D-060 at 3360x1888 "without the weird carpet issue"), WebP 92, served at quality 90 | Hero physical (revealed) layer; supersedes `hero-physical-v2.webp` |
 | `film-poster-v2.webp` | the founder's `physical-cloud-reveal-reference.png` (D-060, 2400x1372, one participant, not the hero's circle of seven), WebP 92, `object-fit: cover` at 16:9 in the page (no manual pre-crop needed) | Section 3 film preview; supersedes `film-poster-circle.webp`, which cropped from the hero's physical photo |
-| `light-sequence.mp4` | hero-reveal clip (Numadelics Gemini Omni Flash Reference to Video), native 1280x720, CRF 17, keyframes forced on the rest frames | Opening sequence |
 | `film-poster-circle.webp` | the physical hero PNG, cropped 16:9 to the circle of participants | Section 3 click-to-play preview; the film itself is a YouTube embed |
-| `etapa-s0.webp` to `etapa-s6.webp` | stock-images/Etapas `S0.png` to `S6.png` (mixed sizes, 3:2 to 2.33:1, on black), except S2: `etapa-s2-v4.webp` from the founder's own edit of `S2.png` (D-058, 3632x2048, landscape; superseded D-055 to D-057's earlier versions) | Section 4, one image per stage, shown whole with a feathered edge; a portrait stage image gets a narrower box on the stacked list (`.etapas-list__figure--portrait`, D-057), keyed off its own aspect ratio, so it applies automatically if one comes back |
+| `etapa-s0.webp` to `etapa-s6.webp` | stock-images/Etapas `S0.png` to `S6.png` (mixed sizes, 3:2 to 2.33:1, on black), except S2: `etapa-s2-v4.webp` from the founder's own edit of `S2.png` (D-058, 3632x2048, landscape; superseded D-055 to D-057's earlier versions). **The bytes behind `etapa-s0.webp` and `etapa-s1.webp` were swapped on disk 2026-09-23 (D-078, team request)** — the file that used to be S1's (hands passing a headset) is now served at the `etapa-s0.webp` URL and vice versa, so `STAGES.items[0]`/`[1]` in `clear-light.ts` keep pointing at index-matched filenames (a convention `tests/landing-content.test.ts` enforces) while showing the swapped content; only each stage's `alt` text moved with its image, not its `name`/`description` | Section 4, one image per stage, shown whole with a feathered edge; a portrait stage image gets a narrower box on the stacked list (`.etapas-list__figure--portrait`, D-057), keyed off its own aspect ratio, so it applies automatically if one comes back |
 | `join-responde-v2.webp`, `join-habla.webp`, `join-recibe.webp` | stock-images `02-responde-enhanced.jpeg` (D-055, 3632x2048, in fact a PNG), `01-habla`, `03-recibe` (1672x941, mapped to the steps by what each shows, not by file number) | Section 5, one per step |
 | `participant-heart-v3.webp` | stock-images `FAQ-enhanced-image-3.jpeg` (in fact a PNG, 2048x2720, D-056), WebP 92, served at quality 90 | Section 7 (replaces D-053's `participant-heart-v2.webp`) |
 | `footer-arc.webp` | stock-images `footer/footer.png` (3342x1882), top 1040px: six bodies in an arc around the fire | Section 8 (replaces `arc-top.webp` and `fire.webp` from CL circle 2) |
+| `partners/citius.png`, `partners/xunta-de-galicia.png`, `partners/usc.webp`, `partners/irl.png`, `partners/tiny-blue-dot-foundation.png` | Each partner's own supplied mark, uploaded 2026-09-23 (D-077/D-078) | Research partners / funding credit band, above the footer. Served at each file's actual intrinsic size (read with `sharp`, not guessed) — see `src/content/landing/clear-light.ts` (`PARTNERS`) |
 
 ## Publication gate
 
@@ -313,11 +380,17 @@ the legal pages draw their own keys.
 | `CONTACTO_FORMULARIO` | Where contact form messages go, with its anti-abuse and privacy work (the dialog sends nothing until then) |
 | `TITULAR_WEB` | Site owner for the legal notice (LSSI-CE art. 10): name, NIF, address, email, registry details |
 | `RESPONSABLE_TRATAMIENTO` | Data controller: entity, NIF, address, contact |
-| `DPO` | Data Protection Officer contact |
 | `BASE_JURIDICA` | Approved legal basis for each processing activity |
 | `PLAZO_CONSERVACION` | Retention periods |
 | `ENCARGADOS_TRATAMIENTO` | Processors, hosting region and international transfers |
 | `REVISION_LEGAL` | Legal review of the three legal pages, with a version date |
+
+`DPO` is no longer in this list (D-081): the CEImG-approved participant
+consent form gives the USC and SERGAS (CHUS) Data Protection Officers'
+contact details verbatim, and publishing a DPO's contact is a GDPR
+requirement (art. 37(7)), not a legal judgment this code has to defer. The
+consent form does not give `RESPONSABLE_TRATAMIENTO`'s NIF or registered
+address, so that key, and every other key above, still blocks publication.
 
 Also pending, not rendered as markers: native editorial review of the English
 and Galician translations (D-063), native Spanish editorial review, clinical
@@ -365,11 +438,39 @@ logo.
   the black page, instead of cropped clips in a square frame (D-048). Stage
   names use the founder's `#887cde` (5.98:1 on black) at a heading line height,
   in a right column widened so every name sets on one line.
-- Sections 1 to 3 share one pinned stage on desktop (the opening sequence),
-  added once the coalescence footage was supplied. The eight-section order, the
-  headings and the stacked (mobile, reduced motion, no-JS) reading are
-  unchanged. On desktop the handoff's "light at the bottom of section 2, top of
-  section 3" is the footage's own orb, not the CSS light.
+- **Superseded by D-077, D-079:** sections 1 to 3 used to share one pinned
+  stage on desktop (the opening sequence), added once the coalescence footage
+  was supplied. That stage, and the clip it played, are gone (D-077). "El
+  porqué" and "El qué" are pinned again as of D-079, but as a plain opacity
+  crossfade with no video and no scroll hold, distinct from the removed
+  opening sequence; the hero is not part of it. The eight-section order and
+  headings are unchanged throughout.
+- **The hero is video-free (D-077) but its layout is unchanged.** D-077 briefly
+  recentred the copy on both axes over a symmetric vignette; the team's
+  follow-up ("keep them how it was, it works better") reverted that same day
+  (D-078), so `.hero__inner`/`.hero__copy`/`.hero__scrim` are back to the
+  original left band over a one-sided linear scrim. The pointer/touch feathered
+  reveal of the physical photograph was never touched by either round; only the
+  pinned clip and its scroll hold are gone.
+- **The "aNUma" brand name is gone (D-077, team request).** The site reads
+  "Clear Light" wherever it used to read "aNUma" or "aNUma Clear Light": the
+  nav and footer brand mark, page titles, and the legal pages' copy.
+- **A research-partners / funding-credit band was added (D-077, team
+  request), logo files supplied and wired in the same day (D-078).** Not one
+  of the eight locked sections: an institutional trust band (`partners.tsx`)
+  between the final invitation and the footer, logos and institution names
+  only.
+- **An interactive starfield sits behind the whole page (D-078).** Offered as
+  an alternative to the travelling reading light the team asked removed, not
+  requested outright ("if you want to add something interactive perhaps a bg
+  with interactive particles that resemble stars"). See `star-field.tsx`.
+- **No seam light between "El porqué" and "El qué" (D-079).** The small
+  breathing orb that used to rest half outside the bottom of one section and
+  half outside the top of the other ("the section with the video") is gone,
+  team feedback, and not replaced with anything.
+- **The funding logo is centred (D-079 fix).** `next/image` renders a
+  block-level `<img>`, so the ancestor's `text-align: center` never reached
+  it; `.partners__funding-logo` now centres itself with `margin-inline: auto`.
 
 ## Verification
 
@@ -549,6 +650,66 @@ JavaScript off:
 Not verified: a real phone (the touch branch of the lock is exercised only
 through Chrome's touch emulation, and the pinned variant it guards does not run
 at phone widths anyway), Safari and Firefox.
+
+**Hero simplified, "aNUma" branding removed, partners band added (D-077),
+verified 2026-09-23** with a Playwright script at 1440x900 and 390x844,
+against the dev server. Superseded within the hour by D-078 below — the hero
+recentring this pass checked is no longer current behaviour, kept as a record
+of what was verified at the time.
+
+| Check | Result |
+|---|---|
+| Hero at 1440 (D-077 only, since reverted) | Recentred: copy horizontally and vertically centred over the photograph; no clip requested; `#porque` and `#que` reachable without a scroll hold |
+| "El porqué" / "El qué" at 1440 | Fade-up-through-reading-light presentation (D-078 replaced this with a plain per-block fade, see below) |
+| Layout | No horizontal overflow at 1440 or 390 |
+| Brand | Nav and footer read "Clear Light"; no remaining "aNUma" in `src/` |
+| Partners band | Renders between the invitation and the footer at both widths; the five logo images 404 (files not yet supplied) without breaking layout |
+| `typecheck`, `lint`, `test` (375), `build` | Pass |
+
+**Hero reverted, reading light replaced, starfield added, S0/S1 swapped, real
+partner logos wired in (D-078), verified 2026-09-23** with a Playwright script
+at 1440x900, against the dev server:
+
+| Check | Result |
+|---|---|
+| Hero at 1440 | Left-anchored copy over the linear scrim, matching the pre-D-077 screenshot; no clip, no scroll hold |
+| "El porqué" | No travelling light element rendered; headline, body fully visible after an instant scroll (per-block `data-sc-in` fade, not a script-driven reveal) |
+| Etapas (S0/S1) | S0's card shows the hands-passing-a-headset photograph, S1's shows the laptop video call — swapped from before; `STAGES.items[0].code`/`[1].code` still `"S0"`/`"S1"` in that order |
+| Starfield | Visible as small white dots across every plain-black section (hero, etapas, partners); present at both `.hero` (over the photograph) and the black sections below it |
+| Partners band | All five real logos (CiTIUS, Xunta de Galicia, USC, Intangible Realities Laboratory, Tiny Blue Dot Foundation) render at their actual intrinsic size (read with `sharp`, not guessed); no broken-image icons |
+| Layout | No horizontal overflow at 1440 |
+| Console | No page errors, no 404s |
+| `typecheck`, `lint`, `test` (375), `build` | Pass |
+
+Not verified (either round): a real phone, Safari and Firefox, 390px width
+against this round's specific changes (only 1440 was re-shot after D-078;
+D-077's own 390px pass, no longer current, is above), and the starfield's
+`prefers-reduced-motion` branch (code-reviewed, not exercised under an
+emulated reduced-motion Playwright run).
+
+**"El porqué"/"El qué" pinned crossfade, seam light removed, funding logo
+centred (D-079), verified 2026-09-23** with a Playwright script at 1440x900,
+against the dev server, reading each panel's computed `opacity` at nine
+points across the pin's actual sticky-scroll travel (not just its total
+height, which includes the sticky viewport itself and does not map linearly
+to the engine's `--sc-p`):
+
+| Check | Result |
+|---|---|
+| Crossfade, 0% to 25% of travel | "El porqué" opacity 1, "El qué" opacity 0 |
+| Crossfade, 40% to 60% of travel | Gradual: why/what opacity pairs (0.944, 0.055), (0.755, 0.243), (0.499, 0.499), (0.243, 0.755), (0.055, 0.944) — a smooth dissolve, not a cut |
+| Crossfade, 75% to 100% of travel | "El porqué" opacity 0, "El qué" opacity 1 (holds, no ramp back out) |
+| Position | Both panels render at the same `getBoundingClientRect`; no vertical movement observed at any sampled point (`data-sc-rise="0"` confirmed in effect) |
+| Seam light | No `.porque__light`/`<Signal>` in the rendered DOM or in `why-what.tsx`'s source |
+| Funding logo | `getBoundingClientRect` centre (720px) equals the viewport centre (720px) at 1440, was 538.6px (off by 181px) before the fix |
+| Console | No page errors |
+| `typecheck`, `lint`, `test` (377), `build` | Pass |
+
+Not verified: a real phone, Safari and Firefox, 390px width, reduced motion
+(the crossfade's CSS transition duration under `prefers-reduced-motion` was
+not separately exercised — the engine's own reduced-motion handling, already
+covered by earlier verification of `stages.tsx`'s identical cue mechanism, is
+relied on rather than re-tested here).
 
 ## Open questions
 

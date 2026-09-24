@@ -1,5 +1,5 @@
 /**
- * Working Spanish copy for the aNUma Clear Light recruitment landing page.
+ * Working Spanish copy for the Clear Light recruitment landing page.
  *
  * STATUS: prototype copy, pending native editorial, clinical and ethics review
  * (docs/landing-page.md). Everything here comes from the V3 handoff content
@@ -52,21 +52,21 @@ export const NAV = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "Estudio de investigación · Realidad virtual compartida",
+  eyebrow: "Estudio de investigación  con asignación al azar sobre una experiencia grupal de realidad virtual.",
   headline: "¿Puede una experiencia inmersiva transformar cómo nos relacionamos con la mortalidad?",
   support:
-    "Este estudio investiga si es posible reducir la ansiedad ante la muerte y aumentar la aceptación de este proceso universal.",
+    "Este estudio investiga cómo una experiencia inmersiva y compartida influye en la salud mental y el bienestar de personas que viven con una enfermedad grave.",
   reveal: {
     /** Alt text for the layered still. No explicit toggle labels: the control was removed (D-054). */
-    luminousAlt: "Siete presencias de luz azul violeta, difusas, sentadas en un arco poco profundo sobre un fondo oscuro.",
+    luminousAlt: "Seis presencias de luz azul violeta, difusas, dispuestas en círculo sobre un fondo oscuro.",
     physicalAlt:
-      "Siete personas sentadas en círculo en una sala cálida, cada una con unas gafas Meta Quest 3 y dos mandos en las manos.",
+      "Seis personas sentadas en sillas formando un círculo en una sala cálida, cada una con unas gafas Meta Quest 3 y dos mandos en las manos.",
   },
 } as const;
 
 export const WHY = {
-  headline: "Mirar de frente lo que nos transforma.",
-  body: "Una enfermedad que amenaza la vida puede cambiar nuestra relación con el cuerpo, el tiempo y con quienes amamos. Este estudio explora si una experiencia compartida puede abrir un espacio de presencia, conexión y sentido.",
+  headline: "Cuando una enfermedad grave lo cambia todo.",
+  body: "Una enfermedad grave puede cambiar la relación con el cuerpo, con el tiempo y con quienes amamos. Este estudio explora si una experiencia compartida puede abrir un espacio de presencia, conexión y sentido ante este proceso natural.",
 } as const;
 
 export const WHAT = {
@@ -104,7 +104,7 @@ export const STAGES = {
         src: "/landing/media/etapa-s0.webp",
         width: 1536,
         height: 1024,
-        alt: "Un portátil con una videollamada de grupo que comparte la presentación «¿Cómo prepararse para el programa?».",
+        alt: "Unas manos entregan a otras unas gafas de realidad virtual.",
       },
     },
     {
@@ -115,7 +115,7 @@ export const STAGES = {
         src: "/landing/media/etapa-s1.webp",
         width: 1536,
         height: 1024,
-        alt: "Unas manos entregan a otras unas gafas de realidad virtual.",
+        alt: "Un portátil con una videollamada de grupo que comparte la presentación «¿Cómo prepararse para el programa?».",
       },
     },
     {
@@ -184,7 +184,7 @@ export const JOIN = {
     {
       numeral: "01",
       label: "Responde el cuestionario",
-      body: "Comparte tu interés mediante el formulario de Qualtrics. Enviarlo no te compromete a participar.",
+      body: "Comparte tu interés mediante el formulario de Qualtrics. Enviarlo no te compromete a participar. En ese primer cuestionario se te entregará toda la información y deberás firmar el consentimiento informado. El equipo tiene que revisar tus respuestas primero para ver si este estudio es adecuado para ti.",
       visual: {
         // The founder's enhanced version (D-055), same scene, new file name
         // since nothing pins the old one and content changed.
@@ -195,7 +195,7 @@ export const JOIN = {
     {
       numeral: "02",
       label: "Habla con el equipo",
-      body: "El equipo revisará contigo los requisitos, resolverá tus dudas y explicará el estudio.",
+      body: "Si el estudio es adecuado para ti, el equipo revisará contigo los requisitos, resolverá tus dudas y te explicará el estudio.",
       visual: {
         src: "/landing/media/join-habla.webp",
         alt: "Una mujer conversa por videollamada con una profesional desde un portátil en su casa.",
@@ -228,21 +228,21 @@ export interface Branch {
 }
 
 export const SPLIT = {
-  eyebrow: "Por qué hay dos grupos",
+  eyebrow: "Los dos grupos del estudio",
   heading: "La asignación se realiza al azar.",
   body: [
-    "Este estudio es un ensayo controlado aleatorizado. Formamos dos grupos parecidos: uno participa en el programa Clear Light y el otro en una experiencia similar. Al final comparamos cómo está cada grupo.",
-    "Así podemos saber qué cambios se deben al programa y no a otros factores. Para que la comparación sea justa, nadie elige su grupo: lo decide el azar.",
+    "Este estudio es un ensayo controlado aleatorizado: para saber si un programa funciona hay que comparar. Formamos dos grupos con personas en una situación parecida y es el azar quien decide en cuál está cada una. Al final del estudio comparamos cómo está cada grupo.",
+    "Así podemos distinguir qué cambios se deben al programa y cuáles habrían ocurrido de todos modos. Para que la comparación sea justa, nadie elige su grupo.",
   ],
   branches: [
     {
       label: "Grupo del programa",
-      lines: ["Participa en el programa Clear Light.", "Nos muestra qué cambia con la experiencia."],
+      lines: ["Participa en el programa Clear Light durante el estudio.", "Sigue con su seguimiento médico habitual. Completa las mismas medidas que el otro grupo."],
       condition: missing("CONDICION_GRUPO_PROGRAMA", "Descripción aprobada del grupo del programa"),
     },
     {
-      label: "Grupo control",
-      lines: ["Recibe una experiencia similar para comparar.", "Nos permite medir los resultados con rigor."],
+      label: "Grupo de comparación",
+      lines: ["Sigue con su seguimiento médico habitual.", "Completa las mismas medidas que el otro grupo. Al finalizar su participación, se le ofrecerá de forma opcional un PDF con los resultados y accesso a la Realidad Virtual de Clear Light Solo."],
       condition: missing("CONDICION_GRUPO_CONTROL", "Descripción aprobada del grupo control"),
     },
   ] as readonly [Branch, Branch],
@@ -271,11 +271,11 @@ export const ELIGIBILITY = {
    * full protocol list (no exclusions yet), so the text below remits the rest
    * to the call and `criteria` keeps blocking publication.
    */
-  criteriaItems: ["Tener una enfermedad que amenaza la vida.", "Hablar castellano."],
+  criteriaItems: ["Tener una enfermedad grave o avanzada.", "Hablar castellano."],
   criteriaText:
     "En la llamada con el equipo revisaremos juntos si el estudio encaja contigo, según todos los criterios aprobados para el estudio.",
   criteria: missing("CRITERIOS", "Criterios de inclusión y exclusión aprobados"),
-  requiredLine: "No se garantizan beneficios personales.",
+  
   registry: missing("REGISTRO", "Registro público e identificador del estudio"),
   investigator: missing("EQUIPO", "Investigador responsable, promotor y centro"),
   participantAlt:
@@ -285,7 +285,7 @@ export const ELIGIBILITY = {
       id: "participar",
       topic: "Qué implica participar",
       statements: [
-        "El programa tiene siete etapas: preparación, encuentros por videollamada y sesiones de realidad virtual. Te explicaremos la duración y el calendario antes de empezar.",
+        "El programa tiene varias etapas: preparación, encuentros por videollamada y sesiones de realidad virtual. Te explicaremos la duración y el calendario antes de empezar.",
         "La participación es voluntaria.",
       ],
       pending: missing("DEDICACION", "Duración total, número y formato de las sesiones, lugar y dedicación"),
@@ -295,8 +295,8 @@ export const ELIGIBILITY = {
       topic: "Posibles beneficios y riesgos",
       statements: [
         // Founder wording (D-052), in the page's "tú" register.
-        "No se espera que obtengas ningún beneficio directo por participar en el estudio. La participación es voluntaria y no será remunerada.",
-        "La investigación pretende descubrir aspectos desconocidos o poco claros sobre el potencial del uso de la realidad virtual en la salud mental y el bienestar en personas con diagnóstico de enfermedad amenazante para la vida. Esta información podrá ser de utilidad en un futuro para otras personas.",
+        "Aunque estudios previos sugieren que esta experiencia podría resultar beneficiosa, no se garantizan beneficios personales: no es posible asegurar que participar te aporte un beneficio directo.",
+        "La participación es voluntaria y no será remunerada.",
         "Antes de decidir, el equipo te explicará con detalle los posibles beneficios, riesgos y molestias.",
       ],
       pending: missing("RIESGOS", "Posibles beneficios, riesgos, molestias y cargas aprobados"),
@@ -305,8 +305,9 @@ export const ELIGIBILITY = {
       id: "grupos",
       topic: "Qué recibe cada grupo",
       statements: [
-        "La asignación se realiza al azar. No puedes elegir el grupo.",
-        "El grupo del programa participa en Clear Light. El grupo control recibe una experiencia similar para poder comparar.",
+        "La asignación se realiza al azar: no puedes elegir tu grupo y el equipo tampoco lo decide.",
+        "Los dos grupos responden las mismas medidas a lo largo del estudio y siguen con su seguimiento médico habitual.",
+        "El grupo del programa participa en Clear Light y el grupo de comparación al final de su participación, recibe un PDF con los resultados y acceso a Clear Light Solo.",
       ],
       pending: missing("CONDICION_GRUPOS", "Descripción aprobada de lo que recibe cada grupo"),
     },
@@ -314,7 +315,8 @@ export const ELIGIBILITY = {
       id: "gafas",
       topic: "Uso de las gafas de realidad virtual",
       statements: [
-        "Una persona del equipo te entrega las gafas en casa y te explica cómo usarlas.",
+        "Si eres asignado al grupo del programa, una persona del equipo te entrega las gafas en casa y te explica cómo usarlas.",
+        "Participas de todo el programa desde casa.",
         "Si tienes dudas durante el estudio, el equipo te ayuda.",
       ],
       pending: missing("EQUIPAMIENTO", "Entrega, configuración y devolución del equipo, y adaptaciones de accesibilidad"),
@@ -325,6 +327,7 @@ export const ELIGIBILITY = {
       statements: [
         "Puedes hacer preguntas antes de decidir.",
         "Puedes dejar el estudio en cualquier momento, sin tener que dar explicaciones.",
+        "Para participar, deberás firmar un consentimiento informado en el que se te entrega toda la información.",
       ],
       pending: missing("RETIRADA", "Procedimiento aprobado de retirada y de contacto"),
     },
@@ -343,11 +346,37 @@ export const ELIGIBILITY = {
       topic: "Contacto y registro del estudio",
       statements: [
         "Cuando completes el cuestionario, el equipo se pondrá en contacto contigo.",
-        "Publicaremos aquí el registro del estudio y los datos de contacto.",
       ],
       pending: missing("CONTACTO", "Correo electrónico y teléfono del estudio, vía alternativa de contacto y enlace al registro"),
     },
   ] as readonly FaqItem[],
+} as const;
+
+export interface Partner {
+  readonly name: string;
+  /** One logo under /landing/media/partners, sized for a dark ground. */
+  readonly logo: { readonly src: string; readonly width: number; readonly height: number };
+}
+
+/**
+ * Research partners and funding credit (D-077, added at the team's request
+ * alongside the hero simplification). Institutional, not participant-facing
+ * explanation: names and marks only, no claim about what each partner does on
+ * the study. Sits just above the footer, after the final invitation.
+ */
+export const PARTNERS = {
+  heading: "Colaboran en este estudio",
+  items: [
+    { name: "CiTIUS · Centro Singular de Investigación en Tecnoloxías Intelixentes", logo: { src: "/landing/media/partners/citius.png", width: 3367, height: 1218 } },
+    { name: "Xunta de Galicia", logo: { src: "/landing/media/partners/xunta-de-galicia.png", width: 7000, height: 2000 } },
+    { name: "Universidade de Santiago de Compostela", logo: { src: "/landing/media/partners/usc.webp", width: 3840, height: 2498 } },
+    { name: "Intangible Realities Laboratory", logo: { src: "/landing/media/partners/irl.png", width: 280, height: 140 } },
+  ] as readonly Partner[],
+  funding: {
+    heading: "Con la financiación de",
+    name: "Tiny Blue Dot Foundation",
+    logo: { src: "/landing/media/partners/tiny-blue-dot-foundation.png", width: 1500, height: 308 },
+  },
 } as const;
 
 export const INVITATION = {
@@ -358,7 +387,7 @@ export const INVITATION = {
   footer: {
     /** Accessible name of the footer navigation. */
     navLabel: "Pie de página",
-    tagline: "Estudio de investigación sobre una experiencia grupal de realidad virtual.",
+    tagline: "Estudio de investigación sobre un programa grupal de realidad virtual.",
     groups: [
       {
         heading: "El estudio",
@@ -422,7 +451,7 @@ export const CONSENT = {
 } as const;
 
 export const META = {
-  title: "aNUma Clear Light · Estudio de investigación",
+  title: "Clear Light · Estudio de investigación",
   description:
     "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
 } as const;
@@ -449,6 +478,7 @@ export const LANDING_ES = {
   JOIN,
   SPLIT,
   ELIGIBILITY,
+  PARTNERS,
   INVITATION,
   CONTACT,
   CONSENT,

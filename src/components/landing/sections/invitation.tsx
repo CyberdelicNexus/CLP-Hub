@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Missing } from "@/components/landing/missing";
+import { Partners } from "@/components/landing/sections/partners";
 import { SiteFooter } from "@/components/landing/site-footer";
 import type { LandingCopy } from "@/content/landing/clear-light";
 
@@ -51,6 +52,7 @@ export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; 
         </div>
       </div>
 
+      <Partners copy={copy} />
       <SiteFooter copy={copy} rootId={rootId} onLanding />
     </section>
   );

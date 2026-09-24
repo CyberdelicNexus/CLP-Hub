@@ -21,19 +21,19 @@ export const LANDING_EN: LandingCopy = {
     { href: "#elegibilidad", label: "Questions" },
   ],
   HERO: {
-    eyebrow: "Research study · Shared virtual reality",
+    eyebrow: "Randomized research study of a group virtual reality experience.",
     headline: "Can an immersive experience transform how we relate to mortality?",
     support:
-      "This study investigates whether it is possible to reduce anxiety about death and increase acceptance of this universal process.",
+      "This study investigates how an immersive, shared experience affects the mental health and well-being of people living with a serious illness.",
     reveal: {
-      luminousAlt: "Seven diffuse presences of blue-violet light, seated in a shallow arc against a dark background.",
+      luminousAlt: "Six diffuse presences of blue-violet light arranged in a circle against a dark background.",
       physicalAlt:
-        "Seven people seated in a circle in a warm room, each with a Meta Quest 3 headset and two controllers in their hands.",
+        "Six people seated on chairs in a circle in a warm room, each with a Meta Quest 3 headset and two controllers in their hands.",
     },
   },
   WHY: {
-    headline: "Looking directly at what transforms us.",
-    body: "A life-threatening illness can change our relationship with our body, with time, and with the people we love. This study explores whether a shared experience can open a space for presence, connection, and meaning.",
+    headline: "When a serious illness changes everything.",
+    body: "A serious illness can change our relationship with our body, with time, and with the people we love. This study explores whether a shared experience can open a space for presence, connection, and meaning in the face of this natural process.",
   },
   WHAT: {
     headline: "A guided experience to explore together.",
@@ -60,7 +60,7 @@ export const LANDING_EN: LandingCopy = {
           src: "/landing/media/etapa-s0.webp",
           width: 1536,
           height: 1024,
-          alt: "A laptop with a group video call sharing the presentation “How to prepare for the program?”",
+          alt: "One pair of hands passes a virtual reality headset to another.",
         },
       },
       {
@@ -71,7 +71,7 @@ export const LANDING_EN: LandingCopy = {
           src: "/landing/media/etapa-s1.webp",
           width: 1536,
           height: 1024,
-          alt: "One pair of hands passes a virtual reality headset to another.",
+          alt: "A laptop with a group video call sharing the presentation “How to prepare for the program?”",
         },
       },
       {
@@ -137,7 +137,7 @@ export const LANDING_EN: LandingCopy = {
       {
         numeral: "01",
         label: "Answer the questionnaire",
-        body: "Share your interest through the Qualtrics form. Sending it does not commit you to take part.",
+        body: "Share your interest through the Qualtrics form. Submitting it does not commit you to take part. In this first questionnaire, you will receive all the information and need to sign the informed consent form. The team must first review your answers to see whether this study is suitable for you.",
         visual: {
           src: "/landing/media/join-responde-v2.webp",
           alt: "A woman answers a questionnaire on a tablet, sitting at the table in her home at dusk.",
@@ -146,7 +146,7 @@ export const LANDING_EN: LandingCopy = {
       {
         numeral: "02",
         label: "Talk to the team",
-        body: "The team will go over the requirements with you, answer your questions, and explain the study.",
+        body: "If the study is suitable for you, the team will go over the requirements with you, answer your questions, and explain the study.",
         visual: {
           src: "/landing/media/join-habla.webp",
           alt: "A woman talks with a professional by video call from a laptop in her home.",
@@ -165,21 +165,21 @@ export const LANDING_EN: LandingCopy = {
     supporting: "Showing interest does not commit you to take part.",
   },
   SPLIT: {
-    eyebrow: "Why there are two groups",
+    eyebrow: "The study's two groups",
     heading: "Assignment is made at random.",
     body: [
-      "This study is a randomized controlled trial. We form two similar groups: one takes part in the Clear Light program and the other in a similar experience. At the end, we compare how each group is doing.",
-      "This way we can tell which changes are due to the program and not to other factors. To keep the comparison fair, no one chooses their group: chance decides.",
+      "This study is a randomized controlled trial: to find out whether a program works, we need to compare. We form two groups of people in similar situations, and chance decides which group each person joins. At the end of the study, we compare how each group is doing.",
+      "This helps us distinguish changes caused by the program from those that would have happened anyway. To keep the comparison fair, no one chooses their group.",
     ],
     branches: [
       {
         label: "Program group",
-        lines: ["Takes part in the Clear Light program.", "Shows us what changes with the experience."],
+        lines: ["Takes part in the Clear Light program during the study.", "Continues with their usual medical care. Completes the same assessments as the other group."],
         condition: ES.SPLIT.branches[0].condition,
       },
       {
-        label: "Control group",
-        lines: ["Receives a similar experience for comparison.", "Lets us measure the results rigorously."],
+        label: "Comparison group",
+        lines: ["Continues with their usual medical care.", "Completes the same assessments as the other group. At the end of their participation, they will be offered an optional PDF with the results and access to Clear Light Solo virtual reality."],
         condition: ES.SPLIT.branches[1].condition,
       },
     ],
@@ -190,11 +190,10 @@ export const LANDING_EN: LandingCopy = {
     heading: "Could this study be for me?",
     intro: "Eligibility is confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
     criteriaHeading: "Participation criteria",
-    criteriaItems: ["Have a life-threatening illness.", "Speak Spanish."],
+    criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish."],
     criteriaText:
       "In the call with the team, we will review together whether the study suits you, according to all the criteria approved for the study.",
     criteria: ES.ELIGIBILITY.criteria,
-    requiredLine: "Personal benefits are not guaranteed.",
     registry: ES.ELIGIBILITY.registry,
     investigator: ES.ELIGIBILITY.investigator,
     participantAlt:
@@ -204,7 +203,7 @@ export const LANDING_EN: LandingCopy = {
         id: "participar",
         topic: "What taking part involves",
         statements: [
-          "The program has seven stages: preparation, video call meetings, and virtual reality sessions. We will explain the duration and the schedule to you before you start.",
+          "The program has several stages: preparation, video call meetings, and virtual reality sessions. We will explain the duration and the schedule to you before you start.",
           "Participation is voluntary.",
         ],
         pending: ES.ELIGIBILITY.faq[0].pending,
@@ -213,8 +212,8 @@ export const LANDING_EN: LandingCopy = {
         id: "beneficios",
         topic: "Possible benefits and risks",
         statements: [
-          "You are not expected to get any direct benefit from taking part in the study. Participation is voluntary and will be unpaid.",
-          "The research aims to uncover unknown or unclear aspects of the potential of using virtual reality for mental health and well-being in people diagnosed with a life-threatening illness. This information may be useful to other people in the future.",
+          "Although previous studies suggest that this experience could be beneficial, personal benefits are not guaranteed: we cannot assure you that taking part will benefit you directly.",
+          "Participation is voluntary and will be unpaid.",
           "Before you decide, the team will explain the possible benefits, risks, and discomforts to you in detail.",
         ],
         pending: ES.ELIGIBILITY.faq[1].pending,
@@ -223,8 +222,9 @@ export const LANDING_EN: LandingCopy = {
         id: "grupos",
         topic: "What each group receives",
         statements: [
-          "Assignment is made at random. You cannot choose your group.",
-          "The program group takes part in Clear Light. The control group receives a similar experience so the groups can be compared.",
+          "Assignment is made at random: you cannot choose your group, and the team does not decide it either.",
+          "Both groups complete the same assessments throughout the study and continue with their usual medical care.",
+          "The program group takes part in Clear Light, and at the end of their participation the comparison group receives a PDF with the results and access to Clear Light Solo.",
         ],
         pending: ES.ELIGIBILITY.faq[2].pending,
       },
@@ -232,7 +232,8 @@ export const LANDING_EN: LandingCopy = {
         id: "gafas",
         topic: "Using the virtual reality headset",
         statements: [
-          "A member of the team brings the headset to your home and explains how to use it.",
+          "If you are assigned to the program group, a member of the team brings the headset to your home and explains how to use it.",
+          "You take part in the entire program from home.",
           "If you have questions during the study, the team helps you.",
         ],
         pending: ES.ELIGIBILITY.faq[3].pending,
@@ -243,6 +244,7 @@ export const LANDING_EN: LandingCopy = {
         statements: [
           "You can ask questions before you decide.",
           "You can leave the study at any time, without having to give a reason.",
+          "To take part, you will need to sign an informed consent form that provides you with all the information.",
         ],
         pending: ES.ELIGIBILITY.faq[4].pending,
       },
@@ -261,11 +263,24 @@ export const LANDING_EN: LandingCopy = {
         topic: "Contact and study registry",
         statements: [
           "When you complete the questionnaire, the team will get in touch with you.",
-          "We will publish the study registry entry and the contact details here.",
         ],
         pending: ES.ELIGIBILITY.faq[6].pending,
       },
     ] as readonly FaqItem[],
+  },
+  PARTNERS: {
+    heading: "Collaborating on this study",
+    items: [
+      { name: ES.PARTNERS.items[0].name, logo: ES.PARTNERS.items[0].logo },
+      { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },
+      { name: ES.PARTNERS.items[2].name, logo: ES.PARTNERS.items[2].logo },
+      { name: ES.PARTNERS.items[3].name, logo: ES.PARTNERS.items[3].logo },
+    ],
+    funding: {
+      heading: "Funded by",
+      name: ES.PARTNERS.funding.name,
+      logo: ES.PARTNERS.funding.logo,
+    },
   },
   INVITATION: {
     heading: "Decide with all the information.",
@@ -274,7 +289,7 @@ export const LANDING_EN: LandingCopy = {
     closed: "The interest questionnaire is not available at the moment.",
     footer: {
       navLabel: "Footer",
-      tagline: "Research study on a group virtual reality experience.",
+      tagline: "Research study on a group virtual reality program.",
       groups: [
         {
           heading: "The study",
@@ -325,7 +340,7 @@ export const LANDING_EN: LandingCopy = {
     filmAccept: "Accept and play",
   },
   META: {
-    title: "aNUma Clear Light · Research study",
+    title: "Clear Light · Research study",
     description:
       "Research study with random assignment on a group virtual reality experience. Public information for people who are interested.",
   },

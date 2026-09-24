@@ -2960,6 +2960,459 @@ test-script race, submitting two edits 600ms apart, not a bug: re-tested
 phone alone, with the actual server response awaited, and it persisted
 correctly).
 
+## D-077 · 2026-09-23 · Hero simplified for patients: no more scroll-jacked clip, "aNUma" gone, a partners band added
+
+*"we need to take out the scroll animation from the hero unfortunately. The
+team decided to make the website more simple for patients... We need to
+remove the Anuma branding... add a research partners [section]... this
+project is financed by Tiny Blue Dot Foundation."*
+
+Three changes to the public landing page, requested together.
+
+**The pinned opening sequence is gone.** Sections 1 to 3 used to be one
+pinned, clip-driven stage on a wide viewport (D-046 through D-062:
+`light-sequence.tsx`, the threshold hold, the directional wipes) — an
+elaborate, carefully tuned mechanism, deleted in full rather than disabled,
+because "feel free to experiment" plus "more simple for patients" reads as
+license to remove complexity, not hide it behind a flag nobody would ever
+flip back on. `opening.tsx` now just renders `Hero` then `Why`/`What` inside
+`ReadingLight`, unconditionally — the same component that already drove the
+mobile/reduced-motion fallback (D-061), just no longer gated to
+`(min-width: 861px)…`. That fallback was already extensively verified on its
+own terms, so promoting it to the only variant is a deletion, not new
+animation code: the "fade into the next section" and "fade bottom up" the
+request asked for is `reading-light.tsx`'s existing block-by-block reveal,
+now visible everywhere instead of only under 861px. The one genuinely new
+touch is a `data-sc-in` fade-up on the hero's own copy (`hero.tsx`), since
+neither variant previously animated the hero itself in. `light-sequence.tsx`
+and every `.op__*`/`.opening__act` CSS rule are deleted, not commented out;
+`docs/landing-page.md`'s old "opening sequence" section is kept as marked
+history rather than deleted outright, since it documents real design
+reasoning (the clip-to-still registration math, the threshold-hold's
+D-061→D-062 fix) that a future "bring the intro back" request would want to
+read. `light-sequence.mp4` itself is left in `public/landing/media/`, unused;
+deleting media assets felt outside this round's scope.
+
+**Hero recentred, video removed, photo reveal kept.** The request named "the
+video," not the pointer-tracking feathered photo reveal (`hero-reveal.tsx`,
+D-054) — those are different features that happen to share a section, and
+only the former is scroll-jacking. Kept the interactive reveal, recentred the
+copy on both axes (`.hero__inner`, `.hero__copy`: was a left-anchored band
+with a one-sided linear scrim, now centred with a symmetric radial vignette
+so the text reads over the photograph from any side).
+
+**"aNUma" branding removed.** It was not only a nav-bar wordmark: "aNUma" and
+"aNUma Clear Light" appeared in the nav, the footer, three page titles, and
+throughout the legal pages' copy across all three languages — a global,
+mechanical `aNUma Clear Light` → `Clear Light`, then `aNUma` → `Clear Light`,
+across every file the phrase appeared in (`clear-light-landing.tsx`,
+`site-footer.tsx`, `legal-page.tsx`, the three public page.tsx title lines,
+and the ES/EN/GL content and legal copy). Every result read naturally
+afterward (verified by grep, not just by eye).
+
+**A research-partners / funding-credit band, `partners.tsx`.** Not one of the
+eight locked sections (docs/landing-page.md) — an institutional trust band
+between the final invitation and the footer, added to `Invitation` just
+before `SiteFooter`. New `PARTNERS` content block
+(`content/landing/clear-light.ts` and its `.en`/`.gl` translations): four
+partner marks (CiTIUS, Xunta de Galicia, USC, Intangible Realities
+Laboratory) plus a separate "funded by" line for Tiny Blue Dot Foundation.
+Institution names are proper nouns, kept identical across languages; only the
+two headings translate.
+
+**The five logo files were not supplied in this round and are not faked.**
+The user pasted five logo images into the conversation; there is no tool
+available here to save a pasted chat image to disk, only to read a file that
+already exists at a given path — the same limitation hit, and resolved the
+same way (asking for a saved path), when the sidebar logo was added earlier
+in this project. Rather than block the whole round on that one asset, the
+content model, the component, and the CSS were all built to their final
+shape with the real expected paths (`/landing/media/partners/citius.webp`
+etc., sizes taken from the images as pasted) and left to 404 gracefully:
+`next/image` renders alt text and the layout holds, nothing crashes or looks
+broken beyond the expected missing-image icon. Asked the user, after this
+message, to save the five files to disk so they can be dropped in.
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test` (375/375, after
+replacing the pinned-sequence-specific test in `landing-content.test.ts`'s
+"mobile reading" describe block with one asserting the deleted controller
+left no trace), and `npm run build` all clean. Playwright against the dev
+server at 1440x900 and 390x844: no horizontal overflow at either width, no
+console errors beyond the five expected logo 404s, hero visibly recentred
+and video-free, "El porqué"/"El qué" fading up correctly, "Clear Light" in
+place of "aNUma" in the nav and footer, and the partners band rendering in
+its intended position with correct alt text.
+
+## D-078 · 2026-09-23 · Hero reverted, the travelling light dropped for a starfield, S0/S1 swapped, real partner logos in
+
+*"Revert the changes you did on the hero text, keep them how it was, it works
+better. Not a fan of the light traveling down, its better to make the text
+reveal effects. If you want to add something interactive perhaps a bg with
+interactive particles that resemble stars. Swap the image of S0 to S1 and S1
+to S0. I have uploaded the logos..."*
+
+Same-day follow-up to D-077, correcting two of that round's own calls and
+adding two new small requests.
+
+**Hero reverted, not just "kept as-is."** D-077 recentred `.hero__inner` on
+both axes over a symmetric vignette; this request said that was a step back
+("it works better" the way it was), so `.hero__inner`/`.hero__copy`/
+`.hero__title`/`.hero__support`/`.hero__actions`/`.hero__scrim` went back to
+their exact pre-D-077 values (left band, one-sided linear scrim). The
+`data-sc-in` fade-up added to the hero's own copy in D-077 was left in place —
+the founder's complaint was about position, not about the hero fading in at
+all, and a fade-up is exactly the "text reveal effect" asked for two lines
+later.
+
+**The travelling reading light is gone, not just hidden from a narrower
+viewport this time — deleted.** D-077 had *promoted* `reading-light.tsx` from
+the mobile/reduced-motion fallback to the only variant; this round removed it
+outright, since the complaint ("not a fan of the light traveling down") was
+about the mechanism itself, not where it ran. Replaced with the same
+`data-sc-in` fade-up-once-per-element the vendored engine already gives
+`sections/stages.tsx` and `sections/join.tsx`'s list items — swapped
+`data-reading-block` for `data-sc-in` on each block in `why-what.tsx`, deleted
+`reading-light.tsx`, and deleted the now-dead `.reading`/`.reading__light`/
+`[data-reading=…]` CSS. One knock-on fix: `.porque__light`'s breathing
+animation was gated on `[data-arrived]`, an attribute only `reading-light.tsx`
+ever set (D-061) — with that script gone the seam light would have stayed
+permanently paused, so that gate is removed and it just breathes like every
+other `.signal--breath` light now.
+
+**An interactive starfield, `star-field.tsx` — offered, not required.** The
+request framed this as optional ("if you want"); read it as license to add
+something in the gap the travelling light left, not an instruction. A canvas
+fixed behind the whole page: a few hundred stars (density-scaled to viewport
+area, capped at 220) twinkle via a per-star sine phase and drift a few pixels
+with the pointer (`PARALLAX` px of lerped offset, not per-star physics — cheap
+enough to redraw every frame at this count). Respects `prefers-reduced-motion`
+(stars placed once, no animation loop at all, not just a frozen one) and
+"Pausar animación" (`data-still`, read once per frame rather than wired
+through a `MutationObserver`, since a frame is already ticking regardless).
+Stacking took a moment to get right: `.cl` doesn't itself establish a
+stacking context (`position: relative` alone, no `z-index`), so a naive
+`position: fixed; z-index: -1` descendant would have escaped to the document
+root and could have painted behind or in front of page content unpredictably
+depending on what else acquires a stacking context. Settled on `z-index: 0`
+on the canvas plus `.cl > main { position: relative; z-index: 1; }`, so
+`main` — which already wraps every real section, footer included — simply
+stacks above it regardless of the starfield's own context details; `.bar`
+(the nav) already carries `--sc-z-chrome`, well above either.
+
+**S0 and S1 swapped — the image files, not the code's index-to-name
+mapping.** First attempt swapped which `src` string each stage's content
+pointed to; that broke `tests/landing-content.test.ts`'s existing invariant
+that a stage's image filename carries its own index (`etapa-s{k}.webp`), a
+guard against exactly this kind of drift. Better fix: swap the two files'
+*bytes* on disk (`etapa-s0.webp` ⇄ `etapa-s1.webp`, confirmed by file size
+before/after) and leave every stage's `src` pointing at its own index-matched
+filename — same visual result, the naming convention and its test both stay
+intact. Only each stage's `alt` text moved with its image (alt describes what
+is actually shown); `name` and `description` stayed with their stage code,
+since "Preparación" is still S0's name regardless of which photo illustrates
+it.
+
+**Five real logo files landed and were renamed to match the content
+model.** The user saved them to `public/landing/media/partners/` with their
+original download names (`image 11.png`, `xunta.png`, a `.svg (1).webp`
+double extension, etc.) — matched each to its institution by opening the
+ambiguous ones (`image 11.png` = CiTIUS by its wordmark, `image 12.png` = the
+small "INTANGIBLE REALITIES LABORATORY" mark), renamed all five to the
+kebab-case paths `PARTNERS` already expected, and read each file's actual
+pixel dimensions with `sharp` (already a project dependency, used by
+`scripts/landing-media.mjs`) rather than trust the placeholder sizes D-077
+guessed from the chat's displayed-image metadata — three of the five matched
+exactly, but the IRL mark (280x140, not the guessed 1200x480) and the Tiny
+Blue Dot Foundation mark (1500x308, not 1512x293) would have rendered
+squashed or oversized on the guessed numbers. Kept the source formats as
+uploaded (four PNG, one WebP) rather than reprocessing them through the
+`landing-media.mjs` pipeline; `next/image` optimizes on request regardless of
+source format, so there was nothing to gain from a conversion pass here.
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test` (375/375, after
+rewriting the D-077 describe block in `landing-content.test.ts` — the two
+tests asserting `reading-light.tsx`'s internals were replaced with one
+confirming no file under `components/landing` still references it, plus one
+confirming `why-what.tsx` carries `data-sc-in` on at least four blocks), and
+`npm run build` all clean. Playwright against the dev server at 1440x900: no
+console errors, no horizontal overflow, hero visually matches the pre-D-077
+screenshot, no light orb travels through "El porqué", stars visible across
+every plain-black section, the S0/S1 card swap confirmed by which photograph
+shows under which stage name, and all five real partner/funder logos render
+at full quality with no broken-image icons.
+
+## D-079 · 2026-09-23 · El porqué/El qué pinned again, but as a video-free crossfade; the seam light dropped; the funding logo centred
+
+*"Instead of the second section text moving up and down, it should stay put
+and only gets revealed and dissolved, then the next section is revealed in
+the same position. Remove the light orb from the section with the video. The
+tiny blue dot logo needs to be centered."*
+
+Third same-day round on the landing page, and the second correction to the
+opening's reveal mechanism specifically (D-077 removed the pinned clip,
+D-078 replaced what took its place, this round replaces D-078's replacement).
+
+**Read "stay put... revealed and dissolved... next section revealed in the
+same position" as a request for a pinned crossfade, not a smaller CSS
+tweak.** D-078's `data-sc-in` fade-up-14px-on-entry was itself the "moving"
+being complained about: in ordinary document flow, content that fades in as
+it scrolls up into place also keeps scrolling up and away as the reader
+continues — the fade-up is subtle, but the section's own departure off the
+top of the screen is what reads as "moving up and down." The only way for a
+section to genuinely "stay put" while dissolving, and hand off to the next
+section "in the same position," is for both to occupy one fixed screen slot
+— which means pinning is back for "El porqué"/"El qué", deliberately, after
+two rounds of moving away from it. The scope is narrower than what D-077
+removed though: no video, no scroll hold, no threshold wall — just the
+vendored engine reading scroll position and writing `opacity` on two stacked
+panels, the exact mechanism `stages.tsx` already uses (safely, for a long
+time) for its own active image/text crossfade. `data-sc-rise="0"` — an
+existing engine feature, not new code — is what removes the small default
+vertical drift the engine's cues normally add, giving pure opacity, no
+movement at all.
+
+**`WhyWhat` (`why-what.tsx`) replaces the separate `Why`/`What`
+components.** One pinned stage (span 2), two absolutely-positioned panels
+each carrying a `data-sc-cue` window computed by the same `from/to/rampIn/
+rampOut` formula `stages.tsx` uses (generalized to N=2, 0.14 overlap): "El
+porqué" holds full opacity for the first 36% of the act's progress, dissolves
+over the middle 28%, and "El qué" then holds for the last 36%. `WhyCopy`/
+`WhatCopy` (the actual headline/body/facts JSX) lost the reveal attributes
+they carried in D-078 — the pinned variant now reveals a whole panel at
+once via its wrapping `data-sc-cue`, not per element — and the stacked
+(mobile/reduced-motion/no-JS) fallback, still required by this page's own
+rule that nothing essential lives only in a pinned state, adds `data-sc-in`
+itself at the call site, one per whole block rather than per line.
+
+An id-uniqueness wrinkle: with content now duplicated across a pinned and a
+stacked rendering, giving both copies of a heading the same `id` (needed for
+`aria-labelledby`) would be invalid HTML, present in the DOM simultaneously
+even though only one is visible via a CSS media query. Suffixed the stacked
+variant's heading ids (`porque-title-stacked`, `que-title-stacked`); the
+outer `#porque` anchor id — the one thing actually linked to, from the nav
+and the hero's "Conocer el estudio" — sits once on the wrapper that contains
+both variants, so `href="#porque"` resolves correctly regardless of which is
+showing. `#que` was never linked from anywhere, so it does not need an id of
+its own any more (it did in the old opening sequence, which used it for
+JS-driven anchor-swapping — a mechanism this round has no equivalent of).
+
+**The seam light is deleted, not relocated.** `<Signal className="porque__light"
+breath />` used to rest half outside the bottom of "El porqué" and half
+outside the top of "El qué"; asked to remove it from "the section with the
+video," which is where it visually sat regardless of which component's JSX
+rendered it. Also dropped the `--cl-light`-reserving padding on the stacked
+variant's `.porque`/`.que` (previously `calc(var(--cl-light) / 2 + Nrem)`,
+padding sized to leave room for a light that no longer exists) and a CSS
+rule that gated `.porque__light`'s breathing animation on `[data-arrived]`,
+an attribute only D-061's now-deleted `reading-light.tsx` ever set — already
+dead after D-078, only now actually removed since nothing referenced
+`.porque__light` at all to notice it was dead.
+
+**The funding logo's centring bug: `next/image` renders a block-level
+`<img>`.** `.partners__funding`'s `text-align: center` (inherited from
+`.partners`) does nothing to a block box — text-align only ever affected
+inline/inline-block content, and `.partners__logo` (the four-across research
+partners row) only looked centred because its parent is a flex container
+with `justify-content: center`, not because of text-align. Measured before
+fixing: the logo's centre sat at 538.6px in a 1440px viewport (should be
+720px), off by exactly half its own width, consistent with a plain
+left-alignment inside a wider box. Fix: `margin: 1.25rem auto 0` (margin
+auto is the correct centring technique for a block box) instead of relying
+on inherited text-align.
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test` (377/377 —
+rewrote the D-077/078 describe block once more to assert the new pinned
+crossfade's shape — `data-sc-act="pin"`, two `data-sc-cue`s, `data-sc-rise="0"`
+on both, no seam light in source or CSS — rather than the plain-flow
+assertions it replaced), and `npm run build` all clean. Playwright against
+the dev server at 1440x900: sampled each panel's computed opacity at nine
+points across the pin's actual sticky-scroll travel range (not its total
+height, which includes the sticky viewport itself and does not map linearly
+to scroll progress) and got a smooth dissolve — (1, 0) → (0.944, 0.055) →
+(0.755, 0.243) → (0.499, 0.499) → (0.243, 0.755) → (0.055, 0.944) → (0, 1) —
+confirming a real crossfade rather than a hard cut; confirmed no vertical
+position change at any sampled point; confirmed no seam light renders;
+re-measured the funding logo's centre at exactly the viewport centre after
+the fix.
+
+## D-080 · 2026-09-23 · Partner logos bigger and undimmed, matching a DevTools edit
+
+The user had already dialed this in live, in the browser's DevTools, and
+asked to have it saved into the source rather than lost on the next reload —
+a case this codebase has no tooling for (no way to pull the current state of
+someone else's open tab), so the fix came from a screenshot of the edited
+result instead of an exact diff. `.partners__logo`: height
+`clamp(2rem, 4vw, 2.75rem)` → `clamp(3rem, 6vw, 4.5rem)`, `max-width: 11rem`
+→ `16rem`, `opacity: 0.78` (with a hover-to-1) → removed, full strength
+always. `.partners__funding-logo` scaled to match (height
+`clamp(2.25rem, 4.5vw, 3rem)` → `clamp(3.5rem, 7.5vw, 5.5rem)`, `max-width:
+14rem` → `20rem`). `.partners__list`'s `gap` widened
+(`clamp(1.75rem, 4vw, 3.25rem)` → `clamp(2.5rem, 6vw, 5rem)`) so five bigger
+marks still read as one row rather than crowding together.
+
+**Same-day follow-up:** more breathing room requested between the two rows
+and below the funding logo. `.partners__funding`'s `margin-top`
+(`clamp(2rem, 4vw, 3rem)` → `clamp(3.5rem, 7vw, 5.5rem)`) separates the
+partner-logos row from "Con la financiación de"/Tiny Blue Dot Foundation;
+`.partners`'s own bottom padding, previously `0` (the section had no space
+of its own below the funding logo, relying on the footer's top border to
+read as a break), is now `clamp(3rem, 6vw, 4.5rem)`, matching its top.
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test` (377/377,
+unaffected — this round touched no markup, no content, nothing the test
+suite asserts on), and `npm run build` all clean. Playwright screenshot of
+the partners band alone, cropped to its own bounding box, compared by eye
+against the user's screenshot of their DevTools edit: same undimmed
+brightness, same enlarged, evenly spaced logos.
+
+## D-081 · 2026-09-24 · Layout polish after the copy lengthened, no text touched
+
+The founder rewrote several strings directly (hero eyebrow, section 6
+branches, step 01 of "Cómo incorporarse") as part of the working-copy pass
+that produced the current draft, and asked for three layout fixes to catch up
+with the new lengths — explicitly not touching the words themselves.
+
+**Hero eyebrow.** `HERO.eyebrow` grew from a three-word tag ("Estudio de
+investigación · Realidad virtual compartida") into a full sentence
+describing the RCT design. `.cl-eyebrow`'s all-caps, `0.12em`-tracked
+treatment suits a short label; stretched across a full sentence it read as
+two lines of shouting. Added a `.hero__eyebrow` modifier (composed with the
+shared `.cl-eyebrow` for the accent colour) that drops the caps and tracking
+and sets its own size/line-height/max-width, so this one instance reads as a
+quiet sentence instead. `.cl-eyebrow` itself, and the other three places that
+use it (S0 to S6 stage codes, the section 6 antetítulo), are untouched.
+
+**Step 01, "Cómo incorporarse."** Its body grew from one sentence to four
+(now covers the consent signature and the team's review before assignment).
+The pinned desktop stage renders all three steps' bodies in one shared grid
+cell (`.steps__desc`, so the crossfade never reflows the layout underneath
+it), sized to the tallest — at the old `34ch` and the old `5fr/7fr` column
+split, step 01 alone wrapped to 7 lines and pushed the whole pinned section
+close to its fixed `100svh` height, which does not scroll internally.
+`.stage--join`'s column split went to `6fr/7fr` and `.steps__body`'s
+`max-width` to `44ch`, which uses the column's real available width instead
+of an arbitrary narrower one; step 01 now wraps to 5 lines. Widened
+`.join-list__copy` to match (`32ch/36ch` → `38ch/42ch`) for the same reason
+in the stacked/mobile card variant, where the card just grows rather than
+overflowing, but the same narrower-than-necessary wrap made it taller than
+its neighbours for no reason.
+
+**Section 6 branches.** `SPLIT.branches[1]`'s (Grupo de comparación) second
+line grew to describe the end-of-study PDF and Clear Light Solo offer, at
+roughly twice the length of the programme group's equivalent line. Both
+columns are a subgrid (`.azar__branch`, 3 shared rows) so the name and first
+line already started level; the long second line still made the comparison
+column visibly heavier (4 wrapped lines against 2). No CSS can equalise
+different real content, but `.azar__stage` was narrower than it needed to be
+(`52rem`, chosen when both branches were one short line each): widened to
+`64rem`, which lets the long line wrap to 3 instead of 4, and, as a side
+effect, lets both first lines fit on one line each, so both branches now
+start with a single-line row before the two second lines diverge.
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run
+build` all clean (pre-existing es/en/gl drift from the founder's own text
+edits is separate, see below, and none of it is new). Playwright screenshots
+at 1440×900 (desktop pinned join stage at each step's scroll position, the
+`prefers-reduced-motion: reduce` end state for section 6) and 390×844
+(mobile hero) before and after, compared by eye.
+
+**Left alone, flagged instead of fixed:** running `npm test` on the working
+tree already showed `criteriaItems` no longer matching its test's literal
+string, and the en/gl translations no longer matching Spanish's shape in
+`ELIGIBILITY` (both from the founder's own direct edits to `clear-light.ts`
+before this session, not from this change). Fixing either means writing new
+English/Galician copy or deciding new test literals, which is a content
+decision, not a layout one, so it stays open rather than done implicitly
+inside a "no cambies el texto" pass.
+
+## D-082 · 2026-09-24 · DPO contact resolved from the CEImG-approved consent form; every other legal-page marker stays gated
+
+The founder shared `docs/Consentimiento castellano limpio (1).docx` — the
+participant consent form approved by the Galician medicines research ethics
+committee (CEImG) — as the source for the legal pages' still-open facts.
+
+Read against what each marker in `legal.ts` actually asks for
+(`missing()`'s `needs` text), only one of the seven legal-page keys is fully
+answered by this document:
+
+- `DPO` asks for "Datos de contacto del Delegado de Protección de Datos." The
+  consent form's "Información relativa a sus datos" section gives this
+  verbatim, for two DPOs: USC (`dpd@usc.gal`, `881 81 10 00`) and SERGAS/CHUS
+  (`DPD@sergas.es`). Resolved: `DPO` in `legal.ts` is now that string, not a
+  `Missing`. `legalMissing()` drops it from the gate on its own (it already
+  treats any non-string row value as unresolved), so no page-rendering code
+  changed. `LEGAL_MISSING.DPO` is still exported by the same name, so
+  `legal.en.ts`/`legal.gl.ts` show the same (untranslated — it is contact
+  details, not prose) text without any change on their side.
+- `RESPONSABLE_TRATAMIENTO` asks for "entidad, NIF, domicilio y contacto."
+  The document names the entity ("la institución en la que se desarrolla
+  esta investigación," i.e. USC) and a contact route (the DPO above), but no
+  NIF or registered address. Left gated.
+- `TITULAR_WEB` (the LSSI-CE notice for the *website*, a distinct legal
+  concept from the study's data controller) is not addressed by a participant
+  consent form at all. Left gated.
+- `BASE_JURIDICA`, `PLAZO_CONSERVACION`, `ENCARGADOS_TRATAMIENTO` each need a
+  specific legal categorisation, retention figure, or processor/hosting list
+  the form does not state in those terms (it says data are pseudonymised and
+  eventually deleted or anonymised "según lo que escoja," not a duration).
+  Left gated.
+- `REVISION_LEGAL` is a lawyer's sign-off on *this website's* wording
+  specifically; a study consent form is not that review, however
+  ethics-committee-approved. Left gated.
+
+None of this is treated as "the legal pages are now compliant" (CLAUDE.md
+rule 10): a DPO's contact is a fact GDPR art. 37(7) requires an organisation
+to publish, not a determination this code is making on the study's behalf,
+so resolving just that one marker does not touch `REVISION_LEGAL` or claim
+anything about the rest of the page.
+
+**Also surfaced, not acted on:** the consent form's inclusion description
+still reads "diagnóstico de enfermedad amenazante para la vida" — the exact
+"amenaza la vida" phrasing Catherine and Joana were discussing softening to
+"enfermedad grave" earlier this week (see the landing-copy proposals sent
+2026-09-23). Whatever the team decides for the recruitment copy, the
+CEImG-approved consent form is presumably the version of record for the
+actual eligibility wording, and this discrepancy has not been reconciled
+here — surfaced for the study team, not resolved in code (CLAUDE.md rule 3:
+eligibility criteria are never this codebase's call). The form also has
+concrete numbers not yet used anywhere in the landing copy (6 sessions of
+~60 minutes, a pre/post home visit with ECG, questionnaires at baseline/3
+weeks/3 months, 46 participants per arm) that would resolve `DEDICACION` and
+most of `RIESGOS`/`EQUIPAMIENTO` on the landing page's own FAQ (a separate,
+larger content change from the legal pages, not made in this pass).
+
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run
+build`.
+
+## D-083 · 2026-09-24 · "El porqué" fades in place instead of rising into view
+
+Request: a smooth fade on the second section's text, so it appears already in
+position rather than visibly coming from below.
+
+D-079 made the pinned stage opacity-only (`data-sc-rise="0"`), but "El
+porqué"'s cue started fully opaque at p = 0. The engine's pinned progress is
+0 for the whole entry slide (the stage still scrolling up into place), so the
+text was visible and travelling with the page until it pinned. That travel was
+the "coming from below".
+
+- Pinned: the cue now ramps in over the first 10% of the pin (`FADE_IN` in
+  `why-what.tsx`). Opacity is 0 while the stage arrives and the text is
+  revealed once it has landed. Because a jump to `#porque` (the hero button,
+  the nav) lands at p = 0, `.porque-que` gets `scroll-margin-top: -12vh`
+  inside the pinned media query, so the jump arrives just past the fade
+  rather than on a blank stage. Not applied to the stacked variant, where it
+  would clip the heading under the nav.
+- Stacked (mobile, reduced motion, no-JS): the block used the engine's flow
+  reveal, which fades and lifts 14px. `.porque__inner[data-sc-in]` now
+  cancels the lift; opacity only.
+- "El qué" is unchanged (it already fades in over the crossfade overlap).
+
+**Verified:** `npm run typecheck`, `npm run lint` and `npm run build` pass.
+`npm test` passes except 6 assertions in `landing-content.test.ts` about
+eligibility/benefit copy wording, left failing by the same-day copy edits
+(D-081/D-082 notes on "enfermedad grave" vs the consent form's "amenaza la
+vida"); none touch this change. Not checked in a browser.
+
 ## Open questions for researchers
 
 - Should D-038 and D-040's "codes only, even for an entitled viewer" rule be

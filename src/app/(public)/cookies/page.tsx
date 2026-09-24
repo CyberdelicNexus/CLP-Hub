@@ -8,7 +8,7 @@ import "@/components/landing/landing.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = legalPage("cookies", LEGAL_COPY[await getPublicLocale()]);
-  return { title: { absolute: `${page.title} · aNUma Clear Light` }, description: page.description };
+  return { title: { absolute: `${page.title} · Clear Light` }, description: page.description };
 }
 
 export default function CookiesPage() {

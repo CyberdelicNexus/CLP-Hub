@@ -17,7 +17,7 @@ export const LEGAL_EN: LegalCopy = {
     {
       slug: "aviso-legal",
       title: "Legal notice and terms of use",
-      description: "Owner of the website and terms of use of the public information about the aNUma Clear Light study.",
+      description: "Owner of the website and terms of use of the public information about the Clear Light study.",
       sections: [
         {
           heading: "Website owner",
@@ -29,7 +29,7 @@ export const LEGAL_EN: LegalCopy = {
         {
           heading: "Purpose of the site",
           blocks: [
-            p("This site offers public information about the aNUma Clear Light research study and gives access to the interest questionnaire. It is not a health care service."),
+            p("This site offers public information about the Clear Light research study and gives access to the interest questionnaire. It is not a health care service."),
           ],
         },
         {
@@ -66,7 +66,7 @@ export const LEGAL_EN: LegalCopy = {
     {
       slug: "privacidad",
       title: "Privacy policy",
-      description: "How personal data is processed on the website and in the aNUma Clear Light study.",
+      description: "How personal data is processed on the website and in the Clear Light study.",
       sections: [
         {
           heading: "Data controller",
@@ -136,7 +136,7 @@ export const LEGAL_EN: LegalCopy = {
     {
       slug: "cookies",
       title: "Cookie policy",
-      description: "What cookies and browser storage the aNUma Clear Light study website uses.",
+      description: "What cookies and browser storage the Clear Light study website uses.",
       sections: [
         {
           heading: "What cookies are",

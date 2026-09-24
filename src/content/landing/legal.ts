@@ -24,7 +24,18 @@ const missing = (key: string, needs: string): Missing => ({ missing: true, key, 
 
 const TITULAR = missing("TITULAR_WEB", "Titular del sitio web: denominación, NIF, domicilio, correo electrónico y datos registrales");
 const RESPONSABLE = missing("RESPONSABLE_TRATAMIENTO", "Responsable del tratamiento: entidad, NIF, domicilio y contacto");
-const DPO = missing("DPO", "Datos de contacto del Delegado de Protección de Datos");
+/**
+ * Transcribed verbatim from the CEImG-approved participant consent form
+ * (docs/Consentimiento castellano limpio (1).docx, "Información relativa a
+ * sus datos", 2026-09-24): the USC Data Protection Officer's contact, plus
+ * the SERGAS (CHUS) DPO named alongside it there. A DPO's contact is a public
+ * fact GDPR art. 37(7) requires publishing, not a judgment call, so this one
+ * marker resolves; `RESPONSABLE_TRATAMIENTO` stays open since that same
+ * document names the institution but not its NIF or registered address, and
+ * `REVISION_LEGAL` stays open because a lawyer still has to sign off on this
+ * page's own wording (D-081).
+ */
+const DPO = "Universidade de Santiago de Compostela: dpd@usc.gal · 881 81 10 00. Delegado de Protección de Datos del SERGAS (CHUS): DPD@sergas.es.";
 const BASE = missing("BASE_JURIDICA", "Base jurídica aprobada de cada tratamiento");
 const PLAZO = missing("PLAZO_CONSERVACION", "Plazos de conservación de los datos");
 const ENCARGADOS = missing(
@@ -67,7 +78,7 @@ export const LEGAL: LegalCopy = {
     {
       slug: "aviso-legal",
       title: "Aviso legal y condiciones de uso",
-      description: "Titular del sitio web y condiciones de uso de la información pública del estudio aNUma Clear Light.",
+      description: "Titular del sitio web y condiciones de uso de la información pública del estudio Clear Light.",
       sections: [
         {
           heading: "Titular del sitio web",
@@ -79,7 +90,7 @@ export const LEGAL: LegalCopy = {
         {
           heading: "Objeto del sitio",
           blocks: [
-            p("Este sitio ofrece información pública sobre el estudio de investigación aNUma Clear Light y da acceso al cuestionario de interés. No es un servicio de atención sanitaria."),
+            p("Este sitio ofrece información pública sobre el estudio de investigación Clear Light y da acceso al cuestionario de interés. No es un servicio de atención sanitaria."),
           ],
         },
         {
@@ -116,7 +127,7 @@ export const LEGAL: LegalCopy = {
     {
       slug: "privacidad",
       title: "Política de privacidad",
-      description: "Cómo se tratan los datos personales en la web y en el estudio aNUma Clear Light.",
+      description: "Cómo se tratan los datos personales en la web y en el estudio Clear Light.",
       sections: [
         {
           heading: "Responsable del tratamiento",
@@ -186,7 +197,7 @@ export const LEGAL: LegalCopy = {
     {
       slug: "cookies",
       title: "Política de cookies",
-      description: "Qué cookies y almacenamiento del navegador usa la web del estudio aNUma Clear Light.",
+      description: "Qué cookies y almacenamiento del navegador usa la web del estudio Clear Light.",
       sections: [
         {
           heading: "Qué son las cookies",

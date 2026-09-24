@@ -46,7 +46,6 @@ export function Eligibility({ copy }: { copy: LandingCopy }) {
               ))}
             </ul>
             <p className="elig__criteria-body">{ELIGIBILITY.criteriaText}</p>
-            <p className="elig__required">{ELIGIBILITY.requiredLine}</p>
           </div>
 
           <div className="faq">

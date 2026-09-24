@@ -52,7 +52,7 @@ describe("landing copy rules", () => {
   it("says that showing interest is not consent, and that benefit is not guaranteed", () => {
     expect(INVITATION.support).toMatch(/no equivale a dar consentimiento/);
     expect(JOIN.supporting).toMatch(/no te compromete a participar/);
-    expect(visibleStrings().some((s) => /No se garantizan? (un )?beneficio/.test(s))).toBe(true);
+    expect(visibleStrings().some((s) => /no se garantizan? (un )?beneficios?/i.test(s))).toBe(true);
   });
 
   it("identifies the page as a research study in the hero", () => {
@@ -67,6 +67,31 @@ describe("landing copy rules", () => {
     const hero = readFileSync(join(process.cwd(), "src/components/landing/sections/hero.tsx"), "utf8");
     expect(hero).toContain('href="#invitacion"');
     expect(hero).not.toMatch(/qualtricsUrl/);
+  });
+});
+
+describe("translated landing copy", () => {
+  it("keeps the participant information aligned with the Spanish source", () => {
+    const spanish = LANDING_COPY.es;
+    for (const locale of ["en", "gl"] as const) {
+      const copy = LANDING_COPY[locale];
+      expect(copy.JOIN.steps.map((step) => step.numeral)).toEqual(spanish.JOIN.steps.map((step) => step.numeral));
+      expect(copy.SPLIT.branches.map((branch) => branch.lines.length)).toEqual(
+        spanish.SPLIT.branches.map((branch) => branch.lines.length),
+      );
+      expect(copy.ELIGIBILITY.faq.map((item) => [item.id, item.statements.length])).toEqual(
+        spanish.ELIGIBILITY.faq.map((item) => [item.id, item.statements.length]),
+      );
+      expect(copy.STAGES.items.map((stage) => [stage.code, stage.media.src])).toEqual(
+        spanish.STAGES.items.map((stage) => [stage.code, stage.media.src]),
+      );
+      const participantCopy = [
+        ...copy.SPLIT.body,
+        ...copy.SPLIT.branches.flatMap((branch) => branch.lines),
+        ...copy.ELIGIBILITY.faq.flatMap((item) => item.statements),
+      ].join(" ");
+      expect(participantCopy).not.toMatch(/similar experience|experiencia similar|seven stages|sete etapas/i);
+    }
   });
 });
 
@@ -113,7 +138,7 @@ describe("eligibility and questions", () => {
   });
 
   it("lists only the criteria the founder supplied, and remits the rest to the team", () => {
-    expect(ELIGIBILITY.criteriaItems).toEqual(["Tener una enfermedad que amenaza la vida.", "Hablar castellano."]);
+    expect(ELIGIBILITY.criteriaItems).toEqual(["Tener una enfermedad grave o avanzada.", "Hablar castellano."]);
     expect(ELIGIBILITY.criteriaText).toMatch(/todos los criterios aprobados/);
     // The list is not yet the full approved protocol set (no exclusions), so it still gates publication.
     expect(missingContentList().map((m) => m.key)).toContain("CRITERIOS");
@@ -191,9 +216,17 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
 
   it("keeps every legal fact the team has not supplied in the publication gate", () => {
     const keys = missingContentList().map((m) => m.key);
-    for (const k of ["TITULAR_WEB", "RESPONSABLE_TRATAMIENTO", "DPO", "BASE_JURIDICA", "PLAZO_CONSERVACION", "ENCARGADOS_TRATAMIENTO", "REVISION_LEGAL", "CONTACTO_FORMULARIO", "PROTECCION_DATOS"]) {
+    for (const k of ["TITULAR_WEB", "RESPONSABLE_TRATAMIENTO", "BASE_JURIDICA", "PLAZO_CONSERVACION", "ENCARGADOS_TRATAMIENTO", "REVISION_LEGAL", "CONTACTO_FORMULARIO", "PROTECCION_DATOS"]) {
       expect(keys).toContain(k);
     }
+    // DPO resolved (D-081): the CEImG-approved consent form gives its contact
+    // verbatim, and a DPO's contact is a public fact GDPR requires publishing,
+    // not a legal judgment call the way the other keys above are.
+    expect(keys).not.toContain("DPO");
+    expect(LEGAL.pages.find((pg) => pg.slug === "privacidad")?.sections[0]?.blocks[0]).toMatchObject({
+      kind: "rows",
+      rows: [{ label: "Responsable" }, { label: "Delegado de Protección de Datos", value: expect.stringContaining("dpd@usc.gal") }],
+    });
   });
 
   it("offers accept and reject with the same weight, and loads YouTube only with consent", () => {
@@ -218,23 +251,8 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
   });
 });
 
-describe("mobile reading and the opening sequence's pacing (D-062)", () => {
+describe("hero video-free; El porqué/El qué a video-free pinned crossfade (D-077 to D-079)", () => {
   const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
-
-  it("never hides copy until the reading light's script is running", () => {
-    // No-JS and pre-hydration readers must see finished copy, so the hidden
-    // state is scoped to the attribute the component sets on mount.
-    const css = read("src/components/landing/landing.css");
-    expect(css).toMatch(/\.reading\[data-reading="live"\] \[data-reading-block\] \{/);
-    expect(css).not.toMatch(/^\s*\[data-reading-block\] \{\s*$\n\s*opacity: 0/m);
-    expect(read("src/components/landing/reading-light.tsx")).toMatch(/root\.dataset\.reading = "live"/);
-  });
-
-  it("lights a block once and leaves it lit", () => {
-    const source = read("src/components/landing/reading-light.tsx");
-    expect(source).toMatch(/if \(block\.dataset\.lit !== undefined\) continue/);
-    expect(source).not.toMatch(/delete block\.dataset\.lit/);
-  });
 
   it("keeps the engine's flow reveal readable without scripting", () => {
     expect(read("src/components/landing/landing.css")).toMatch(
@@ -242,33 +260,53 @@ describe("mobile reading and the opening sequence's pacing (D-062)", () => {
     );
   });
 
-  it("holds scroll only at the edge of the next sequence, briefly, and always lets go (D-062)", () => {
-    const source = read("src/components/landing/light-sequence.tsx");
-    // The wall is armed when a forward transition starts, not by blocking the
-    // scroll that started it, and never pulls back a reader already past it.
-    expect(source).toMatch(/arm\(next\);\s*\n\s*video\.play\(\)/);
-    expect(source).toMatch(/if \(window\.scrollY > wallY\(k\) \+ 1\) return;/);
-    // It sits where the next sequence would begin.
-    expect(source).toMatch(/travel \* \(k === 1 \? ENTER\[1\] - 0\.005 : 1\)/);
-    // It lifts DWELL_MS after arrival, on BOTH ways a rest is reached, and the
-    // same DWELL_MS gates the next play, so the next push starts it at once.
-    expect(source).toMatch(/const DWELL_MS = 1100/);
-    expect(source.match(/wall\.until = now \+ DWELL_MS/g)?.length).toBe(2);
-    expect(source).toMatch(/now - arrivedAt >= DWELL_MS/);
-    // Pushing is answered: the clip plays faster while the reader pushes.
-    expect(source).toMatch(/now - lastPush < PUSH_WINDOW_MS \? PUSH_RATE : baseRate/);
-    // Up is never held; Escape, focus elsewhere, a navigation-sized jump, a
-    // jump or cut, leaving, "Pausar animación" and a safety cap all release.
-    expect(source).toMatch(/if \(!wall \|\| e\.deltaY <= 0 \|\| e\.ctrlKey\) return;/);
-    expect(source).toMatch(/if \(e\.key === "Escape"\) return release\(\)/);
-    expect(source).toMatch(/if \(!stage\.contains\(e\.target as Node\)\) release\(\)/);
-    expect(source).toMatch(/if \(over > window\.innerHeight \* 0\.5\) return release\(\)/);
-    expect(source).toMatch(/now >= wall\.until \|\| now >= wall\.safety \|\| leaving \|\| still\)\) release\(\)/);
-    expect(source).toMatch(/if \(wall \|\| k < 1 \|\| still \|\| !mq\.matches\) return/);
-    // Non-passive listeners exist only while the wall stands.
-    expect(source.match(/addEventListener\("wheel"/g)?.length).toBe(1);
-    expect(source).toMatch(/const arm = [\s\S]*addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
-    expect(source).toMatch(/const release = [\s\S]*removeEventListener\("wheel", onWheel\)/);
+  it("no longer ships the pinned opening sequence's scroll-jacking clip (D-077)", () => {
+    // The team asked for the hero video and its scroll hold removed; nothing
+    // under components/landing should reference the deleted controller.
+    const dir = join(process.cwd(), "src/components/landing");
+    for (const f of ["sections/opening.tsx", "sections/hero.tsx", "landing.css"]) {
+      expect(readFileSync(join(dir, f), "utf8"), f).not.toMatch(/light-sequence|LightSequence|op__video|opening__act/);
+    }
+  });
+
+  it("no longer ships the travelling reading light (D-078)", () => {
+    const dir = join(process.cwd(), "src/components/landing");
+    for (const f of ["sections/opening.tsx", "sections/why-what.tsx", "landing.css"]) {
+      expect(readFileSync(join(dir, f), "utf8"), f).not.toMatch(/reading-light|ReadingLight|data-reading-block|data-reading=/);
+    }
+  });
+
+  it("El porqué and El qué crossfade in place, opacity only, no video (D-079)", () => {
+    // "instead of the second section text moving up and down, it should stay
+    // put and only gets revealed and dissolved" — data-sc-rise="0" is the
+    // vendored engine's own way to disable its default vertical drift.
+    const source = read("src/components/landing/sections/why-what.tsx");
+    expect(source).toMatch(/data-sc-act="pin"/);
+    expect(source.match(/data-sc-cue=/g)?.length).toBe(2);
+    expect(source.match(/data-sc-rise="0"/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(source).not.toMatch(/<video|youtubeId.*&&|light-sequence/i);
+  });
+
+  it("El porqué fades in place: not opaque at p = 0, no lift in the stacked variant (D-083)", () => {
+    const source = read("src/components/landing/sections/why-what.tsx");
+    expect(source).toMatch(/const FADE_IN = 0\.1/);
+    expect(source).toMatch(/k === 0 \? FADE_IN \/ win/);
+    const css = read("src/components/landing/landing.css");
+    expect(css).toMatch(/\.porque__inner\[data-sc-in\]\s*\{\s*transform:\s*none/);
+    expect(css).toMatch(/\.porque-que\s*\{\s*scroll-margin-top:\s*-12vh/);
+  });
+
+  it("has no seam light between El porqué and El qué (D-079)", () => {
+    // "remove the light orb from the section with the video" — the Signal
+    // that used to rest half in each section is gone, not relocated.
+    const source = read("src/components/landing/sections/why-what.tsx");
+    expect(source).not.toMatch(/porque__light|<Signal/);
+    expect(read("src/components/landing/landing.css")).not.toMatch(/\.porque__light/);
+  });
+
+  it("reveals each block of the stacked (mobile/reduced-motion/no-JS) fallback with data-sc-in", () => {
+    const source = read("src/components/landing/sections/why-what.tsx");
+    expect(source.match(/data-sc-in/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
   it("does not draw the stage marker, but still gates publication on it", () => {
@@ -293,6 +331,7 @@ describe("the landing page collects nothing", () => {
       "sections/join.tsx",
       "sections/split.tsx",
       "sections/eligibility.tsx",
+      "sections/partners.tsx",
       "sections/invitation.tsx",
       "language-switch.tsx",
     ];
@@ -360,7 +399,7 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
       gl: { consent: /non equivale a dar consentimento/i, benefit: /non se garanten/i, trial: /ensaio controlado aleatorizado/i },
     }[locale as "en" | "gl"];
     expect(c.INVITATION.support).toMatch(expected.consent);
-    expect(c.ELIGIBILITY.requiredLine).toMatch(expected.benefit);
+    expect(c.ELIGIBILITY.faq.find((f) => f.id === "beneficios")?.statements.join(" ")).toMatch(expected.benefit);
     expect(c.SPLIT.body.join(" ")).toMatch(expected.trial);
     expect(c.SPLIT.branches[0].lines).toHaveLength(c.SPLIT.branches[1].lines.length);
   });

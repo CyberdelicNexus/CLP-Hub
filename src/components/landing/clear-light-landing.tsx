@@ -9,6 +9,7 @@ import { Split } from "@/components/landing/sections/split";
 import { Stages } from "@/components/landing/sections/stages";
 import { LanguageSwitch } from "@/components/landing/language-switch";
 import { SiteBar } from "@/components/landing/site-bar";
+import { StarField } from "@/components/landing/star-field";
 import type { LandingCopy } from "@/content/landing/clear-light";
 import type { PublicLocale } from "@/domain/locale";
 
@@ -33,8 +34,9 @@ export function ClearLightLanding({
 }) {
   return (
     <div id={LANDING_ROOT_ID} className={`cl ${fontClass}`} lang={locale}>
+      <StarField rootId={LANDING_ROOT_ID} />
       <SiteBar
-        brand="aNUma"
+        brand="Clear Light"
         links={copy.NAV}
         cta={{ href: "#invitacion", label: copy.ACTIONS.primaryCta }}
         language={<LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/" />}
