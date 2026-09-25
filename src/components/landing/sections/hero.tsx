@@ -39,13 +39,13 @@ export function HeroMedia({ copy }: { copy: LandingCopy }) {
       {/* Paint order: luminous ground, then the masked physical people, then
           the masked haze copy screened over them. */}
       <div className="hero__layer hero__layer--luminous">
-        <Image src="/landing/media/hero-luminous-hd.webp" alt={HERO.reveal.luminousAlt} fill sizes="100vw" quality={90} priority />
+        <Image src="/landing/media/hero-luminous-refined-v2.png" alt={HERO.reveal.luminousAlt} fill sizes="100vw" quality={90} priority />
       </div>
       <div className="hero__layer hero__layer--physical">
         <Image src="/landing/media/hero-physical-v4.webp" alt={HERO.reveal.physicalAlt} fill sizes="100vw" quality={90} />
       </div>
       <div className="hero__layer hero__layer--haze" aria-hidden>
-        <Image src="/landing/media/hero-luminous-hd.webp" alt="" fill sizes="100vw" quality={90} />
+        <Image src="/landing/media/hero-luminous-refined-v2.png" alt="" fill sizes="100vw" quality={90} />
       </div>
     </HeroReveal>
   );
