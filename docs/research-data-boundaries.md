@@ -52,14 +52,20 @@ SQL so it cannot become a place to write a name — and nothing else about the
 person until staff deliberately add contact details to arrange a visit (D-031).
 
 The landing page's contact dialog (D-052) renders a name, email and message
-form but has no destination: no action, no request, no storage, and a test
-asserts it. It asks visitors not to include health information. Giving it a
-destination is a recorded decision still to be made, for exactly the reason
-above: free text from prospective participants invites Category C.
+form. Since D-088 it goes to the Hub's inquiry inbox, and because free text from
+prospective participants invites Category C, the text is kept only while the
+inquiry is pending: answering or closing it erases the name, email and message
+(enforced by a check constraint), the reply is never stored, and the staff
+notification email does not contain the question. It asks visitors not to
+include health information.
 
-`/participar` collects nothing. It renders no form, no input and no server
-action; a test asserts this, because the digital consent is accepted in Qualtrics
-*before* any datum is collected and a form here would invert that order.
+`/participar` takes exactly three facts before the Qualtrics questionnaire:
+name (as first name and surname), email and phone (D-086, D-087), so the team
+can contact the person. A test pins that the server action reads only those
+fields. This deliberately reverses D-031's order (consent in Qualtrics before any
+datum), at the founder's direction; whether that fits the ethics-approved
+procedure is an open question for the study team. Everything else, including the
+consent and every screening answer, stays in Qualtrics.
 
 `qualtrics_field_mappings` configures a read-only integration that **does not
 exist yet**. Its value is the check constraint: a mapping whose `source_class` is

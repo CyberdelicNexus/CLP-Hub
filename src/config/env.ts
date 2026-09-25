@@ -11,6 +11,10 @@ import { z } from "zod";
  * The service-role key is intentionally NOT part of this schema. It must
  * only ever be read by scripts under /scripts, never by application code.
  */
+/** A key left blank in an env file (`KEY=`) means "not set", not "invalid". */
+const blankIsUnset = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
+
 const envSchema = z.object({
   APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -33,6 +37,17 @@ const envSchema = z.object({
    * connected", not an error — see src/services/trello.ts.
    */
   TRELLO_BOARD_URL: z.string().url().optional(),
+  /**
+   * Outbound email through Resend (D-088): inquiry notifications to staff and
+   * replies to the person who asked. Both optional: with no key, notifications
+   * are skipped with a log line and a reply is refused (so an answer is never
+   * lost as "sent"). MAIL_FROM must be an address on a domain verified at Resend,
+   * e.g. `Clear Light <consultas@your-domain>`. APP_URL is the Hub's public
+   * address, used only to link the inbox from a notification.
+   */
+  RESEND_API_KEY: blankIsUnset(z.string().min(1)),
+  MAIL_FROM: blankIsUnset(z.string().min(3)),
+  APP_URL: blankIsUnset(z.string().url()),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;

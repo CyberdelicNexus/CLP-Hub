@@ -11,7 +11,7 @@ import { PREFERENCE_COOKIE_OPTIONS, PUBLIC_LOCALE_COOKIE } from "@/i18n/cookies"
  * It stores nothing else. The return path is checked against the public pages,
  * so the link cannot be used to redirect anywhere else.
  */
-const RETURN_PATHS = ["/", "/aviso-legal", "/privacidad", "/cookies"] as const;
+const RETURN_PATHS = ["/", "/aviso-legal", "/privacidad", "/cookies", "/participar"] as const;
 
 export async function GET(request: NextRequest, ctx: RouteContext<"/idioma/[locale]">) {
   const { locale } = await ctx.params;

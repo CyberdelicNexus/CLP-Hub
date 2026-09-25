@@ -40,14 +40,14 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 /**
  * How the application reached the study.
  *
- * QUALTRICS is the live route (D-031): initial screening — and the digital
- * consent that must precede any data collection, including the name — happens in
- * Qualtrics, and staff record the anonymized outcome here.
+ * PUBLIC_FORM is the expression of interest on `/participar` (D-086, reviving
+ * the value D-031 retired): the person leaves name, email and phone, and only
+ * then opens the Qualtrics questionnaire, which carries the Hub's participant
+ * code. The information sheet, the consent and the screening answers stay in
+ * Qualtrics.
  *
- * PUBLIC_FORM is RETIRED and kept only so historical rows remain readable. No
- * code path creates one: `/participar` is now a landing page that hands the
- * person to Qualtrics. Postgres enum values cannot be dropped safely, and
- * rewriting old rows would be falsifying history, so the value stays.
+ * QUALTRICS is staff recording a Qualtrics response by its opaque reference
+ * (D-031), for anyone who reached the questionnaire without the Hub step.
  */
 export const APPLICATION_SOURCES = [
   "PUBLIC_FORM",
@@ -59,6 +59,7 @@ export type ApplicationSource = (typeof APPLICATION_SOURCES)[number];
 
 /** Sources a new application may be created with today. */
 export const ACTIVE_APPLICATION_SOURCES: readonly ApplicationSource[] = [
+  "PUBLIC_FORM",
   "QUALTRICS",
   "STAFF_ENTRY",
   "IMPORT",
@@ -164,7 +165,54 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/** Participant code format, e.g. "P-000042". Generated from a database sequence. */
+/**
+ * Sequence-based participant code, e.g. "P-000042". Used by the staff-entry,
+ * IMPORT and Qualtrics-reference routes, and by every participant created
+ * before D-087. The public route now builds `formatInterestCode` instead.
+ */
 export function formatParticipantCode(sequence: number): string {
   return `P-${String(sequence).padStart(6, "0")}`;
 }
+
+/**
+ * The public route's code (D-087): initials of the first name and the first
+ * surname, then the month and year of the submission, e.g. "P-JM1026".
+ *
+ * NOT PSEUDONYMOUS. Unlike the sequence code it is derived from the person's
+ * name, so it reveals initials wherever a code is shown "instead of the name"
+ * (D-038, D-040) and survives a pseudonymizing erasure. The founder chose
+ * that trade-off; see D-087 for what it costs. Accents are folded (Á to A,
+ * Ñ to N) and a name with no Latin letter yields "X".
+ *
+ * Two people with the same initials in the same month collide; the service
+ * appends "-2", "-3", ... (`withCollisionSuffix`).
+ */
+export function initialOf(name: string): string {
+  const folded = name.normalize("NFD").replace(/\p{M}/gu, "");
+  const letter = folded.match(/[A-Za-z]/)?.[0];
+  return letter ? letter.toUpperCase() : "X";
+}
+
+/** Month and year as the study's own calendar reads them, not the server's. */
+export function monthYearIn(date: Date, timeZone: string): { month: string; year: string } {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, month: "2-digit", year: "2-digit" }).formatToParts(date);
+  const pick = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return { month: pick("month"), year: pick("year") };
+}
+
+export function formatInterestCode(params: {
+  firstName: string;
+  lastName: string;
+  submittedAt: Date;
+  timeZone: string;
+}): string {
+  const { month, year } = monthYearIn(params.submittedAt, params.timeZone);
+  return `P-${initialOf(params.firstName)}${initialOf(params.lastName)}${month}${year}`;
+}
+
+export function withCollisionSuffix(baseCode: string, attempt: number): string {
+  return attempt <= 1 ? baseCode : `${baseCode}-${attempt}`;
+}
+
+/** Every code shape the database accepts; mirrored by `participants_code_format`. */
+export const PARTICIPANT_CODE_PATTERN = /^P-([0-9]{6,}|[A-Z]{2}[0-9]{4}(-[0-9]+)?)$/;

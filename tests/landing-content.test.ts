@@ -216,7 +216,7 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
 
   it("keeps every legal fact the team has not supplied in the publication gate", () => {
     const keys = missingContentList().map((m) => m.key);
-    for (const k of ["TITULAR_WEB", "RESPONSABLE_TRATAMIENTO", "BASE_JURIDICA", "PLAZO_CONSERVACION", "ENCARGADOS_TRATAMIENTO", "REVISION_LEGAL", "CONTACTO_FORMULARIO", "PROTECCION_DATOS"]) {
+    for (const k of ["TITULAR_WEB", "RESPONSABLE_TRATAMIENTO", "BASE_JURIDICA", "PLAZO_CONSERVACION", "ENCARGADOS_TRATAMIENTO", "REVISION_LEGAL", "PROTECCION_DATOS"]) {
       expect(keys).toContain(k);
     }
     // DPO resolved (D-081): the CEImG-approved consent form gives its contact
@@ -237,10 +237,13 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
     expect(film).toMatch(/const playing = requested && consent === "accepted"/);
   });
 
-  it("gives the contact form no destination: no action, request, storage or server code", () => {
+  it("sends the contact form to the Hub inbox through one server action, and nowhere else (D-088)", () => {
+    // CONTACTO_FORMULARIO (where messages go) is resolved: the Hub inbox, Consultas.
+    expect(missingContentList().map((m) => m.key)).not.toContain("CONTACTO_FORMULARIO");
     const dialog = read("src/components/landing/contact-dialog.tsx");
-    expect(dialog).toMatch(/e\.preventDefault\(\)/);
-    expect(dialog).not.toMatch(/action=|fetch\(|XMLHttpRequest|sendBeacon|localStorage|"use server"|mailto:/);
+    expect(dialog).toMatch(/submitInquiryAction/);
+    // No direct request, browser storage or mailto: the browser only calls the action.
+    expect(dialog).not.toMatch(/fetch\(|XMLHttpRequest|sendBeacon|localStorage|mailto:/);
     expect(CONTACT.healthNote).toMatch(/no incluyas información sobre tu salud/);
   });
 
@@ -334,6 +337,7 @@ describe("the landing page collects nothing", () => {
       "sections/partners.tsx",
       "sections/invitation.tsx",
       "language-switch.tsx",
+      "apply-frame.tsx",
     ];
     for (const f of files) {
       const source = readFileSync(join(dir, f), "utf8");
@@ -446,5 +450,46 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
     const unknown = await call("fr");
     expect(unknown.status).toBe(404);
     expect(unknown.cookies.getAll()).toHaveLength(0);
+  });
+});
+
+describe("the apply page frames the questionnaire (D-085)", () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+
+  it("sends the primary CTA to /participar and never hands the Qualtrics URL to the landing markup", () => {
+    const source = read("src/components/landing/sections/invitation.tsx");
+    expect(source).toMatch(/href="\/participar"/);
+    expect(source).not.toMatch(/href=\{qualtricsUrl\}/);
+  });
+
+  it("mounts the Qualtrics iframe only after a click and with third-party consent, sandboxed", () => {
+    const source = read("src/components/landing/apply-frame.tsx");
+    expect(source.match(/<iframe/g)).toHaveLength(1);
+    expect(source).toMatch(/const open = requested && consent === "accepted"/);
+    expect(source).toMatch(/\{open \? \(\s*<iframe/);
+    expect(source).toMatch(/sandbox="[^"]*allow-scripts[^"]*"/);
+    // The link to open it in a new tab is not a third-party load and is always offered.
+    expect(source).toMatch(/target="_blank" rel="external noopener noreferrer"/);
+  });
+
+  it("reads the URL from the open study, renders nothing when there is none, and is reachable from the language switch", async () => {
+    const page = read("src/app/(public)/participar/page.tsx");
+    expect(page).toMatch(/openScreeningUrl/);
+    expect(page).toMatch(/\{url \? \(\s*<ApplyFlow/);
+    const { GET } = await import("@/app/(public)/idioma/[locale]/route");
+    const res = await GET(new NextRequest("https://example.org/idioma/en?desde=%2Fparticipar"), {
+      params: Promise.resolve({ locale: "en" }),
+    });
+    expect(res.headers.get("location")).toBe("https://example.org/participar");
+  });
+
+  it("says the same three things in every language: what happens first, who hosts it, and how to open it elsewhere", () => {
+    for (const locale of PUBLIC_LOCALES) {
+      const { APPLY } = LANDING_COPY[locale];
+      expect(APPLY.steps, locale).toHaveLength(3);
+      expect(APPLY.frame.note, locale).toMatch(/Qualtrics/);
+      expect(APPLY.frame.newTab.length, locale).toBeGreaterThan(0);
+      expect(LANDING_COPY[locale].CONSENT.body, locale).toMatch(/Qualtrics/);
+    }
   });
 });

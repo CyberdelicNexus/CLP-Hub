@@ -3413,8 +3413,277 @@ eligibility/benefit copy wording, left failing by the same-day copy edits
 (D-081/D-082 notes on "enfermedad grave" vs the consent form's "amenaza la
 vida"); none touch this change. Not checked in a browser.
 
+## D-084 · 2026-09-25 · Partners band: more room under the headings, one shared rhythm
+
+Team feedback on D-080's enlarged logos: the band felt tight under its two
+headings and uneven. CSS only, `landing.css` `.partners`: both headings now
+sit the same distance above their logos (`--partners-head-gap`, previously
+two different values), the gap between the two groups grows, and the padding
+above and below the band grows. No copy, markup or logo change. Checked in a
+browser at 1440px and 390px.
+
+## D-085 · 2026-09-25 · The primary CTA goes to a dedicated `/participar` page that frames the Qualtrics questionnaire
+
+Founder request: bring the Qualtrics link into the landing's look, choosing
+between a modal and a page. A page: a long multi-page survey in a modal means
+scroll-in-scroll and a covered keyboard on phones, and no Back button or
+shareable URL.
+
+- `/participar` (previously a staff-styled hand-off page) is rebuilt in the
+  landing theme: heading (the one primary-CTA label), what happens first,
+  then the questionnaire in a frame. The invitation section's button links to
+  it; the nav and hero links still scroll to the invitation section, so the
+  two-group explanation still comes before any CTA.
+- **Still collects nothing (D-031).** No form, input or server action on the
+  page; `tests/intake.test.ts` and `landing-content.test.ts` pin it. The
+  frame renders only when the open study has `screening_url`; that URL stays
+  configuration (staff Configuración), not code.
+- **Consent for the embed.** Same rule as the YouTube film (D-052): the iframe
+  mounts only after a click and with third-party consent, asked in place
+  otherwise; sandboxed (`allow-scripts allow-same-origin allow-forms
+  allow-popups ...`); a "new tab" link is always shown because embedding
+  depends on the Qualtrics account's settings and small screens.
+- **Wording changes this forced, for legal review:** the cookie banner body,
+  a Qualtrics row in the cookie table, and the "third-party services" sentence
+  in the privacy text (all three languages) now say Qualtrics may be shown
+  inside the page. These are draft legal texts (still `REVISION_LEGAL`); the
+  DPO/lawyer should confirm them. Nothing claims compliance.
+- Removed the now-unused `public.apply.*` strings from `messages/*.json`;
+  the page's copy is study-public copy in `src/content/landing` (rule 7).
+  The language switch may return to `/participar`.
+
+The real questionnaire link was set on the CLP study's `screening_url` on
+2026-09-25 by a one-off script, at the founder's request, with an audit row
+(`study.settings_changed`, SYSTEM actor). `recruitment_open` was left as it
+was (false): the public page keeps offering the DEMO study's placeholder link
+until someone opens CLP recruitment and closes DEMO's.
+
+Checked in a browser: the frame appears only after click and consent, and the
+real questionnaire loads inside the sandbox (this account allows embedding).
+Qualtrics renders it on its default white theme; matching it to the site is
+done in Qualtrics' Look & Feel, not here. The questionnaire's own text still
+calls the project "Numadélicas", which the landing dropped (D-077); worth
+aligning in Qualtrics.
+
+## D-086 · 2026-09-25 · `/participar` takes name, email and phone before the questionnaire (reverses D-031's order)
+
+Founder decision. With the questionnaire embedded (D-085), a submission
+reached Qualtrics and nothing reached the Hub: an iframe from another origin
+cannot be read, and Qualtrics' response API was ruled out on cost. The founder
+set the boundary: the Hub takes **name, email and phone, and the participant
+code**, nothing else. Offered two ways: Qualtrics custom JavaScript posting
+the fields to the page after its consent (keeps D-031's order), or a Hub step
+before the questionnaire. The founder chose the Hub step, knowing it collects
+contact data before the questionnaire's consent.
+
+- **Step 1** (`apply-flow.tsx`, `participar/actions.ts`,
+  `submitInterest` in `services/recruitment.ts`): three fields plus a
+  required privacy acknowledgement. One transaction creates the participant,
+  their `participant_contacts` row and a `SUBMITTED` application with source
+  `PUBLIC_FORM` (revived; see `domain/recruitment.ts`), audited as the
+  participant, by code only, plus the `APPLICATION_SUBMITTED` study event.
+  The study is the open one, read on the server. `domain/interest.ts` is the
+  boundary; tests pin that the action reads only those fields.
+- **Step 2**: the D-085 frame. (The first version passed `?codigo=<code>`; D-087
+  removed it, since Qualtrics responses carry no code.)
+- **Duplicates** (D-013): a known email in the study gets a new application
+  on the same participant; a repeat within two minutes returns the same code.
+  Unlike IMPORT, an existing person's contact details are **not** overwritten,
+  because this route is unauthenticated and anyone knowing an email could
+  otherwise rewrite that person's phone.
+- **Abuse**: a honeypot field only. There is no rate limiting anywhere in the
+  app; a public write endpoint may need one before wide recruitment (open
+  question below).
+- **Locale**: participants know `es`/`en`; a Galician visitor is recorded
+  as `es`.
+- Copy changed to match (all three languages): the page's steps no longer
+  say "no data before consent", and the privacy policy now lists the
+  application (name, email, phone, application code) as its own item. Both
+  are draft legal text for the DPO/lawyer (`REVISION_LEGAL`).
+
+**For the study team, not decided here:** whether collecting contact
+details before the questionnaire's consent fits the ethics-approved
+recruitment procedure (CEImG). The consent form describes consent before
+data collection. The code does what the founder asked; the ethics question
+is theirs.
+
+Verified end to end in a browser against the DEMO study with synthetic data:
+the application, contact row and two audit rows were created, and the frame
+opened `...SV_40IE1sQCH58DWm2?codigo=P-000014`.
+
+## D-087 · 2026-09-25 · Public participant codes are built from initials; Qualtrics is matched by name
+
+Founder request after a real test submission: the code should be the initials
+of name and surname plus month and year of the submission (`P-JM1026`), and
+since Qualtrics responses have no code, the two records are cross-referenced by
+the name (the questionnaire asks for name, email and phone as well).
+
+- **Code**: `formatInterestCode` in `domain/recruitment.ts`. Initials of the
+  first name and the first surname, accents folded (Á to A), `X` when a name has
+  no Latin letter; month and year read in the **study's** timezone, not the
+  server's. A repeat in the same month gets `-2`, `-3`, ... (`P-JM1026-2`),
+  chosen under a transaction-scoped advisory lock on the base code so two
+  simultaneous submissions cannot collide on the unique index.
+- **Name asked as two fields** (first name, surname) instead of one, because
+  "Nombre y apellidos" in one box cannot say where the given names end
+  (Spanish names have one or two given names and two surnames). Stored joined
+  as `full_name`, the way the questionnaire's own "Nombre y apellidos" is typed.
+- **Migration 0022** replaces `participants_code_format` so it accepts both the
+  sequence shape (`P-000042`, still used by staff entry, IMPORT and the
+  Qualtrics-reference route, and by every earlier participant) and the initials
+  shape. Applied to the hosted database on 2026-09-25 at the founder's
+  confirmation; no row was touched.
+- **No code sent to Qualtrics.** `?codigo=` and its helper are gone. The page
+  tells the person to type their name, email and phone the same way in the
+  questionnaire. Matching by name is only as good as that: "Juan M." versus
+  "Juan Martínez", or two people with one name, will not match by name alone,
+  so staff should also use email and phone.
+
+**What this trades away, decided by the founder.** The sequence code was
+pseudonymous, which the rest of the design leans on: D-038 and D-040 show codes
+instead of names "even for an entitled viewer", audit rows identify people by
+code precisely so they hold no PII, and the erasure plan in
+`docs/research-data-boundaries.md` keeps history "keyed by participant code"
+after contact data is pseudonymized. An initials code breaks each of these in a
+small way: initials plus a month are visible on screens and in audit rows that
+were meant to be anonymous, and remain in history after an erasure. In a study
+of about 46 people per arm, initials plus month narrows an identity a lot.
+Nothing was changed to compensate. Only the public route uses the new shape,
+so reverting is one function (`submitInterest`) and, once no initials code
+exists, the old constraint.
+
+The privacy text (all three languages, still draft legal text) now says the
+code is made of initials and month/year and that the team matches by name,
+email and phone.
+
+Verified end to end in a browser with synthetic data: `P-JM0926`, a second
+"JM" as `P-JM0926-2`, and `P-AN0926` for "Álvaro Núñez".
+
+**Follow-up, same day: the public page no longer shows the code.** A test with
+an email that already belonged to an older participant (P-000013, from
+2026-09-20) attached the new application to that person and displayed *their*
+code. That is D-013 working as designed (a known email joins the existing
+participant, and contact details are not overwritten), but it exposed that
+returning the code from an unauthenticated form leaks it: typing a stranger's
+email would reveal their initials and month. The thank-you message now carries
+no reference, and `submitInterestAction` cannot return one (a test pins it).
+The code is still created and stored; matching with Qualtrics is by name, so the
+visitor never needed it. A new and an already-registered email now get the
+identical message.
+
+## D-088 · 2026-09-25 · Public questions land in a Hub inbox, answered in the Hub and by email
+
+Founder request: the landing's contact form ("questions before they apply")
+should not go nowhere. Staff should answer in the Hub and be emailed when one
+arrives, for now Cathy, Joana and Jose.
+
+**This reverses D-039/D-043** ("no inbound path, no reply column, never a
+mailer") and resolves the `CONTACTO_FORMULARIO` publication marker. The
+founder chose it knowingly when offered three models: inbox and reply in the
+Hub (chosen), inbox with replies from personal email, or notification only.
+
+- **Where it goes.** `contacto/actions.ts` (public server action: name, email,
+  message and a honeypot, nothing else; the study is the open one, read on the
+  server) creates an `inquiries` row (migration 0023). Staff read and answer at
+  `/equipo/consultas` (permission `inquiries.manage`).
+- **Who is notified.** Everyone who holds `inquiries.manage` in the study
+  with an active account, looked up when an inquiry arrives, not a hardcoded
+  list. Today that is ADMIN (Jose), STUDY_MANAGER (Cathy) and RESEARCHER
+  (Joana). Changing who is notified is changing who holds the permission.
+  RESEARCHER otherwise never sees contact data; this is a deliberate,
+  documented exception, limited to an open inquiry's name and email.
+- **The text does not stay.** `name`, `email` and `message` exist only while
+  the inquiry is NEW. Answering or closing it sets them to NULL in the same
+  transaction as the status change, and check constraints make "handled but
+  still holding text" impossible. The reply text is never stored. So a health
+  detail typed into a public box (the notice asks people not to) is not kept. A
+  handled row shows only status, who and when.
+- **The notification email does not contain the question**, only that one
+  arrived, and a link when `APP_URL` is set. A mailbox is a worse place for a
+  possible health detail than the Hub.
+- **Send first, then erase.** `answerInquiry` emails the reply, and only if that
+  succeeds marks it answered and erases the text. With no mail configured or a
+  provider error the inquiry stays pending with its text and the screen says so,
+  so an answer is never recorded as sent when it was not. The reply carries the
+  answering person's address as Reply-To, so the person's next message goes
+  straight to them, outside the Hub. The person's own question is quoted in the
+  reply, since the Hub keeps no copy.
+- **Email provider.** Resend (`src/services/mailer.ts`, one function, no queue,
+  no retries, no delivery tracking), configured by `RESEND_API_KEY`, `MAIL_FROM`
+  (an address on a domain verified at Resend) and optional `APP_URL`. Blank means
+  unset. D-043 still holds for automation: nothing scheduled or rule-driven
+  sends anything; `mailer.ts` is only called by this feature.
+- **Abuse.** The app has no rate limiting; this endpoint also causes emails, so:
+  a honeypot, a hard cap of 30 inquiries per hour per study (refused as
+  "unavailable"), and staff are emailed for only the first 5 in an hour.
+- **Audit.** `inquiry.received` (SYSTEM), `inquiry.answered`, `inquiry.closed`
+  (STAFF), carrying the inquiry id and status only, never its text.
+- **Public copy** (three languages, draft legal text): the contact dialog now
+  says the message is received; the privacy text says the team replies by email
+  and deletes name, email and message once it replies.
+
+**Not done, deliberately.** Nothing emails the person on receipt (only the
+answer does), unanswered inquiries are never auto-deleted (a spam or ignored
+one keeps its text until someone closes it), there is no unread badge on the nav
+or overview, and the inbox does not thread replies (a follow-up goes by email to
+whoever answered).
+
+**Setup needed before the emails work.** Create a Resend account, verify a
+sending domain, and set `RESEND_API_KEY` and `MAIL_FROM` (and `APP_URL`) in the
+environment. Until then the inbox works but staff are not emailed and replies
+are refused.
+
+Verified: typecheck, lint, tests and build; in a browser, the public form's
+validation and confirmation; and against the database, the constraint that
+forbids an answered inquiry keeping text, a reply refused with no provider
+leaving the inquiry pending with its text, close erasing it, a second close
+refused, and the audit rows. **Not verified:** the staff page in a browser (the
+demo accounts have no roles and a real team login was not used) and an actual
+email send (no provider configured).
+
+**Follow-ups to D-088, same day.**
+
+- **Confirmation copy.** After sending, the contact dialog now retitles itself
+  "Mensaje enviado", drops the intro line, says the team will read and reply by
+  email, and says the message is kept only until it is answered (true by
+  design) and to check spam. Focus moves to the close button, since the form that
+  had it is gone.
+- **The inbox is laid out like a chat app** (`consultas/inbox.tsx`): conversations
+  on the left (avatar with initials, name, time, one-line preview, a dot while
+  pending, tabs Pendientes/Respondidas/Cerradas, newest first) and the open one
+  on the right (the question as an incoming bubble, a message bar at the foot,
+  "Cerrar sin responder" in the header). One pane at a time on a phone. The
+  selection is `?consulta=<id>` in the URL, validated as a UUID and looked up in
+  this study only, so every row is a plain link.
+- **It is a chat in appearance only.** Because the text is erased once an
+  inquiry is answered or closed and the reply is never stored, a handled
+  conversation shows a single line ("Respondida por X el ..., el texto se ha
+  borrado") instead of a history. Keeping conversations would reverse D-088's
+  privacy design and is an open question below.
+- **Sending needs Ctrl or Cmd + Enter, not Enter**: an email cannot be unsent.
+  Closing without replying asks for confirmation first, since it erases the text.
+- Verified by rendering the component with synthetic data into the dev server's
+  real stylesheet at desktop and phone widths (list, open chat, empty state,
+  handled state), and the changed queries against the database. Not verified: the
+  page inside the real authenticated shell, the interactive send, or dark mode.
+
 ## Open questions for researchers
 
+- Should the Consultas inbox keep the conversation (the question and the
+  replies) instead of erasing it once handled, so it works like a real chat
+  history? It would make the inbox far more useful to the team, and it would
+  store free text from the public, including any health detail people type,
+  which D-088 was built to avoid. It needs a decision on retention and on who
+  may read it.
+
+- Is an initials-based participant code (D-087) acceptable given D-038, D-040
+  and the erasure approach, which assumed a code that identifies no one? If
+  not, the alternative that keeps the request's spirit is showing the person a
+  friendly reference while the stored code stays sequential.
+- Does collecting name, email and phone on `/participar` before the
+  Qualtrics consent (D-086) need an amendment or notice to the ethics
+  committee? And should the public write endpoint get rate limiting before
+  recruitment is announced widely?
 - Should D-038 and D-040's "codes only, even for an entitled viewer" rule be
   restored after this demo, kept as a permission-gated name display, or
   something in between? The team asked to see it rolled back for one demo;

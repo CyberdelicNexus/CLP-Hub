@@ -1,117 +1,107 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { ArrowLeft, ArrowUpRight, ShieldCheck } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { getOpenRecruitmentStudy } from "@/services/recruitment";
+import { ApplyFlow } from "@/components/landing/apply-flow";
+import { CookieBanner } from "@/components/landing/consent";
+import { ContactDialog } from "@/components/landing/contact-dialog";
+import { HOLDING_FONT_CLASS, PUBLIC_FONT_CLASS } from "@/components/landing/fonts";
+import { LanguageSwitch } from "@/components/landing/language-switch";
+import { SiteFooter } from "@/components/landing/site-footer";
+import { StarField } from "@/components/landing/star-field";
+import { isProduction } from "@/config/env";
+import { missingContentList } from "@/content/landing/clear-light";
+import { LANDING_COPY } from "@/content/landing/copy";
+import { getPublicLocale } from "@/i18n/public-locale";
+import { openScreeningUrl } from "../screening-url";
+import "@/components/landing/scrollcraft.css";
+import "@/components/landing/landing.css";
+
+const ROOT_ID = "clear-light-apply";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("public.apply");
-  return { title: t("title") };
+  const { APPLY } = LANDING_COPY[await getPublicLocale()];
+  return { title: { absolute: APPLY.meta.title }, description: APPLY.meta.description };
 }
 
 /**
- * Public recruitment page.
+ * The page behind "Comprobar si puedo participar" (D-085), in the landing's
+ * theme: what happens, then two steps (D-086). First name, email and phone,
+ * which create the application in the Hub (`apply-flow.tsx`,
+ * `actions.ts`); then the Qualtrics questionnaire framed on the page, opened
+ * with the application's participant code in its URL.
  *
- * THIS PAGE COLLECTS NOTHING. It used to host CLP Hub's own application form;
- * that form is retired (D-031). Initial screening happens in Qualtrics, and the
- * digital consent is accepted there *before* any datum about the person — their
- * name included — is collected. A form here would necessarily collect a name
- * before that consent existed, which is precisely the order the study must not
- * work in.
- *
- * So this is a hand-off: an explanation and one outbound link. There is no form
- * element, no server action, no input of any kind, and nothing is written to the
- * database when someone visits. The destination is `studies.screening_url`,
- * configured per study (non-negotiable 6) and constrained to https in SQL.
- *
- * When recruitment is closed, or no screening URL is configured, the link is not
- * rendered at all — decided on the server, never hidden with CSS.
+ * D-086 REVERSES D-031's "nothing before consent", at the founder's direction:
+ * those three contact fields are taken before the questionnaire's consent.
+ * Nothing else is: the information sheet, the consent and every screening
+ * answer stay in Qualtrics. The destination is `studies.screening_url`,
+ * configured per study. When recruitment is closed or no URL is configured,
+ * neither step is rendered, decided on the server.
  */
 export default async function ApplyPage() {
-  const t = await getTranslations("public.apply");
-  const study = await getOpenRecruitmentStudy();
-  const screeningUrl = study?.screeningUrl ?? null;
+  const locale = await getPublicLocale();
+  const copy = LANDING_COPY[locale];
+  const { ACTIONS, APPLY, INVITATION } = copy;
+  const url = await openScreeningUrl();
+
+  // Same publication gate as the landing page and the legal pages.
+  if (isProduction() && missingContentList({ qualtricsUrl: url }).length > 0) {
+    return (
+      <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang={locale}>
+        <div>
+          <h1 className="cl-title--md">{copy.HOLDING.title}</h1>
+          <p className="cl-lead">{copy.HOLDING.body}</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main id="main" className="relative flex-1 px-4 py-10 sm:px-6 sm:py-16">
-      <div
-        aria-hidden
-        className="bg-aurora pointer-events-none absolute inset-x-0 top-0 h-80 opacity-50 dark:opacity-25"
-      />
+    <div id={ROOT_ID} className={`cl legal apply ${PUBLIC_FONT_CLASS}`} lang={locale}>
+      <StarField rootId={ROOT_ID} />
+      <header className="legal__bar">
+        {/* Full document loads, not <Link>, like the legal pages. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/" className="bar__brand">
+          Clear Light
+        </a>
+        <div className="legal__bar-end">
+          <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/participar" />
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className="cl-link">
+            {APPLY.back}
+          </a>
+        </div>
+      </header>
 
-      <div className="relative mx-auto w-full max-w-xl">
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 rounded-lg text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            <ArrowLeft className="size-4" aria-hidden />
-            {t("back")}
-          </Link>
-          <ThemeToggle />
+      <main id="main" className="apply__main">
+        <div className="apply__head">
+          <p className="cl-eyebrow">{APPLY.eyebrow}</p>
+          <h1 className="cl-title apply__title">{ACTIONS.primaryCta}</h1>
+          <p className="cl-lead apply__intro">{APPLY.intro}</p>
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-3 leading-relaxed text-muted-foreground">{t("intro")}</p>
+        <section aria-labelledby="apply-steps">
+          <h2 id="apply-steps" className="apply__steps-label">
+            {APPLY.stepsLabel}
+          </h2>
+          <ol className="apply__steps">
+            {APPLY.steps.map((s) => (
+              <li key={s.title} className="apply__step">
+                <h3 className="apply__step-title">{s.title}</h3>
+                <p>{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-        <div className="mt-8 rounded-2xl bg-card p-6 shadow-soft ring-1 ring-foreground/10 sm:p-8">
-          {screeningUrl ? (
-            <>
-              <h2 className="text-lg font-medium">{t("handoffTitle")}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {t("handoffBody")}
-              </p>
+        {url ? (
+          <ApplyFlow url={url} apply={APPLY} />
+        ) : (
+          <p className="apply__closed">{INVITATION.closed}</p>
+        )}
+      </main>
 
-              <ol className="mt-5 space-y-3 text-sm">
-                {(["consent", "questions", "contact"] as const).map((step, i) => (
-                  <li key={step} className="flex gap-3">
-                    <span
-                      data-numeric
-                      aria-hidden
-                      className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-lilac text-xs font-medium text-surface-lilac-ink"
-                    >
-                      {i + 1}
-                    </span>
-                    <span className="leading-relaxed text-muted-foreground">
-                      {t(`handoffStep.${step}`)}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-
-              {/*
-                An ordinary outbound link. `noopener`/`noreferrer` because the
-                destination is a third party, and `rel="external"` so the hand-off
-                is explicit in the markup rather than only in the copy.
-              */}
-              <a
-                href={screeningUrl}
-                target="_blank"
-                rel="external noopener noreferrer"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft transition-shadow hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                {t("handoffCta")}
-                <ArrowUpRight className="size-4" aria-hidden />
-              </a>
-
-              <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-                <span>{t("handoffConsentNote")}</span>
-              </p>
-            </>
-          ) : (
-            <div>
-              <h2 className="text-lg font-medium">{t("closedTitle")}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("closed")}</p>
-            </div>
-          )}
-        </div>
-
-        <p className="mt-6 text-xs leading-relaxed text-muted-foreground">{t("privacyNote")}</p>
-      </div>
-    </main>
+      <SiteFooter copy={copy} rootId={ROOT_ID} onLanding={false} />
+      <ContactDialog copy={copy.CONTACT} />
+      <CookieBanner copy={copy.CONSENT} />
+    </div>
   );
 }

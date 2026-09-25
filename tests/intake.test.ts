@@ -145,31 +145,47 @@ describe("no transfer code exists", () => {
 });
 
 describe("application sources", () => {
-  it("keeps the retired public form value so old rows stay readable", () => {
+  it("creates public applications again as PUBLIC_FORM (D-086), alongside Qualtrics references", () => {
     expect(APPLICATION_SOURCES).toContain("PUBLIC_FORM");
-  });
-
-  it("does not offer the public form as a route anything can create today", () => {
-    expect(ACTIVE_APPLICATION_SOURCES).not.toContain("PUBLIC_FORM");
+    expect(ACTIVE_APPLICATION_SOURCES).toContain("PUBLIC_FORM");
     expect(ACTIVE_APPLICATION_SOURCES).toContain("QUALTRICS");
   });
 });
 
-describe("the public page collects nothing", () => {
-  const page = readFileSync(
-    join(process.cwd(), "src/app/(public)/participar/page.tsx"),
-    "utf8",
-  );
+/**
+ * D-086: the public page takes name, email and phone before the questionnaire,
+ * and nothing else. These pin that boundary in the code that reads the request
+ * and the code that renders the form.
+ */
+describe("the public page takes three contact fields and nothing else (D-086)", () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+  const action = read("src/app/(public)/participar/actions.ts");
+  const flow = read("src/components/landing/apply-flow.tsx");
 
-  /**
-   * The digital consent is accepted in Qualtrics BEFORE any datum is collected,
-   * the name included. A form on this page would necessarily collect one first,
-   * which is the exact order the study must not work in (D-031).
-   */
-  it("renders no form, input or server action", () => {
-    expect(page).not.toMatch(/<form/);
-    expect(page).not.toMatch(/<input/i);
-    expect(page).not.toMatch(/useActionState|"use server"/);
+  it("reads only name, email, phone, the privacy tick and the honeypot from the request", () => {
+    const keys = [...action.matchAll(/(?:text\(form|form\.get\()\s*,?\s*"([^"]+)"/g)].map((m) => m[1]).sort();
+    expect(keys).toEqual(["email", "firstName", "lastName", "phone", "privacy", "website"]);
+    // The study comes from the server, never from the request.
+    expect(action).toMatch(/getOpenRecruitmentStudy\(\)/);
+    expect(action).not.toMatch(/studyId: text\(|form\.get\("studyId"\)/);
+  });
+
+  it("never hands the participant code back to the visitor", () => {
+    // The code is built from the name (D-087); returning it for an email that
+    // already applied would reveal a stranger's initials.
+    expect(action).not.toMatch(/participantCode/);
+    expect(flow).not.toMatch(/participantCode/);
+    expect(action).toMatch(/\| \{ status: "ok" \};/);
+  });
+
+  it("renders only those inputs, and no free-text area", () => {
+    const fieldNames = [...flow.matchAll(/field\("([a-zA-Z]+)"/g)].map((m) => m[1]);
+    expect(fieldNames.sort()).toEqual(["email", "firstName", "lastName", "phone"]);
+    // One <input> inside the field helper, plus the honeypot and the privacy tick.
+    expect(flow.match(/<input/g)).toHaveLength(3);
+    expect(flow).toMatch(/name="website"/);
+    expect(flow).toMatch(/name="privacy"/);
+    expect(flow).not.toMatch(/<textarea|<select/);
   });
 });
 

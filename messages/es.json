@@ -36,6 +36,7 @@
     "logistics": "Logística VR",
     "content": "Contenido",
     "tasks": "Tareas",
+    "inquiries": "Consultas",
     "alerts": "Alertas",
     "team": "Equipo",
     "settings": "Configuración"
@@ -127,23 +128,6 @@
     }
   },
   "public": {
-    "apply": {
-      "title": "Participar en el estudio",
-      "intro": "Si te interesa participar, el primer paso es un breve cuestionario inicial que se completa fuera de esta web.",
-      "back": "Volver",
-      "handoffTitle": "Cómo empezar",
-      "handoffBody": "El cuestionario inicial se realiza en una plataforma externa del estudio. Esta página no recoge ningún dato tuyo.",
-      "handoffStep": {
-        "consent": "Primero leerás la información del estudio y darás tu consentimiento. Hasta ese momento no se te pide ningún dato, ni siquiera tu nombre.",
-        "questions": "Después responderás a unas preguntas para saber si el estudio encaja contigo.",
-        "contact": "Si continúas en el proceso, el equipo del estudio se pondrá en contacto contigo."
-      },
-      "handoffCta": "Ir al cuestionario inicial",
-      "handoffConsentNote": "El consentimiento se da antes de recoger cualquier dato personal. Puedes parar en cualquier momento.",
-      "closedTitle": "Inscripción cerrada",
-      "closed": "En este momento no hay ningún estudio abierto a nuevas incorporaciones.",
-      "privacyNote": "Esta página no recoge, guarda ni envía ningún dato personal. Tus respuestas al cuestionario inicial quedan en la plataforma del estudio, no en esta web."
-    },
     "study": {
       "backHome": "Inicio",
       "updated": "Actualizado el {date}",
@@ -864,6 +848,9 @@
       "initial_visit__closed": "Visita inicial cerrada",
       "initial_visit__notes_updated": "Notas de la visita actualizadas",
       "initial_visit__scheduled": "Visita inicial programada",
+      "inquiry__answered": "Consulta respondida",
+      "inquiry__closed": "Consulta cerrada",
+      "inquiry__received": "Consulta recibida",
       "participant__contact_email_set": "Correo de contacto actualizado",
       "participant__contact_name_set": "Nombre de contacto actualizado",
       "participant__contact_phone_set": "Teléfono de contacto actualizado",
@@ -1161,6 +1148,45 @@
     },
     "aboutParticipant": "Sobre un participante",
     "aboutCohort": "Sobre una cohorte"
+  },
+  "inquiries": {
+    "subtitle": "Preguntas de la web antes de solicitar participar",
+    "tabs": {
+      "NEW": "Pendientes",
+      "ANSWERED": "Respondidas",
+      "CLOSED": "Cerradas"
+    },
+    "handledTitle": {
+      "ANSWERED": "Consulta respondida",
+      "CLOSED": "Consulta cerrada"
+    },
+    "empty": "No hay consultas en esta lista.",
+    "selectPrompt": "Selecciona una consulta para leerla y responder",
+    "boundary": "El texto de una consulta solo existe mientras está pendiente: al responderla o cerrarla se borran el nombre, el correo y el mensaje, y la respuesta no se guarda. Por eso, si alguien cuenta datos de su salud, no se conservan.",
+    "back": "Volver a la lista",
+    "someone": "alguien del equipo",
+    "answeredNote": "Respondida por {name} el {when}. El texto de la consulta y de la respuesta se ha borrado.",
+    "closedNote": "Cerrada sin respuesta por {name} el {when}. El texto de la consulta se ha borrado.",
+    "handledBy": "Por",
+    "listAria": "Lista de consultas",
+    "replyLabel": "Tu respuesta",
+    "placeholder": "Escribe tu respuesta",
+    "hint": "Se envía por correo a la persona, con tu dirección para que pueda contestarte. Ctrl + Intro envía. No se guarda.",
+    "send": "Enviar respuesta",
+    "sending": "Enviando…",
+    "close": "Cerrar sin responder",
+    "closeConfirm": "¿Cerrar esta consulta sin responder? Se borrará su texto y no se podrá recuperar.",
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalid": "Revisa los datos del formulario.",
+      "required": "Escribe una respuesta.",
+      "tooLong": "La respuesta es demasiado larga.",
+      "notFound": "Esta consulta ya no está pendiente.",
+      "mailNotConfigured": "El envío de correo no está configurado. La consulta sigue pendiente y no se ha enviado nada.",
+      "mailRejected": "El proveedor de correo rechazó el envío. Si el dominio de envío aún no está verificado en Resend, solo se pueden enviar correos a la dirección de la cuenta de Resend. La consulta sigue pendiente.",
+      "mailFailed": "No se pudo contactar con el proveedor de correo. La consulta sigue pendiente; inténtalo de nuevo.",
+      "failed": "No se ha podido completar la acción."
+    }
   },
   "alerts": {
     "subtitle": "Lo que no cuadra en los registros del estudio. Nadie ha concluido nada: hay que mirarlo.",

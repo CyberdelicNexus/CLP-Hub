@@ -203,8 +203,8 @@ export const JOIN = {
     },
     {
       numeral: "03",
-      label: "Asignación a tu cohorte",
-      body: "Si resultas seleccionado/a, te asignaremos a una cohorte del estudio y coordinaremos una visita para entregarte las gafas de realidad virtual y explicarte cómo utilizarlas.",
+      label: "Asignación a tu grupo",
+      body: "Si resultas seleccionado/a para participar, te asignaremos a uno de los dos grupos y te explicaremos todo sobre cómo participar.",
       visual: {
         src: "/landing/media/join-recibe.webp",
         alt: "Una integrante del equipo entrega en la puerta de una casa unas gafas de realidad virtual en su estuche.",
@@ -418,8 +418,76 @@ export const INVITATION = {
 } as const;
 
 /**
- * The contact dialog (D-052). Design only: nothing is sent or stored until the
- * study team approves where messages go, and the dialog says so on submit.
+ * The page behind the primary CTA (D-085, D-086): first name, email and phone,
+ * kept by the study team to contact the person; then the Qualtrics
+ * questionnaire framed inside the site, loaded on a click and with
+ * third-party consent. Everything answered in the questionnaire stays there.
+ */
+export const APPLY = {
+  eyebrow: "Cuestionario de interés",
+  intro:
+    "Primero nos dejas tus datos de contacto y después completas un cuestionario breve en la plataforma del estudio. Mostrar interés no te compromete a participar.",
+  stepsLabel: "Qué va a pasar",
+  steps: [
+    {
+      title: "Primero, tus datos de contacto",
+      body: "Nos dejas tu nombre, tu correo y tu teléfono para que el equipo pueda contactarte. Son los únicos datos que guarda esta web.",
+    },
+    {
+      title: "Después, el cuestionario",
+      body: "En el cuestionario lees la información del estudio, decides si das tu consentimiento y respondes a unas preguntas para ver si el estudio es adecuado para ti.",
+    },
+    {
+      title: "Por último, el equipo te contacta",
+      body: "Si continúas en el proceso, el equipo del estudio se pondrá en contacto contigo.",
+    },
+  ],
+  frame: {
+    title: "Cuestionario de interés del estudio",
+    note: "El cuestionario lo aloja Qualtrics, un servicio externo. Esta web no recoge ni guarda tus respuestas.",
+    open: "Abrir el cuestionario aquí",
+    blocked: "Para ver el cuestionario aquí, acepta el contenido de Qualtrics.",
+    accept: "Aceptar y abrir",
+    newTab: "Abrir en una pestaña nueva",
+    trouble: "¿No se ve bien o prefieres otra pantalla?",
+  },
+  form: {
+    title: "Tus datos de contacto",
+    intro: "Solo los usaremos para contactarte sobre el estudio. No escribas aquí nada sobre tu salud.",
+    firstName: "Nombre",
+    lastName: "Apellidos",
+    email: "Correo electrónico",
+    phone: "Teléfono",
+    privacyBefore: "He leído la",
+    privacyLink: "política de privacidad",
+    privacyAfter: " y acepto que el equipo del estudio guarde estos datos para contactarme.",
+    submit: "Continuar al cuestionario",
+    sending: "Guardando…",
+    done: "Gracias, hemos guardado tus datos. Ahora continúa con el cuestionario.",
+    matchNote: "En el cuestionario, escribe tu nombre, tu correo y tu teléfono igual que aquí: así el equipo podrá relacionar las dos solicitudes.",
+    errors: {
+      required: "Este dato es necesario.",
+      tooLong: "El texto es demasiado largo.",
+      invalidName: "Revisa este dato.",
+      invalidEmail: "Revisa el correo electrónico.",
+      invalidPhone: "Revisa el teléfono.",
+      privacy: "Para continuar, acepta la política de privacidad.",
+      closed: "El cuestionario de interés no está disponible en este momento.",
+      failed: "No hemos podido guardar tus datos. Inténtalo de nuevo más tarde.",
+    },
+  },
+  back: "Volver al inicio",
+  meta: {
+    title: "Comprobar si puedo participar · Clear Light",
+    description:
+      "Cuestionario de interés del estudio Clear Light, que se completa en la plataforma del estudio. Mostrar interés no te compromete a participar.",
+  },
+} as const;
+
+/**
+ * The contact dialog (D-052, wired to the Hub inbox in D-088). Submitting stores
+ * the question in the Hub, where staff answer it by email; the text is erased
+ * once it is answered.
  */
 export const CONTACT = {
   title: "Contactar con el equipo",
@@ -432,17 +500,27 @@ export const CONTACT = {
   privacyLink: "política de privacidad",
   submit: "Enviar mensaje",
   close: "Cerrar",
-  unavailable: "El envío de mensajes estará disponible próximamente. Tu mensaje no se ha enviado ni guardado.",
-  destination: missing("CONTACTO_FORMULARIO", "Destino aprobado de los mensajes del formulario de contacto"),
+  sending: "Enviando…",
+  sentTitle: "Mensaje enviado",
+  sent: "Gracias por escribirnos. El equipo del estudio leerá tu mensaje y te responderá por correo electrónico.",
+  sentNote: "Guardamos tu mensaje solo hasta que te respondamos; después se borra. Si no encuentras nuestra respuesta, revisa también la carpeta de spam.",
+  unavailable: "Ahora mismo no podemos recibir mensajes. Inténtalo de nuevo más tarde.",
+  failed: "No hemos podido enviar tu mensaje. Inténtalo de nuevo más tarde.",
+  errors: {
+    required: "Este dato es necesario.",
+    tooLong: "El texto es demasiado largo.",
+    invalidEmail: "Revisa el correo electrónico.",
+  },
 } as const;
 
 /**
  * Cookie and third-party consent (D-052). The page sets no cookies of its own;
- * the only optional content is the section 3 YouTube film.
+ * the only optional content is the section 3 YouTube film and, since D-085,
+ * the Qualtrics questionnaire framed on /participar.
  */
 export const CONSENT = {
   title: "Cookies y contenido de terceros",
-  body: "Esta web solo usa el almacenamiento técnico necesario para funcionar. Si lo aceptas, también podremos cargar el vídeo de YouTube, que puede guardar datos en tu navegador.",
+  body: "Esta web solo usa el almacenamiento técnico necesario para funcionar. Si lo aceptas, también podremos cargar el vídeo de YouTube y el cuestionario de Qualtrics, que pueden guardar datos en tu navegador.",
   accept: "Aceptar",
   reject: "Rechazar",
   policy: "Política de cookies",
@@ -480,6 +558,7 @@ export const LANDING_ES = {
   ELIGIBILITY,
   PARTNERS,
   INVITATION,
+  APPLY,
   CONTACT,
   CONSENT,
   META,
@@ -514,7 +593,6 @@ export function missingContentList(resolved: { qualtricsUrl: string | null } = {
   if (!resolved.qualtricsUrl) add(INVITATION.qualtricsUrl);
   add(INVITATION.footer.privacy);
   add(INVITATION.footer.version);
-  add(CONTACT.destination);
   for (const m of legalMissing()) add(m);
   return [...seen.values()];
 }

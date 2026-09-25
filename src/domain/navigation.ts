@@ -14,6 +14,8 @@ export interface NavSection {
 
 export const TEAM_NAV: readonly NavSection[] = [
   { key: "overview", path: "", permissions: [] },
+  // Questions come before applications: a person asks before they apply (D-088).
+  { key: "inquiries", path: "consultas", permissions: ["inquiries.manage"] },
   { key: "applications", path: "solicitudes", permissions: ["applications.read"] },
   { key: "participants", path: "participantes", permissions: ["participants.read"] },
   { key: "screening", path: "evaluacion", permissions: ["screening.read"] },

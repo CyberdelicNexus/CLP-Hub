@@ -48,6 +48,7 @@ come from the Supabase project; never commit them (`.env*` is git-ignored, and
 | `DATABASE_URL` | Yes | Use Supabase's **Transaction pooler** URI on Vercel: the app runs serverless and a direct connection exhausts Postgres connections. |
 | `LOG_LEVEL` | No | Defaults to `info`. |
 | `CRON_SECRET` | Only for Phase 8 automation | 16 characters or more. Unset means the processor endpoint refuses every request (503), which is the closed state. |
+| `RESEND_API_KEY`, `MAIL_FROM`, `APP_URL` | Only for the inquiry inbox (D-088) | Blank means unset. See "Email" below. Without them the inbox works but staff are not emailed and replies are refused. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Never in Vercel | Scripts only (seeding), from a local shell. Application code never reads it. |
 
 The first four are not optional at runtime: `getEnv()` parses them on the
@@ -88,6 +89,70 @@ needed for a landing-page review. To enable it, add `vercel.json`:
 and set `CRON_SECRET`. Vercel sends it as `Authorization: Bearer`. Without the
 secret the endpoint answers 503 to everything, so an unconfigured deployment is
 closed rather than open (`docs/automations.md`).
+
+## Email (inquiry inbox, D-088)
+
+The inquiry inbox emails staff when a question arrives and sends the staff reply
+to the person, through Resend (`src/services/mailer.ts`).
+
+| Variable | Value |
+|---|---|
+| `RESEND_API_KEY` | A Resend API key. "Sending access" is enough for the app. |
+| `MAIL_FROM` | The sender, `Clear Light <address@your-verified-domain>`. |
+| `APP_URL` | The Hub's public address, only to link the inbox from the notification. |
+
+**Testing before a domain exists.** Resend refuses any sender on a domain that is
+not verified in the account (a `@usc.es` or `@gmail.com` `MAIL_FROM` gets a 403).
+Use Resend's shared test sender, `MAIL_FROM=Clear Light <onboarding@resend.dev>`,
+which can only deliver **to the address the Resend account was created with**.
+So in that mode a reply to an inquiry works only if the person's email is that
+address, and the notification to the team is rejected (logged as
+`mail.rejected`, and the submission still succeeds) because their addresses are
+not the account owner's.
+
+**Going live** needs a domain the team controls, verified at Resend:
+
+1. In Resend, Domains, add the domain. Prefer a **subdomain used only for
+   sending** (for example `mail.example.org`): it leaves the root domain's own
+   mail untouched and keeps this sender's reputation separate. Pick the **EU
+   (Ireland) region**: this is a study with participants in Spain.
+2. Resend then shows the DNS records to create (normally an SPF pair, a DKIM
+   key, and optionally DMARC). The exact values are specific to the domain and
+   come only from the Resend dashboard; they are not in this repository.
+3. Whoever holds the domain adds them at the DNS host, then presses Verify in
+   Resend (propagation is usually minutes, up to 48 hours).
+4. Set `MAIL_FROM` to an address on that domain and redeploy.
+
+The API key created for the app should be "sending access" and, if the domain is
+verified, restricted to that domain. It cannot manage domains, which is why
+domain setup is done in the Resend dashboard (or with a separate full-access key
+kept out of the app's environment).
+
+### The domain: numadelic.org
+
+State on 2026-09-25 (public DNS lookups; the account is held by David):
+
+- DNS is hosted at **GoDaddy** (`ns49/ns50.domaincontrol.com`).
+- The root already has **live email hosting**: MX records at `mx0/mx1.123-reg.co.uk`.
+  Never change or remove them. It has no SPF and no DMARC record, and its
+  `A` records look like a parked page.
+- `clearlight.numadelic.org` is free, so the site goes there: **CNAME `clearlight` to Vercel**
+  (`cname.vercel-dns.com`, or whatever target the Vercel Domains page shows for
+  the project, which wins if different). Add the domain in the Vercel project
+  first (Settings, Domains). Then set `APP_URL=https://clearlight.numadelic.org` in
+  Vercel and add that address to Supabase Auth's Site URL and redirect URLs, or
+  staff login will send people back to the old address.
+- Email is sent from the **root** `numadelic.org` registered in Resend (EU
+  Ireland), as `Clear Light <consultas@numadelic.org>`. The records Resend issued
+  (2026-09-25) all live on their own names and do not touch the root's MX:
+  CNAME `send` to `send.forge.rmta.net`, CNAME `rsend` to
+  `rsend-euw1.forge.rmta.net`, TXT `resend._domainkey` (the DKIM public key,
+  copied from the Resend dashboard), and a recommended TXT `_dmarc`
+  (`v=DMARC1; p=none;`, monitoring only, since none existed). Resend generates
+  the values per domain, so re-copy them from its dashboard if the domain is ever
+  re-added.
+- Until Resend shows the domain as verified, keep
+  `MAIL_FROM=Clear Light <onboarding@resend.dev>`.
 
 ## Before anything real
 

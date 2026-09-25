@@ -13,6 +13,7 @@ import {
   Layers,
   LayoutDashboard,
   ListChecks,
+  MessageCircleQuestionMark,
   MessageSquare,
   Package,
   Settings,
@@ -46,6 +47,9 @@ const ICONS: Record<string, LucideIcon> = {
   calendar: CalendarRange,
   logistics: Package,
   content: FileText,
+  // Public questions (D-088). Not Inbox (Solicitudes) or MessageSquare: a
+  // question mark tells it apart from applications at a glance.
+  inquiries: MessageCircleQuestionMark,
   tasks: ListChecks,
   alerts: Bell,
   team: UserCog,

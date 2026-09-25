@@ -115,7 +115,7 @@ export const LEGAL: LegalCopy = {
         {
           heading: "Servicios de terceros",
           blocks: [
-            p("Este sitio enlaza al cuestionario de interés, alojado en Qualtrics, y puede mostrar un vídeo alojado en YouTube si lo aceptas. Esos servicios tienen sus propias condiciones y políticas de privacidad."),
+            p("Este sitio enlaza al cuestionario de interés, alojado en Qualtrics, y puede mostrarlo dentro de la página, así como un vídeo alojado en YouTube, si lo aceptas. Esos servicios tienen sus propias condiciones y políticas de privacidad."),
           ],
         },
         {
@@ -148,8 +148,9 @@ export const LEGAL: LegalCopy = {
               kind: "list",
               items: [
                 "Navegación por esta web: no usa cookies de análisis ni de publicidad y no crea perfiles. Solo guarda en tu navegador tu elección sobre el contenido de terceros y, si lo eliges, el idioma de la web.",
-                "Cuestionario de interés (Qualtrics): los datos que decidas compartir para valorar si el estudio encaja contigo. El cuestionario te informa y te pide consentimiento antes de recoger ningún dato.",
-                "Formulario de contacto: nombre, correo electrónico y mensaje, solo para responderte. El envío todavía no está disponible y hoy no se guarda nada.",
+                "Solicitud en «Comprobar si puedo participar»: nombre, correo electrónico y teléfono, solo para que el equipo del estudio pueda contactarte. Se guardan con un código de solicitud formado por tus iniciales y el mes y el año de la solicitud. El equipo relaciona tu solicitud con tus respuestas del cuestionario por tu nombre, correo y teléfono. No se guarda ningún otro dato tuyo en esta web.",
+                "Cuestionario de interés (Qualtrics): los datos que decidas compartir para valorar si el estudio encaja contigo. El cuestionario te informa y te pide consentimiento antes de hacerte ninguna pregunta del estudio. Tus respuestas se quedan en Qualtrics.",
+                "Formulario de contacto: nombre, correo electrónico y mensaje, solo para responderte. El equipo los lee y te responde por correo electrónico desde su sistema de gestión, y en cuanto responde borra tu nombre, tu correo y tu mensaje de ese sistema. Por eso te pedimos que no incluyas datos sobre tu salud.",
                 "Participación en el estudio: si participas, el equipo trata tus datos de contacto y la información necesaria para organizar el estudio, como el calendario y la entrega de las gafas, identificándote con un código. Las respuestas de investigación se guardan en sistemas aprobados por la institución, separadas de tus datos de contacto.",
               ],
             },
@@ -215,6 +216,7 @@ export const LEGAL: LegalCopy = {
                 ["Preferencia de consentimiento", "Propio", "Recordar si aceptas o rechazas el contenido de terceros.", "Técnica, necesaria", "12 meses"],
                 ["Idioma (clp_public_locale)", "Propio", "Recordar el idioma que eliges para la web. Solo se crea si cambias de idioma.", "Técnica, necesaria", "12 meses"],
                 ["Vídeo de YouTube (youtube-nocookie.com)", "Google", "Reproducir el vídeo de la sección «El qué». YouTube puede guardar datos para el funcionamiento del reproductor.", "De terceros, solo si la aceptas", "Según la política de Google"],
+                ["Cuestionario de Qualtrics (qualtrics.com)", "Qualtrics", "Mostrar el cuestionario de interés dentro de la página «Comprobar si puedo participar». Qualtrics puede guardar datos para el funcionamiento del cuestionario.", "De terceros, solo si la aceptas", "Según la política de Qualtrics"],
                 ["Sesión del equipo", "Propio", "Mantener la sesión del personal del estudio. Solo en el área del equipo.", "Técnica, necesaria", "Mientras dura la sesión"],
               ],
             },

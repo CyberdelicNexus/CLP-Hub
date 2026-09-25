@@ -10,9 +10,10 @@ import type { LandingCopy } from "@/content/landing/clear-light";
  * clarification, one Qualtrics CTA, the contact action and the footer. The
  * page resolves here and holds; nothing fades out.
  *
- * The CTA is the only outbound link on the page. It renders only when the open
- * study has a screening URL configured (studies.screening_url, D-031). The
- * contact action opens ContactDialog.
+ * The CTA goes to /participar (D-085), where the Qualtrics questionnaire is
+ * framed inside the site; the Qualtrics URL itself is only handed to that page.
+ * It renders only when the open study has a screening URL configured
+ * (studies.screening_url, D-031). The contact action opens ContactDialog.
  */
 export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; qualtricsUrl: string | null; rootId: string }) {
   const { ACTIONS, INVITATION } = copy;
@@ -33,7 +34,9 @@ export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; 
         <p className="cl-lead invitacion__support">{INVITATION.support}</p>
         <div className="invitacion__cta">
           {qualtricsUrl ? (
-            <a href={qualtricsUrl} className="cl-btn" target="_blank" rel="external noopener noreferrer">
+            // A plain link (a full document load), like the legal pages: the
+            // scroll engine is a script that mounts on page load.
+            <a href="/participar" className="cl-btn">
               {ACTIONS.primaryCta}
             </a>
           ) : (

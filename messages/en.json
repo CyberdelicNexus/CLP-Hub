@@ -36,6 +36,7 @@
     "logistics": "VR Logistics",
     "content": "Content",
     "tasks": "Tasks",
+    "inquiries": "Inquiries",
     "alerts": "Alerts",
     "team": "Team",
     "settings": "Settings"
@@ -127,23 +128,6 @@
     }
   },
   "public": {
-    "apply": {
-      "title": "Take part in the study",
-      "intro": "If you are interested in taking part, the first step is a short initial questionnaire completed outside this site.",
-      "back": "Back",
-      "handoffTitle": "How to start",
-      "handoffBody": "The initial questionnaire runs on the study's external platform. This page collects no data about you.",
-      "handoffStep": {
-        "consent": "First you will read the study information and give your consent. Nothing about you is asked until then, not even your name.",
-        "questions": "Then you will answer a few questions so we can see whether the study is a fit for you.",
-        "contact": "If you continue in the process, the study team will get in touch with you."
-      },
-      "handoffCta": "Go to the initial questionnaire",
-      "handoffConsentNote": "Consent is given before any personal data is collected. You can stop at any point.",
-      "closedTitle": "Enrolment closed",
-      "closed": "No study is currently open to new participants.",
-      "privacyNote": "This page does not collect, store or send any personal data. Your answers to the initial questionnaire stay on the study platform, not on this site."
-    },
     "study": {
       "backHome": "Home",
       "updated": "Updated {date}",
@@ -864,6 +848,9 @@
       "initial_visit__closed": "Initial visit closed",
       "initial_visit__notes_updated": "Visit notes updated",
       "initial_visit__scheduled": "Initial visit scheduled",
+      "inquiry__answered": "Inquiry answered",
+      "inquiry__closed": "Inquiry closed",
+      "inquiry__received": "Inquiry received",
       "participant__contact_email_set": "Contact email updated",
       "participant__contact_name_set": "Contact name updated",
       "participant__contact_phone_set": "Contact phone updated",
@@ -1161,6 +1148,45 @@
     },
     "aboutParticipant": "About a participant",
     "aboutCohort": "About a cohort"
+  },
+  "inquiries": {
+    "subtitle": "Questions from the website before applying",
+    "tabs": {
+      "NEW": "Pending",
+      "ANSWERED": "Answered",
+      "CLOSED": "Closed"
+    },
+    "handledTitle": {
+      "ANSWERED": "Answered inquiry",
+      "CLOSED": "Closed inquiry"
+    },
+    "empty": "No inquiries in this list.",
+    "selectPrompt": "Select an inquiry to read it and reply",
+    "boundary": "An inquiry text exists only while it is pending: answering or closing it erases the name, email and message, and the reply is not stored. So if someone mentions their health, it is not kept.",
+    "back": "Back to the list",
+    "someone": "someone on the team",
+    "answeredNote": "Answered by {name} on {when}. The inquiry text and the reply have been erased.",
+    "closedNote": "Closed without a reply by {name} on {when}. The inquiry text has been erased.",
+    "handledBy": "By",
+    "listAria": "Inquiry list",
+    "replyLabel": "Your reply",
+    "placeholder": "Write your reply",
+    "hint": "Sent by email to the person, with your address so they can answer you. Ctrl + Enter sends. It is not stored.",
+    "send": "Send reply",
+    "sending": "Sending…",
+    "close": "Close without replying",
+    "closeConfirm": "Close this inquiry without replying? Its text will be erased and cannot be recovered.",
+    "errors": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "Check the form.",
+      "required": "Write a reply.",
+      "tooLong": "The reply is too long.",
+      "notFound": "This inquiry is no longer pending.",
+      "mailNotConfigured": "Email sending is not configured. The inquiry is still pending and nothing was sent.",
+      "mailRejected": "The email provider rejected the message. If the sending domain is not yet verified at Resend, emails can only be sent to the address of the Resend account. The inquiry is still pending.",
+      "mailFailed": "The email provider could not be reached. The inquiry is still pending; try again.",
+      "failed": "The action could not be completed."
+    }
   },
   "alerts": {
     "subtitle": "What does not add up in the study's records. Nothing has been concluded: somebody should look.",

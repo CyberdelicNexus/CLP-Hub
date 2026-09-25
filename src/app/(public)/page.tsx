@@ -5,8 +5,7 @@ import { isProduction } from "@/config/env";
 import { missingContentList } from "@/content/landing/clear-light";
 import { LANDING_COPY } from "@/content/landing/copy";
 import { getPublicLocale } from "@/i18n/public-locale";
-import { logger } from "@/lib/logger";
-import { getOpenRecruitmentStudy } from "@/services/recruitment";
+import { openScreeningUrl } from "./screening-url";
 import "@/components/landing/scrollcraft.css";
 import "@/components/landing/landing.css";
 
@@ -24,18 +23,6 @@ import "@/components/landing/landing.css";
 export async function generateMetadata(): Promise<Metadata> {
   const { META } = LANDING_COPY[await getPublicLocale()];
   return { title: { absolute: META.title }, description: META.description };
-}
-
-async function openScreeningUrl(): Promise<string | null> {
-  try {
-    const study = await getOpenRecruitmentStudy();
-    return study?.screeningUrl ?? null;
-  } catch (err) {
-    // A public page must not 500 because the database is unreachable; it
-    // fails closed, with no outbound link, and says so in the log.
-    logger.error({ err }, "landing: could not read the open recruitment study");
-    return null;
-  }
 }
 
 export default async function PublicHomePage() {

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, like, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
 import { getDb, type DbExecutor } from "@/db/client";
@@ -19,9 +19,11 @@ import { isValidExternalRef } from "@/domain/intake";
 import type { Locale } from "@/domain/locale";
 import {
   canTransitionApplication,
+  formatInterestCode,
   formatParticipantCode,
   normalizeEmail,
   recruitmentStatusForApplication,
+  withCollisionSuffix,
   type ApplicationStatus,
 } from "@/domain/recruitment";
 
@@ -248,9 +250,9 @@ export interface SubmitApplicationResult {
  * RETIRED AS A PUBLIC ROUTE (D-031). The public form that called this is gone:
  * initial screening, and the digital consent that must precede any data
  * collection, now happen in Qualtrics. This function survives for the IMPORT
- * route — a bulk load of records that genuinely do carry answers — and is the
- * only remaining path that writes `participant_contacts` from a submission.
- * Nothing reachable without authentication calls it.
+ * route — a bulk load of records that genuinely do carry answers. Nothing
+ * reachable without authentication calls it; the public route is
+ * `submitInterest` below (D-086), which takes contact details only.
  *
  * The actor is the participant, not a staff member, so the audit row carries
  * actor_type PARTICIPANT. Duplicate handling follows D-013: within one study a
@@ -386,6 +388,146 @@ export async function submitApplication(
     });
 
     return { applicationId: application.id, participantCode, deduplicated: false };
+  });
+}
+
+export interface InterestResult {
+  participantCode: string;
+  /** True when this email already had an application inside the dedupe window. */
+  deduplicated: boolean;
+}
+
+/**
+ * The public expression of interest on /participar (D-086): name, email and
+ * phone, nothing else (`validateInterest` in src/domain/interest.ts is the
+ * boundary; callers must have run it). Creates the participant, their contact
+ * row and a PUBLIC_FORM application in one transaction, audited as the
+ * participant, and returns the participant code.
+ *
+ * The code is built from the person's initials and the submission month and
+ * year (D-087, e.g. P-JM1026), with a numeric suffix when that is taken. Codes
+ * are unique per study, so creation takes a transaction-scoped advisory lock
+ * on the base code: two people with the same initials submitting at once are
+ * serialized instead of one of them hitting the unique constraint.
+ *
+ * Duplicates follow D-013: a known email in this study gets a new application
+ * on the same participant, and a repeat inside the dedupe window returns the
+ * same code instead of a second application. Unlike the IMPORT route, an
+ * existing person's contact details are NOT overwritten: this route needs no
+ * authentication, so anyone who knows an email could otherwise rewrite that
+ * person's phone. Staff see the new application and reconcile by hand.
+ */
+export async function submitInterest(params: {
+  studyId: string;
+  locale: Locale;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phone: string;
+}): Promise<InterestResult> {
+  const { studyId, locale, firstName, lastName, fullName, email, phone } = params;
+  const emailNormalized = normalizeEmail(email);
+
+  return getDb().transaction(async (tx) => {
+    const existing = await findParticipantByEmail(tx, studyId, emailNormalized);
+
+    let participantId: string;
+    let participantCode: string;
+
+    if (existing) {
+      participantId = existing.id;
+      participantCode = existing.code;
+
+      const [recent] = await tx
+        .select({ id: applications.id })
+        .from(applications)
+        .where(
+          and(
+            eq(applications.participantId, participantId),
+            gt(applications.submittedAt, new Date(Date.now() - DUPLICATE_SUBMISSION_WINDOW_MS)),
+          ),
+        )
+        .limit(1);
+      if (recent) return { participantCode, deduplicated: true };
+    } else {
+      const [study] = await tx
+        .select({ timezone: studies.timezone })
+        .from(studies)
+        .where(eq(studies.id, studyId))
+        .limit(1);
+      if (!study) throw new Error(`Study ${studyId} not found`);
+      const baseCode = formatInterestCode({ firstName, lastName, submittedAt: new Date(), timeZone: study.timezone });
+
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${studyId}), hashtext(${baseCode}))`);
+      const taken = new Set(
+        (
+          await tx
+            .select({ code: participants.code })
+            .from(participants)
+            .where(and(eq(participants.studyId, studyId), like(participants.code, `${baseCode}%`)))
+        ).map((r) => r.code),
+      );
+      let attempt = 1;
+      while (taken.has(withCollisionSuffix(baseCode, attempt))) attempt++;
+      participantCode = withCollisionSuffix(baseCode, attempt);
+
+      const [created] = await tx
+        .insert(participants)
+        .values({ studyId, code: participantCode, locale, recruitmentStatus: "INTERESTED" })
+        .returning({ id: participants.id });
+      participantId = created.id;
+
+      await tx.insert(participantContacts).values({
+        participantId,
+        studyId,
+        fullName,
+        email,
+        emailNormalized,
+        phone,
+      });
+
+      await recordAuditEvent(tx, {
+        studyId,
+        actor: { type: "PARTICIPANT", id: participantId },
+        action: "participant.created",
+        entityType: "participant",
+        entityId: participantId,
+        // By code, not contact details: the audit log is read under a
+        // different permission and should not widen PII exposure.
+        after: { code: participantCode, recruitmentStatus: "INTERESTED", source: "PUBLIC_FORM" },
+        metadata: { contactStored: true },
+      });
+    }
+
+    const [application] = await tx
+      .insert(applications)
+      .values({ studyId, participantId, locale, status: "SUBMITTED", source: "PUBLIC_FORM" })
+      .returning({ id: applications.id });
+
+    const nextStatus = recruitmentStatusForApplication("SUBMITTED");
+    if (nextStatus) {
+      await tx.update(participants).set({ recruitmentStatus: nextStatus }).where(eq(participants.id, participantId));
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "PARTICIPANT", id: participantId },
+      action: "application.submitted",
+      entityType: "application",
+      entityId: application.id,
+      after: { status: "SUBMITTED", source: "PUBLIC_FORM", participantCode, answerCount: 0 },
+      metadata: { existingParticipant: Boolean(existing) },
+    });
+
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "APPLICATION_SUBMITTED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      metadata: { participantCode, source: "PUBLIC_FORM" },
+    });
+
+    return { participantCode, deduplicated: false };
   });
 }
 

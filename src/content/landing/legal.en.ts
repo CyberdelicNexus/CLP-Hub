@@ -54,7 +54,7 @@ export const LEGAL_EN: LegalCopy = {
         {
           heading: "Third-party services",
           blocks: [
-            p("This site links to the interest questionnaire, hosted on Qualtrics, and may show a video hosted on YouTube if you accept it. Those services have their own terms and privacy policies."),
+            p("This site links to the interest questionnaire, hosted on Qualtrics, and may show it inside the page, as well as a video hosted on YouTube, if you accept it. Those services have their own terms and privacy policies."),
           ],
         },
         {
@@ -87,8 +87,9 @@ export const LEGAL_EN: LegalCopy = {
               kind: "list",
               items: [
                 "Browsing this website: it does not use analytics or advertising cookies and does not create profiles. It only stores in your browser your choice about third-party content and, if you choose it, the language of the website.",
-                "Interest questionnaire (Qualtrics): the data you decide to share so we can assess whether the study suits you. The questionnaire informs you and asks for your consent before collecting any data.",
-                "Contact form: name, email address, and message, only to reply to you. Sending is not available yet and nothing is stored today.",
+                "Application on “Check if I can take part”: name, email and phone number, only so the study team can contact you. They are kept with an application code made of your initials and the month and year of the application. The team matches your application with your questionnaire answers by your name, email and phone number. No other data about you is kept on this website.",
+                "Interest questionnaire (Qualtrics): the data you decide to share so we can assess whether the study suits you. The questionnaire informs you and asks for your consent before asking you any study question. Your answers stay in Qualtrics.",
+                "Contact form: name, email address, and message, only to reply to you. The team reads them and replies by email from its management system, and as soon as it replies it deletes your name, email address and message from that system. That is why we ask you not to include information about your health.",
                 "Taking part in the study: if you take part, the team processes your contact details and the information needed to organize the study, such as the schedule and the delivery of the headset, identifying you by a code. Research responses are stored in systems approved by the institution, separate from your contact details.",
               ],
             },
@@ -154,6 +155,7 @@ export const LEGAL_EN: LegalCopy = {
                 ["Consent preference", "First party", "Remember whether you accept or reject third-party content.", "Technical, necessary", "12 months"],
                 ["Language (clp_public_locale)", "First party", "Remember the language you choose for the website. It is only created if you change the language.", "Technical, necessary", "12 months"],
                 ["YouTube video (youtube-nocookie.com)", "Google", "Play the video in the “What” section. YouTube may store data so the player works.", "Third party, only if you accept it", "According to Google's policy"],
+                ["Qualtrics questionnaire (qualtrics.com)", "Qualtrics", "Show the interest questionnaire inside the “Check if I can take part” page. Qualtrics may store data so the questionnaire works.", "Third party, only if you accept it", "According to Qualtrics' policy"],
                 ["Team session", "First party", "Keep the study staff's session active. Only in the team area.", "Technical, necessary", "For as long as the session lasts"],
               ],
             },

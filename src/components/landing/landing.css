@@ -22,6 +22,11 @@
   --sc-accent: #b79cff;
   --sc-accent-ink: #170c30;
   --sc-shadow-color: 262 40% 4%;
+  /* scrollcraft.css sets these on :root, where `--sc-accent` is still its own
+     yellow-green, and they inherit as that computed colour, not as this
+     page's lilac: the typing caret and native controls came out yellow. */
+  caret-color: var(--sc-accent);
+  accent-color: var(--sc-accent);
 
   /* --- page tokens ------------------------------------------------------ */
   --cl-muted: #879590;
@@ -1079,8 +1084,11 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    brightens them rather than reintroducing colour of its own (`opacity`
    because the marks are flat art, not photographs, so no wash is needed). */
 .partners {
+  /* One heading-to-logos gap for both groups (D-084), so the two headings
+     sit the same distance above what they introduce. */
+  --partners-head-gap: clamp(3.25rem, 5vw, 4.75rem);
   border-top: 1px solid var(--cl-line);
-  padding: clamp(3.5rem, 6vw, 5rem) var(--sc-gutter) clamp(4rem, 7vw, 5.5rem);
+  padding: clamp(4.5rem, 7vw, 6.5rem) var(--sc-gutter) clamp(5rem, 8vw, 7rem);
   max-width: var(--cl-container);
   margin-inline: auto;
   text-align: center;
@@ -1095,7 +1103,7 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 }
 .partners__list {
   list-style: none;
-  margin: clamp(2.5rem, 4vw, 3.5rem) 0 0;
+  margin: var(--partners-head-gap) 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
@@ -1112,12 +1120,12 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   max-width: 16rem;
   object-fit: contain;
 }
-.partners__funding { margin-top: clamp(4.5rem, 8vw, 6.5rem); }
+.partners__funding { margin-top: clamp(5.5rem, 9vw, 8rem); }
 .partners__funding-logo {
   /* next/image renders a block-level <img>, so the ancestor's text-align
      does nothing here (D-079, team feedback: it wasn't centred) — margin
      auto is the actual centring mechanism for a block box. */
-  margin: clamp(2.25rem, 3.5vw, 3rem) auto 0;
+  margin: var(--partners-head-gap) auto 0;
   height: clamp(3.5rem, 7.5vw, 5.5rem);
   width: auto;
   max-width: 20rem;
@@ -1256,9 +1264,18 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   transition: border-color var(--sc-d-fast) var(--sc-ease-out), box-shadow var(--sc-d-fast) var(--sc-ease-out);
 }
 .contact__field :is(input, textarea):focus { outline: none; border-color: var(--sc-accent); box-shadow: 0 0 0 3px rgb(168 136 246 / 0.25); }
+.contact__sent { margin-top: 1.5rem; display: grid; gap: 1rem; justify-items: start; }
+.contact__sent-mark { position: relative; width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--sc-accent); background: color-mix(in oklab, var(--sc-accent) 12%, transparent); }
+.contact__sent-mark::after { content: ""; position: absolute; left: 50%; top: 46%; width: 0.5rem; height: 0.9rem; border: solid var(--sc-accent); border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); }
+.contact__sent-text { font-size: 1.05rem; line-height: 1.55; color: var(--sc-ink); }
 .contact__note { font-size: 0.85rem; color: var(--cl-muted); line-height: 1.5; }
 .contact__note .cl-link { padding: 0; }
 .contact__submit { justify-self: start; margin-top: 0.25rem; }
+.contact__submit:disabled { opacity: 0.6; cursor: progress; }
+.contact__error { font-style: normal; font-size: 0.85rem; color: var(--cl-accent-strong); }
+.contact__field :is(input, textarea)[aria-invalid="true"] { border-color: var(--cl-accent-strong); }
+/* Off-screen, not display:none, so simple bots still fill it. */
+.contact__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .contact__status:empty { display: none; }
 .contact__status { font-size: 0.92rem; color: var(--cl-accent-strong); }
 
@@ -1324,6 +1341,126 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .legal__table tbody th { color: var(--sc-ink); font-weight: 500; }
 @media (max-width: 560px) {
   .legal__rows > div { grid-template-columns: 1fr; gap: 0.2rem; }
+}
+
+/* --------------------------------------------- apply page (/participar, D-085)
+   Same shell as the legal pages (`.legal`, `.legal__bar`) with the starfield
+   behind. What happens first, then the Qualtrics questionnaire in a frame. */
+.apply { position: relative; }
+.apply__main {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding: clamp(3rem, 7vw, 5.5rem) var(--sc-gutter) clamp(4.5rem, 9vw, 7rem);
+}
+.apply__head { max-width: 44rem; margin-inline: auto; text-align: center; }
+.apply__title { margin-top: 1.25rem; font-size: clamp(2rem, 4.4vw, 3.25rem); }
+.apply__intro { margin-top: 1.25rem; margin-inline: auto; max-width: 52ch; }
+
+.apply__steps-label {
+  margin-top: clamp(3rem, 6vw, 4.5rem);
+  text-align: center;
+  font-family: var(--cl-font-label);
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cl-accent-soft);
+}
+.apply__steps {
+  list-style: none;
+  counter-reset: apply-step;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+.apply__step { counter-increment: apply-step; color: var(--sc-ink-soft); line-height: 1.65; }
+.apply__step::before {
+  content: counter(apply-step, decimal-leading-zero);
+  display: block;
+  margin-bottom: 0.9rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cl-line-strong);
+  font-family: var(--cl-font-label);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  color: var(--sc-accent);
+}
+.apply__step-title { font-family: var(--sc-font-display); font-size: 1.1rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; color: var(--sc-ink); margin-bottom: 0.6rem; }
+
+.apply__frame-wrap { margin-top: clamp(3rem, 6vw, 4.5rem); }
+.apply__frame {
+  border: 1px solid var(--cl-line);
+  border-radius: var(--cl-radius);
+  background: color-mix(in oklab, var(--sc-surface) 55%, transparent);
+  overflow: hidden;
+}
+.apply__gate {
+  min-height: 15rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.5rem;
+  padding: clamp(2rem, 5vw, 3.5rem) var(--sc-gutter);
+  text-align: center;
+}
+.apply__gate-text { max-width: 46ch; color: var(--sc-ink-soft); line-height: 1.65; }
+/* Qualtrics does not report its height to the page, so the frame is a fixed,
+   generous window that scrolls inside itself. */
+.apply__embed { display: block; width: 100%; height: clamp(34rem, 80dvh, 62rem); border: 0; background: #fff; }
+.apply__trouble { margin-top: 1.1rem; text-align: center; font-size: 0.95rem; color: var(--cl-muted); }
+.apply__closed { margin-top: clamp(3rem, 6vw, 4.5rem); text-align: center; color: var(--cl-muted); }
+
+/* Step 1 of D-086: the three contact fields. Same card as the frame. */
+.apply__form {
+  margin: clamp(3rem, 6vw, 4.5rem) auto 0;
+  max-width: 34rem;
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  border: 1px solid var(--cl-line);
+  border-radius: var(--cl-radius);
+  background: color-mix(in oklab, var(--sc-surface) 55%, transparent);
+}
+.apply__form-title { font-family: var(--sc-font-display); font-size: clamp(1.3rem, 2.4vw, 1.6rem); font-weight: 500; letter-spacing: -0.01em; }
+.apply__form-intro { margin-top: -0.5rem; color: var(--sc-ink-soft); line-height: 1.6; }
+.apply__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+@media (max-width: 480px) { .apply__pair { grid-template-columns: 1fr; } }
+.apply__field { display: grid; gap: 0.45rem; min-width: 0; }
+.apply__field label { font-size: 0.95rem; color: var(--sc-ink); }
+.apply__field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--sc-ink);
+  background: color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+  border: 1px solid var(--cl-line-strong);
+  border-radius: calc(var(--cl-radius) * 0.6);
+  padding: 0.8rem 0.95rem;
+}
+.apply__field input:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 1px; border-color: transparent; }
+.apply__field input[aria-invalid="true"] { border-color: var(--cl-accent-strong); }
+.apply__check { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; align-items: start; color: var(--sc-ink-soft); font-size: 0.95rem; line-height: 1.55; }
+.apply__check input { width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; accent-color: var(--sc-accent); }
+.apply__check .cl-link { padding: 0; }
+.apply__error { color: var(--cl-accent-strong); font-size: 0.9rem; }
+.apply__submit { justify-self: start; margin-top: 0.25rem; }
+.apply__submit:disabled { opacity: 0.6; cursor: progress; }
+/* Off-screen, not display:none, so simple bots still fill it. */
+.apply__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.apply__done-text { margin-top: clamp(3rem, 6vw, 4.5rem); text-align: center; color: var(--sc-ink-soft); }
+.apply__done .apply__frame-wrap { margin-top: 1.75rem; }
+.apply__ref { display: block; margin-top: 0.4rem; font-size: 0.9rem; color: var(--cl-muted); }
+
+@media (max-width: 760px) {
+  .apply__steps { grid-template-columns: 1fr; gap: 1.5rem; }
+  .apply__embed { height: min(85dvh, 60rem); }
 }
 
 /* ------------------------------------------------------- reduced motion */

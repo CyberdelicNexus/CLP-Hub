@@ -34,6 +34,7 @@ Roles are **study-scoped** (`user_roles`). A user may hold several roles in one 
 | communications.approve | ✓ | ✓ | | | | |
 | tasks.read / manage | ✓ | ✓ | ✓ | | ✓ | ✓ |
 | alerts.read | ✓ | ✓ | ✓ | | ✓ | ✓ |
+| inquiries.manage | ✓ | ✓ | | ✓ | | |
 | exports.research | ✓ | | | ✓ | | |
 
 ## Field-level rules (to enforce as tables arrive)
@@ -71,6 +72,7 @@ Every permission in the matrix is now exercised by a real surface. Notable ones:
 - `alerts.read` — `/equipo/alertas`, including acknowledging and resolving.
   There is no separate manage key: a role that could see the queue but not clear
   it would leave the queue permanently full (D-043).
+- `inquiries.manage` — `/equipo/consultas`: read and answer public questions (D-088). It also decides who is emailed when one arrives. RESEARCHER holds it as a deliberate exception to "never sees contact data": it covers only an open inquiry's name and email, erased once answered.
 - `communications.approve` — still unused. Whether it should gate the
   APPROVAL_REQUIRED delivery mode is an open question.
 

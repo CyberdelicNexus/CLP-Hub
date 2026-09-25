@@ -37,11 +37,12 @@ describe("navigation visibility", () => {
     for (const p of paths) expect(p).toMatch(/^[a-z-]*$/);
   });
 
-  it("shows all 12 sections to ADMIN", () => {
+  it("shows all 13 sections to ADMIN", () => {
     // Was 13 before D-068 folded sessions/communications/content into the
     // cohort workspace nav entry; content came back (2026-09-19, D-070) once
-    // it grew a real editor, and calendar is new — net 13 -> 10 -> 12.
-    expect(visible(["ADMIN"])).toHaveLength(12);
+    // it grew a real editor, and calendar is new — net 13 -> 10 -> 12. The inquiry
+    // inbox (D-088) makes 13.
+    expect(visible(["ADMIN"])).toHaveLength(13);
   });
 
   it("hides settings and team from non-admins", () => {

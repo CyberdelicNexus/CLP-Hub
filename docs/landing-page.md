@@ -299,18 +299,40 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
 - **Contact dialog** (`contact-dialog.tsx`): every `#contacto` link opens a
   native modal `<dialog>` centred on screen, with a blurred backdrop; a click
   outside the panel or Escape closes it. Name, email, message, a note not to
-  include health information, and a privacy link. **Design only**: the form has
-  no action and makes no request; submitting says sending is not available and
-  nothing was sent or stored (`CONTACTO_FORMULARIO`). Without JavaScript,
+  include health information, and a privacy link. Since D-088 it submits to the
+  Hub's inquiry inbox through `contacto/actions.ts` (validation errors inline,
+  a honeypot, a confirmation), where staff answer by email at `/equipo/consultas`;
+  the text is erased once answered. Without JavaScript,
   `#contacto` reaches section 7's "Contacto y registro" answer, which owns that
   id; the dialog is `#contacto-formulario`.
 - **Consent** (`consent.tsx`): the public pages set no cookie for an anonymous
   visitor (verified) until they pick a language (D-063), which sets
   `clp_public_locale`; the cookie policy lists it. A banner offers "Rechazar" and "Aceptar" with identical
   styling; the choice is stored in localStorage (`cl-consent-v1`) for 12 months
-  and reopened from "Configurar cookies". The only optional content is the
-  section 3 YouTube film: without consent, pressing play asks in place and no
-  YouTube request is made.
+  and reopened from "Configurar cookies". The optional content is the
+  section 3 YouTube film and, since D-085, the Qualtrics questionnaire on
+  `/participar`: without consent, pressing play or "Abrir el cuestionario aquí"
+  asks in place and no YouTube or Qualtrics request is made.
+- **Apply page** `/participar` (D-085): the page behind "Comprobar si puedo
+  participar" in the closing section. Landing theme and starfield, the same
+  bar/footer/dialog/banner as the legal pages; three steps saying what happens
+  first (information and consent inside Qualtrics before any datum, then the
+  questions, then the team's contact), then the Qualtrics questionnaire in a
+  frame. The nav and hero links still scroll to the closing section, so the
+  groups are explained before the CTA. `apply-frame.tsx` mounts the iframe
+  only after a click and with the same third-party consent as the YouTube film
+  (asked in place if not given); it is sandboxed, and "Abrir en una pestaña
+  nueva" is always offered. Since D-086 the frame is step 2: step 1
+  (`apply-flow.tsx`, `participar/actions.ts`) takes first name, surname,
+  email and phone, creates a PUBLIC_FORM application, and only then shows the
+  frame. The participant code is built from the initials and the submission
+  month and year, e.g. `P-JM0926`, with `-2`, `-3` for a repeat (D-087); it is
+  kept in the Hub and never shown to the visitor (returning it for an email
+  that already applied would reveal a stranger's initials) nor sent to
+  Qualtrics, whose responses have no code field. The two records are matched by name, email and
+  phone, which the questionnaire also asks for, so the page asks people to
+  type them the same way there. Neither step renders unless the open study has
+  a `screening_url`, set in the staff Configuración screen, not in code.
 - **Legal pages** `/aviso-legal`, `/privacidad`, `/cookies`: drafts in the
   landing theme, marked "Borrador pendiente de revisión legal" at the top, with
   the same footer, dialog and banner. They describe only what the code does,
@@ -377,7 +399,7 @@ the legal pages draw their own keys.
 | `PROTECCION_DATOS` | Approval, by the DPO or ethics committee, of the section 7 confidentiality and data protection answer |
 | `PRIVACIDAD` | Legal approval of the privacy policy page (`/privacidad`) |
 | `VERSION_MATERIAL` | Version and date of the recruitment material (not rendered as a marker since D-052) |
-| `CONTACTO_FORMULARIO` | Where contact form messages go, with its anti-abuse and privacy work (the dialog sends nothing until then) |
+| ~~`CONTACTO_FORMULARIO`~~ | Resolved by D-088: contact form messages go to the Hub inbox (`/equipo/consultas`); no longer a publication marker |
 | `TITULAR_WEB` | Site owner for the legal notice (LSSI-CE art. 10): name, NIF, address, email, registry details |
 | `RESPONSABLE_TRATAMIENTO` | Data controller: entity, NIF, address, contact |
 | `BASE_JURIDICA` | Approved legal basis for each processing activity |

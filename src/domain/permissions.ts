@@ -64,6 +64,18 @@ export const PERMISSIONS = [
   "tasks.manage",
   "alerts.read",
 
+  // Public inquiries (D-088)
+  /**
+   * Read and answer the questions visitors send from the public contact form.
+   * Held by the three people who answer them today (ADMIN, STUDY_MANAGER,
+   * RESEARCHER). It also decides who is emailed when one arrives, so changing
+   * who holds it changes who is notified. RESEARCHER otherwise never sees
+   * contact data; this is the one deliberate exception, at the founder's
+   * request, and it covers only an open inquiry's name and email, which are
+   * erased once it is answered.
+   */
+  "inquiries.manage",
+
   // Research
   "exports.research",
 ] as const;
@@ -110,6 +122,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "tasks.read",
     "tasks.manage",
     "alerts.read",
+    "inquiries.manage",
   ],
 
   // Facilitators see their cohorts and sessions and limited operational
@@ -139,6 +152,8 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "sessions.read",
     "content.read",
     "exports.research",
+    // Deliberate exception to "never sees contact data" (see the key's note).
+    "inquiries.manage",
   ],
 
   // Logistics needs shipping and contact data; no screening or consent detail.
