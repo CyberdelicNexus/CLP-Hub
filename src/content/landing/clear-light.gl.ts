@@ -17,7 +17,7 @@ export const LANDING_GL: LandingCopy = {
   },
   NAV: [
     { href: "#porque", label: "O estudo" },
-    { href: "#incorporarse", label: "Participar" },
+    { href: "#incorporarse", label: "Como participar" },
     { href: "#elegibilidad", label: "Preguntas" },
   ],
   HERO: {

@@ -61,7 +61,7 @@ export const ACTIONS = {
 
 export const NAV = [
   { href: "#porque", label: "El estudio" },
-  { href: "#incorporarse", label: "Participar" },
+  { href: "#incorporarse", label: "Cómo participar" },
   { href: "#elegibilidad", label: "Preguntas" },
 ] as const;
 

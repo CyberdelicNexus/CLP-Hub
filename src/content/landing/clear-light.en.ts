@@ -18,7 +18,7 @@ export const LANDING_EN: LandingCopy = {
   },
   NAV: [
     { href: "#porque", label: "The study" },
-    { href: "#incorporarse", label: "Taking part" },
+    { href: "#incorporarse", label: "How to take part" },
     { href: "#elegibilidad", label: "Questions" },
   ],
   HERO: {
