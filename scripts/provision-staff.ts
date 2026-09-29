@@ -51,9 +51,26 @@ const REAL_STAFF: ReadonlyArray<{ email: string; displayName: string; role: Staf
   { email: "joanajoanavidal@gmail.com", displayName: "Joana", role: "RESEARCHER" },
   { email: "drglowacki@gmail.com", displayName: "David", role: "SUPERVISOR" },
   { email: "jlhardyphd@gmail.com", displayName: "Joe", role: "SUPERVISOR" },
-  // 2026-09-29 request: two more RESEARCHER accounts, same SEED_STAFF_PASSWORD.
-  { email: "swayambujnana@gmail.com", displayName: "Justin", role: "RESEARCHER" },
-  { email: "valerie.bonnelle@hotmail.fr", displayName: "Valerie", role: "RESEARCHER" },
+  // 2026-09-29 request: two more accounts, same SEED_STAFF_PASSWORD. Granted
+  // RESEARCHER first, then moved to SUPERVISOR "for now" the same day — see
+  // ROLE_CHANGES below, which revokes the RESEARCHER grant this loop already
+  // created so they end up holding only SUPERVISOR.
+  { email: "swayambujnana@gmail.com", displayName: "Justin", role: "SUPERVISOR" },
+  { email: "valerie.bonnelle@hotmail.fr", displayName: "Valerie", role: "SUPERVISOR" },
+];
+
+/**
+ * A grant is never deleted (D-044) — moving someone to a different role means
+ * revoking the old grant, not editing it. This script has no interactive
+ * staff actor to attribute the change to, so it is recorded the same way the
+ * OLD_DEMO_ROLES cleanup below already is: SYSTEM, with the reason in
+ * `metadata`. Remove an entry here once its revoke has actually run;
+ * re-running this script afterward is a no-op for it either way (nothing
+ * left with that role to find).
+ */
+const ROLE_CHANGES: ReadonlyArray<{ email: string; from: StaffRole; to: StaffRole }> = [
+  { email: "swayambujnana@gmail.com", from: "RESEARCHER", to: "SUPERVISOR" },
+  { email: "valerie.bonnelle@hotmail.fr", from: "RESEARCHER", to: "SUPERVISOR" },
 ];
 
 /** seed.ts's DEMO_STAFF pattern: demo.<role>@example.com, one per role. */
@@ -84,7 +101,7 @@ async function main() {
 
   try {
     const [demoStudy] = await db
-      .select({ id: schema.studies.id })
+      .select({ id: schema.studies.id, code: schema.studies.code })
       .from(schema.studies)
       .where(eq(schema.studies.code, "DEMO"))
       .limit(1);
@@ -176,6 +193,42 @@ async function main() {
         });
       });
       console.log(`revoke  ${role.padEnd(14)} ${email}`);
+    }
+
+    for (const change of ROLE_CHANGES) {
+      const [user] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, change.email)).limit(1);
+      if (!user) continue;
+
+      for (const study of [demoStudy, clpStudy]) {
+        const [grant] = await db
+          .select({ id: schema.userRoles.id })
+          .from(schema.userRoles)
+          .where(
+            and(
+              eq(schema.userRoles.studyId, study.id),
+              eq(schema.userRoles.userId, user.id),
+              eq(schema.userRoles.role, change.from),
+              isNull(schema.userRoles.revokedAt),
+            ),
+          )
+          .limit(1);
+        if (!grant) continue;
+
+        await db.transaction(async (tx) => {
+          await tx.update(schema.userRoles).set({ revokedAt: new Date() }).where(eq(schema.userRoles.id, grant.id));
+          await recordAuditEvent(tx, {
+            studyId: study.id,
+            actor: { type: "SYSTEM" },
+            action: "user_role.revoked",
+            entityType: "user_role",
+            entityId: grant.id,
+            before: { userId: user.id, role: change.from },
+            after: { revoked: true },
+            metadata: { source: "provision-staff", reason: `role changed to ${change.to}` },
+          });
+        });
+        console.log(`revoke  ${change.from.padEnd(14)} ${change.email} (${study.code}, now ${change.to})`);
+      }
     }
 
     console.log("\nDone. Sign in at /equipo/login with any address above and SEED_STAFF_PASSWORD.");
