@@ -13,6 +13,7 @@
  */
 import { z } from "zod";
 import { isSafeHref } from "./markdown";
+import { richTextDocSchema } from "./rich-text";
 
 /**
  * Content kinds, from docs/content-model.md.
@@ -129,7 +130,20 @@ export const BLOCK_TYPES = [
 ] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
-const MD = z.string().max(4000);
+/**
+ * A text-bearing block carries EITHER the legacy Markdown string (`md`, old
+ * rows) OR the new rich-text doc (`content`, everything the Tiptap editor
+ * writes going forward) — both optional, no `.refine()` requiring exactly
+ * one. Deliberate: `parseBody` already drops any block that fails
+ * validation without complaint, so a strict "exactly one" refine would add
+ * one more silent way to lose real published content to a subtle bug,
+ * for a property (never both, never neither) nothing downstream actually
+ * depends on — the renderer and editor both simply prefer `content` when
+ * present. See docs/decisions.md's lote-4 entry for the full reasoning
+ * behind keeping both formats readable rather than a one-shot migration.
+ */
+const MD = z.string().max(4000).optional();
+const RICH_TEXT = richTextDocSchema.optional();
 const LINE = z.string().trim().min(1).max(300);
 
 /** A URL an author may point at. Same scheme rules as inline links. */
@@ -173,7 +187,7 @@ const ALIGN = z.enum(BLOCK_ALIGNMENTS).default("left");
  * acquired an unknown block cannot reach a page.
  */
 const LEAF_BLOCK_VARIANTS = [
-  z.object({ type: z.literal("TEXT"), md: MD, align: ALIGN }),
+  z.object({ type: z.literal("TEXT"), md: MD, content: RICH_TEXT, align: ALIGN }),
   z.object({
     type: z.literal("VIDEO"),
     url: SAFE_URL,
@@ -205,8 +219,9 @@ const LEAF_BLOCK_VARIANTS = [
     tone: z.enum(CALLOUT_TONES).default("INFO"),
     title: z.string().trim().max(200).optional(),
     md: MD,
+    content: RICH_TEXT,
   }),
-  z.object({ type: z.literal("CONTEMPLATION"), md: MD }),
+  z.object({ type: z.literal("CONTEMPLATION"), md: MD, content: RICH_TEXT }),
   z.object({
     type: z.literal("BUTTON"),
     label: z.string().trim().min(1).max(80),
@@ -220,12 +235,14 @@ const LEAF_BLOCK_VARIANTS = [
     step: z.number().int().min(1).max(99),
     title: z.string().trim().min(1).max(200),
     md: MD,
+    content: RICH_TEXT,
     color: COLOR.default("primary"),
   }),
   z.object({
     type: z.literal("SUPPORT_BOX"),
     title: z.string().trim().max(200).optional(),
     md: MD,
+    content: RICH_TEXT,
     contactLabel: z.string().trim().max(120).optional(),
     contactUrl: SAFE_URL.optional(),
   }),

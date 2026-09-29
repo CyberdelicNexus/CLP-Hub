@@ -700,8 +700,25 @@
       "medium": "Media",
       "thick": "Gruesa"
     },
+    "richText": {
+      "paragraph": "Párrafo",
+      "heading": "Título",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "underline": "Subrayado",
+      "code": "Código",
+      "link": "Enlace",
+      "removeLink": "Quitar enlace",
+      "bulletList": "Lista con viñetas",
+      "orderedList": "Lista numerada",
+      "linkUrl": "https://...",
+      "linkApply": "Aplicar",
+      "linkCancel": "Cancelar",
+      "color": "Color de texto",
+      "removeColor": "Quitar color"
+    },
     "blockField": {
-      "md": "Texto (admite **negrita**, *cursiva*, `código` y enlaces)",
+      "md": "Texto",
       "url": "Enlace",
       "caption": "Pie de foto",
       "alt": "Texto alternativo",

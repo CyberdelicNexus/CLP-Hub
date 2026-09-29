@@ -68,6 +68,8 @@ import {
   type LeafContentBlock,
   type TokenColor,
 } from "@/domain/content";
+import { emptyRichTextDoc, toRichTextDoc } from "@/domain/rich-text";
+import { RichTextField, type RichTextFieldLabels } from "./rich-text-field";
 
 const CALLOUT_STYLES: Record<CalloutTone, { surface: string; Icon: typeof Info }> = {
   INFO: { surface: "bg-surface-sky text-surface-sky-ink", Icon: Info },
@@ -112,7 +114,7 @@ const SEAMLESS = "w-full min-w-0 bg-transparent outline-none placeholder:text-mu
 function emptyBlock(type: BlockType, stepCount: number): ContentBlock {
   switch (type) {
     case "TEXT":
-      return { type, md: "", align: "left" };
+      return { type, content: emptyRichTextDoc(), align: "left" };
     case "VIDEO":
       return { type, url: "", align: "left" };
     case "IMAGE":
@@ -122,15 +124,15 @@ function emptyBlock(type: BlockType, stepCount: number): ContentBlock {
     case "CHECKLIST":
       return { type, items: [""] };
     case "CALLOUT":
-      return { type, tone: "INFO", md: "" };
+      return { type, tone: "INFO", content: emptyRichTextDoc() };
     case "CONTEMPLATION":
-      return { type, md: "" };
+      return { type, content: emptyRichTextDoc() };
     case "BUTTON":
       return { type, label: "", url: "", color: "primary", align: "left" };
     case "TECHNICAL_STEP":
-      return { type, step: stepCount + 1, title: "", md: "", color: "primary" };
+      return { type, step: stepCount + 1, title: "", content: emptyRichTextDoc(), color: "primary" };
     case "SUPPORT_BOX":
-      return { type, md: "" };
+      return { type, content: emptyRichTextDoc() };
     case "DIVIDER":
       return { type, style: "solid", thickness: "thin", color: "default" };
     case "COLUMNS":
@@ -155,6 +157,7 @@ export interface Labels {
   calloutTone: Record<CalloutTone, string>;
   dividerStyle: Record<(typeof DIVIDER_STYLES)[number], string>;
   dividerThickness: Record<(typeof DIVIDER_THICKNESSES)[number], string>;
+  richText: RichTextFieldLabels;
   field: {
     md: string;
     url: string;
@@ -463,10 +466,11 @@ function InlineBlock({
       return (
         <div>
           <AlignControl value={block.align} onChange={(align) => onChange({ ...block, align })} />
-          <AutoTextarea
-            value={block.md}
-            onChange={(v) => onChange({ ...block, md: v })}
+          <RichTextField
+            value={toRichTextDoc(block)}
+            onChange={(content) => onChange({ ...block, content, md: undefined })}
             placeholder={f.md}
+            labels={labels.richText}
             className={cn("text-base leading-relaxed", block.align === "center" && "text-center", block.align === "right" && "text-right")}
           />
         </div>
@@ -475,10 +479,11 @@ function InlineBlock({
     case "CONTEMPLATION":
       return (
         <blockquote className="border-l-2 border-chart-1 py-1 pl-5">
-          <AutoTextarea
-            value={block.md}
-            onChange={(v) => onChange({ ...block, md: v })}
+          <RichTextField
+            value={toRichTextDoc(block)}
+            onChange={(content) => onChange({ ...block, content, md: undefined })}
             placeholder={f.md}
+            labels={labels.richText}
             className="text-lg leading-relaxed text-pretty italic"
           />
         </blockquote>
@@ -513,10 +518,11 @@ function InlineBlock({
                 ))}
               </div>
             </div>
-            <AutoTextarea
-              value={block.md}
-              onChange={(v) => onChange({ ...block, md: v })}
+            <RichTextField
+              value={toRichTextDoc(block)}
+              onChange={(content) => onChange({ ...block, content, md: undefined })}
               placeholder={f.md}
+              labels={labels.richText}
               className="text-sm leading-relaxed"
             />
           </div>
@@ -591,10 +597,11 @@ function InlineBlock({
               />
               <ColorSwatches value={block.color} onChange={(color) => onChange({ ...block, color })} />
             </div>
-            <AutoTextarea
-              value={block.md}
-              onChange={(v) => onChange({ ...block, md: v })}
+            <RichTextField
+              value={toRichTextDoc(block)}
+              onChange={(content) => onChange({ ...block, content, md: undefined })}
               placeholder={f.md}
+              labels={labels.richText}
               className="text-sm leading-relaxed"
             />
           </div>
@@ -613,10 +620,11 @@ function InlineBlock({
                 placeholder={f.title}
                 className={cn(SEAMLESS, "font-semibold")}
               />
-              <AutoTextarea
-                value={block.md}
-                onChange={(v) => onChange({ ...block, md: v })}
+              <RichTextField
+                value={toRichTextDoc(block)}
+                onChange={(content) => onChange({ ...block, content, md: undefined })}
                 placeholder={f.md}
+                labels={labels.richText}
                 className="text-sm leading-relaxed"
               />
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -890,108 +898,3 @@ function MediaBlock({
   );
 }
 
-/**
- * A textarea whose selection can be wrapped in Markdown syntax from a small
- * floating toolbar ("when you highlight text you can format it") and that
- * grows with its content instead of scrolling inside a fixed box — Notion's
- * own paragraph behaviour. Still plain Markdown at rest — **bold**,
- * *italic*, `code`, a link — the same tiny subset `domain/markdown.ts`
- * already parses; no contentEditable, no HTML. The toolbar mutates the
- * textarea's own value via selectionStart/selectionEnd, same as any
- * plain-text editor's "wrap selection" command.
- */
-function AutoTextarea({
-  value,
-  onChange,
-  placeholder,
-  className,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  className?: string;
-}) {
-  const [selection, setSelection] = useState<{ start: number; end: number } | null>(null);
-  const [ref, setRef] = useState<HTMLTextAreaElement | null>(null);
-
-  function autosize(el: HTMLTextAreaElement) {
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }
-
-  function wrap(before: string, after: string = before) {
-    if (!ref || !selection || selection.start === selection.end) return;
-    const { start, end } = selection;
-    const next = value.slice(0, start) + before + value.slice(start, end) + after + value.slice(end);
-    onChange(next);
-    requestAnimationFrame(() => {
-      ref.focus();
-      ref.setSelectionRange(start + before.length, end + before.length);
-    });
-  }
-
-  const showToolbar = selection && selection.start !== selection.end;
-
-  return (
-    <div className="relative">
-      {showToolbar ? (
-        <div className="absolute -top-9 left-0 z-10 flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lift">
-          <ToolbarButton label="Bold" onClick={() => wrap("**")}>
-            <span className="font-bold">B</span>
-          </ToolbarButton>
-          <ToolbarButton label="Italic" onClick={() => wrap("*")}>
-            <span className="italic">i</span>
-          </ToolbarButton>
-          <ToolbarButton label="Code" onClick={() => wrap("`")}>
-            <span className="font-mono">{"</>"}</span>
-          </ToolbarButton>
-          <ToolbarButton label="Link" onClick={() => wrap("[", "](https://)")}>
-            <span className="underline">🔗</span>
-          </ToolbarButton>
-        </div>
-      ) : null}
-      <textarea
-        ref={(el) => {
-          setRef(el);
-          if (el) autosize(el);
-        }}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          autosize(e.currentTarget);
-        }}
-        onSelect={(e) => {
-          const el = e.currentTarget;
-          setSelection({ start: el.selectionStart, end: el.selectionEnd });
-        }}
-        onBlur={() => setSelection(null)}
-        rows={1}
-        placeholder={placeholder}
-        className={cn(SEAMLESS, "resize-none overflow-hidden", className)}
-      />
-    </div>
-  );
-}
-
-function ToolbarButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className="flex size-6 items-center justify-center rounded text-xs text-foreground hover:bg-muted"
-    >
-      {children}
-    </button>
-  );
-}

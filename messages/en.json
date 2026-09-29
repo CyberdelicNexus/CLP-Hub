@@ -700,8 +700,25 @@
       "medium": "Medium",
       "thick": "Thick"
     },
+    "richText": {
+      "paragraph": "Paragraph",
+      "heading": "Heading",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "code": "Code",
+      "link": "Link",
+      "removeLink": "Remove link",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list",
+      "linkUrl": "https://...",
+      "linkApply": "Apply",
+      "linkCancel": "Cancel",
+      "color": "Text color",
+      "removeColor": "Remove color"
+    },
     "blockField": {
-      "md": "Text (accepts **bold**, *italic*, `code` and links)",
+      "md": "Text",
       "url": "Link",
       "caption": "Caption",
       "alt": "Alt text",

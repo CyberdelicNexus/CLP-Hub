@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Bookmark, CircleCheck, CircleHelp, Info, LifeBuoy, TriangleAlert } from "lucide-react";
 import type { BlockAlign, ContentBlock, ContentBody, TokenColor } from "@/domain/content";
 import { parseMarkdown, type Inline } from "@/domain/markdown";
+import type { RichTextBlockNode, RichTextDoc, RichTextInlineNode, TextColorToken } from "@/domain/rich-text";
 import { resolveVideoEmbed } from "@/domain/video";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,135 @@ export function Markdown({ md, className }: { md: string; className?: string }) 
   );
 }
 
+/** Same closed palette as `rich-text-field.tsx`'s `TEXT_COLOR_CLASS` —
+ * duplicated rather than imported (that file is staff-editor-only and
+ * pulls in Tiptap; this one must never do that), written as full literal
+ * class strings so Tailwind's build-time scanner can see them. */
+const TEXT_COLOR_CLASS: Record<TextColorToken, string> = {
+  "chart-1": "text-chart-1",
+  "chart-2": "text-chart-2",
+  "chart-3": "text-chart-3",
+  "chart-4": "text-chart-4",
+  "chart-5": "text-chart-5",
+};
+
+function RichTextInline({ nodes }: { nodes: readonly RichTextInlineNode[] }) {
+  return (
+    <>
+      {nodes.map((node, i) => {
+        if (node.type === "hardBreak") return <br key={i} />;
+        let el: React.ReactNode = node.text;
+        for (const mark of node.marks ?? []) {
+          switch (mark.type) {
+            case "bold":
+              el = <strong className="font-semibold">{el}</strong>;
+              break;
+            case "italic":
+              el = <em>{el}</em>;
+              break;
+            case "underline":
+              el = <u>{el}</u>;
+              break;
+            case "code":
+              el = <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">{el}</code>;
+              break;
+            case "link":
+              el = (
+                <a
+                  href={mark.attrs.href}
+                  rel="noopener noreferrer"
+                  className="rounded underline underline-offset-4 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  {el}
+                </a>
+              );
+              break;
+            case "textColor":
+              el = <span className={TEXT_COLOR_CLASS[mark.attrs.token]}>{el}</span>;
+              break;
+          }
+        }
+        return <Fragment key={i}>{el}</Fragment>;
+      })}
+    </>
+  );
+}
+
+const HEADING_TAG = { 1: "h1", 2: "h2", 3: "h3", 4: "h4" } as const;
+/** Deliberately smaller than the page's own <h1> title (text-3xl/4xl,
+ * [key]/page.tsx and the sessions variant) — an in-body heading is
+ * structure within the article, not a second page title. */
+const HEADING_CLASS = { 1: "text-2xl", 2: "text-xl", 3: "text-lg", 4: "text-base" } as const;
+
+function RichTextBlock({ node }: { node: RichTextBlockNode }) {
+  switch (node.type) {
+    case "paragraph":
+      return (
+        <p className="leading-relaxed">
+          <RichTextInline nodes={node.content ?? []} />
+        </p>
+      );
+    case "heading": {
+      const level = node.attrs.level;
+      const Tag = HEADING_TAG[level];
+      return (
+        <Tag className={cn("font-semibold tracking-tight text-balance", HEADING_CLASS[level])}>
+          <RichTextInline nodes={node.content ?? []} />
+        </Tag>
+      );
+    }
+    case "bulletList":
+      return (
+        <ul className="ml-5 flex list-disc flex-col gap-1.5">
+          {node.content.map((item, i) => (
+            <li key={i} className="leading-relaxed">
+              <RichTextInline nodes={item.content[0].content ?? []} />
+            </li>
+          ))}
+        </ul>
+      );
+    case "orderedList":
+      return (
+        <ol className="ml-5 flex list-decimal flex-col gap-1.5">
+          {node.content.map((item, i) => (
+            <li key={i} className="leading-relaxed">
+              <RichTextInline nodes={item.content[0].content ?? []} />
+            </li>
+          ))}
+        </ol>
+      );
+  }
+}
+
+/** The Tiptap-authored replacement for `Markdown` — same technique (a typed
+ * tree switched into real React elements, no `generateHTML`, no
+ * `dangerouslySetInnerHTML`), walking the richer validated tree
+ * `richTextDocSchema` (`domain/rich-text.ts`) produces instead of the old
+ * flat Markdown-string AST. */
+export function RichText({ content, className }: { content: RichTextDoc; className?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-3", className)}>
+      {content.content.map((node, i) => (
+        <RichTextBlock key={i} node={node} />
+      ))}
+    </div>
+  );
+}
+
+/** The one call site every rich-text-bearing block's public render goes
+ * through: prefers the new `content` shape, falls back to rendering the
+ * legacy `md` string through the old `Markdown` component untouched — no
+ * upconversion needed just to render a legacy row, only the staff editor
+ * needs the upconverted doc (`domain/rich-text.ts`'s `toRichTextDoc`) since
+ * it needs something editable, not just something displayable. See
+ * docs/decisions.md's lote-4 entry for why both shapes stay readable
+ * indefinitely rather than a one-shot data migration. */
+function BlockBody({ block, className }: { block: { md?: string; content?: RichTextDoc }; className?: string }) {
+  if (block.content) return <RichText content={block.content} className={className} />;
+  if (block.md) return <Markdown md={block.md} className={className} />;
+  return null;
+}
+
 const CALLOUT_STYLES = {
   INFO: { surface: "bg-surface-sky text-surface-sky-ink", Icon: Info },
   WARNING: { surface: "bg-surface-peach text-surface-peach-ink", Icon: TriangleAlert },
@@ -145,7 +275,7 @@ const ROW_ALIGN_CLASS: Record<BlockAlign, string> = {
 function Block({ block }: { block: ContentBlock }) {
   switch (block.type) {
     case "TEXT":
-      return <Markdown md={block.md} className={TEXT_ALIGN_CLASS[block.align]} />;
+      return <BlockBody block={block} className={TEXT_ALIGN_CLASS[block.align]} />;
 
     case "CALLOUT": {
       const { surface, Icon } = CALLOUT_STYLES[block.tone];
@@ -154,7 +284,7 @@ function Block({ block }: { block: ContentBlock }) {
           <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="min-w-0">
             {block.title ? <p className="text-lg font-semibold">{block.title}</p> : null}
-            <Markdown md={block.md} className="mt-1" />
+            <BlockBody block={block} className="mt-1" />
           </div>
         </aside>
       );
@@ -165,7 +295,7 @@ function Block({ block }: { block: ContentBlock }) {
       // pause, and a bordered card would read as an alert.
       return (
         <blockquote className="border-l-2 border-chart-1 py-1 pl-5 text-lg leading-relaxed text-pretty italic">
-          <Markdown md={block.md} />
+          <BlockBody block={block} />
         </blockquote>
       );
 
@@ -202,7 +332,7 @@ function Block({ block }: { block: ContentBlock }) {
               <span className="sr-only">Paso {block.step}: </span>
               {block.title}
             </p>
-            <Markdown md={block.md} className="mt-1.5" />
+            <BlockBody block={block} className="mt-1.5" />
           </div>
         </div>
       );
@@ -214,7 +344,7 @@ function Block({ block }: { block: ContentBlock }) {
             <CircleHelp className="mt-0.5 size-5 shrink-0" aria-hidden />
             <div className="min-w-0">
               {block.title ? <p className="font-semibold">{block.title}</p> : null}
-              <Markdown md={block.md} className="mt-1" />
+              <BlockBody block={block} className="mt-1" />
               {block.contactUrl && block.contactLabel ? (
                 <a
                   href={block.contactUrl}

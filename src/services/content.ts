@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getDb, type DbExecutor } from "@/db/client";
+import { logger } from "@/lib/logger";
 import {
   cohortSessions,
   contentAssignments,
@@ -233,7 +234,8 @@ export async function getPublishedByKey(params: {
     .limit(1);
 
   if (!row || !isPublicContentType(row.type) || isSessionContentType(row.type)) return null;
-  const { blocks } = parseBody(row.body);
+  const { blocks, dropped } = parseBody(row.body);
+  if (dropped > 0) logDroppedBlocks({ key: row.key, dropped });
   return {
     title: row.title,
     body: blocks,
@@ -242,6 +244,21 @@ export async function getPublishedByKey(params: {
     updatedAt: row.updatedAt ?? new Date(),
     key: row.key,
   };
+}
+
+/**
+ * `parseBody` silently drops any block that fails schema validation rather
+ * than take the whole public page down — the right call for availability,
+ * but until this logging existed a drop was invisible everywhere: no error,
+ * no metric, nothing a researcher or the founder would ever see (2026-09-29
+ * finding, made while investigating an unrelated report). This is the one
+ * place both public-read paths funnel through, so it only needs writing once.
+ */
+function logDroppedBlocks(params: { key: string; dropped: number }) {
+  logger.warn(
+    { event: "content.blocks_dropped", key: params.key, dropped: params.dropped },
+    "a published content row had blocks that failed validation and were dropped from the public page",
+  );
 }
 
 /** The live preparation or integration page for a session, by session code. */
@@ -282,7 +299,8 @@ export async function getPublishedForSession(params: {
     .limit(1);
 
   if (!row) return null;
-  const { blocks } = parseBody(row.body);
+  const { blocks, dropped } = parseBody(row.body);
+  if (dropped > 0) logDroppedBlocks({ key: `${params.sessionCode}/${params.type}`, dropped });
   return {
     contentId: row.contentId,
     title: row.title,

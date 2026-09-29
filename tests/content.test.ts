@@ -87,21 +87,66 @@ describe("block validation", () => {
     ).toBe(true);
   });
 
-  it("accepts the nine block types", () => {
+  it("accepts all twelve block types", () => {
     const body = [
       { type: "TEXT", md: "Hola" },
       { type: "VIDEO", url: "https://e.org/v" },
       { type: "IMAGE", url: "https://e.org/a.png", alt: "a" },
+      { type: "BOOKMARK", url: "https://e.org", title: "Recurso" },
       { type: "CHECKLIST", items: ["uno"] },
       { type: "CALLOUT", tone: "INFO", md: "ojo" },
       { type: "CONTEMPLATION", md: "respira" },
       { type: "BUTTON", label: "Ir", url: "https://e.org" },
       { type: "TECHNICAL_STEP", step: 1, title: "Enciende", md: "pulsa" },
       { type: "SUPPORT_BOX", md: "escríbenos" },
+      { type: "DIVIDER" },
+      {
+        type: "COLUMNS",
+        columns: [
+          { width: 50, blocks: [{ type: "TEXT", md: "izquierda" }] },
+          { width: 50, blocks: [{ type: "TEXT", md: "derecha" }] },
+        ],
+      },
     ];
     const parsed = bodySchema.safeParse(body);
     expect(parsed.success).toBe(true);
-    expect(parsed.success && parsed.data).toHaveLength(9);
+    expect(parsed.success && parsed.data).toHaveLength(12);
+  });
+
+  it("a text-bearing block accepts legacy md, new content, or both", () => {
+    expect(bodySchema.safeParse([{ type: "TEXT", md: "legacy" }]).success).toBe(true);
+    expect(
+      bodySchema.safeParse([
+        { type: "TEXT", content: { type: "doc", content: [{ type: "paragraph" }] } },
+      ]).success,
+    ).toBe(true);
+    // Neither is also accepted (parseBody's silent-drop-on-invalid means an
+    // extra "must have exactly one" refine would be one more way to lose a
+    // real block to a subtle bug for a property nothing downstream needs —
+    // see docs/decisions.md's lote-4 entry).
+    expect(bodySchema.safeParse([{ type: "TEXT" }]).success).toBe(true);
+  });
+
+  it("rejects a COLUMNS block nested inside another COLUMNS block", () => {
+    const nested = {
+      type: "COLUMNS",
+      columns: [
+        {
+          width: 50,
+          blocks: [
+            {
+              type: "COLUMNS",
+              columns: [
+                { width: 50, blocks: [] },
+                { width: 50, blocks: [] },
+              ],
+            },
+          ],
+        },
+        { width: 50, blocks: [] },
+      ],
+    };
+    expect(bodySchema.safeParse([nested]).success).toBe(false);
   });
 
   it("drops malformed blocks on read instead of taking a page down", () => {

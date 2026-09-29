@@ -4037,6 +4037,124 @@ Not yet verified with a live browser walkthrough of the new block types
 single end-to-end Playwright pass after lote 5, rather than re-authenticating
 against the staff login for every intermediate batch.
 
+## D-094 · 2026-09-29 · Content editor refinement — lote 4 (Tiptap rich-text editor)
+
+Third batch of the plan started in D-092/D-093, and the biggest architectural
+change: replaces `AutoTextarea` (a plain textarea writing a tiny hand-rolled
+Markdown subset, `domain/markdown.ts`) with a real Tiptap WYSIWYG editor for
+the five block types that carry body text — TEXT, CALLOUT, CONTEMPLATION,
+TECHNICAL_STEP, SUPPORT_BOX. The founder explicitly chose this over extending
+the Markdown syntax (asked directly, given the size/risk difference) after
+being told it was the bigger, riskier option.
+
+**New dependency**: `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`,
+`@tiptap/extension-link` at 3.31.3 (checked `npm view` at implementation
+time rather than trusting a remembered version). Every StarterKit
+sub-extension is configured explicitly (`StarterKit.configure({...})`)
+rather than accepting its defaults, so the allowlist is reviewable in one
+place and immune to what a future StarterKit major bundles: `blockquote`,
+`codeBlock`, `horizontalRule` and `strike` are explicitly turned off
+(CONTEMPLATION already owns "set apart, italic" semantics; a divider is its
+own block type, lote 3, not a `---` inline shortcut; code blocks and
+strikethrough were never requested). `@tiptap/extension-underline` and
+`@tiptap/extension-link` turned out to already be bundled inside StarterKit
+3.x (checked its `package.json` dependencies directly rather than assuming),
+so only `@tiptap/extension-link` was installed separately, to import and
+`.configure()` it explicitly with a `validate` callback reusing
+`domain/markdown.ts`'s existing `isSafeHref` — one scheme-check function, not
+two. `@tiptap/extension-text-style` was installed, then removed again: the
+text-color feature is a genuinely standalone `Mark.create()`
+(`rich-text-field.tsx`'s `TextColorMark`), not built on Tiptap's own `Color`
+extension (which stores arbitrary hex/CSS via `TextStyle` — precisely the
+free color picker the founder asked to avoid everywhere else in this app),
+so the TextStyle base dependency was never actually needed.
+
+**Storage shape: a validated JSON tree, not markdown-at-rest, but the same
+security posture.** New `src/domain/rich-text.ts`: `richTextDocSchema` mirrors
+Tiptap's own `.getJSON()` shape but restricted to a closed node/mark
+allowlist (paragraph, heading levels 1-4, bulletList/orderedList/listItem,
+hardBreak; bold/italic/underline/code/link/textColor marks) with explicit
+size limits (per-node text cap, array-length caps at every level, and a
+doc-wide total-character-count `.refine()`, the real backstop against a
+pathological doc). `dangerouslySetInnerHTML` is still never used anywhere —
+the public renderer's new `RichText`/`RichTextInline` (`components/content/
+blocks.tsx`) is a direct structural mirror of the existing `Markdown`/
+`InlineNodes` pair: a typed tree, switched into real React elements. The
+trust boundary doesn't move: `editor.getJSON()` is client editor state, not
+a trusted payload, so `saveVersionAction`'s existing `JSON.parse` →
+`bodySchema.safeParse` (`contenido/actions.ts`) is exactly what still
+catches a hand-crafted payload that skips the UI entirely — a `link` with
+`href: "javascript:..."` or a `heading` with `level: 99` gets rejected the
+same way an invalid block always has.
+
+**List items are capped to exactly one paragraph, no nested lists.** Matches
+what the legacy Markdown subset could already express (flat lists only), so
+this isn't a feature regression — and it means the whole schema has a fixed,
+shallow depth with no true self-recursion (doc → block → [list → item →
+paragraph] → inline), so no `z.lazy()` was needed at all, simpler than
+originally scoped.
+
+**No one-shot database migration — a permanent dual-format union instead,
+with a tested converter.** This was the highest-risk decision in the whole
+plan, made *after* directly confirming the stakes: a production DB query
+(during the D-092 investigation) found real, currently-published content
+using the old `md: string` shape (`"Que Preparar Para Nuestra Visita"`, the
+DEMO content). `parseBody` (`services/content.ts`) silently drops any block
+that fails validation rather than throwing — and, until this same batch,
+that drop was logged *nowhere*, so a bug in a one-shot rewrite script could
+have quietly blanked out real trial content on a public page with zero
+error surfaced anywhere. Given the conversion is genuinely mechanical (the
+old subset is a strict subset of the new schema's expressiveness) but
+"mechanically simple" is exactly the kind of claim that gets the untested
+edge case wrong, `md`/`content` both stay optional and valid on all five
+block types indefinitely — same shape of decision as D-039 keeping
+`EMAIL_TEMPLATE`/`WHATSAPP_TEMPLATE` in the `ContentType` enum forever
+because "Postgres cannot drop one safely and any content row already using
+them must remain readable." The staff editor eagerly upconverts a legacy
+block to the new shape the moment it's loaded (`toRichTextDoc` in
+`domain/rich-text.ts`), so a person re-touching an old block migrates it
+naturally with a human looking at the WYSIWYG result before saving — far
+safer than an unattended script. New saves always write `content`, never
+`md`. `markdownAstToRichTextDoc` (the mechanical converter — old AST's
+nested mark-wrapper-nodes get flattened onto each text leaf's `marks` array,
+since that's Tiptap's model) is unit-tested (`tests/rich-text.test.ts`)
+specifically to assert the "lossless" claim rather than just state it,
+including that its own output always re-validates against
+`richTextDocSchema`. A real one-shot backfill remains available later, once
+this organic migration has run its course — same converter, now
+de-risked by however many real edits have already gone through it uneventfully.
+
+**Bonus, bundled in because it directly explains the migration-risk
+reasoning above**: `parseBody`'s `dropped` count is now logged
+(`services/content.ts`'s new `logDroppedBlocks`, `pino`, `content
+.blocks_dropped`) — previously computed and silently discarded at both
+public read paths. Cheap, independently valuable, and means any future drop
+— migration-caused or not — is visible for the first time.
+
+**Fixed toolbar, not floating-on-select.** The old `AutoTextarea`'s toolbar
+only appeared once text was selected — fine for a 4-button "wrap selection"
+trick, but switching a line to a heading needs no selection (Notion's own
+model: put the cursor in the line, click H2). `rich-text-field.tsx`'s
+`Toolbar` is fixed above each editor instance instead, one per rich-text-
+bearing block, same one-instance-per-block model `AutoTextarea` already had.
+Link insertion uses a small inline URL input (matching the existing
+`MediaBlock` toggle-open-a-form pattern elsewhere in this editor) rather than
+a native `window.prompt()`.
+
+**Bundle isolation confirmed, not just assumed**: `block-editor.tsx` (and
+the new `rich-text-field.tsx`) are under the already-`"use client"` staff
+`/equipo/contenido` route; `components/content/blocks.tsx`'s public
+`RichText` renderer never imports Tiptap, only the validated JSON type —
+checked directly (`grep -rn "tiptap" src/components/content/blocks.tsx
+src/app/(public)/`, zero hits) rather than trusted on architecture alone.
+
+Verified: typecheck, lint, full test suite (446 passing, 13 new — schema
+closedness, the migration converter's losslessness, and the DIVIDER/COLUMNS
+nesting rule), production build. Still pending: a live browser walkthrough
+of the actual Tiptap editing experience (toolbar, heading switching, color
+swatches, link insertion) — bundled into the single end-to-end Playwright
+pass planned after lote 5.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the
