@@ -137,10 +137,12 @@
       }
     },
     "a11y": {
-      "label": "Accessibility tools",
-      "increaseText": "Increase text size",
-      "decreaseText": "Decrease text size",
-      "reset": "Reset"
+      "label": "Text size",
+      "textStep": {
+        "md": "Normal",
+        "lg": "Large",
+        "xl": "Extra large"
+      }
     }
   },
   "applications": {

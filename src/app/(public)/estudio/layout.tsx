@@ -20,10 +20,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
  * column constrains it. That pushes the horizontal max-width and the
  * padding down into each page component instead of centralising it here;
  * both public page templates share the identical wrapper now. The back
- * link and theme toggle become a floating overlay (`glass-panel`, same
- * "chrome over content" pattern as the team header) rather than a block
- * above the content, so nothing sits above the cover — and pages with no
- * cover still clear it via top padding on their own content wrapper.
+ * link, text-size control and theme toggle become a floating overlay
+ * (`glass-panel`, same "chrome over content" pattern as the team header)
+ * rather than a block above the content, so nothing sits above the cover —
+ * and pages with no cover still clear it via top padding on their own
+ * content wrapper. The text-size control used to float separately as its
+ * own vertical panel on the right edge; moved into this same header bar
+ * (2026-09-29 request) since on a phone it sat cramped right next to the
+ * reading column instead of reading as navigation chrome.
  */
 export default async function StudyContentLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations("public.study");
@@ -44,11 +48,12 @@ export default async function StudyContentLayout({ children }: { children: React
             <ArrowLeft className="size-4" aria-hidden />
             {t("backHome")}
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <AccessibilityToolbar />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
-
-      <AccessibilityToolbar />
 
       <main id="main" className="relative flex-1">
         <PageFade>

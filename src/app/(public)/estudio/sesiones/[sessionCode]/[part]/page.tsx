@@ -53,8 +53,8 @@ export default async function SessionContentPage({ params }: { params: Promise<P
   return (
     <article className="flex flex-col">
       <CoverImage url={page.coverImageUrl} position={page.coverImagePosition} variant="hero" />
-      {/* pt-20 / pr-14: see [key]/page.tsx's identical wrapper for why. */}
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 pt-20 pr-14 pb-10 pl-4 sm:px-6 sm:pb-14">
+      {/* pt-20: see [key]/page.tsx's identical wrapper for why. */}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pt-20 pb-10 sm:px-6 sm:pb-14">
         <header className="flex flex-col gap-3">
           <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {page.sessionName} · {t(`part.${part}`)}

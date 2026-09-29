@@ -137,10 +137,12 @@
       }
     },
     "a11y": {
-      "label": "Herramientas de accesibilidad",
-      "increaseText": "Aumentar el tamaño del texto",
-      "decreaseText": "Reducir el tamaño del texto",
-      "reset": "Restablecer"
+      "label": "Tamaño del texto",
+      "textStep": {
+        "md": "Normal",
+        "lg": "Grande",
+        "xl": "Muy grande"
+      }
     }
   },
   "applications": {

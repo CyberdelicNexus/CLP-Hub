@@ -4387,6 +4387,40 @@ no new domain logic here beyond the sessions-service mirror of an already-
 tested pattern), production build, and the actual public URLs (curled
 directly, see above).
 
+## D-099 · 2026-09-29 · Accessibility text-size control moved into the header nav bar
+
+Founder feedback from a phone screenshot: the floating vertical panel
+(`+`/`T`/`−`, right edge, `AccessibilityToolbar`) sat cramped right next to
+the reading column on a narrow screen, easy to mistake for part of the
+article. Asked for it to live in the navigation bar instead, and for the
+text to actually be legible.
+
+Redesigned `AccessibilityToolbar` (`src/components/accessibility-toolbar.tsx`)
+from a `fixed` vertical increment/decrement panel into a single compact
+dropdown — same trigger pattern as the adjacent `ThemeToggle` (`Button
+variant="ghost" size="icon-sm"` opening a `DropdownMenu` with the three
+sizes as radio items: Normal/Grande/Muy grande) — placed directly inside
+`(public)/estudio/layout.tsx`'s existing header bar, next to the theme
+toggle. A direct 3-way picker also reaches "muy grande" in one tap instead
+of several presses of "+", which is arguably a legibility win on its own
+beyond just the placement.
+
+Removing the floating panel let two other things fall out for free: the
+`pr-14` right-padding both public page templates ([key]/page.tsx and the
+sessions variant) reserved specifically so body content wouldn't run under
+the panel is gone (replaced with plain symmetric `px-4`/`sm:px-6`), giving
+the reading column its full width back on mobile; and `increaseText`/
+`decreaseText`/`reset`'s `public.a11y.*` message keys are replaced with
+`textStep.md/lg/xl` in both locales.
+
+Verified visually, not just by the type/lint/test/build gates: ran the
+local dev server, drove a real 390×844 mobile-viewport Playwright session
+against the live S0 preparation page, confirmed no console errors, and
+screenshotted the header control closed, open (all three options visible,
+"Normal" checked), and after selecting "Muy grande" (checkmark moved, body
+paragraph text visibly larger) — the same page a static build/lint pass
+cannot actually observe rendering correctly.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

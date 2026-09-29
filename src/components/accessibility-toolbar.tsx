@@ -2,7 +2,15 @@
 
 import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
-import { Minus, Plus, RotateCcw, Type } from "lucide-react";
+import { Type } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "clp-a11y-prefs";
@@ -77,109 +85,49 @@ export function a11yContentClassName(prefs: A11yPrefs): string {
 }
 
 /**
- * Floating accessibility controls for the public study pages (2026-09-19
- * request; muted-colour and text-spacing controls removed 2026-09-29 —
- * text size is the one the founder wanted kept) — this audience skews older
- * adult (see the `text-lg` note on both public page templates), so a
- * three-step text-size control is the tool that reader actually benefits
- * from. Preference is per-browser (localStorage), the same "viewport
- * preference, not data" reasoning as the sidebar's collapsed state —
- * nothing here is participant data.
+ * Text-size control for the public study pages. Originally a floating
+ * vertical panel pinned to the right edge (2026-09-19); moved into the
+ * header's own nav bar as a single compact dropdown, same trigger pattern as
+ * the adjacent `ThemeToggle` (2026-09-29 request — on a phone the floating
+ * panel sat right next to the reading column, cramped and easy to mistake
+ * for part of the article). A direct 3-way size picker also gets a reader to
+ * "muy grande" in one tap instead of several presses of "+".
  */
-export function AccessibilityToolbar() {
+export function AccessibilityToolbar({ className }: { className?: string }) {
   const t = useTranslations("public.a11y");
   const prefs = useA11yPrefs();
-  const isDefault = prefs.text === "md";
-
-  function cycleText() {
-    const i = TEXT_STEPS.indexOf(prefs.text);
-    setPrefs({ ...prefs, text: TEXT_STEPS[Math.min(i + 1, TEXT_STEPS.length - 1)] });
-  }
-  function shrinkText() {
-    const i = TEXT_STEPS.indexOf(prefs.text);
-    setPrefs({ ...prefs, text: TEXT_STEPS[Math.max(i - 1, 0)] });
-  }
 
   return (
-    <div
-      className="glass-panel fixed top-1/2 right-3 z-30 flex -translate-y-1/2 flex-col items-center gap-1 rounded-2xl p-1.5 sm:right-4"
-      role="group"
-      aria-label={t("label")}
-    >
-      <ToolButton
-        onClick={cycleText}
-        disabled={prefs.text === "xl"}
-        active={prefs.text !== "md"}
-        label={t("increaseText")}
-        icon={<Plus className="size-4" aria-hidden />}
-      />
-      <span aria-hidden className="flex size-8 items-center justify-center text-muted-foreground">
-        <Type className="size-4" />
-      </span>
-      <ToolButton
-        onClick={shrinkText}
-        disabled={prefs.text === "md"}
-        active={false}
-        label={t("decreaseText")}
-        icon={<Minus className="size-4" aria-hidden />}
-      />
-
-      {isDefault ? null : (
-        <>
-          <div aria-hidden className="my-0.5 h-px w-6 bg-border" />
-          <ToolButton
-            onClick={() => setPrefs(DEFAULT_PREFS)}
-            active={false}
-            label={t("reset")}
-            icon={<RotateCcw className="size-4" aria-hidden />}
-          />
-        </>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" className={className} aria-label={t("label")} />}
+      >
+        <Type aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuRadioGroup
+          value={prefs.text}
+          onValueChange={(value) => setPrefs({ text: value as TextStep })}
+        >
+          {TEXT_STEPS.map((step) => (
+            <DropdownMenuRadioItem key={step} value={step}>
+              {t(`textStep.${step}`)}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 /**
- * Applies the current text-size preference to whatever it
- * wraps. Split out from `AccessibilityToolbar` itself so the server
- * component layout can wrap just the readable content in it while the
- * toolbar floats separately — both read the same store, so a change in one
- * is reflected in the other without any prop plumbing between them.
+ * Applies the current text-size preference to whatever it wraps. Split out
+ * from `AccessibilityToolbar` itself so the server component layout can wrap
+ * just the readable content in it while the toolbar lives in the header —
+ * both read the same store, so a change in one is reflected in the other
+ * without any prop plumbing between them.
  */
 export function A11yContentWrapper({ children }: { children: React.ReactNode }) {
   const prefs = useA11yPrefs();
   return <div className={a11yContentClassName(prefs)}>{children}</div>;
-}
-
-function ToolButton({
-  onClick,
-  active,
-  disabled,
-  label,
-  icon,
-}: {
-  onClick: () => void;
-  active: boolean;
-  disabled?: boolean;
-  label: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "flex size-8 items-center justify-center rounded-xl text-muted-foreground transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
-        active
-          ? "bg-primary text-primary-foreground"
-          : "hover:bg-muted hover:text-foreground",
-      )}
-    >
-      {icon}
-    </button>
-  );
 }

@@ -39,14 +39,14 @@ export default async function StudyPage({ params }: { params: Promise<{ key: str
   return (
     <article className="flex flex-col">
       <CoverImage url={page.coverImageUrl} position={page.coverImagePosition} variant="hero" />
-      {/* pt-20 clears the floating back-link/theme-toggle header when there's
-          no cover to push content below it (see layout.tsx); when there IS a
-          cover, its own height already does that, and this just adds a
-          little breathing room before the title. pr-14 (vs. pl-4) reserves
-          room below `sm:` for the fixed AccessibilityToolbar riding the
-          right edge, so a wide block (e.g. a callout) never runs under it —
-          from `sm:` up the column has margin to spare either side already. */}
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 pt-20 pr-14 pb-10 pl-4 sm:px-6 sm:pb-14">
+      {/* pt-20 clears the floating back-link/text-size/theme-toggle header
+          when there's no cover to push content below it (see layout.tsx);
+          when there IS a cover, its own height already does that, and this
+          just adds a little breathing room before the title. No more pr-14:
+          that used to reserve room for a floating AccessibilityToolbar
+          riding the right edge, now folded into the header bar itself
+          (2026-09-29), so the column no longer needs asymmetric padding. */}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pt-20 pb-10 sm:px-6 sm:pb-14">
         <header className="flex flex-col gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             {page.title}
