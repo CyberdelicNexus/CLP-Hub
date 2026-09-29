@@ -22,8 +22,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The page behind "Comprobar si puedo participar" (D-085), in the landing's
- * theme: what happens, then two steps (D-086). First name, email and phone,
+ * The page behind the hero's "Aplicar al estudio" and the invitation's
+ * "Comprobar si puedo participar" (D-085, D-090), in the landing's theme:
+ * what happens, then two steps (D-086). Its own H1 (`APPLY.title`) is
+ * deliberately its own copy, not `ACTIONS.primaryCta` — see D-090: someone
+ * who has clicked through to here already thinks they fit and is ready to
+ * apply. First name, email and phone,
  * which create the application in the Hub (`apply-flow.tsx`,
  * `actions.ts`); then the Qualtrics questionnaire framed on the page, opened
  * with the application's participant code in its URL.
@@ -38,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ApplyPage() {
   const locale = await getPublicLocale();
   const copy = LANDING_COPY[locale];
-  const { ACTIONS, APPLY, INVITATION } = copy;
+  const { APPLY, INVITATION } = copy;
   const url = await openScreeningUrl();
 
   // Same publication gate as the landing page and the legal pages.
@@ -74,7 +78,7 @@ export default async function ApplyPage() {
       <main id="main" className="apply__main">
         <div className="apply__head">
           <p className="cl-eyebrow">{APPLY.eyebrow}</p>
-          <h1 className="cl-title apply__title">{ACTIONS.primaryCta}</h1>
+          <h1 className="cl-title apply__title">{APPLY.title}</h1>
           <p className="cl-lead apply__intro">{APPLY.intro}</p>
         </div>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { A11yContentWrapper, AccessibilityToolbar } from "@/components/accessibility-toolbar";
+import { PageFade } from "@/components/page-fade";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
@@ -50,7 +51,9 @@ export default async function StudyContentLayout({ children }: { children: React
       <AccessibilityToolbar />
 
       <main id="main" className="relative flex-1">
-        <A11yContentWrapper>{children}</A11yContentWrapper>
+        <PageFade>
+          <A11yContentWrapper>{children}</A11yContentWrapper>
+        </PageFade>
       </main>
 
       <footer className="relative border-t border-border px-4 py-8 sm:px-6">

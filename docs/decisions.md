@@ -3809,6 +3809,83 @@ hold — no direct `qualtricsUrl` reference, `NAV` in-page only — stays locked
 down. Verified: typecheck, lint, the full test suite (433 tests) and the
 production build.
 
+## D-091 · 2026-09-29 · A site-wide page fade, one language dropdown, and D-090's copy actually split in two
+
+Founder request, four parts.
+
+**A fade on every page change, site-wide.** The natural Next 16 App Router way
+to do this — React's `<ViewTransition>` component, wrapping the browser's View
+Transitions API, which the framework's own docs say "works in the App Router
+with no configuration" — turned out not to be available: it needs a React
+canary build, and this app pins a stable `react@19.2.8` with no
+`ViewTransition` export (checked directly against the installed package, not
+assumed from the docs' general claim). Moving the whole app onto a canary
+React for one fade effect is a much bigger, riskier change than a visual
+transition warrants, so this uses the classic `usePathname` + CSS-opacity
+approach instead (`src/components/page-fade.tsx`): on a real route change —
+not an in-page anchor, not a search-param-only update like `?cohorte=<id>`,
+since `usePathname()` ignores both — the wrapper briefly gets `.page-fade--out`
+then loses it a frame later, so the CSS transition carries the fade in. A
+`previous`-pathname ref stops it from also firing on first render, which
+would otherwise flash every cold load invisible before showing it.
+
+**Scoped to each app's own content slot, not the root layout.** Wrapping the
+root layout's `{children}` would have caught the staff sidebar and header
+inside the fade too, since they live in the same subtree — every click
+between `/equipo` pages would have re-faded the whole shell, sidebar
+included, which reads as the interface flickering rather than the page
+changing. Instead: `TeamShell`'s `<main>` wraps only its content slot,
+`/estudio`'s layout wraps only its content past the fixed back-link bar, and
+a new `src/app/(public)/layout.tsx` wraps the whole public group (safe there,
+because none of those pages share persistent chrome with each other — each
+already renders its own header inline). The CSS lives in `globals.css`,
+following `.reveal`'s exact existing convention: scoped to
+`@media (scripting: enabled)` so JavaScript off never leaves content stuck
+invisible, and explicitly forced back to opaque under `prefers-reduced-motion:
+reduce` (on top of the sitewide rule that already collapses every transition
+to near-zero duration).
+
+**The three language buttons become one circular globe icon.** A native
+`<details>/<summary>` disclosure (`language-switch.tsx`) — the same "no
+JavaScript required, keyboard operable" reasoning as every other interactive
+bit of landing-page chrome, and the identical pattern the staff app's own
+icon-triggered popovers already use. Each option now shows the language's
+full name ("Español", "English", "Galego") rather than a two-letter code,
+since the dropdown has room a three-button row did not. No prop changed, so
+every existing call site — the landing page, `/participar`, the legal pages —
+needed no edits.
+
+**D-090's copy, actually split in two, not just re-pointed.** D-090 moved
+where the hero's two buttons LINK to but left `primaryCta`'s TEXT — "Comprobar
+si puedo participar" — reused on the button now anchored at
+`#elegibilidad`. That read wrong: a button captioned "check if I can take
+part" landing on a FAQ section is a mismatch the moment someone actually
+clicks it expecting an eligibility check and gets criteria-and-questions
+instead. So it gets its own label, `ACTIONS.eligibilityCta` ("Requisitos y
+preguntas frecuentes"), and `primaryCta` goes back to meaning only what it
+always meant elsewhere: SiteBar's nav CTA and the invitation section's own
+button, both still "Comprobar si puedo participar" pointed at the final
+invitation, untouched.
+
+The same reasoning extended to `/participar`'s own H1, which had reused
+`ACTIONS.primaryCta` since D-085 first built the page. The founder's framing —
+someone arriving here already thinks they fit the criteria and is ready to
+apply, not someone still checking — is a different moment than the hero's
+"check if I can take part," so it gets its own copy, `APPLY.title` ("Quiero
+participar en el estudio"), and the page's `<title>` tag changes to match. All
+three languages were updated together for every new or changed string
+(`eligibilityCta`, `APPLY.title`, `APPLY.meta.title`) — `LandingCopy`'s type
+(`Translatable<typeof LANDING_ES>`) would have refused to compile EN or GL
+missing any of them, which is exactly the safety net that type exists for.
+
+Verified: typecheck, lint, the full test suite (433 tests), the production
+build, and — because this touches rendered layout and interactive chrome, not
+only copy — a headless Playwright pass against the dev server: the hero's two
+buttons show the right text and hrefs, the language dropdown opens and lists
+all three names, clicking the eligibility button actually lands on
+`#elegibilidad`, `/participar`'s H1 reads the new copy, `.page-fade` is
+present, and no console errors.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

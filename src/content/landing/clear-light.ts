@@ -38,7 +38,11 @@ export function isMissing(value: unknown): value is Missing {
 }
 
 export const ACTIONS = {
-  /** The one recruitment intent. Same label everywhere it appears. */
+  /**
+   * The one recruitment intent, used where the destination is the final
+   * invitation (SiteBar's nav CTA, the invitation section's own button) —
+   * same label everywhere IT appears, per the landing copy test.
+   */
   primaryCta: "Comprobar si puedo participar",
   /**
    * Hero's direct application action (D-090, 2026-09-29) — links to
@@ -46,6 +50,12 @@ export const ACTIONS = {
    * "hero only scrolls to the explanation" rule; see hero.tsx's comment.
    */
   exploreCta: "Aplicar al estudio",
+  /**
+   * Hero's second button (2026-09-29 request) — anchors to #elegibilidad
+   * (criteria, benefits, risks, FAQ), so the label says that rather than
+   * reusing `primaryCta`, which now means something else here.
+   */
+  eligibilityCta: "Requisitos y preguntas frecuentes",
   contactCta: "Contactar con el equipo",
 } as const;
 
@@ -429,6 +439,13 @@ export const INVITATION = {
  */
 export const APPLY = {
   eyebrow: "Cuestionario de interés",
+  /**
+   * The page's own H1 (2026-09-29 request) — distinct from `ACTIONS.primaryCta`
+   * on purpose: this page is for someone who already thinks they fit the
+   * criteria and is ready to apply, not someone still checking. Anywhere
+   * else that still says "Comprobar si puedo participar" is unchanged.
+   */
+  title: "Quiero participar en el estudio",
   intro:
     "Primero nos dejas tus datos de contacto y después completas un cuestionario breve en la plataforma del estudio. Mostrar interés no te compromete a participar.",
   stepsLabel: "Qué va a pasar",
@@ -482,7 +499,7 @@ export const APPLY = {
   },
   back: "Volver al inicio",
   meta: {
-    title: "Comprobar si puedo participar · Clear Light",
+    title: "Quiero participar en el estudio · Clear Light",
     description:
       "Cuestionario de interés del estudio Clear Light, que se completa en la plataforma del estudio. Mostrar interés no te compromete a participar.",
   },

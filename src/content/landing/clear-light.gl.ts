@@ -12,6 +12,7 @@ export const LANDING_GL: LandingCopy = {
   ACTIONS: {
     primaryCta: "Comprobar se podo participar",
     exploreCta: "Aplicar ao estudo",
+    eligibilityCta: "Requisitos e preguntas frecuentes",
     contactCta: "Contactar co equipo",
   },
   NAV: [
@@ -317,6 +318,7 @@ export const LANDING_GL: LandingCopy = {
   },
   APPLY: {
     eyebrow: "Cuestionario de interese",
+    title: "Quero participar no estudo",
     intro:
       "Primeiro déixasnos os teus datos de contacto e despois completas un cuestionario breve na plataforma do estudo. Amosar interese non te compromete a participar.",
     stepsLabel: "Que vai pasar",
@@ -370,7 +372,7 @@ export const LANDING_GL: LandingCopy = {
     },
     back: "Volver ao inicio",
     meta: {
-      title: "Comprobar se podo participar · Clear Light",
+      title: "Quero participar no estudo · Clear Light",
       description:
         "Cuestionario de interese do estudo Clear Light, que se completa na plataforma do estudo. Amosar interese non te compromete a participar.",
     },

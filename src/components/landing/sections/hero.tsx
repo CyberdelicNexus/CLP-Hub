@@ -25,16 +25,17 @@ export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: strin
         application page rather than only anchoring within the page — a
         deliberate, confirmed override of D-085's earlier "everything
         anchors in-page, only the final invitation reaches outward" rule.
-        `primaryCta` moves to the eligibility/questions section instead of
-        the invitation, since "check if I can take part" is what that
-        section actually answers.
+        The second button anchors to the eligibility/questions section
+        instead of the invitation, with its own label (`eligibilityCta`)
+        rather than reusing `primaryCta`, which still means "go apply" for
+        the SiteBar nav CTA and the invitation section's own button.
       */}
       <div className="hero__actions">
         <a href="/participar" className="cl-btn">
           {ACTIONS.exploreCta}
         </a>
         <a href="#elegibilidad" className="cl-link">
-          {ACTIONS.primaryCta}
+          {ACTIONS.eligibilityCta}
         </a>
       </div>
     </div>

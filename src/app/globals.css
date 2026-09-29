@@ -452,6 +452,19 @@
       opacity: 1;
       transform: none;
     }
+    /* Page fade on navigation (2026-09-29 request). <PageFade> adds
+     * .page-fade--out for one frame on a real route change (usePathname);
+     * base state is always visible, so JavaScript off or not-yet-hydrated
+     * content never gets stuck hidden — the same reasoning `.reveal` above
+     * follows. */
+    .page-fade {
+      opacity: 1;
+      transition: opacity 0.22s var(--ease-out-soft);
+    }
+    .page-fade--out {
+      opacity: 0;
+      transition-duration: 0s;
+    }
   }
 }
 
@@ -471,5 +484,9 @@
   .reveal {
     opacity: 1;
     transform: none;
+  }
+  .page-fade,
+  .page-fade--out {
+    opacity: 1;
   }
 }

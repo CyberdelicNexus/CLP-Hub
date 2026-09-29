@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import type { StudyContext } from "@/auth/study-context";
+import { PageFade } from "@/components/page-fade";
 import { TEAM_NAV, TEAM_BASE_PATH } from "@/domain/navigation";
 import { countUnresolvedAlerts } from "@/services/automation";
 import { SidebarNav, type NavItem } from "./sidebar-nav";
@@ -78,7 +79,7 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
           }}
         />
         <main id="main" className="flex-1 px-4 pt-2 pb-8 sm:px-6 lg:pr-6 lg:pl-0">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <PageFade className="mx-auto w-full max-w-6xl">{children}</PageFade>
         </main>
       </div>
     </div>

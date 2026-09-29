@@ -13,6 +13,7 @@ export const LANDING_EN: LandingCopy = {
   ACTIONS: {
     primaryCta: "Check if I can take part",
     exploreCta: "Apply to the study",
+    eligibilityCta: "Requirements and FAQ",
     contactCta: "Contact the team",
   },
   NAV: [
@@ -318,6 +319,7 @@ export const LANDING_EN: LandingCopy = {
   },
   APPLY: {
     eyebrow: "Interest questionnaire",
+    title: "I want to take part in the study",
     intro:
       "First you leave your contact details, then you complete a short questionnaire on the study's platform. Showing interest does not commit you to taking part.",
     stepsLabel: "What will happen",
@@ -371,7 +373,7 @@ export const LANDING_EN: LandingCopy = {
     },
     back: "Back to the start",
     meta: {
-      title: "Check if I can take part · Clear Light",
+      title: "I want to take part in the study · Clear Light",
       description:
         "The Clear Light study's interest questionnaire, completed on the study's platform. Showing interest does not commit you to taking part.",
     },
