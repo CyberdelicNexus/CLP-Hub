@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Mark, mergeAttributes } from "@tiptap/core";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import {
   Bold as BoldIcon,
@@ -143,9 +144,19 @@ function extensions() {
   ];
 }
 
-/** Fixed toolbar above the editor, not floating-on-select: switching a line
- * to a heading needs no text selection (Notion's own model), which a
- * floating-on-select toolbar structurally can't offer — see docs/decisions.md. */
+/**
+ * A bubble menu that only appears while text is selected (2026-09-29
+ * founder feedback: a toolbar visible above every single block, all the
+ * time, made a page with several TECHNICAL_STEP/TEXT blocks look cluttered
+ * — a genuine "context menu on selection" was the actual ask, not a
+ * permanently-docked one). Tradeoff accepted deliberately: switching a
+ * paragraph to a heading now needs a text selection first (nothing to put
+ * the cursor in and hit "H2" without selecting), which the original
+ * fixed-toolbar design avoided — but the visual-noise problem was the more
+ * pressing one in practice. `@tiptap/react/menus`' `BubbleMenu` defaults to
+ * showing only when the editor is focused AND the selection is non-empty,
+ * which is exactly "select text, get a menu."
+ */
 function Toolbar({ editor, labels }: { editor: Editor; labels: RichTextFieldLabels }) {
   const [linkPrompt, setLinkPrompt] = useState<string | null>(null);
 
@@ -165,7 +176,10 @@ function Toolbar({ editor, labels }: { editor: Editor; labels: RichTextFieldLabe
   }
 
   return (
-    <div className="mb-1 flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-soft">
+    <BubbleMenu
+      editor={editor}
+      className="flex max-w-[min(90vw,28rem)] flex-wrap items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lift"
+    >
       {HEADING_LEVELS.map((level) => {
         const Icon = HEADING_ICON[level];
         return (
@@ -296,7 +310,7 @@ function Toolbar({ editor, labels }: { editor: Editor; labels: RichTextFieldLabe
           </button>
         </div>
       ) : null}
-    </div>
+    </BubbleMenu>
   );
 }
 

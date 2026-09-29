@@ -658,7 +658,8 @@
       "coverImagePosition": "Posición",
       "coverImageRemove": "Quitar portada",
       "body": "Bloques",
-      "bodyHelp": "Lista de bloques en formato JSON. Los bloques de texto admiten **negrita**, *cursiva*, `código` y enlaces."
+      "bodyHelp": "Lista de bloques en formato JSON. Los bloques de texto admiten **negrita**, *cursiva*, `código` y enlaces.",
+      "upload": "Subir imagen"
     },
     "blockEditor": {
       "add": "Pasa el ratón entre bloques y pulsa + para añadir uno ahí. Arrastra el icono ⠿ para reordenar.",
@@ -734,8 +735,7 @@
       "contactUrl": "Enlace de contacto",
       "width": "Ancho %",
       "addColumn": "Añadir columna",
-      "removeColumn": "Quitar columna",
-      "upload": "Subir imagen"
+      "removeColumn": "Quitar columna"
     },
     "uploadError": {
       "invalid": "Selecciona un archivo de imagen.",

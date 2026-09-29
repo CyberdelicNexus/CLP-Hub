@@ -4131,15 +4131,16 @@ reasoning above**: `parseBody`'s `dropped` count is now logged
 public read paths. Cheap, independently valuable, and means any future drop
 — migration-caused or not — is visible for the first time.
 
-**Fixed toolbar, not floating-on-select.** The old `AutoTextarea`'s toolbar
-only appeared once text was selected — fine for a 4-button "wrap selection"
-trick, but switching a line to a heading needs no selection (Notion's own
-model: put the cursor in the line, click H2). `rich-text-field.tsx`'s
-`Toolbar` is fixed above each editor instance instead, one per rich-text-
-bearing block, same one-instance-per-block model `AutoTextarea` already had.
-Link insertion uses a small inline URL input (matching the existing
-`MediaBlock` toggle-open-a-form pattern elsewhere in this editor) rather than
-a native `window.prompt()`.
+**Fixed toolbar, not floating-on-select** — superseded same-day, see the
+correction at the end of this entry. Originally: the old `AutoTextarea`'s
+toolbar only appeared once text was selected — fine for a 4-button "wrap
+selection" trick, but switching a line to a heading needs no selection
+(Notion's own model: put the cursor in the line, click H2). `rich-text-
+field.tsx`'s `Toolbar` was fixed above each editor instance instead, one per
+rich-text-bearing block, same one-instance-per-block model `AutoTextarea`
+already had. Link insertion uses a small inline URL input (matching the
+existing `MediaBlock` toggle-open-a-form pattern elsewhere in this editor)
+rather than a native `window.prompt()` — this part didn't change.
 
 **Bundle isolation confirmed, not just assumed**: `block-editor.tsx` (and
 the new `rich-text-field.tsx`) are under the already-`"use client"` staff
@@ -4150,10 +4151,22 @@ src/app/(public)/`, zero hits) rather than trusted on architecture alone.
 
 Verified: typecheck, lint, full test suite (446 passing, 13 new — schema
 closedness, the migration converter's losslessness, and the DIVIDER/COLUMNS
-nesting rule), production build. Still pending: a live browser walkthrough
-of the actual Tiptap editing experience (toolbar, heading switching, color
-swatches, link insertion) — bundled into the single end-to-end Playwright
-pass planned after lote 5.
+nesting rule), production build.
+
+**Same-day correction, from an actual screenshot of the shipped editor**:
+the fixed toolbar looked cluttered in practice — a page with several
+TECHNICAL_STEP/TEXT blocks in a row showed a toolbar docked above every
+single one, all the time, all at once. The founder's ask was explicit: only
+show it as a context menu on text selection. `Toolbar` now renders as
+`@tiptap/react/menus`' `BubbleMenu` (already present via `@tiptap/react`'s
+own `optionalDependencies`, so no new install needed) instead of a plain
+`<div>` — its default `shouldShow` is exactly "editor focused and selection
+non-empty," which is the behaviour asked for. Accepted tradeoff: switching a
+paragraph to a heading now needs a text selection first (there is no longer
+a way to just place the cursor and click H2) — the visual-noise problem was
+the more pressing one in practice, and this can be revisited (e.g. a
+lightweight per-block hover control for block-type switching, separate from
+the inline formatting menu) if losing that convenience turns out to matter.
 
 ## D-095 · 2026-09-29 · Content editor refinement — lote 5 (Supabase Storage image upload)
 

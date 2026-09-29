@@ -658,7 +658,8 @@
       "coverImagePosition": "Position",
       "coverImageRemove": "Remove cover",
       "body": "Blocks",
-      "bodyHelp": "A JSON list of blocks. Text blocks accept **bold**, *italic*, `code` and links."
+      "bodyHelp": "A JSON list of blocks. Text blocks accept **bold**, *italic*, `code` and links.",
+      "upload": "Upload image"
     },
     "blockEditor": {
       "add": "Hover between blocks and press + to add one there. Drag the ⠿ handle to reorder.",
@@ -734,8 +735,7 @@
       "contactUrl": "Contact link",
       "width": "Width %",
       "addColumn": "Add column",
-      "removeColumn": "Remove column",
-      "upload": "Upload image"
+      "removeColumn": "Remove column"
     },
     "uploadError": {
       "invalid": "Choose an image file.",
