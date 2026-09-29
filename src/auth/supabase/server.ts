@@ -5,7 +5,11 @@ import { publicEnv } from "@/config/public-env";
 
 /**
  * Supabase client for Server Components, Server Functions and Route Handlers.
- * Used ONLY for staff authentication. Data access goes through src/db.
+ * Used for staff authentication, and — as of the content-images bucket,
+ * 2026-09-29 — cookie-authenticated Storage uploads
+ * (contenido/actions.ts's `uploadContentImageAction`). Everything else that
+ * is "data access" still goes through src/db; Storage has no Drizzle
+ * equivalent, so it is the one exception.
  */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();

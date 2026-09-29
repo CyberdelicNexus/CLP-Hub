@@ -69,6 +69,7 @@ import {
   type TokenColor,
 } from "@/domain/content";
 import { emptyRichTextDoc, toRichTextDoc } from "@/domain/rich-text";
+import { ImageUploadButton } from "./image-upload-button";
 import { RichTextField, type RichTextFieldLabels } from "./rich-text-field";
 
 const CALLOUT_STYLES: Record<CalloutTone, { surface: string; Icon: typeof Info }> = {
@@ -175,6 +176,8 @@ export interface Labels {
     width: string;
     addColumn: string;
     removeColumn: string;
+    upload: string;
+    uploadErrors: Record<string, string>;
   };
 }
 
@@ -854,6 +857,11 @@ function MediaBlock({
           />
           {block.type === "IMAGE" ? (
             <>
+              <ImageUploadButton
+                onUploaded={(url) => onChange({ ...block, url })}
+                label={f.upload}
+                errorLabels={f.uploadErrors}
+              />
               <Input
                 value={block.alt}
                 onChange={(e) => onChange({ ...block, alt: e.target.value })}

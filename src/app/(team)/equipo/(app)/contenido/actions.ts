@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertPermission, AuthorizationError } from "@/auth/authorize";
+import { createSupabaseServerClient } from "@/auth/supabase/server";
 import { getStudyContext } from "@/auth/study-context";
 import {
   CONTENT_KEY_PATTERN,
@@ -343,6 +344,58 @@ export async function renameContentKeyAction(
 
   revalidate(parsed.data.contentId);
   return { error: null, ok: true };
+}
+
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+export type UploadImageResult = { url: string; error?: undefined } | { url?: undefined; error: string };
+
+/**
+ * Uploads a staff-picked image file to the `content-images` Supabase Storage
+ * bucket (supabase/migrations/0025_content_images_bucket.sql) and returns its
+ * public URL — called directly from a client component (not through
+ * `useActionState`; there's no form/prev-state here, just "upload this one
+ * file"), unlike every other action in this file. Validates type and size
+ * server-side before ever calling Storage: client-side validation is a UX
+ * nicety, not a boundary anything here relies on. Uses
+ * `createSupabaseServerClient()` (cookie-authenticated as the calling staff
+ * member, anon key only) rather than a service-role client — the bucket's
+ * RLS policies are the actual gate, scoped by role and by study.
+ */
+export async function uploadContentImageAction(formData: FormData): Promise<UploadImageResult> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+  try {
+    assertPermission(ctx, "content.manage");
+  } catch {
+    return { error: "forbidden" };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "invalid" };
+  const ext = ALLOWED_IMAGE_TYPES[file.type];
+  if (!ext) return { error: "unsupportedType" };
+  if (file.size > MAX_IMAGE_BYTES) return { error: "tooLarge" };
+
+  const path = `${ctx.study.id}/${crypto.randomUUID()}.${ext}`;
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.storage.from("content-images").upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) {
+    logger.error({ event: "content.image_upload.failed", err: error.message }, "image upload failed");
+    return { error: "failed" };
+  }
+
+  const { data } = supabase.storage.from("content-images").getPublicUrl(path);
+  return { url: data.publicUrl };
 }
 
 export async function createDraftAction(

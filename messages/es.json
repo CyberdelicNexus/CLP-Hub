@@ -734,7 +734,14 @@
       "contactUrl": "Enlace de contacto",
       "width": "Ancho %",
       "addColumn": "Añadir columna",
-      "removeColumn": "Quitar columna"
+      "removeColumn": "Quitar columna",
+      "upload": "Subir imagen"
+    },
+    "uploadError": {
+      "invalid": "Selecciona un archivo de imagen.",
+      "unsupportedType": "Formato no admitido (usa PNG, JPEG, WebP o GIF).",
+      "tooLarge": "La imagen pesa demasiado (máximo 5 MB).",
+      "failed": "No se pudo subir la imagen. Inténtalo de nuevo."
     },
     "error": {
       "invalid": "Ese cambio no es posible.",

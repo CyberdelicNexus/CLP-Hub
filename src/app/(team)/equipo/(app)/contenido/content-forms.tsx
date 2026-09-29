@@ -248,7 +248,14 @@ export function VersionEditor({
   initialCoverImagePosition: number;
   labels: Labels & { title: string };
   editorLabels: BlockEditorLabels;
-  coverLabels: { add: string; url: string; position: string; remove: string };
+  coverLabels: {
+    add: string;
+    url: string;
+    position: string;
+    remove: string;
+    upload: string;
+    uploadErrors: Record<string, string>;
+  };
 }) {
   const [state, action, pending] = useActionState(saveVersionAction, initial);
   const [blocks, setBlocks] = useState<ContentBody>(initialBody);

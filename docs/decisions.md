@@ -4155,6 +4155,73 @@ of the actual Tiptap editing experience (toolbar, heading switching, color
 swatches, link insertion) — bundled into the single end-to-end Playwright
 pass planned after lote 5.
 
+## D-095 · 2026-09-29 · Content editor refinement — lote 5 (Supabase Storage image upload)
+
+Fourth and final batch of the plan started in D-092. Until now every IMAGE
+block and cover banner stored only a pasted external URL — no upload path
+existed anywhere in the app.
+
+**New migration**: `supabase/migrations/0025_content_images_bucket.sql`
+creates a public-read `content-images` Storage bucket. Staff write access is
+scoped by role AND by study via a new `content_images_can_manage(uuid)`
+SQL function, checked in three `storage.objects` policies (insert/update/
+delete) against `(storage.foldername(name))[1]` — the object path convention
+the upload action writes to is `content-images/{studyId}/{uuid}.{ext}`, so
+that first path segment is the study id.
+
+**Why a SECURITY DEFINER function instead of a direct RLS policy query**: a
+storage policy checking `exists (select 1 from user_roles where ...)`
+directly would fail outright, not just return no rows — `user_roles` has
+`revoke all from anon, authenticated` (D-006's deny-all default), so the
+`authenticated` Postgres role (what every anon-key-authenticated staff
+session runs as) has no table-level privilege to even attempt that query,
+policy or no policy. `content_images_can_manage` is `security definer`
+(runs with the function owner's privileges, bypassing `user_roles`' RLS for
+this one check) and only ever answers "does the caller — `auth.uid()`,
+never attacker-suppliable — hold ADMIN or STUDY_MANAGER for this specific
+study", so it can't be used to read anyone else's role grants. This is the
+one deliberate, narrow exception to D-006's "no permission matrix
+duplicated in SQL": the two role names are hardcoded in the migration
+because SQL cannot import `src/domain/permissions.ts`'s `content.manage`
+grant — if that grant ever changes, this function must be updated by hand,
+nothing links them automatically. Confirmed by reading `permissions.ts`
+directly that only ADMIN (via the `STUDY_MANAGER` role's own permission
+list, not derived) and STUDY_MANAGER hold `content.manage` today —
+SUPERVISOR and RESEARCHER do not, despite both existing as roles.
+
+**Upload path stays anon-key, cookie-authenticated — no service-role key in
+application code.** `env.ts`'s existing rule ("the service-role key must
+only ever be read by scripts under /scripts, never by application code") is
+the reason the bucket needs its own RLS policies at all rather than a
+simpler service-role bypass; `uploadContentImageAction`
+(`contenido/actions.ts`) reuses the existing `createSupabaseServerClient()`
+(`src/auth/supabase/server.ts`, previously documented as "ONLY for staff
+authentication" — comment updated to note this second legitimate use, since
+Storage has no Drizzle equivalent and isn't really "data access" in the
+sense that comment meant). The action validates MIME type (`image/png`,
+`/jpeg`, `/webp`, `/gif`) and a 5 MB size cap server-side before ever calling
+Storage — client-side validation is a UX nicety here, not a boundary
+anything relies on; the bucket's RLS policies remain the actual gate.
+
+**No schema change to `IMAGE`.** Both the upload path and the existing
+"paste a URL" path end at the same `url` field a block already had — the
+upload button (`image-upload-button.tsx`, shared by `MediaBlock`'s IMAGE
+form and `CoverBanner`) just fills that field with the uploaded file's
+public URL instead of a hand-typed one. `blockSchema` and the public
+renderer are both untouched by this lote.
+
+**Deploying this migration is a separate step from writing it** — unlike
+lotes 1-4 (pure app code, safe to commit and ship together), this one
+creates real infrastructure in the production Supabase project (a bucket, a
+function, three policies). The migration file is written and reviewed here;
+running `npm run db:migrate` against it is confirmed with the founder
+separately before it happens, matching how this session has treated every
+other action with real, harder-to-reverse footprint.
+
+Verified (code side): typecheck, lint, full test suite (446 passing,
+unchanged — no new schema/domain logic to test here, this lote is
+infrastructure + a thin upload action + UI), production build.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

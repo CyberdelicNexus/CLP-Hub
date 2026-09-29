@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
+import { ImageUploadButton } from "./image-upload-button";
 
 /**
  * The page's optional cover — a thin banner, not a full block, that fades
@@ -25,7 +26,14 @@ export function CoverBanner({
   position: number;
   onUrlChange: (url: string) => void;
   onPositionChange: (position: number) => void;
-  labels: { add: string; url: string; position: string; remove: string };
+  labels: {
+    add: string;
+    url: string;
+    position: string;
+    remove: string;
+    upload: string;
+    uploadErrors: Record<string, string>;
+  };
 }) {
   const [editingUrl, setEditingUrl] = useState(false);
 
@@ -51,14 +59,17 @@ export function CoverBanner({
         />
       </div>
     ) : (
-      <button
-        type="button"
-        onClick={() => setEditingUrl(true)}
-        className="mb-2 inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ImagePlus className="size-3.5" aria-hidden />
-        {labels.add}
-      </button>
+      <div className="mb-2 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setEditingUrl(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ImagePlus className="size-3.5" aria-hidden />
+          {labels.add}
+        </button>
+        <ImageUploadButton onUploaded={onUrlChange} label={labels.upload} errorLabels={labels.uploadErrors} />
+      </div>
     );
   }
 

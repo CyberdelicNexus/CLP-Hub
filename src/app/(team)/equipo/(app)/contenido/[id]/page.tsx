@@ -74,6 +74,13 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
     failed: t("content.error.failed"),
   };
   const base = { submit: t("common.save"), submitting: t("common.loading"), errors };
+  const uploadErrors = {
+    forbidden: t("common.noAccess"),
+    invalid: t("content.uploadError.invalid"),
+    unsupportedType: t("content.uploadError.unsupportedType"),
+    tooLarge: t("content.uploadError.tooLarge"),
+    failed: t("content.uploadError.failed"),
+  };
 
   const workingBody = working ? parseBody(working.body).blocks : [];
   const publishedBody = published ? parseBody(published.body).blocks : [];
@@ -197,6 +204,8 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
                   url: t("content.field.coverImage"),
                   position: t("content.field.coverImagePosition"),
                   remove: t("content.field.coverImageRemove"),
+                  upload: t("content.field.upload"),
+                  uploadErrors,
                 }}
                 editorLabels={{
                   empty: t("content.blockEditor.empty"),
@@ -268,6 +277,8 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
                     width: t("content.blockField.width"),
                     addColumn: t("content.blockField.addColumn"),
                     removeColumn: t("content.blockField.removeColumn"),
+                    upload: t("content.field.upload"),
+                    uploadErrors,
                   },
                 }}
               />
