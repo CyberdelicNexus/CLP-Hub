@@ -12,6 +12,7 @@ import {
   createDraftAction,
   publishVersionAction,
   relinkSessionAction,
+  renameContentKeyAction,
   saveVersionAction,
   setStatusAction,
   type ContentActionState,
@@ -179,6 +180,41 @@ export function RelinkSessionForm({
       <div className="w-full">
         <ErrorLine state={state} errors={labels.errors} />
       </div>
+    </form>
+  );
+}
+
+/**
+ * Rename a content item's `key` (2026-09-29 request — there was previously no
+ * way to change it after creation). Only meaningful for content whose public
+ * URL is actually built from `key` (`publicPathFor`, `src/domain/content.ts`
+ * — session-linked content ignores it entirely); the caller is responsible
+ * for only rendering this where that applies.
+ */
+export function RenameKeyForm({
+  contentId,
+  currentKey,
+  labels,
+}: {
+  contentId: string;
+  currentKey: string;
+  labels: Labels & { field: string; warning: string };
+}) {
+  const [state, action, pending] = useActionState(renameContentKeyAction, initial);
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="contentId" value={contentId} />
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-48 flex-1 space-y-1.5">
+          <Label htmlFor="rename-key">{labels.field}</Label>
+          <Input id="rename-key" name="key" required maxLength={61} defaultValue={currentKey} />
+        </div>
+        <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{labels.warning}</p>
+      <ErrorLine state={state} errors={labels.errors} />
     </form>
   );
 }

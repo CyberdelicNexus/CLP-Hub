@@ -12,7 +12,14 @@ import { isEditable, isSessionContentType, parseBody, publicPathFor, type Conten
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { getContentDetail } from "@/services/content";
 import { listSessionTemplates } from "@/services/sessions";
-import { NewDraftForm, PublishForm, RelinkSessionForm, VersionEditor, VersionStatusForm } from "../content-forms";
+import {
+  NewDraftForm,
+  PublishForm,
+  RelinkSessionForm,
+  RenameKeyForm,
+  VersionEditor,
+  VersionStatusForm,
+} from "../content-forms";
 import { CoverImage } from "@/components/content/cover-image";
 import { contentTone } from "../tone";
 
@@ -83,7 +90,6 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
 
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="font-mono text-xs text-muted-foreground">{content.key}</p>
           <h1 className="text-2xl font-semibold tracking-tight">
             {published?.title ?? working?.title ?? content.key}
           </h1>
@@ -103,6 +109,35 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
             )
           ) : (
             <p className="text-xs text-muted-foreground">{t("content.notPublic")}</p>
+          )}
+          {isSessionContent ? (
+            // The `key` column exists for internal uniqueness only here — the
+            // real slug is the linked session's `code`, edited on a different
+            // screen entirely (2026-09-29 finding: staff typing a `key` here
+            // and expecting it to become the URL was the reported "slug
+            // wasn't respected" bug).
+            <p className="text-xs text-muted-foreground">
+              {t("content.sessionUrlNote", { sessionCode: content.sessionCode ?? "—" })}{" "}
+              <Link
+                href={`${TEAM_BASE_PATH}/configuracion`}
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                {t("content.sessionUrlNoteLink")}
+              </Link>
+            </p>
+          ) : canManage ? (
+            <RenameKeyForm
+              contentId={content.id}
+              currentKey={content.key}
+              labels={{
+                ...base,
+                submit: t("content.renameKeySubmit"),
+                field: t("content.field.key"),
+                warning: t("content.renameKeyWarning"),
+              }}
+            />
+          ) : (
+            <p className="font-mono text-xs text-muted-foreground">{content.key}</p>
           )}
         </div>
         <StatusBadge tone="info">{t(`content.type.${content.type}`)}</StatusBadge>

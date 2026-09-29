@@ -21,6 +21,7 @@ import {
   NotFoundError,
   publishVersion,
   relinkContentSession,
+  renameContentKey,
   saveVersion,
   setVersionStatus,
 } from "@/services/content";
@@ -297,6 +298,50 @@ export async function relinkSessionAction(
 
   revalidate(parsed.data.contentId);
   revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
+  return { error: null, ok: true };
+}
+
+const renameKeySchema = z.object({
+  contentId: uuid,
+  key: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase())
+    .refine((v) => CONTENT_KEY_PATTERN.test(v)),
+});
+
+/**
+ * Rename a content item's slug (2026-09-29 request — there was previously no
+ * way to change `key` after creation at all). Doesn't move a redirect: an
+ * already-shared link built from the old key just 404s from here on, which
+ * the form's own copy warns about before submitting.
+ */
+export async function renameContentKeyAction(
+  _prev: ContentActionState,
+  formData: FormData,
+): Promise<ContentActionState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = renameKeySchema.safeParse({
+    contentId: formData.get("contentId"),
+    key: formData.get("key"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "content.manage");
+    await renameContentKey({
+      studyId: ctx.study.id,
+      contentId: parsed.data.contentId,
+      actorId: ctx.session.userId,
+      key: parsed.data.key,
+    });
+  } catch (err) {
+    return fail(err, "content.renameKey");
+  }
+
+  revalidate(parsed.data.contentId);
   return { error: null, ok: true };
 }
 

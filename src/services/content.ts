@@ -433,6 +433,54 @@ export async function relinkContentSession(params: {
   });
 }
 
+/**
+ * Rename a content item's key (its public URL slug for non-session types;
+ * an internal-only identifier for session-linked types, whose public URL is
+ * instead determined by the linked session template's own `code` — see
+ * `publicPathFor` in `src/domain/content.ts`). Renaming does not create a
+ * redirect from the old slug: there is no such infrastructure today, so an
+ * already-shared link using the old key starts 404ing immediately. The
+ * calling UI is expected to warn about that before submitting.
+ */
+export async function renameContentKey(params: {
+  studyId: string;
+  contentId: string;
+  actorId: string;
+  key: string;
+}): Promise<void> {
+  const { studyId, contentId, actorId } = params;
+  const key = params.key.trim().toLowerCase();
+
+  await getDb().transaction(async (tx) => {
+    const [content] = await tx
+      .select({ id: contents.id, key: contents.key })
+      .from(contents)
+      .where(and(eq(contents.id, contentId), eq(contents.studyId, studyId)))
+      .limit(1);
+    if (!content) throw new NotFoundError("content", contentId);
+    if (content.key === key) return;
+
+    const [existing] = await tx
+      .select({ id: contents.id })
+      .from(contents)
+      .where(and(eq(contents.studyId, studyId), eq(contents.key, key)))
+      .limit(1);
+    if (existing) throw new ConflictError("duplicateKey");
+
+    await tx.update(contents).set({ key }).where(eq(contents.id, contentId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "content.key_renamed",
+      entityType: "content",
+      entityId: contentId,
+      before: { key: content.key },
+      after: { key },
+    });
+  });
+}
+
 /** Save a draft body. Refuses on a published or archived version. */
 export async function saveVersion(params: {
   studyId: string;
