@@ -98,6 +98,15 @@ export const cohorts = pgTable(
      */
     currentStageId: uuid("current_stage_id").references(() => programStages.id),
     currentStageEnteredAt: timestamp("current_stage_entered_at", { withTimezone: true }),
+    /**
+     * When staff archived this cohort. Null means visible in the ordinary
+     * workspace list — every cohort before this column existed, and most
+     * after. A second, independent axis from `status`: archiving a demo or
+     * mistaken cohort is reversible and says nothing about where it was in
+     * its programme, so it is not a new terminal `CohortStatus` value
+     * (migration 0024).
+     */
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -11,12 +11,14 @@ import { logger } from "@/lib/logger";
 import { NOTE_COLORS } from "@/domain/cohort-note";
 import {
   advanceCohortStatus,
+  archiveCohort,
   assignCohortStaff,
   assignToCohort,
   CohortSizeError,
   ConflictError,
   createCohort,
   createCohortNote,
+  deleteCohort,
   deleteCohortNote,
   InvalidTransitionError,
   NotFoundError,
@@ -24,6 +26,8 @@ import {
   removeFromCohort,
   revokeCohortStaff,
   transferToCohort,
+  unarchiveCohort,
+  updateCohort,
 } from "@/services/cohorts";
 import {
   setCohortStage,
@@ -54,6 +58,7 @@ export type CohortState = {
     | "sameCohort"
     | "sizeUnder"
     | "sizeOver"
+    | "deleteReasonRequired"
     | "failed"
     | null;
   ok?: boolean;
@@ -167,6 +172,153 @@ export async function createCohortAction(
     });
   } catch (err) {
     return fail(err, "cohort.create");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const updateSchema = z.object({
+  cohortId: uuid,
+  code: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => COHORT_CODE_PATTERN.test(v)),
+  name: z.string().trim().min(1).max(COHORT_NAME_MAX_LENGTH),
+  plannedStartDate: z.string().trim().optional(),
+  plannedEndDate: z.string().trim().optional(),
+  armId: z.union([uuid, z.literal("")]).optional(),
+  minSize: positiveIntOrNull,
+  maxSize: positiveIntOrNull,
+});
+
+export async function updateCohortAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = updateSchema.safeParse({
+    cohortId: formData.get("cohortId"),
+    code: formData.get("code"),
+    name: formData.get("name"),
+    plannedStartDate: formData.get("plannedStartDate") ?? undefined,
+    plannedEndDate: formData.get("plannedEndDate") ?? undefined,
+    armId: formData.get("armId") ?? undefined,
+    minSize: formData.get("minSize") ?? undefined,
+    maxSize: formData.get("maxSize") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await updateCohort({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+      code: parsed.data.code,
+      name: parsed.data.name,
+      plannedStartDate: parsed.data.plannedStartDate || null,
+      plannedEndDate: parsed.data.plannedEndDate || null,
+      armId: parsed.data.armId || null,
+      minSize: parsed.data.minSize,
+      maxSize: parsed.data.maxSize,
+    });
+  } catch (err) {
+    return fail(err, "cohort.update");
+  }
+
+  revalidate(`${TEAM_BASE_PATH}/cohortes/${parsed.data.cohortId}`);
+  return { error: null, ok: true };
+}
+
+const archiveSchema = z.object({ cohortId: uuid });
+
+export async function archiveCohortAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = archiveSchema.safeParse({ cohortId: formData.get("cohortId") });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await archiveCohort({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+    });
+  } catch (err) {
+    return fail(err, "cohort.archive");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+export async function unarchiveCohortAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = archiveSchema.safeParse({ cohortId: formData.get("cohortId") });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await unarchiveCohort({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+    });
+  } catch (err) {
+    return fail(err, "cohort.unarchive");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const deleteSchema = z.object({
+  cohortId: uuid,
+  reason: z.string().trim().min(1).max(280),
+});
+
+/**
+ * Permanently remove a cohort — see `deleteCohort` (services/cohorts.ts, D-089)
+ * for what this destroys and why a reason is mandatory. Redirects to the
+ * cohort list rather than revalidating the now-nonexistent detail path.
+ */
+export async function deleteCohortAction(
+  _prev: CohortState,
+  formData: FormData,
+): Promise<CohortState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = deleteSchema.safeParse({
+    cohortId: formData.get("cohortId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "cohorts.manage");
+    await deleteCohort({
+      studyId: ctx.study.id,
+      cohortId: parsed.data.cohortId,
+      actorId: ctx.session.userId,
+      reason: parsed.data.reason,
+    });
+  } catch (err) {
+    return fail(err, "cohort.delete");
   }
 
   revalidate();

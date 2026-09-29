@@ -59,9 +59,12 @@ Roles are **study-scoped** (`user_roles`). A user may hold several roles in one 
 Every permission in the matrix is now exercised by a real surface. Notable ones:
 
 - `study.settings.manage` — `/equipo/configuracion`: the study's title, status,
-  timezone, recruitment switch and screening URL, plus the automation rules. Only
+  timezone, recruitment switch and screening URL, the automation rules, and
+  (D-089) the programme itself — session templates and programme stages: their
+  names, order, modality and timing, every cohort's shared configuration. Only
   ADMIN. A facilitator who can use a template should not be able to change when
-  it fires (D-044).
+  it fires (D-044), and the same line now holds for who may redefine what every
+  cohort's sessions are.
 - `team.read` / `team.manage` — `/equipo/equipo`. Reading the team is not the
   same as changing it, so more roles hold `read`. Neither can create an account:
   logins live in Supabase Auth.

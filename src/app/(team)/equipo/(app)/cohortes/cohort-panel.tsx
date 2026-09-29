@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowRight, CalendarDays, ChevronDown, MessageSquare, Plus } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import type { StudyContext } from "@/auth/study-context";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,23 @@ import { assessCohortSize, nextCohortStatus, sizeIsCheckedAt } from "@/domain/co
 import { TASK_PRIORITIES } from "@/domain/automation";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import type { Locale } from "@/domain/locale";
-import { getCohortDetail, listAssignableStaff, listCohortNotes } from "@/services/cohorts";
+import { getCohortDetail, listAssignableStaff, listCohortNotes, listStudyArms } from "@/services/cohorts";
 import { listProgramStages } from "@/services/program-stages";
 import { listSessionTemplates, listSessions } from "@/services/sessions";
 import { getPublishedForSession, listContentsByType } from "@/services/content";
 import { listTemplates } from "@/services/communications";
 import { listTasks } from "@/services/automation";
 import { listParticipants } from "@/services/participant-ops";
-import { AddMemberForm, AdvanceCohortForm, AssignStaffForm, RevokeStaffForm } from "./cohort-forms";
+import {
+  AddMemberForm,
+  AdvanceCohortForm,
+  ArchiveCohortForm,
+  AssignStaffForm,
+  DeleteCohortForm,
+  EditCohortForm,
+  RevokeStaffForm,
+  UnarchiveCohortForm,
+} from "./cohort-forms";
 import { ContentSlot, type AssignableContentOption } from "./content-slot";
 import { CommsSlot, type AssignableTemplateOption } from "./comms-slot";
 import { CreateNoteForm, NoteCard } from "./cohort-notes";
@@ -67,6 +76,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
   const [
     assignable,
     addableParticipants,
+    arms,
     stages,
     templates,
     scheduledSessions,
@@ -80,6 +90,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     canManage
       ? listParticipants(ctx.study.id, { includeContact, eligibility: "ELIGIBLE" })
       : Promise.resolve([]),
+    canManage ? listStudyArms(ctx.study.id) : Promise.resolve([]),
     listProgramStages(ctx.study.id),
     listSessionTemplates(ctx.study.id),
     listSessions(ctx.study.id, { scope: ctx.cohortScope, cohortId }),
@@ -145,6 +156,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     alreadyAssigned: t("cohorts.error.alreadyAssigned"),
     cohortClosed: t("cohorts.error.cohortClosed"),
     badReference: t("participants.error.badReference"),
+    deleteReasonRequired: t("cohorts.error.deleteReasonRequired"),
     failed: t("cohorts.error.failed"),
   };
   const base = { submit: t("common.save"), submitting: t("common.loading"), errors };
@@ -198,6 +210,108 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
             ) : null}
           </div>
         </div>
+
+        {/* Configuration actions — edit, archive/unarchive, delete
+            (2026-09-28 request). Separate from the status/advance row above:
+            these touch the cohort's own settings, not its lifecycle. */}
+        {canManage ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {cohort.archivedAt ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {t("cohorts.archivedBadge")}
+              </span>
+            ) : null}
+
+            <Dialog>
+              <DialogTrigger
+                render={
+                  <Button variant="outline" size="xs" className="gap-1 rounded-md" />
+                }
+              >
+                <Pencil className="size-3" aria-hidden />
+                {t("cohorts.edit")}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t("cohorts.editTitle")}</DialogTitle>
+                </DialogHeader>
+                <EditCohortForm
+                  cohort={{
+                    id: cohort.id,
+                    code: cohort.code,
+                    name: cohort.name,
+                    plannedStartDate: cohort.plannedStartDate,
+                    plannedEndDate: cohort.plannedEndDate,
+                    armId: cohort.armId,
+                    minSize: cohort.minSize,
+                    maxSize: cohort.maxSize,
+                  }}
+                  arms={arms.map((a) => ({ id: a.id, label: `${a.code} · ${a.nameEs}` }))}
+                  labels={{
+                    ...base,
+                    code: t("cohorts.field.code"),
+                    name: t("cohorts.field.name"),
+                    start: t("cohorts.field.start"),
+                    end: t("cohorts.field.end"),
+                    minSize: t("cohorts.field.minSize"),
+                    maxSize: t("cohorts.field.maxSize"),
+                    sizeHelp: t("cohorts.field.sizeHelp"),
+                    arm: t("cohorts.field.arm"),
+                    armHelp: t("cohorts.field.armHelp"),
+                    armAny: t("cohorts.field.armAny"),
+                    saved: t("settings.saved"),
+                    errors,
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+
+            {cohort.archivedAt ? (
+              <UnarchiveCohortForm
+                cohortId={cohort.id}
+                labels={{ ...base, submit: t("cohorts.unarchive") }}
+              />
+            ) : (
+              <ArchiveCohortForm
+                cohortId={cohort.id}
+                labels={{ ...base, submit: t("cohorts.archive") }}
+              />
+            )}
+
+            <Dialog>
+              <DialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="gap-1 rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  />
+                }
+              >
+                <Trash2 className="size-3" aria-hidden />
+                {t("cohorts.delete")}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t("cohorts.deleteTitle", { code: cohort.code })}</DialogTitle>
+                </DialogHeader>
+                <DeleteCohortForm
+                  cohortId={cohort.id}
+                  labels={{
+                    ...base,
+                    submit: t("cohorts.deleteConfirm"),
+                    warning: t("cohorts.deleteWarning", {
+                      members: members.length,
+                      sessions: scheduledSessions.length,
+                    }),
+                    reason: t("cohorts.deleteReason"),
+                    errors,
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        ) : null}
 
         {next && sizeIsCheckedAt(next) && blocked ? (
           <p className="rounded-xl bg-surface-peach px-3 py-2 text-xs leading-relaxed text-surface-peach-ink">

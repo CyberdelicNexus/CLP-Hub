@@ -3667,6 +3667,111 @@ email send (no provider configured).
   handled state), and the changed queries against the database. Not verified: the
   page inside the real authenticated shell, the interactive send, or dark mode.
 
+## D-089 · 2026-09-28 · A programme configuration screen, cohort editing, and archive vs. delete
+
+Founder report, in the real study rather than DEMO: creating a new cohort
+showed no sessions to schedule. **Root cause, not a cohort bug.** Every cohort
+already shares one study-wide set of `session_templates` and `program_stages`
+(D-026, D-067) — the timeline the founder described as "todas las cohortes se
+mueven através de las mismas sesiones" is already how the architecture works.
+What the real study lacked was any *row* in either table: only
+`scripts/seed.ts` ever wrote them, and only for DEMO. There was, until this
+change, no admin screen that could — the same gap already named as an open
+question for `eligibility_reasons` ("no admin UI, only seed or a direct
+database change"). This closes it for the programme specifically.
+
+**A configuration screen, not another seed.** `/equipo/configuracion` gains a
+"Programa" section: create and edit programme stages and session templates
+(name, modality, order, day offset, which stage a session belongs to), and
+retire one by flag rather than delete — `setSessionTemplateActive` /
+`setProgramStageActive` never remove the row, because past sessions and
+content already point at it by id (D-026, D-029) and deleting it would orphan
+them. Gated on `study.settings.manage`, ADMIN only, the same reasoning
+D-044 gives automation rules: a facilitator who schedules one session for
+their own cohort should not be able to redefine what every cohort's sessions
+are. No new permission key — this is the existing key's boundary drawn
+around a second kind of configuration.
+
+**Cohort editing.** `updateCohort` lets staff correct a cohort's own code,
+name, dates, arm and size bounds after creation — fields that had a create
+form but no edit path. It deliberately never touches `status` or
+`currentStageId`: those carry rules (the forward-only lifecycle, the size
+check at ACTIVE, the arm check) that a generic field edit must not bypass, so
+they stay behind `advanceCohortStatus` and `setCohortStage`. Audited with only
+the fields that actually changed, the same pattern `updateStudySettings`
+(D-044) already established.
+
+**Archive, and separately, delete — two different questions with two
+different answers.** The founder asked for a delete button for demo and draft
+cohorts, and separately offered archiving as a fallback. Both were built,
+because they answer different questions:
+
+- **Archive (`archivedAt`, nullable)** hides a cohort from the ordinary
+  workspace list without touching anything it carries — reversible, and
+  deliberately not a new terminal `CohortStatus` value: archiving says
+  nothing about where a cohort was in its programme, the same reasoning
+  `active` already gives `session_templates` and `program_stages`. This is
+  the safe default and needs no justification to use.
+- **Delete (`deleteCohort`)** permanently removes the cohort and everything
+  scoped to it — sessions, attendance, pinned content, staff, notes, tasks,
+  logged communications, automation bookkeeping, and the participants' own
+  assignment rows to it.
+
+**Why delete exists at all, stated plainly.** Every other removal in this
+codebase is historical — `removedAt`, `revokedAt`, SUPERSEDED — precisely so
+"who was in what cohort when" stays reconstructable (D-023, D-025, D-035,
+D-038). A real hard delete of participant assignment history is exactly the
+thing this application otherwise refuses everywhere else, and it was not
+added lightly: the founder was asked directly whether a narrower design
+(delete blocked once a cohort had any participant, ever) would cover the
+need, and confirmed the actual need is broader — deleting a demo or draft
+cohort outright, participants and all, not correcting a cohort that actually
+ran. Two things keep it from being a silent eraser:
+
+- **A one-line reason is required**, not optional, and is written to the
+  audit row — together with a snapshot of the cohort's own configuration and
+  *counts* of what it carried (members, sessions, staff) — in the same
+  transaction, before the destructive deletes run. Never a participant's code
+  or name: this is the one place in the codebase that erases the rows
+  themselves, so what stays behind must not become a second, unredacted place
+  identities are readable from (D-037's redaction stance, extended to this
+  case). "A cohort of N people was deleted, by whom, when and why" stays
+  answerable after the rows are gone; who those N people were does not.
+- **Nothing cascades from `cohorts` at the database level.** Every foreign
+  key into a cohort is a plain reference, no `ON DELETE CASCADE` — so an
+  ordinary removal elsewhere in the codebase can never accidentally take a
+  cohort's history with it. `deleteCohort` deletes each dependent table
+  explicitly, in its own transaction, which is the only path this destruction
+  can happen through.
+
+**What this is not.** Not a correction tool — a participant wrongly assigned
+to a cohort is moved with `transferToCohort` or taken out with
+`removeFromCohort`, both already historical. Not a substitute for archiving —
+the button labels and the in-app warning both point at "Archivar" first for
+anyone who only wants a cohort off the list.
+
+Verified: typecheck, lint, the full test suite (433 tests, including a new
+`tests/cohort-admin.test.ts` asserting the audit-before-delete ordering, the
+required reason, that participants themselves are never deleted, and the
+permission gates on every new action) and the production build. Not
+verified: exercised against a real Postgres (this suite has no test database
+wired up, matching `tests/settings.test.ts`'s own constraint, noted there
+already) or in a browser.
+
+**Same-day follow-up: the CLP study's programme was actually configured**,
+closing the loop this decision otherwise leaves as a task for the founder.
+The founder confirmed the real trial runs the identical seven-stage S0–S6
+programme already modelled for DEMO (D-067, D-068) — same stage names, same
+session sequence and day offsets, nothing invented. `scripts/seed-program.ts`
+(one-time, idempotent, not synthetic seed data — these are the real trial's
+stage and session names for the real CLP study, rule 9 does not apply) wrote
+those seven stages and seven session templates against the live database.
+Confirmed by querying it directly afterward: both tables now hold the S0–S6
+rows for CLP, and the one cohort that already existed there (`C-DEMO`,
+RECRUITING) now shares them, same as every cohort created from here on.
+Adjusting the programme going forward belongs in Configuración → Programa
+(the screen this decision built), not back in this script.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the
@@ -3876,3 +3981,19 @@ email send (no provider configured).
   first-login change). Worth unique passwords, or at least a forced
   password reset, before this study is anything more than internal
   testing.
+- D-089's `deleteCohort` also deletes that cohort's logged communications and
+  automation bookkeeping (tasks, scheduled actions, study events) rather than
+  detaching them. Right for a demo/draft cohort with nothing real in it; worth
+  revisiting if a cohort that had already exchanged real messages is ever a
+  candidate for deletion — that log might be worth keeping even once the
+  cohort itself is gone.
+- D-089's `setSessionTemplateActive` / `setProgramStageActive` retire a row by
+  flag, permanently — there is no path to actually remove one, even a
+  template created by mistake with a typo'd code that nothing has ever
+  scheduled against. Worth a narrower "delete, but only if truly unused"
+  action if that turns out to be a real annoyance rather than a rare typo.
+- D-089 gates programme configuration (session templates, stages) on the same
+  `study.settings.manage` key as automation rules and the study record
+  itself — ADMIN only. Worth confirming that is the right line once a
+  STUDY_MANAGER is actually the one adjusting the programme day to day; today
+  they hold `cohorts.manage` but not this.

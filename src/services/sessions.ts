@@ -50,6 +50,15 @@ export class NotFoundError extends Error {
   }
 }
 
+export class ConflictError extends Error {
+  readonly reason: "duplicateCode";
+  constructor(reason: ConflictError["reason"]) {
+    super(reason);
+    this.name = "ConflictError";
+    this.reason = reason;
+  }
+}
+
 /** Narrowing on the cohort a session belongs to. Empty scope matches nothing. */
 function scopeFilter(scope: CohortScope) {
   if (scope === null) return undefined;
@@ -61,11 +70,16 @@ function scopeFilter(scope: CohortScope) {
 // Reads
 // ---------------------------------------------------------------------------
 
-export async function listSessionTemplates(studyId: string): Promise<SessionTemplate[]> {
+export async function listSessionTemplates(
+  studyId: string,
+  options?: { includeInactive?: boolean },
+): Promise<SessionTemplate[]> {
+  const filters = [eq(sessionTemplates.studyId, studyId)];
+  if (!options?.includeInactive) filters.push(eq(sessionTemplates.active, true));
   return getDb()
     .select()
     .from(sessionTemplates)
-    .where(and(eq(sessionTemplates.studyId, studyId), eq(sessionTemplates.active, true)))
+    .where(and(...filters))
     .orderBy(asc(sessionTemplates.position), asc(sessionTemplates.code));
 }
 
@@ -178,6 +192,181 @@ export async function getSessionDetail(
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------
+
+/**
+ * Create a session template — one row of the programme's definition (D-026).
+ * Every cohort in the study shares the same set of templates; scheduling a
+ * session for a specific cohort (`scheduleSession` below) is a separate,
+ * per-cohort action.
+ */
+export async function createSessionTemplate(params: {
+  studyId: string;
+  actorId: string;
+  code: string;
+  nameEs: string;
+  nameEn?: string | null;
+  armId?: string | null;
+  stageId?: string | null;
+  modality: SessionModality;
+  durationMinutes?: number | null;
+  dayOffset?: number | null;
+  position?: number;
+}): Promise<string> {
+  const { studyId, actorId } = params;
+  const code = params.code.trim().toLowerCase();
+  const nameEs = params.nameEs.trim();
+
+  return getDb().transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: sessionTemplates.id })
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.studyId, studyId), eq(sessionTemplates.code, code)))
+      .limit(1);
+    if (existing) throw new ConflictError("duplicateCode");
+
+    const [created] = await tx
+      .insert(sessionTemplates)
+      .values({
+        studyId,
+        code,
+        nameEs,
+        nameEn: params.nameEn?.trim() || null,
+        armId: params.armId || null,
+        stageId: params.stageId || null,
+        modality: params.modality,
+        durationMinutes: params.durationMinutes ?? null,
+        dayOffset: params.dayOffset ?? null,
+        position: params.position ?? 0,
+      })
+      .returning({ id: sessionTemplates.id });
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "session_template.created",
+      entityType: "session_template",
+      entityId: created.id,
+      // Configuration, not participant data: the whole shape is safe to
+      // snapshot, same reasoning as `automation_rule.created`.
+      after: {
+        code,
+        nameEs,
+        modality: params.modality,
+        stageId: params.stageId ?? null,
+        armId: params.armId ?? null,
+        dayOffset: params.dayOffset ?? null,
+      },
+    });
+
+    return created.id;
+  });
+}
+
+export async function updateSessionTemplate(params: {
+  studyId: string;
+  templateId: string;
+  actorId: string;
+  nameEs?: string;
+  nameEn?: string | null;
+  armId?: string | null;
+  stageId?: string | null;
+  modality?: SessionModality;
+  durationMinutes?: number | null;
+  dayOffset?: number | null;
+  position?: number;
+}): Promise<void> {
+  const { studyId, templateId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.id, templateId), eq(sessionTemplates.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("session template", templateId);
+
+    const patch = {
+      nameEs: params.nameEs !== undefined ? params.nameEs.trim() : current.nameEs,
+      nameEn: params.nameEn !== undefined ? (params.nameEn?.trim() || null) : current.nameEn,
+      armId: params.armId !== undefined ? params.armId : current.armId,
+      stageId: params.stageId !== undefined ? params.stageId : current.stageId,
+      modality: params.modality ?? current.modality,
+      durationMinutes: params.durationMinutes !== undefined ? params.durationMinutes : current.durationMinutes,
+      dayOffset: params.dayOffset !== undefined ? params.dayOffset : current.dayOffset,
+      position: params.position ?? current.position,
+    } satisfies Partial<SessionTemplate>;
+
+    const fields: (keyof typeof patch)[] = [
+      "nameEs",
+      "nameEn",
+      "armId",
+      "stageId",
+      "modality",
+      "durationMinutes",
+      "dayOffset",
+      "position",
+    ];
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+    for (const key of fields) {
+      if (patch[key] !== current[key]) {
+        before[key] = current[key];
+        after[key] = patch[key];
+      }
+    }
+    if (Object.keys(after).length === 0) return;
+
+    await tx.update(sessionTemplates).set(patch).where(eq(sessionTemplates.id, templateId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "session_template.updated",
+      entityType: "session_template",
+      entityId: templateId,
+      before,
+      after,
+    });
+  });
+}
+
+/**
+ * Retire (or restore) a session template. Deliberately a flag, not a delete:
+ * past sessions and content still point at the template by id (D-026, D-029),
+ * and removing the row would orphan them. Inactive templates simply stop
+ * appearing on a cohort's programme accordion and in the schedule-session
+ * picker.
+ */
+export async function setSessionTemplateActive(params: {
+  studyId: string;
+  templateId: string;
+  actorId: string;
+  active: boolean;
+}): Promise<void> {
+  const { studyId, templateId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({ id: sessionTemplates.id, code: sessionTemplates.code, active: sessionTemplates.active })
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.id, templateId), eq(sessionTemplates.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("session template", templateId);
+    if (current.active === params.active) return;
+
+    await tx.update(sessionTemplates).set({ active: params.active }).where(eq(sessionTemplates.id, templateId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: params.active ? "session_template.activated" : "session_template.deactivated",
+      entityType: "session_template",
+      entityId: templateId,
+      before: { active: current.active },
+      after: { active: params.active, code: current.code },
+    });
+  });
+}
 
 /**
  * Schedule a session for a cohort and open its register.

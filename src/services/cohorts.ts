@@ -5,15 +5,21 @@ import { recordStudyEvent } from "./automation";
 import type { CohortScope } from "@/auth/cohort-scope";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
+  alerts,
   cohortNotes,
+  cohortSessions,
   cohortStaff,
   cohorts,
+  communications,
   consents,
   participantCohortAssignments,
   participantContacts,
   participants,
   randomizations,
+  scheduledActions,
   studyArms,
+  studyEvents,
+  tasks,
   userRoles,
   users,
   type Cohort,
@@ -89,7 +95,9 @@ export class ConflictError extends Error {
     /** The cohort runs one arm and no allocation has been recorded yet. */
     | "armNotRecorded"
     /** Already in the cohort being moved to; nothing to do. */
-    | "sameCohort";
+    | "sameCohort"
+    /** `deleteCohort` was called with an empty or missing reason. */
+    | "deleteReasonRequired";
   constructor(reason: ConflictError["reason"]) {
     super(reason);
     this.name = "ConflictError";
@@ -121,9 +129,16 @@ export interface CohortListRow extends Cohort {
 
 export async function listCohorts(
   studyId: string,
-  options: { scope: CohortScope },
+  options: {
+    scope: CohortScope;
+    /** Archived cohorts are hidden from the ordinary workspace list by default. */
+    includeArchived?: boolean;
+  },
 ): Promise<CohortListRow[]> {
   const narrowing = scopeFilter(options.scope);
+  const filters = [eq(cohorts.studyId, studyId)];
+  if (narrowing) filters.push(narrowing);
+  if (!options.includeArchived) filters.push(isNull(cohorts.archivedAt));
 
   const rows = await getDb()
     .select({
@@ -144,7 +159,7 @@ export async function listCohorts(
       ),
     )
     .leftJoin(studyArms, eq(studyArms.id, cohorts.armId))
-    .where(narrowing ? and(eq(cohorts.studyId, studyId), narrowing) : eq(cohorts.studyId, studyId))
+    .where(and(...filters))
     .groupBy(cohorts.id, studyArms.code)
     .orderBy(asc(cohorts.code));
 
@@ -444,6 +459,243 @@ export async function advanceCohortStatus(params: {
       subject: { kind: "COHORT", id: cohortId },
       metadata: { cohortCode: current.code, from: current.status, to: status },
     });
+  });
+}
+
+/**
+ * Edit a cohort's own configuration — code, name, dates, arm and size bounds.
+ * Never touches `status` or `currentStageId`: those move through their own
+ * actions (`advanceCohortStatus`, `setCohortStage`) because each carries rules
+ * this generic edit must not bypass.
+ *
+ * Every field is optional so the form can submit only what changed; the audit
+ * row records just those fields, before and after, the same as every other
+ * configuration table in this codebase.
+ */
+export async function updateCohort(params: {
+  studyId: string;
+  cohortId: string;
+  actorId: string;
+  code?: string;
+  name?: string;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  armId?: string | null;
+  minSize?: number | null;
+  maxSize?: number | null;
+}): Promise<void> {
+  const { studyId, cohortId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(cohorts)
+      .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("cohort", cohortId);
+
+    const nextCode = params.code !== undefined ? params.code.trim().toUpperCase() : current.code;
+    if (nextCode !== current.code) {
+      const [existing] = await tx
+        .select({ id: cohorts.id })
+        .from(cohorts)
+        .where(and(eq(cohorts.studyId, studyId), eq(cohorts.code, nextCode)))
+        .limit(1);
+      if (existing) throw new ConflictError("duplicateCode");
+    }
+
+    const patch = {
+      code: nextCode,
+      name: params.name !== undefined ? params.name.trim() : current.name,
+      plannedStartDate: params.plannedStartDate !== undefined ? params.plannedStartDate : current.plannedStartDate,
+      plannedEndDate: params.plannedEndDate !== undefined ? params.plannedEndDate : current.plannedEndDate,
+      armId: params.armId !== undefined ? params.armId : current.armId,
+      minSize: params.minSize !== undefined ? params.minSize : current.minSize,
+      maxSize: params.maxSize !== undefined ? params.maxSize : current.maxSize,
+    } satisfies Partial<Cohort>;
+
+    // Nothing to audit or write when the submitted values match what is
+    // already stored (e.g. the form was opened and saved without a change).
+    const fields: (keyof typeof patch)[] = [
+      "code",
+      "name",
+      "plannedStartDate",
+      "plannedEndDate",
+      "armId",
+      "minSize",
+      "maxSize",
+    ];
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+    for (const key of fields) {
+      if (patch[key] !== current[key]) {
+        before[key] = current[key];
+        after[key] = patch[key];
+      }
+    }
+    if (Object.keys(after).length === 0) return;
+
+    await tx.update(cohorts).set(patch).where(eq(cohorts.id, cohortId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort.updated",
+      entityType: "cohort",
+      entityId: cohortId,
+      before,
+      after,
+    });
+  });
+}
+
+/**
+ * Archive a cohort — hides it from the ordinary workspace list without
+ * touching anything it carries (members, sessions, staff, history). Reversible
+ * (`unarchiveCohort`), and deliberately not a `CohortStatus` value: archiving a
+ * demo or stalled cohort says nothing about where it was in its programme
+ * (migration 0024).
+ */
+export async function archiveCohort(params: {
+  studyId: string;
+  cohortId: string;
+  actorId: string;
+}): Promise<void> {
+  const { studyId, cohortId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({ id: cohorts.id, code: cohorts.code, archivedAt: cohorts.archivedAt })
+      .from(cohorts)
+      .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("cohort", cohortId);
+    if (current.archivedAt) return;
+
+    const now = new Date();
+    await tx.update(cohorts).set({ archivedAt: now }).where(eq(cohorts.id, cohortId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort.archived",
+      entityType: "cohort",
+      entityId: cohortId,
+      after: { archivedAt: now.toISOString(), cohortCode: current.code },
+    });
+  });
+}
+
+export async function unarchiveCohort(params: {
+  studyId: string;
+  cohortId: string;
+  actorId: string;
+}): Promise<void> {
+  const { studyId, cohortId, actorId } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({ id: cohorts.id, code: cohorts.code, archivedAt: cohorts.archivedAt })
+      .from(cohorts)
+      .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("cohort", cohortId);
+    if (!current.archivedAt) return;
+
+    await tx.update(cohorts).set({ archivedAt: null }).where(eq(cohorts.id, cohortId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort.unarchived",
+      entityType: "cohort",
+      entityId: cohortId,
+      before: { archivedAt: current.archivedAt.toISOString() },
+      after: { cohortCode: current.code },
+    });
+  });
+}
+
+/**
+ * Permanently remove a cohort and everything scoped to it — sessions and their
+ * attendance and pinned content, staff assignments, sticky notes, tasks,
+ * logged communications and automation bookkeeping, and (2026-09-28 request)
+ * the participants' own assignment rows to it. This is the one place in this
+ * codebase that erases what is elsewhere treated as historical (D-023, D-025,
+ * D-035, D-038): it exists specifically for a demo or mistakenly-created
+ * cohort, not as a correction tool for a cohort that actually ran. See D-089.
+ *
+ * A one-line reason is REQUIRED and is the only thing left behind: the audit
+ * row captures the cohort's configuration and a count of what it carried —
+ * never participant codes or names — so "a cohort of N people was deleted, by
+ * whom, when and why" stays answerable after the rows themselves are gone.
+ */
+export async function deleteCohort(params: {
+  studyId: string;
+  cohortId: string;
+  actorId: string;
+  reason: string;
+}): Promise<void> {
+  const { studyId, cohortId, actorId } = params;
+  const reason = params.reason.trim();
+  if (!reason) throw new ConflictError("deleteReasonRequired");
+
+  await getDb().transaction(async (tx) => {
+    const [cohort] = await tx
+      .select()
+      .from(cohorts)
+      .where(and(eq(cohorts.id, cohortId), eq(cohorts.studyId, studyId)))
+      .limit(1);
+    if (!cohort) throw new NotFoundError("cohort", cohortId);
+
+    const [[memberRow], [sessionRow], [staffRow]] = await Promise.all([
+      tx.select({ n: count() }).from(participantCohortAssignments).where(eq(participantCohortAssignments.cohortId, cohortId)),
+      tx.select({ n: count() }).from(cohortSessions).where(eq(cohortSessions.cohortId, cohortId)),
+      tx.select({ n: count() }).from(cohortStaff).where(eq(cohortStaff.cohortId, cohortId)),
+    ]);
+
+    // The snapshot and the reason are written BEFORE the destructive deletes
+    // below, in the same transaction, so a failure partway through leaves
+    // neither a dangling audit row nor a silent deletion — same guarantee
+    // `recordAuditEvent`'s own doc comment describes.
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "cohort.deleted",
+      entityType: "cohort",
+      entityId: cohortId,
+      before: {
+        code: cohort.code,
+        name: cohort.name,
+        status: cohort.status,
+        armId: cohort.armId,
+        plannedStartDate: cohort.plannedStartDate,
+        plannedEndDate: cohort.plannedEndDate,
+      },
+      metadata: {
+        reason,
+        memberCount: Number(memberRow?.n ?? 0),
+        sessionCount: Number(sessionRow?.n ?? 0),
+        staffCount: Number(staffRow?.n ?? 0),
+      },
+    });
+
+    // Deleting cohort_sessions cascades to session_attendance and
+    // content_assignments at the database level (both declared ON DELETE
+    // CASCADE from cohort_sessions). Nothing cascades from `cohorts` itself,
+    // on purpose, so an ordinary removal never silently takes history with
+    // it — only this explicit, reasoned action does.
+    await tx.delete(cohortSessions).where(eq(cohortSessions.cohortId, cohortId));
+    await tx.delete(participantCohortAssignments).where(eq(participantCohortAssignments.cohortId, cohortId));
+    await tx.delete(cohortStaff).where(eq(cohortStaff.cohortId, cohortId));
+    await tx.delete(cohortNotes).where(eq(cohortNotes.cohortId, cohortId));
+    await tx.delete(tasks).where(eq(tasks.cohortId, cohortId));
+    await tx.delete(communications).where(eq(communications.cohortId, cohortId));
+    await tx.delete(alerts).where(eq(alerts.cohortId, cohortId));
+    await tx.delete(scheduledActions).where(eq(scheduledActions.cohortId, cohortId));
+    await tx.delete(studyEvents).where(eq(studyEvents.cohortId, cohortId));
+
+    await tx.delete(cohorts).where(eq(cohorts.id, cohortId));
   });
 }
 

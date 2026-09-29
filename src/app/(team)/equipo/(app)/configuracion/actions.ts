@@ -21,9 +21,29 @@ import {
 } from "@/domain/automation";
 import { LOCALES } from "@/domain/locale";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import {
+  SESSION_MODALITIES,
+  SESSION_TEMPLATE_CODE_PATTERN,
+  SESSION_TEMPLATE_NAME_MAX_LENGTH,
+} from "@/domain/session";
+import { STAGE_CODE_PATTERN, STAGE_NAME_MAX_LENGTH } from "@/domain/program-stage";
 import { STUDY_STATUSES } from "@/domain/study";
 import { logger } from "@/lib/logger";
 import { createRule, NotFoundError, RuleError, setRuleActive } from "@/services/automation";
+import {
+  createProgramStage,
+  ConflictError as ProgramStageConflictError,
+  NotFoundError as ProgramStageNotFoundError,
+  setProgramStageActive,
+  updateProgramStage,
+} from "@/services/program-stages";
+import {
+  createSessionTemplate,
+  ConflictError as SessionConflictError,
+  NotFoundError as SessionNotFoundError,
+  setSessionTemplateActive,
+  updateSessionTemplate,
+} from "@/services/sessions";
 import {
   InvalidSettingError,
   SCREENING_URL_MAX_LENGTH,
@@ -52,6 +72,7 @@ export type SettingsState = {
     | "unavailableDeliveryMode"
     | "invalidOffset"
     | "shape"
+    | "duplicateCode"
     | "failed"
     | null;
   ok?: boolean;
@@ -65,6 +86,10 @@ function fail(err: unknown, event: string): SettingsState {
     return { error: "forbidden" };
   }
   if (err instanceof NotFoundError) return { error: "notFound" };
+  if (err instanceof SessionNotFoundError) return { error: "notFound" };
+  if (err instanceof ProgramStageNotFoundError) return { error: "notFound" };
+  if (err instanceof SessionConflictError) return { error: "duplicateCode" };
+  if (err instanceof ProgramStageConflictError) return { error: "duplicateCode" };
   if (err instanceof InvalidSettingError) return { error: err.field };
   if (err instanceof RuleError) return { error: err.problem };
   logger.error(
@@ -256,6 +281,273 @@ export async function toggleRuleAction(
     });
   } catch (err) {
     return fail(err, "rule.toggle");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+// --- Programme: session templates and stages (2026-09-28 request) -----------
+//
+// Session names, order, modality and timings are this trial's programme
+// design, so they are configuration rows (D-026, D-067), never values in
+// code (non-negotiable 6) — and until now the only way to create one was a
+// seed script or a direct database change, which is why a study other than
+// DEMO had no programme to schedule sessions against. This section is that
+// missing admin surface. Gated the same as automation rules: `study.settings
+// .manage`, ADMIN only — a facilitator who schedules a session should not be
+// able to redefine what the whole study's sessions are (D-044's reasoning).
+
+const stageSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase())
+    .refine((v) => STAGE_CODE_PATTERN.test(v)),
+  nameEs: z.string().trim().min(1).max(STAGE_NAME_MAX_LENGTH),
+  nameEn: z.string().trim().max(STAGE_NAME_MAX_LENGTH).optional(),
+  modality: z.enum(SESSION_MODALITIES),
+  position: z.coerce.number().int().min(0).max(9999).default(0),
+});
+
+export async function createProgramStageAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = stageSchema.safeParse({
+    code: formData.get("code"),
+    nameEs: formData.get("nameEs"),
+    nameEn: formData.get("nameEn") ?? undefined,
+    modality: formData.get("modality"),
+    position: formData.get("position") ?? 0,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await createProgramStage({
+      studyId: ctx.study.id,
+      actorId: ctx.session.userId,
+      code: parsed.data.code,
+      nameEs: parsed.data.nameEs,
+      nameEn: parsed.data.nameEn || null,
+      modality: parsed.data.modality,
+      position: parsed.data.position,
+    });
+  } catch (err) {
+    return fail(err, "program_stage.create");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const stageUpdateSchema = z.object({
+  stageId: uuid,
+  nameEs: z.string().trim().min(1).max(STAGE_NAME_MAX_LENGTH),
+  nameEn: z.string().trim().max(STAGE_NAME_MAX_LENGTH).optional(),
+  modality: z.enum(SESSION_MODALITIES),
+  position: z.coerce.number().int().min(0).max(9999).default(0),
+});
+
+export async function updateProgramStageAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = stageUpdateSchema.safeParse({
+    stageId: formData.get("stageId"),
+    nameEs: formData.get("nameEs"),
+    nameEn: formData.get("nameEn") ?? undefined,
+    modality: formData.get("modality"),
+    position: formData.get("position") ?? 0,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await updateProgramStage({
+      studyId: ctx.study.id,
+      stageId: parsed.data.stageId,
+      actorId: ctx.session.userId,
+      nameEs: parsed.data.nameEs,
+      nameEn: parsed.data.nameEn || null,
+      modality: parsed.data.modality,
+      position: parsed.data.position,
+    });
+  } catch (err) {
+    return fail(err, "program_stage.update");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const stageToggleSchema = z.object({ stageId: uuid, active: z.enum(["true", "false"]) });
+
+export async function toggleProgramStageAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = stageToggleSchema.safeParse({
+    stageId: formData.get("stageId"),
+    active: formData.get("active"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await setProgramStageActive({
+      studyId: ctx.study.id,
+      stageId: parsed.data.stageId,
+      actorId: ctx.session.userId,
+      active: parsed.data.active === "true",
+    });
+  } catch (err) {
+    return fail(err, "program_stage.toggle");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const templateSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase())
+    .refine((v) => SESSION_TEMPLATE_CODE_PATTERN.test(v)),
+  nameEs: z.string().trim().min(1).max(SESSION_TEMPLATE_NAME_MAX_LENGTH),
+  nameEn: z.string().trim().max(SESSION_TEMPLATE_NAME_MAX_LENGTH).optional(),
+  stageId: z.union([uuid, z.literal("")]).optional(),
+  armId: z.union([uuid, z.literal("")]).optional(),
+  modality: z.enum(SESSION_MODALITIES),
+  durationMinutes: z.coerce.number().int().positive().optional(),
+  dayOffset: z.coerce.number().int().optional(),
+  position: z.coerce.number().int().min(0).max(9999).default(0),
+});
+
+export async function createSessionTemplateAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = templateSchema.safeParse({
+    code: formData.get("code"),
+    nameEs: formData.get("nameEs"),
+    nameEn: formData.get("nameEn") ?? undefined,
+    stageId: formData.get("stageId") ?? undefined,
+    armId: formData.get("armId") ?? undefined,
+    modality: formData.get("modality"),
+    durationMinutes: formData.get("durationMinutes") || undefined,
+    dayOffset: formData.get("dayOffset") || undefined,
+    position: formData.get("position") ?? 0,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await createSessionTemplate({
+      studyId: ctx.study.id,
+      actorId: ctx.session.userId,
+      code: parsed.data.code,
+      nameEs: parsed.data.nameEs,
+      nameEn: parsed.data.nameEn || null,
+      stageId: parsed.data.stageId || null,
+      armId: parsed.data.armId || null,
+      modality: parsed.data.modality,
+      durationMinutes: parsed.data.durationMinutes ?? null,
+      dayOffset: parsed.data.dayOffset ?? null,
+      position: parsed.data.position,
+    });
+  } catch (err) {
+    return fail(err, "session_template.create");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const templateUpdateSchema = templateSchema.omit({ code: true }).extend({ templateId: uuid });
+
+export async function updateSessionTemplateAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = templateUpdateSchema.safeParse({
+    templateId: formData.get("templateId"),
+    nameEs: formData.get("nameEs"),
+    nameEn: formData.get("nameEn") ?? undefined,
+    stageId: formData.get("stageId") ?? undefined,
+    armId: formData.get("armId") ?? undefined,
+    modality: formData.get("modality"),
+    durationMinutes: formData.get("durationMinutes") || undefined,
+    dayOffset: formData.get("dayOffset") || undefined,
+    position: formData.get("position") ?? 0,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await updateSessionTemplate({
+      studyId: ctx.study.id,
+      templateId: parsed.data.templateId,
+      actorId: ctx.session.userId,
+      nameEs: parsed.data.nameEs,
+      nameEn: parsed.data.nameEn || null,
+      stageId: parsed.data.stageId || null,
+      armId: parsed.data.armId || null,
+      modality: parsed.data.modality,
+      durationMinutes: parsed.data.durationMinutes ?? null,
+      dayOffset: parsed.data.dayOffset ?? null,
+      position: parsed.data.position,
+    });
+  } catch (err) {
+    return fail(err, "session_template.update");
+  }
+
+  revalidate();
+  return { error: null, ok: true };
+}
+
+const templateToggleSchema = z.object({ templateId: uuid, active: z.enum(["true", "false"]) });
+
+export async function toggleSessionTemplateAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = templateToggleSchema.safeParse({
+    templateId: formData.get("templateId"),
+    active: formData.get("active"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await setSessionTemplateActive({
+      studyId: ctx.study.id,
+      templateId: parsed.data.templateId,
+      actorId: ctx.session.userId,
+      active: parsed.data.active === "true",
+    });
+  } catch (err) {
+    return fail(err, "session_template.toggle");
   }
 
   revalidate();

@@ -132,3 +132,15 @@ export function tallyAttendance(statuses: readonly AttendanceStatus[]): Attendan
 /** Session name and location caps. Operational text, not clinical notes. */
 export const SESSION_NAME_MAX_LENGTH = 120;
 export const SESSION_LOCATION_MAX_LENGTH = 200;
+
+// ---------------------------------------------------------------------------
+// Session templates — the programme definition (Phase 4g)
+// ---------------------------------------------------------------------------
+
+/**
+ * A session template's code, e.g. `vida` or `orientacion_grupal` — the same
+ * lowercase-snake shape `program_stages.code` already uses (domain/program-
+ * stage.ts), enforced by the matching database check constraint.
+ */
+export const SESSION_TEMPLATE_CODE_PATTERN = /^[a-z][a-z0-9_-]{1,48}$/;
+export const SESSION_TEMPLATE_NAME_MAX_LENGTH = 120;

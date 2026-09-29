@@ -49,14 +49,19 @@ export default async function CohortsPage({
 
   const canManage = ctx.permissions.has("cohorts.manage");
   const narrowed = ctx.cohortScope !== null;
-  const [rows, arms, stages] = await Promise.all([
-    listCohorts(ctx.study.id, { scope: ctx.cohortScope }),
+  const [allRows, arms, stages] = await Promise.all([
+    listCohorts(ctx.study.id, { scope: ctx.cohortScope, includeArchived: true }),
     canManage ? listStudyArms(ctx.study.id) : Promise.resolve([]),
     listProgramStages(ctx.study.id),
   ]);
+  // Archived cohorts (2026-09-28 request) stay out of the main stack and its
+  // at-a-glance counts, but a direct link to one (from the archived section
+  // below, or an old bookmark) still opens it — see `selectedId` below.
+  const rows = allRows.filter((r) => !r.archivedAt);
+  const archivedRows = allRows.filter((r) => r.archivedAt);
 
   const { cohorte } = await searchParams;
-  const selectedId = rows.some((r) => r.id === cohorte) ? cohorte : rows[0]?.id;
+  const selectedId = allRows.some((r) => r.id === cohorte) ? cohorte : rows[0]?.id;
   const stageById = new Map(stages.map((s) => [s.id, s]));
 
   const occupancyLabels = {
@@ -221,6 +226,34 @@ export default async function CohortsPage({
                   </Link>
                 );
               })}
+
+              {/* Archived cohorts (2026-09-28 request) — hidden from the main
+                  stack and its glance counts, but not gone: collapsed here so
+                  a demo/draft cohort someone archived still "stays somewhere". */}
+              {canManage && archivedRows.length > 0 ? (
+                <details className="rounded-2xl bg-muted/40 p-3">
+                  <summary className="cursor-pointer text-xs font-medium tracking-wide text-muted-foreground uppercase [&::-webkit-details-marker]:hidden">
+                    {t("cohorts.archivedSection", { count: archivedRows.length })}
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {archivedRows.map((row) => (
+                      <Link
+                        key={row.id}
+                        href={`${TEAM_BASE_PATH}/cohortes?cohorte=${row.id}`}
+                        aria-current={row.id === selectedId ? "true" : undefined}
+                        className="flex items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+                      >
+                        <span className="truncate">
+                          <span data-numeric className="text-muted-foreground">
+                            {row.code}
+                          </span>{" "}
+                          {row.name}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
             </div>
 
             <div className="min-w-0">{selectedId ? <CohortPanel ctx={ctx} cohortId={selectedId} /> : null}</div>

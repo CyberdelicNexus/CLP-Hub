@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { X } from "lucide-react";
+import { Archive, ArchiveRestore, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,13 +9,17 @@ import { cn } from "@/lib/utils";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import {
   advanceCohortAction,
+  archiveCohortAction,
   assignStaffAction,
   assignToCohortAction,
   createCohortAction,
+  deleteCohortAction,
   recordRandomizationAction,
   removeFromCohortAction,
   revokeStaffAction,
   transferCohortAction,
+  unarchiveCohortAction,
+  updateCohortAction,
   type CohortState,
 } from "./actions";
 
@@ -116,6 +120,192 @@ export function CreateCohortForm({
       <div className="sm:col-span-2">
         <ErrorLine state={state} errors={labels.errors} />
       </div>
+    </form>
+  );
+}
+
+/**
+ * Edit a cohort's own configuration. Same fields and shape as
+ * `CreateCohortForm`, pre-filled and pointed at `updateCohortAction` instead —
+ * status and programme stage are not here, because each moves through its own
+ * action with its own rules (`AdvanceCohortForm`, the timeline's stage buttons).
+ */
+export function EditCohortForm({
+  cohort,
+  arms,
+  labels,
+}: {
+  cohort: {
+    id: string;
+    code: string;
+    name: string;
+    plannedStartDate: string | null;
+    plannedEndDate: string | null;
+    armId: string | null;
+    minSize: number | null;
+    maxSize: number | null;
+  };
+  arms: { id: string; label: string }[];
+  labels: Labels & {
+    code: string;
+    name: string;
+    start: string;
+    end: string;
+    minSize: string;
+    maxSize: string;
+    sizeHelp: string;
+    arm: string;
+    armHelp: string;
+    armAny: string;
+    saved: string;
+  };
+}) {
+  const [state, action, pending] = useActionState(updateCohortAction, initial);
+
+  return (
+    <form action={action} className="grid gap-3 sm:grid-cols-2">
+      <input type="hidden" name="cohortId" value={cohort.id} />
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-code">{labels.code}</Label>
+        <Input id="edit-code" name="code" required maxLength={32} defaultValue={cohort.code} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-name">{labels.name}</Label>
+        <Input id="edit-name" name="name" required maxLength={120} defaultValue={cohort.name} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-plannedStartDate">{labels.start}</Label>
+        <Input
+          id="edit-plannedStartDate"
+          name="plannedStartDate"
+          type="date"
+          defaultValue={cohort.plannedStartDate ?? ""}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-plannedEndDate">{labels.end}</Label>
+        <Input
+          id="edit-plannedEndDate"
+          name="plannedEndDate"
+          type="date"
+          defaultValue={cohort.plannedEndDate ?? ""}
+        />
+      </div>
+
+      {arms.length > 0 ? (
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="edit-armId">{labels.arm}</Label>
+          <select id="edit-armId" name="armId" defaultValue={cohort.armId ?? ""} className={SELECT_CLASS}>
+            <option value="">{labels.armAny}</option>
+            {arms.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.armHelp}</p>
+        </div>
+      ) : null}
+
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-minSize">{labels.minSize}</Label>
+        <Input
+          id="edit-minSize"
+          name="minSize"
+          type="number"
+          min={1}
+          inputMode="numeric"
+          defaultValue={cohort.minSize ?? ""}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-maxSize">{labels.maxSize}</Label>
+        <Input
+          id="edit-maxSize"
+          name="maxSize"
+          type="number"
+          min={1}
+          inputMode="numeric"
+          defaultValue={cohort.maxSize ?? ""}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">{labels.sizeHelp}</p>
+
+      <div className="flex items-center gap-2 sm:col-span-2">
+        <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+        {state.ok ? <p className="text-sm text-muted-foreground">{labels.saved}</p> : null}
+      </div>
+      <div className="sm:col-span-2">
+        <ErrorLine state={state} errors={labels.errors} />
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Hide a cohort from the ordinary workspace list without touching anything it
+ * carries. Reversible from the archived section (`UnarchiveCohortForm`).
+ */
+export function ArchiveCohortForm({ cohortId, labels }: { cohortId: string; labels: Labels }) {
+  const [state, action, pending] = useActionState(archiveCohortAction, initial);
+  return (
+    <form action={action} className="inline-flex flex-col items-end gap-1">
+      <input type="hidden" name="cohortId" value={cohortId} />
+      <Button type="submit" variant="outline" size="xs" className="gap-1 rounded-md" disabled={pending}>
+        <Archive className="size-3" aria-hidden />
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+      <ErrorLine state={state} errors={labels.errors} />
+    </form>
+  );
+}
+
+export function UnarchiveCohortForm({ cohortId, labels }: { cohortId: string; labels: Labels }) {
+  const [state, action, pending] = useActionState(unarchiveCohortAction, initial);
+  return (
+    <form action={action} className="inline-flex flex-col items-end gap-1">
+      <input type="hidden" name="cohortId" value={cohortId} />
+      <Button type="submit" variant="outline" size="xs" className="gap-1 rounded-md" disabled={pending}>
+        <ArchiveRestore className="size-3" aria-hidden />
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+      <ErrorLine state={state} errors={labels.errors} />
+    </form>
+  );
+}
+
+/**
+ * Permanently remove a cohort. See `deleteCohort` (services/cohorts.ts, D-089)
+ * for what this destroys. A one-line reason is required and is submitted with
+ * the deletion itself — there is no separate confirmation step here because
+ * the dialog this lives in (opened deliberately, never by accident) already
+ * is one, the same reasoning `size.confirmSubmit` uses for activating an
+ * out-of-bounds cohort.
+ */
+export function DeleteCohortForm({
+  cohortId,
+  labels,
+}: {
+  cohortId: string;
+  labels: Labels & { warning: string; reason: string };
+}) {
+  const [state, action, pending] = useActionState(deleteCohortAction, initial);
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="cohortId" value={cohortId} />
+      <p className="rounded-xl bg-surface-peach px-3 py-2 text-xs leading-relaxed text-surface-peach-ink">
+        {labels.warning}
+      </p>
+      <div className="space-y-1.5">
+        <Label htmlFor="delete-reason">{labels.reason}</Label>
+        <Input id="delete-reason" name="reason" required maxLength={280} />
+      </div>
+      <ErrorLine state={state} errors={labels.errors} />
+      <Button type="submit" variant="destructive" size="sm" className="rounded-lg" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
     </form>
   );
 }
