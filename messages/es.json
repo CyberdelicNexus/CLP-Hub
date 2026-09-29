@@ -140,8 +140,6 @@
       "label": "Herramientas de accesibilidad",
       "increaseText": "Aumentar el tamaño del texto",
       "decreaseText": "Reducir el tamaño del texto",
-      "muteColor": "Atenuar los colores",
-      "spacing": "Aumentar el espaciado del texto",
       "reset": "Restablecer"
     }
   },

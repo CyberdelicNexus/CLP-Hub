@@ -4303,6 +4303,28 @@ Verified: typecheck, lint, full test suite (451 passing, 5 new — the
 dual-field schema acceptance for titles/checklist items, and the three new
 `rich-text.ts` helpers), production build.
 
+## D-097 · 2026-09-29 · Accessibility toolbar: text size only, muted-colour and spacing removed
+
+Founder request: keep only the text-size control on the public study pages'
+`AccessibilityToolbar`; drop "atenuar colores" (muted/reduced-saturation)
+and "aumentar espacio" (looser line-height/letter-spacing) entirely, not
+just hide their buttons. Removed the `muted`/`spacing` fields from
+`A11yPrefs` outright — `accessibility-toolbar.tsx`'s `isA11yPrefs` type
+guard, `a11yContentClassName`, `DEFAULT_PREFS`, and the two `ToolButton`s
+are all simplified accordingly, rather than leaving dead state a future
+reader would have to figure out was intentionally unreachable. Their two
+`public.a11y.*` message keys (`muteColor`, `spacing`) are removed from both
+locales too.
+
+A stored preference from before this change (`{"text":"lg","muted":true,
+"spacing":true}` in a returning visitor's `localStorage`) still parses
+today via a stricter `isA11yPrefs` that now only checks `text` — the extra
+keys are simply ignored, not rejected, so no migration or version bump was
+needed; the value just quietly stops mattering.
+
+Verified: typecheck, lint, full test suite (451 passing, unchanged),
+production build.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
-import { Contrast, Minus, Plus, RotateCcw, Type } from "lucide-react";
+import { Minus, Plus, RotateCcw, Type } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "clp-a11y-prefs";
@@ -11,23 +11,14 @@ type TextStep = (typeof TEXT_STEPS)[number];
 
 interface A11yPrefs {
   text: TextStep;
-  /** "Wither the content" (2026-09-19 request) — read as a plain-language
-   * ask for less visual intensity, implemented as reduced saturation. */
-  muted: boolean;
-  spacing: boolean;
 }
 
-const DEFAULT_PREFS: A11yPrefs = { text: "md", muted: false, spacing: false };
+const DEFAULT_PREFS: A11yPrefs = { text: "md" };
 
 function isA11yPrefs(value: unknown): value is A11yPrefs {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
-  return (
-    typeof v.text === "string" &&
-    (TEXT_STEPS as readonly string[]).includes(v.text) &&
-    typeof v.muted === "boolean" &&
-    typeof v.spacing === "boolean"
-  );
+  return typeof v.text === "string" && (TEXT_STEPS as readonly string[]).includes(v.text);
 }
 
 /**
@@ -82,27 +73,23 @@ const TEXT_SCALE: Record<TextStep, string> = { md: "", lg: "text-[1.0625em]", xl
 /** Applied by the caller to whatever element wraps the page's readable
  * content — never global, so this can never bleed into the staff app. */
 export function a11yContentClassName(prefs: A11yPrefs): string {
-  return cn(
-    TEXT_SCALE[prefs.text],
-    prefs.muted && "saturate-[0.35]",
-    prefs.spacing && "leading-loose tracking-wide",
-  );
+  return cn(TEXT_SCALE[prefs.text]);
 }
 
 /**
  * Floating accessibility controls for the public study pages (2026-09-19
- * request) — this audience skews older adult (see the `text-lg` note on
- * both public page templates), so the tools are the ones that reader
- * actually benefits from: bigger text, calmer colour, and looser line
- * spacing for easier tracking, each a plain on/off or three-step control
- * rather than a settings page. Preferences are per-browser (localStorage),
- * the same "viewport preference, not data" reasoning as the sidebar's
- * collapsed state — nothing here is participant data.
+ * request; muted-colour and text-spacing controls removed 2026-09-29 —
+ * text size is the one the founder wanted kept) — this audience skews older
+ * adult (see the `text-lg` note on both public page templates), so a
+ * three-step text-size control is the tool that reader actually benefits
+ * from. Preference is per-browser (localStorage), the same "viewport
+ * preference, not data" reasoning as the sidebar's collapsed state —
+ * nothing here is participant data.
  */
 export function AccessibilityToolbar() {
   const t = useTranslations("public.a11y");
   const prefs = useA11yPrefs();
-  const isDefault = prefs.text === "md" && !prefs.muted && !prefs.spacing;
+  const isDefault = prefs.text === "md";
 
   function cycleText() {
     const i = TEXT_STEPS.indexOf(prefs.text);
@@ -137,21 +124,6 @@ export function AccessibilityToolbar() {
         icon={<Minus className="size-4" aria-hidden />}
       />
 
-      <div aria-hidden className="my-0.5 h-px w-6 bg-border" />
-
-      <ToolButton
-        onClick={() => setPrefs({ ...prefs, muted: !prefs.muted })}
-        active={prefs.muted}
-        label={t("muteColor")}
-        icon={<Contrast className="size-4" aria-hidden />}
-      />
-      <ToolButton
-        onClick={() => setPrefs({ ...prefs, spacing: !prefs.spacing })}
-        active={prefs.spacing}
-        label={t("spacing")}
-        icon={<span aria-hidden className="text-[0.7rem] font-bold leading-none">¶+</span>}
-      />
-
       {isDefault ? null : (
         <>
           <div aria-hidden className="my-0.5 h-px w-6 bg-border" />
@@ -168,7 +140,7 @@ export function AccessibilityToolbar() {
 }
 
 /**
- * Applies the current text-size/colour/spacing preferences to whatever it
+ * Applies the current text-size preference to whatever it
  * wraps. Split out from `AccessibilityToolbar` itself so the server
  * component layout can wrap just the readable content in it while the
  * toolbar floats separately — both read the same store, so a change in one
