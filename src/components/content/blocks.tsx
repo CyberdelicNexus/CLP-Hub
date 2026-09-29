@@ -108,7 +108,7 @@ function Block({ block }: { block: ContentBlock }) {
         <aside className={cn("flex gap-3 rounded-2xl p-5", surface)}>
           <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="min-w-0">
-            {block.title ? <p className="font-semibold">{block.title}</p> : null}
+            {block.title ? <p className="text-lg font-semibold">{block.title}</p> : null}
             <Markdown md={block.md} className="mt-1" />
           </div>
         </aside>

@@ -352,7 +352,7 @@ function InlineBlock({
                 value={block.title ?? ""}
                 onChange={(e) => onChange({ ...block, title: e.target.value })}
                 placeholder={f.title}
-                className={cn(SEAMLESS, "font-semibold")}
+                className={cn(SEAMLESS, "text-lg font-semibold")}
               />
               <div className="flex shrink-0 items-center gap-1">
                 {CALLOUT_TONES.map((tone) => (

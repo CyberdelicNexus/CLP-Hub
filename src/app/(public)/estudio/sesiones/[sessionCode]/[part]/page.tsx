@@ -62,22 +62,20 @@ export default async function SessionContentPage({ params }: { params: Promise<P
           <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             {page.title}
           </h1>
-          <p data-numeric className="text-xs text-muted-foreground">
-            {t("updated", { date: formatDate(page.updatedAt) })}
-          </p>
         </header>
 
-        {/* text-lg: this audience skews older adult (2026-09-19 request) —
-            the 1rem default read too small for a page meant to be read once
-            and acted on, not skimmed. */}
-        <div className="text-lg">
+        {/* text-[1.125em] (== text-lg's 1.125rem at the default root size): this
+            audience skews older adult (2026-09-19 request) — the 1rem default
+            read too small for a page meant to be read once and acted on, not
+            skimmed. Uses an em value rather than text-lg's rem so it compounds
+            with AccessibilityToolbar's own em-based text-size multiplier
+            (src/components/accessibility-toolbar.tsx) instead of overriding it —
+            text-lg silently defeated that toggle for all of this page's body
+            content (2026-09-29 finding). */}
+        <div className="text-[1.125em]">
           <ContentBlocks body={page.body} />
         </div>
       </div>
     </article>
   );
-}
-
-function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("es-ES", { dateStyle: "long" }).format(value);
 }

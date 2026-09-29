@@ -3902,6 +3902,73 @@ invitation section's own button, still pointed at the final invitation,
 unchanged. Verified: typecheck, lint, full suite, build, and a Playwright
 check of the rendered nav bar and hero button text/hrefs.
 
+## D-092 · 2026-09-29 · Content editor refinement — lote 1 (quick fixes) and a plan for lotes 2-5
+
+Founder asked for a batch of content-editor improvements (richer text editing,
+divider/columns blocks, image upload, block colors/alignment) plus two
+reported bugs: a 404 on the published-page link, and a slug that "didn't
+respect" what was typed at creation. Investigated directly against the
+production database and the live site before writing any code (see the
+approved plan, `mighty-pondering-possum.md`, for the full breakdown); the
+findings and lote-1 fixes are recorded here, lotes 2-5 (slug editing, new
+block types, a Tiptap rewrite of the rich-text fields, Supabase Storage image
+upload) are the approved plan for this same session, not yet shipped.
+
+**The 404 was not a code bug.** Queried the production Postgres directly:
+the reported URL's `content_versions` row was `PUBLISHED`, valid, and correct.
+Fetching the live URL returned **200** with `Cache-Control: no-store` and
+`X-Vercel-Cache: MISS` — confirmed (via the build output too: both
+`/estudio/[key]` and `/estudio/sesiones/[sessionCode]/[part]` compile as `ƒ`
+Dynamic, not static/ISR) that these pages render fresh on every request
+because `getLocale()`/`getTranslations` read `cookies()` internally, which
+opts the route out of static rendering. No caching layer exists to have
+served a stale 404. Most likely explanation: the link was visited in the
+few-minute window between the first publish attempt (archived 8 minutes
+later) and the version that's live now — a real but transient state, not a
+reproducible defect. No code changed for this; if it recurs, the next report
+needs the exact URL and timestamp to investigate with fresh data.
+
+**The slug bug is real, but not where it looked.** For `SESSION_PREPARATION`/
+`SESSION_INTEGRATION` content, `publicPathFor` (`src/domain/content.ts`)
+builds the URL from the linked session template's `code`, never from the
+`key` a staff member types when creating the content — that field is
+silently decorative for this content type. The session `code` *is* editable,
+but only from a completely different screen (`/equipo/configuracion`,
+programme setup), which is presumably why it read as "the slug didn't stick."
+Separately, discovered there is **no UI to edit `key` after creation at all**,
+for any content type. Lote 2 of the plan (not yet shipped) adds a proper
+rename UI for non-session content and clarifies the session case in place
+rather than pretending `key` is the slug there.
+
+**Accessibility bug, confirmed and fixed.** Used Playwright against the live
+site (`getComputedStyle` before/after clicking each toggle) rather than
+reading the code and assuming: the "increase text size" control
+(`AccessibilityToolbar`, `src/components/accessibility-toolbar.tsx`) correctly
+applies an em-based multiplier to a wrapper, but both public page templates
+wrapped their body in `<div className="text-lg">` — Tailwind's `text-lg` is
+`1.125rem`, an *absolute* unit that resets the cascade rather than compounding
+with the toolbar's `em`-based scaling above it. Net effect: the toggle visibly
+changed *something* (chrome outside that div) but never actually resized the
+one thing that matters, the article body. Fixed by swapping to the
+numerically-equivalent `text-[1.125em]` in both
+`src/app/(public)/estudio/[key]/page.tsx` and
+`.../sesiones/[sessionCode]/[part]/page.tsx` — same default visual size, now
+relative. The "muted colours" and "spacing" toggles were separately verified
+working correctly; only text-size was broken.
+
+**Also in lote 1**: removed the static "Actualizado el {fecha}" line from
+both public page templates (per founder request — it added no value on a page
+meant to be read once, not tracked for freshness) and its now-orphaned
+`public.study.updated` message key; bumped the CALLOUT block's title to
+`text-lg` in both the public renderer and the staff editor (was plain
+`font-semibold` at body size, hard to distinguish from the callout's own
+text).
+
+Verified: typecheck, lint, full test suite (433 passing), and a production
+build — confirming via the build's own route table that the two public
+content routes are dynamic, not static, which is what makes the 404 finding
+above trustworthy rather than assumed.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the
