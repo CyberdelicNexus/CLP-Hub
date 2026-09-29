@@ -51,6 +51,9 @@ const REAL_STAFF: ReadonlyArray<{ email: string; displayName: string; role: Staf
   { email: "joanajoanavidal@gmail.com", displayName: "Joana", role: "RESEARCHER" },
   { email: "drglowacki@gmail.com", displayName: "David", role: "SUPERVISOR" },
   { email: "jlhardyphd@gmail.com", displayName: "Joe", role: "SUPERVISOR" },
+  // 2026-09-29 request: two more RESEARCHER accounts, same SEED_STAFF_PASSWORD.
+  { email: "swayambujnana@gmail.com", displayName: "Justin", role: "RESEARCHER" },
+  { email: "valerie.bonnelle@hotmail.fr", displayName: "Valerie", role: "RESEARCHER" },
 ];
 
 /** seed.ts's DEMO_STAFF pattern: demo.<role>@example.com, one per role. */
