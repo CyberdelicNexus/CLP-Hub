@@ -8,6 +8,7 @@ import type { SessionModality } from "@/domain/session";
 import {
   createProgramStageAction,
   createSessionTemplateAction,
+  renameSessionTemplateCodeAction,
   toggleProgramStageAction,
   toggleSessionTemplateAction,
   updateProgramStageAction,
@@ -405,6 +406,42 @@ export function EditSessionTemplateForm({
       <div className="sm:col-span-2">
         <ErrorLine state={state} errors={labels.errors} />
       </div>
+    </form>
+  );
+}
+
+/**
+ * Rename a session template's `code` — separate from `EditSessionTemplateForm`
+ * because `code` is deliberately excluded from that form's schema (renaming a
+ * slug is its own act, same reasoning as content's `RenameKeyForm`). This is
+ * the URL segment `/estudio/sesiones/{code}/preparacion` (or `/integracion`)
+ * actually uses (2026-09-29 request, after S0's code being literally
+ * "preparacion" produced a confusing `/preparacion/preparacion` URL).
+ */
+export function RenameSessionTemplateCodeForm({
+  templateId,
+  currentCode,
+  labels,
+}: {
+  templateId: string;
+  currentCode: string;
+  labels: SettingsLabels & { code: string; codeWarning: string };
+}) {
+  const [state, action, pending] = useActionState(renameSessionTemplateCodeAction, initial);
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="templateId" value={templateId} />
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-40 flex-1 space-y-1.5">
+          <Label htmlFor={`rename-code-${templateId}`}>{labels.code}</Label>
+          <Input id={`rename-code-${templateId}`} name="code" required maxLength={49} defaultValue={currentCode} />
+        </div>
+        <Button type="submit" size="xs" variant="outline" className="rounded-md" disabled={pending}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{labels.codeWarning}</p>
+      <ErrorLine state={state} errors={labels.errors} />
     </form>
   );
 }

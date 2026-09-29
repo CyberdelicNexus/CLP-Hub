@@ -41,6 +41,7 @@ import {
   createSessionTemplate,
   ConflictError as SessionConflictError,
   NotFoundError as SessionNotFoundError,
+  renameSessionTemplateCode,
   setSessionTemplateActive,
   updateSessionTemplate,
 } from "@/services/sessions";
@@ -520,6 +521,56 @@ export async function updateSessionTemplateAction(
   }
 
   revalidate();
+  return { error: null, ok: true };
+}
+
+const templateCodeSchema = z.object({
+  templateId: uuid,
+  code: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase())
+    .refine((v) => SESSION_TEMPLATE_CODE_PATTERN.test(v)),
+});
+
+/**
+ * Rename a session template's `code` — the URL segment its public
+ * preparation/integration pages use (2026-09-29 request: S0's code was
+ * literally "preparacion", which collided with the fixed "preparacion"/
+ * "integracion" part segment to produce `/estudio/sesiones/preparacion/
+ * preparacion`). Separate from `updateSessionTemplateAction` because
+ * `templateUpdateSchema` deliberately excludes `code` — same "renaming a
+ * slug is its own act, not bundled into the general edit form" shape as
+ * `renameContentKeyAction` (contenido/actions.ts).
+ */
+export async function renameSessionTemplateCodeAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = templateCodeSchema.safeParse({
+    templateId: formData.get("templateId"),
+    code: formData.get("code"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await renameSessionTemplateCode({
+      studyId: ctx.study.id,
+      templateId: parsed.data.templateId,
+      actorId: ctx.session.userId,
+      code: parsed.data.code,
+    });
+  } catch (err) {
+    return fail(err, "session_template.rename_code");
+  }
+
+  revalidate();
+  // Public preparation/integration pages read this code directly.
+  revalidatePath("/estudio", "layout");
   return { error: null, ok: true };
 }
 

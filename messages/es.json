@@ -932,6 +932,7 @@
       "session__scheduled": "Sesión programada",
       "session__status_changed": "Cambio de estado de la sesión",
       "session_template__activated": "Sesión activada",
+      "session_template__code_renamed": "Código de la sesión cambiado",
       "session_template__created": "Sesión creada",
       "session_template__deactivated": "Sesión desactivada",
       "session_template__updated": "Sesión editada",
@@ -1413,6 +1414,7 @@
   },
   "program": {
     "title": "Programa",
+    "showEditing": "Mostrar edición del programa y las sesiones",
     "boundary": "Etapas y sesiones son la configuración de este estudio: todas las cohortes recorren el mismo programa. Programar una sesión para una cohorte concreta se hace desde su propia página, no aquí.",
     "stages": "Etapas del programa",
     "noStages": "Todavía no se ha configurado ninguna etapa.",
@@ -1426,8 +1428,9 @@
     "inactive": "Inactiva",
     "field": {
       "code": "Código",
-      "stageCodeHelp": "Identificador interno en minúsculas, p. ej. \"preparacion\". No se puede cambiar después.",
-      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"vida\". Lo usan el contenido y las plantillas de mensajes; no se puede cambiar después.",
+      "codeWarning": "Cambiar el código rompe cualquier enlace ya compartido con la dirección anterior (p. ej. /estudio/sesiones/{código}/preparacion): no se redirige automáticamente.",
+      "stageCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\". Se puede renombrar después desde la lista, si hace falta.",
+      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\" — aparece en la URL pública de la sesión (/estudio/sesiones/{código}/preparacion). Se puede renombrar después desde la lista.",
       "nameEs": "Nombre (español)",
       "nameEn": "Nombre (inglés, opcional)",
       "modality": "Modalidad",

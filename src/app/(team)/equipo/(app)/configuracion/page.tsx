@@ -29,6 +29,7 @@ import {
   CreateSessionTemplateForm,
   EditProgramStageForm,
   EditSessionTemplateForm,
+  RenameSessionTemplateCodeForm,
   ToggleProgramStageForm,
   ToggleSessionTemplateForm,
 } from "./program-forms";
@@ -153,170 +154,191 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>{t("program.title")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8">
-          <p className="rounded-xl bg-surface-sky px-4 py-3 text-xs leading-relaxed text-surface-sky-ink">
-            {t("program.boundary")}
-          </p>
+        <CardContent>
+          {/* Collapsed by default (2026-09-29 request): the programme is
+              settled and staff shouldn't stumble into editing it day to
+              day — still reachable, just tucked behind a click. */}
+          <details className="group/program-editing">
+            <summary className="cursor-pointer list-none text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline [&::-webkit-details-marker]:hidden">
+              {t("program.showEditing")}
+            </summary>
+            <div className="mt-4 space-y-8">
+              <p className="rounded-xl bg-surface-sky px-4 py-3 text-xs leading-relaxed text-surface-sky-ink">
+                {t("program.boundary")}
+              </p>
 
-          {/* Stages -------------------------------------------------------- */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">{t("program.stages")}</h3>
-            {stages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("program.noStages")}</p>
-            ) : (
-              <ul className="divide-y">
-                {stages.map((stage) => (
-                  <li key={stage.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                    <details>
-                      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                        <span className="flex items-center gap-2 text-sm">
-                          <span data-numeric className="text-xs text-muted-foreground">
-                            {stage.position}
-                          </span>
-                          <span className="font-medium">{stage.nameEs}</span>
-                          <StatusBadge tone="neutral">{t(`sessions.modality.${stage.modality}`)}</StatusBadge>
-                          {!stage.active ? (
-                            <StatusBadge tone="neutral">{t("program.inactive")}</StatusBadge>
-                          ) : null}
-                        </span>
-                        <span className="text-xs text-muted-foreground underline-offset-4 hover:underline">
-                          {t("program.edit")}
-                        </span>
-                      </summary>
-                      <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                        <EditProgramStageForm
-                          stage={stage}
-                          modalities={modalityOptions}
+              {/* Stages ---------------------------------------------------- */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">{t("program.stages")}</h3>
+                {stages.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("program.noStages")}</p>
+                ) : (
+                  <ul className="divide-y">
+                    {stages.map((stage) => (
+                      <li key={stage.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                        <details>
+                          <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                            <span className="flex items-center gap-2 text-sm">
+                              <span data-numeric className="text-xs text-muted-foreground">
+                                {stage.position}
+                              </span>
+                              <span className="font-medium">{stage.nameEs}</span>
+                              <StatusBadge tone="neutral">{t(`sessions.modality.${stage.modality}`)}</StatusBadge>
+                              {!stage.active ? (
+                                <StatusBadge tone="neutral">{t("program.inactive")}</StatusBadge>
+                              ) : null}
+                            </span>
+                            <span className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                              {t("program.edit")}
+                            </span>
+                          </summary>
+                          <div className="mt-3 rounded-xl bg-muted/40 p-3">
+                            <EditProgramStageForm
+                              stage={stage}
+                              modalities={modalityOptions}
+                              labels={{
+                                ...labels,
+                                nameEs: t("program.field.nameEs"),
+                                nameEn: t("program.field.nameEn"),
+                                modality: t("program.field.modality"),
+                                position: t("program.field.position"),
+                                saved: t("settings.saved"),
+                              }}
+                            />
+                          </div>
+                        </details>
+                        <ToggleProgramStageForm
+                          stageId={stage.id}
+                          active={stage.active}
                           labels={{
                             ...labels,
-                            nameEs: t("program.field.nameEs"),
-                            nameEn: t("program.field.nameEn"),
-                            modality: t("program.field.modality"),
-                            position: t("program.field.position"),
-                            saved: t("settings.saved"),
+                            submit: stage.active ? t("program.deactivate") : t("program.activate"),
                           }}
                         />
-                      </div>
-                    </details>
-                    <ToggleProgramStageForm
-                      stageId={stage.id}
-                      active={stage.active}
-                      labels={{
-                        ...labels,
-                        submit: stage.active ? t("program.deactivate") : t("program.activate"),
-                      }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="border-t border-border pt-4">
-              <h4 className="mb-3 text-sm font-medium">{t("program.newStage")}</h4>
-              <CreateProgramStageForm
-                modalities={modalityOptions}
-                labels={{
-                  ...labels,
-                  submit: t("program.newStage"),
-                  code: t("program.field.code"),
-                  codeHelp: t("program.field.stageCodeHelp"),
-                  nameEs: t("program.field.nameEs"),
-                  nameEn: t("program.field.nameEn"),
-                  modality: t("program.field.modality"),
-                  position: t("program.field.position"),
-                }}
-              />
-            </div>
-          </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="border-t border-border pt-4">
+                  <h4 className="mb-3 text-sm font-medium">{t("program.newStage")}</h4>
+                  <CreateProgramStageForm
+                    modalities={modalityOptions}
+                    labels={{
+                      ...labels,
+                      submit: t("program.newStage"),
+                      code: t("program.field.code"),
+                      codeHelp: t("program.field.stageCodeHelp"),
+                      nameEs: t("program.field.nameEs"),
+                      nameEn: t("program.field.nameEn"),
+                      modality: t("program.field.modality"),
+                      position: t("program.field.position"),
+                    }}
+                  />
+                </div>
+              </div>
 
-          {/* Session templates ---------------------------------------------- */}
-          <div className="space-y-4 border-t border-border pt-6">
-            <h3 className="text-sm font-medium">{t("program.templates")}</h3>
-            {sessionTemplates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("program.noTemplates")}</p>
-            ) : (
-              <ul className="divide-y">
-                {sessionTemplates.map((tpl) => {
-                  const stage = stages.find((s) => s.id === tpl.stageId);
-                  return (
-                    <li key={tpl.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                      <details>
-                        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                          <span className="flex flex-wrap items-center gap-2 text-sm">
-                            <code className="font-mono text-xs text-muted-foreground">{tpl.code}</code>
-                            <span className="font-medium">{tpl.nameEs}</span>
-                            <StatusBadge tone="neutral">{t(`sessions.modality.${tpl.modality}`)}</StatusBadge>
-                            {stage ? <StatusBadge tone="neutral">{stage.nameEs}</StatusBadge> : null}
-                            {!tpl.active ? (
-                              <StatusBadge tone="neutral">{t("program.inactive")}</StatusBadge>
-                            ) : null}
-                          </span>
-                          <span className="text-xs text-muted-foreground underline-offset-4 hover:underline">
-                            {t("program.edit")}
-                          </span>
-                        </summary>
-                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                          <EditSessionTemplateForm
-                            template={tpl}
-                            stages={stageOptions}
-                            arms={armOptions}
-                            modalities={modalityOptions}
+              {/* Session templates ------------------------------------------ */}
+              <div className="space-y-4 border-t border-border pt-6">
+                <h3 className="text-sm font-medium">{t("program.templates")}</h3>
+                {sessionTemplates.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("program.noTemplates")}</p>
+                ) : (
+                  <ul className="divide-y">
+                    {sessionTemplates.map((tpl) => {
+                      const stage = stages.find((s) => s.id === tpl.stageId);
+                      return (
+                        <li key={tpl.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                          <details>
+                            <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                              <span className="flex flex-wrap items-center gap-2 text-sm">
+                                <code className="font-mono text-xs text-muted-foreground">{tpl.code}</code>
+                                <span className="font-medium">{tpl.nameEs}</span>
+                                <StatusBadge tone="neutral">{t(`sessions.modality.${tpl.modality}`)}</StatusBadge>
+                                {stage ? <StatusBadge tone="neutral">{stage.nameEs}</StatusBadge> : null}
+                                {!tpl.active ? (
+                                  <StatusBadge tone="neutral">{t("program.inactive")}</StatusBadge>
+                                ) : null}
+                              </span>
+                              <span className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                                {t("program.edit")}
+                              </span>
+                            </summary>
+                            <div className="mt-3 rounded-xl bg-muted/40 p-3">
+                              <EditSessionTemplateForm
+                                template={tpl}
+                                stages={stageOptions}
+                                arms={armOptions}
+                                modalities={modalityOptions}
+                                labels={{
+                                  ...labels,
+                                  nameEs: t("program.field.nameEs"),
+                                  nameEn: t("program.field.nameEn"),
+                                  modality: t("program.field.modality"),
+                                  stage: t("program.field.stage"),
+                                  stageNone: t("program.field.stageNone"),
+                                  arm: t("cohorts.field.arm"),
+                                  armAny: t("cohorts.field.armAny"),
+                                  duration: t("program.field.duration"),
+                                  dayOffset: t("program.field.dayOffset"),
+                                  dayOffsetHelp: t("program.field.dayOffsetHelp"),
+                                  position: t("program.field.position"),
+                                  saved: t("settings.saved"),
+                                }}
+                              />
+                              <div className="mt-3 border-t border-border pt-3">
+                                <RenameSessionTemplateCodeForm
+                                  templateId={tpl.id}
+                                  currentCode={tpl.code}
+                                  labels={{
+                                    ...labels,
+                                    code: t("program.field.code"),
+                                    codeWarning: t("program.field.codeWarning"),
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </details>
+                          <ToggleSessionTemplateForm
+                            templateId={tpl.id}
+                            active={tpl.active}
                             labels={{
                               ...labels,
-                              nameEs: t("program.field.nameEs"),
-                              nameEn: t("program.field.nameEn"),
-                              modality: t("program.field.modality"),
-                              stage: t("program.field.stage"),
-                              stageNone: t("program.field.stageNone"),
-                              arm: t("cohorts.field.arm"),
-                              armAny: t("cohorts.field.armAny"),
-                              duration: t("program.field.duration"),
-                              dayOffset: t("program.field.dayOffset"),
-                              dayOffsetHelp: t("program.field.dayOffsetHelp"),
-                              position: t("program.field.position"),
-                              saved: t("settings.saved"),
+                              submit: tpl.active ? t("program.deactivate") : t("program.activate"),
                             }}
                           />
-                        </div>
-                      </details>
-                      <ToggleSessionTemplateForm
-                        templateId={tpl.id}
-                        active={tpl.active}
-                        labels={{
-                          ...labels,
-                          submit: tpl.active ? t("program.deactivate") : t("program.activate"),
-                        }}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            <div className="border-t border-border pt-4">
-              <h4 className="mb-3 text-sm font-medium">{t("program.newTemplate")}</h4>
-              <CreateSessionTemplateForm
-                stages={stageOptions}
-                arms={armOptions}
-                modalities={modalityOptions}
-                labels={{
-                  ...labels,
-                  submit: t("program.newTemplate"),
-                  code: t("program.field.code"),
-                  codeHelp: t("program.field.templateCodeHelp"),
-                  nameEs: t("program.field.nameEs"),
-                  nameEn: t("program.field.nameEn"),
-                  modality: t("program.field.modality"),
-                  stage: t("program.field.stage"),
-                  stageNone: t("program.field.stageNone"),
-                  arm: t("cohorts.field.arm"),
-                  armAny: t("cohorts.field.armAny"),
-                  duration: t("program.field.duration"),
-                  dayOffset: t("program.field.dayOffset"),
-                  dayOffsetHelp: t("program.field.dayOffsetHelp"),
-                  position: t("program.field.position"),
-                }}
-              />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <div className="border-t border-border pt-4">
+                  <h4 className="mb-3 text-sm font-medium">{t("program.newTemplate")}</h4>
+                  <CreateSessionTemplateForm
+                    stages={stageOptions}
+                    arms={armOptions}
+                    modalities={modalityOptions}
+                    labels={{
+                      ...labels,
+                      submit: t("program.newTemplate"),
+                      code: t("program.field.code"),
+                      codeHelp: t("program.field.templateCodeHelp"),
+                      nameEs: t("program.field.nameEs"),
+                      nameEn: t("program.field.nameEn"),
+                      modality: t("program.field.modality"),
+                      stage: t("program.field.stage"),
+                      stageNone: t("program.field.stageNone"),
+                      arm: t("cohorts.field.arm"),
+                      armAny: t("cohorts.field.armAny"),
+                      duration: t("program.field.duration"),
+                      dayOffset: t("program.field.dayOffset"),
+                      dayOffsetHelp: t("program.field.dayOffsetHelp"),
+                      position: t("program.field.position"),
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </details>
         </CardContent>
       </Card>
 

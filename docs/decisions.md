@@ -4325,6 +4325,68 @@ needed; the value just quietly stops mattering.
 Verified: typecheck, lint, full test suite (451 passing, unchanged),
 production build.
 
+## D-098 · 2026-09-29 · Session template codes are now renameable; the programme editing UI is collapsed by default; S0 renamed
+
+Two related requests. First, the founder reported the same
+`/estudio/sesiones/preparacion/preparacion` URL from D-092 404ing again.
+Re-checked live: it was returning 200 at the time (transient, as in
+D-092) — but the founder's real point was that the URL itself is bad: S0's
+session template `code` was literally the string `"preparacion"`, which
+collides with the fixed `preparacion`/`integracion` part segment
+`publicPathFor` (`domain/content.ts`) always appends, producing that
+confusing doubled path. Asked for `s0/preparacion` and `s0/integracion`
+instead.
+
+**There was no way to rename a session template's `code` at all.**
+`updateSessionTemplateAction`'s schema (`configuracion/actions.ts`)
+explicitly does `templateSchema.omit({ code: true })` — the same
+create-only-immutable gap `renameContentKey` (D-092/lote 2) fixed for
+`contents.key`, just on the sessions side. Fixed the same way: a new
+`renameSessionTemplateCode` (`services/sessions.ts`, transaction +
+uniqueness check + `recordAuditEvent`, action `session_template
+.code_renamed`), a server action, and a `RenameSessionTemplateCodeForm`
+(`configuracion/program-forms.tsx`) next to each session template's edit
+form. Same tradeoff as `renameContentKey`: no redirect from the old code —
+that infrastructure still doesn't exist, so a link built from the old code
+starts 404ing the moment it's renamed (confirmed directly: `/estudio/
+sesiones/s0/preparacion` → 200, `/estudio/sesiones/preparacion/preparacion`
+→ 404, immediately after the rename below). The stage-code and template-
+code help text (`program.field.stageCodeHelp`/`templateCodeHelp`) both
+previously said "cannot be changed later" — now false, corrected in both
+locales, and their example changed from the literal `"preparacion"` that
+caused this whole report to `"s0"`.
+
+**Second, separately: "hide the ability to edit sessions and programme in
+settings — that's already solid and won't change."** The entire Programme
+card's body (stages list/create/edit, session templates list/create/edit,
+including the new rename form) is now wrapped in a single collapsed
+`<details>` (`configuracion/page.tsx`) behind a `program.showEditing`
+summary line, rather than always rendered open. Deliberately *hidden*, not
+removed — "esconde" was the founder's own word — so the capability (and the
+just-added rename form) stays reachable the rare time it's needed without
+sitting open by default on a page for a structure the founder considers
+finished.
+
+**S0 was actually renamed** (`preparacion` → `s0`) as part of this same
+change, using the new `renameSessionTemplateCode` logic — but not by
+clicking through the (now-freshly-built, not yet deployed at the time)
+UI: replicated by hand in a throwaway script
+(`scripts/_rename-s0-code.ts`, deleted immediately after running, not
+committed) using the exact same transaction/uniqueness-check/audit-event
+shape as the real service function, because every `src/services/*.ts`
+module transitively imports `server-only` via `src/db/client.ts`, which
+throws when required outside Next's own bundler — the same reason
+`scripts/provision-staff.ts` already talks to Drizzle directly instead of
+importing the service layer. The audit event now on record was raised
+under the CLP study's ADMIN account, same as it would have been from the
+UI. This mirrors D-092's own investigation methodology: verify against the
+real database and the real live URL, not just the code.
+
+Verified: typecheck, lint, full test suite (451 passing, unchanged —
+no new domain logic here beyond the sessions-service mirror of an already-
+tested pattern), production build, and the actual public URLs (curled
+directly, see above).
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

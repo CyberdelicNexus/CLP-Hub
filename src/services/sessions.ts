@@ -331,6 +331,59 @@ export async function updateSessionTemplate(params: {
 }
 
 /**
+ * Rename a session template's `code` — the public URL segment for its
+ * SESSION_PREPARATION/SESSION_INTEGRATION content (`publicPathFor`,
+ * `domain/content.ts`: `/estudio/sesiones/{code}/{preparacion|integracion}`).
+ * There was previously no way to do this at all: `updateSessionTemplate`
+ * explicitly omits `code`, and the create-time-only assumption meant a code
+ * picked early (or, as happened for S0, one that collided in an
+ * unfortunate way with the fixed "preparacion"/"integracion" part segment —
+ * producing `/estudio/sesiones/preparacion/preparacion`, confusing enough
+ * to be reported as a bug) could never be fixed afterward (2026-09-29
+ * request). No redirect from the old code: same tradeoff already accepted
+ * for `contents.key` (`renameContentKey`), and for the same reason — no
+ * such infrastructure exists yet.
+ */
+export async function renameSessionTemplateCode(params: {
+  studyId: string;
+  templateId: string;
+  actorId: string;
+  code: string;
+}): Promise<void> {
+  const { studyId, templateId, actorId } = params;
+  const code = params.code.trim().toLowerCase();
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({ id: sessionTemplates.id, code: sessionTemplates.code })
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.id, templateId), eq(sessionTemplates.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("session template", templateId);
+    if (current.code === code) return;
+
+    const [existing] = await tx
+      .select({ id: sessionTemplates.id })
+      .from(sessionTemplates)
+      .where(and(eq(sessionTemplates.studyId, studyId), eq(sessionTemplates.code, code)))
+      .limit(1);
+    if (existing) throw new ConflictError("duplicateCode");
+
+    await tx.update(sessionTemplates).set({ code }).where(eq(sessionTemplates.id, templateId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "session_template.code_renamed",
+      entityType: "session_template",
+      entityId: templateId,
+      before: { code: current.code },
+      after: { code },
+    });
+  });
+}
+
+/**
  * Retire (or restore) a session template. Deliberately a flag, not a delete:
  * past sessions and content still point at the template by id (D-026, D-029),
  * and removing the row would orphan them. Inactive templates simply stop

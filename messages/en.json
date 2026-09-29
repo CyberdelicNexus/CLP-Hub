@@ -932,6 +932,7 @@
       "session__scheduled": "Session scheduled",
       "session__status_changed": "Session status changed",
       "session_template__activated": "Session activated",
+      "session_template__code_renamed": "Session code renamed",
       "session_template__created": "Session created",
       "session_template__deactivated": "Session deactivated",
       "session_template__updated": "Session edited",
@@ -1413,6 +1414,7 @@
   },
   "program": {
     "title": "Programme",
+    "showEditing": "Show programme and session editing",
     "boundary": "Stages and sessions are this study's configuration: every cohort goes through the same programme. Scheduling a session for a specific cohort happens on that cohort's own page, not here.",
     "stages": "Programme stages",
     "noStages": "No stage has been configured yet.",
@@ -1426,8 +1428,9 @@
     "inactive": "Inactive",
     "field": {
       "code": "Code",
-      "stageCodeHelp": "Internal lowercase identifier, e.g. \"preparation\". Cannot be changed later.",
-      "templateCodeHelp": "Internal lowercase identifier, e.g. \"life\". Used by content and message templates; cannot be changed later.",
+      "codeWarning": "Changing the code breaks any link already shared with the old address (e.g. /estudio/sesiones/{code}/preparacion): there is no automatic redirect.",
+      "stageCodeHelp": "Internal lowercase identifier, e.g. \"s0\". Can be renamed later from the list if needed.",
+      "templateCodeHelp": "Internal lowercase identifier, e.g. \"s0\" — appears in the session's public URL (/estudio/sesiones/{code}/preparacion). Can be renamed later from the list.",
       "nameEs": "Name (Spanish)",
       "nameEn": "Name (English, optional)",
       "modality": "Modality",
