@@ -20,11 +20,20 @@ export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: strin
         {HERO.headline}
       </h1>
       <p className="cl-lead hero__support">{HERO.support}</p>
+      {/*
+        2026-09-29 request (D-090): the hero now offers a direct path to the
+        application page rather than only anchoring within the page — a
+        deliberate, confirmed override of D-085's earlier "everything
+        anchors in-page, only the final invitation reaches outward" rule.
+        `primaryCta` moves to the eligibility/questions section instead of
+        the invitation, since "check if I can take part" is what that
+        section actually answers.
+      */}
       <div className="hero__actions">
-        <a href="#porque" className="cl-btn">
+        <a href="/participar" className="cl-btn">
           {ACTIONS.exploreCta}
         </a>
-        <a href="#invitacion" className="cl-link">
+        <a href="#elegibilidad" className="cl-link">
           {ACTIONS.primaryCta}
         </a>
       </div>

@@ -40,8 +40,12 @@ export function isMissing(value: unknown): value is Missing {
 export const ACTIONS = {
   /** The one recruitment intent. Same label everywhere it appears. */
   primaryCta: "Comprobar si puedo participar",
-  /** Hero exploration action: scrolls to the explanation, never to Qualtrics. */
-  exploreCta: "Conocer el estudio",
+  /**
+   * Hero's direct application action (D-090, 2026-09-29) — links to
+   * /participar, not an in-page anchor. Deliberate override of the earlier
+   * "hero only scrolls to the explanation" rule; see hero.tsx's comment.
+   */
+  exploreCta: "Aplicar al estudio",
   contactCta: "Contactar con el equipo",
 } as const;
 

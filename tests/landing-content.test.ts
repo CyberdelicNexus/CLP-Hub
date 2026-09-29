@@ -60,12 +60,20 @@ describe("landing copy rules", () => {
     expect(HERO.headline.trim().startsWith("¿")).toBe(true);
   });
 
-  it("keeps the nav and hero recruitment links inside the page, after the two groups are explained", () => {
-    // The only outbound Qualtrics link lives in the final invitation, which
-    // follows the randomization section. Everything else anchors there.
+  it("keeps the nav anchored in-page, and never references the Qualtrics URL directly from the hero", () => {
+    // D-090 (2026-09-29): a confirmed, deliberate override of the earlier
+    // "hero only scrolls to the explanation" rule — the hero now offers a
+    // direct path to /participar (exploreCta, "Aplicar al estudio"), and
+    // primaryCta ("Comprobar si puedo participar") anchors to the
+    // eligibility/questions section instead of the final invitation. The
+    // nav itself is untouched: still in-page only. `/participar` is a
+    // hand-off page (D-031, D-085), not the Qualtrics URL itself — the
+    // hero must still never reference that variable directly, since the
+    // actual outbound link stays inside /participar's own component.
     expect(NAV.every((n) => n.href.startsWith("#"))).toBe(true);
     const hero = readFileSync(join(process.cwd(), "src/components/landing/sections/hero.tsx"), "utf8");
-    expect(hero).toContain('href="#invitacion"');
+    expect(hero).toContain('href="/participar"');
+    expect(hero).toContain('href="#elegibilidad"');
     expect(hero).not.toMatch(/qualtricsUrl/);
   });
 });

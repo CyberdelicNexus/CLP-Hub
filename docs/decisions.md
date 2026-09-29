@@ -3772,6 +3772,43 @@ RECRUITING) now shares them, same as every cohort created from here on.
 Adjusting the programme going forward belongs in Configuración → Programa
 (the screen this decision built), not back in this script.
 
+## D-090 · 2026-09-29 · The hero gets a direct application link, overriding D-085's "anchor in-page" rule
+
+Founder request: refine the hero's two buttons. `primaryCta` ("Comprobar si
+puedo participar") moves from anchoring at the final invitation (`#invitacion`)
+to the eligibility/questions section (`#elegibilidad`) instead — a better
+match for what the label actually says, since that section is where criteria,
+benefits, risks and other FAQ-style answers live (D-051). `exploreCta` is
+renamed "Aplicar al estudio" (EN: "Apply to the study", GL: "Aplicar ao
+estudo") and now links straight to `/participar`, the real application
+hand-off page, instead of scrolling to the explanation (`#porque`).
+
+**This is a deliberate, confirmed override, not an oversight.** D-042 and
+D-085 established — and `tests/landing-content.test.ts` locked down — that no
+button in the hero or nav should reach the application before a visitor has
+seen the study explained and the two groups described: "everything anchors
+in-page; only the final invitation reaches outward." Before making this
+change, the founder was shown the conflict directly and asked to confirm
+which of two designs was wanted: a strong-looking hero button that still
+anchors to the invitation (keeping the safeguard), or a real, direct shortcut
+to `/participar` (removing it). **The founder chose the direct shortcut.**
+
+**What did not change.** `NAV` (`#porque`, `#incorporarse`, `#elegibilidad`)
+stays entirely in-page — this override is scoped to the hero's own two
+buttons, not the top nav. The hero still never references `qualtricsUrl`
+directly (D-042's absolute-guarantee pattern): `/participar` is the existing
+hand-off page (D-031, D-085), and the actual outbound Qualtrics link still
+lives only inside that page's own component. `primaryCta`'s label text is
+unchanged, so the "one label for the recruitment intent" rule (D-085,
+`tests/landing-content.test.ts`) still holds — only where it points changed.
+
+The test that pinned the old routing (`hero.tsx` must contain
+`href="#invitacion"`) is rewritten to assert the new one (`href="/participar"`
+and `href="#elegibilidad"`) rather than deleted, so the rule that DOES still
+hold — no direct `qualtricsUrl` reference, `NAV` in-page only — stays locked
+down. Verified: typecheck, lint, the full test suite (433 tests) and the
+production build.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the
@@ -3997,3 +4034,9 @@ Adjusting the programme going forward belongs in Configuración → Programa
   itself — ADMIN only. Worth confirming that is the right line once a
   STUDY_MANAGER is actually the one adjusting the programme day to day; today
   they hold `cohorts.manage` but not this.
+- D-090's hero now lets a visitor reach `/participar` without scrolling past
+  the study explanation or the randomization section at all. Worth watching
+  once there is real traffic: does skipping straight there produce more
+  people who apply without understanding the two-group design, versus
+  people who already knew what they wanted and the extra scroll was only
+  friction? Nothing in the app can measure that today (no analytics, D-042).

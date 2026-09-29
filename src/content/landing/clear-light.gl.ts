@@ -11,7 +11,7 @@ import { LANDING_ES as ES, type LandingCopy } from "@/content/landing/clear-ligh
 export const LANDING_GL: LandingCopy = {
   ACTIONS: {
     primaryCta: "Comprobar se podo participar",
-    exploreCta: "Coñecer o estudo",
+    exploreCta: "Aplicar ao estudo",
     contactCta: "Contactar co equipo",
   },
   NAV: [

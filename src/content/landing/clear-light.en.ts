@@ -12,7 +12,7 @@ import { LANDING_ES as ES, type FaqItem, type LandingCopy, type Stage } from "@/
 export const LANDING_EN: LandingCopy = {
   ACTIONS: {
     primaryCta: "Check if I can take part",
-    exploreCta: "Learn about the study",
+    exploreCta: "Apply to the study",
     contactCta: "Contact the team",
   },
   NAV: [
