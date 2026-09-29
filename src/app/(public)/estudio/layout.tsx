@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
@@ -61,9 +62,11 @@ export default async function StudyContentLayout({ children }: { children: React
         </PageFade>
       </main>
 
+      {/* A quiet sign-off, not the informational blurb this replaced
+          (2026-09-29 request) — just the mark, no link, no claim. */}
       <footer className="relative border-t border-border px-4 py-8 sm:px-6">
-        <div className="mx-auto w-full max-w-3xl">
-          <p className="text-sm leading-relaxed text-muted-foreground">{t("footerNote")}</p>
+        <div className="mx-auto flex w-full max-w-3xl justify-center">
+          <Image src="/brand/logo.png" alt="Clear Light" width={28} height={28} className="size-7 opacity-70" />
         </div>
       </footer>
     </div>

@@ -4421,6 +4421,24 @@ screenshotted the header control closed, open (all three options visible,
 paragraph text visibly larger) — the same page a static build/lint pass
 cannot actually observe rendering correctly.
 
+## D-100 · 2026-09-29 · Public page footer: logo instead of the informational blurb
+
+Founder request: drop the footer's explanatory text ("Esta página es
+informativa y es igual para todas las personas..."), replaced — same turn,
+before the first version even shipped — with the Clear Light logo instead
+of leaving the footer empty. `(public)/estudio/layout.tsx`'s `<footer>` now
+renders `/brand/logo.png` (the same mark `sidebar-shell.tsx` and the staff
+login page already use, via `next/image`) centered, small, and dimmed
+(`opacity-70`), with no link and no accompanying text — a quiet sign-off,
+not a claim. `alt="Clear Light"`, the participant-facing study name, not
+"Clear Light Hub" (the internal tool's own name, which has no business
+appearing on a page participants read). `public.study.footerNote` is
+removed from both locales; nothing else read it.
+
+Verified: typecheck, lint, full test suite (451 passing, unchanged),
+production build, and a real screenshot (scrolled to the footer, 900×900
+viewport) confirming the mark actually renders where the text used to be.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

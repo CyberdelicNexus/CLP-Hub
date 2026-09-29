@@ -130,7 +130,6 @@
   "public": {
     "study": {
       "backHome": "Home",
-      "footerNote": "This page is informational and identical for everyone. It contains no personal data and requires no sign-in.",
       "part": {
         "preparacion": "Preparation",
         "integracion": "Integration"

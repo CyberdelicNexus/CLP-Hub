@@ -130,7 +130,6 @@
   "public": {
     "study": {
       "backHome": "Inicio",
-      "footerNote": "Esta página es informativa y es igual para todas las personas. No contiene datos personales ni requiere iniciar sesión.",
       "part": {
         "preparacion": "Preparación",
         "integracion": "Integración"
