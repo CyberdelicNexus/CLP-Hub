@@ -3886,6 +3886,22 @@ all three names, clicking the eligibility button actually lands on
 `#elegibilidad`, `/participar`'s H1 reads the new copy, `.page-fade` is
 present, and no console errors.
 
+**Same-day follow-up.** Two more refinements: `eligibilityCta` shortens to
+"Requisitos para participar" (was "Requisitos y preguntas frecuentes" — the
+section it anchors to answers both, but the button reads better naming the
+one thing someone checking eligibility actually wants). And SiteBar's
+persistent nav CTA — previously `primaryCta` ("Comprobar si puedo
+participar") pointed at `#invitacion` — now shows `exploreCta` ("Aplicar al
+estudio") pointed straight at `/participar`, the same label and destination
+as the hero's own button. Reusing `exploreCta` rather than adding a third
+near-duplicate string, and matching the hero exactly, is what keeps this from
+recreating the "which button does what" confusion D-085's original one-label
+rule existed to prevent — the nav bar no longer promises something different
+from what the hero already does. `primaryCta` now appears only on the
+invitation section's own button, still pointed at the final invitation,
+unchanged. Verified: typecheck, lint, full suite, build, and a Playwright
+check of the rendered nav bar and hero button text/hrefs.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

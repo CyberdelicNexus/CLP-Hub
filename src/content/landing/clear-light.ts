@@ -55,7 +55,7 @@ export const ACTIONS = {
    * (criteria, benefits, risks, FAQ), so the label says that rather than
    * reusing `primaryCta`, which now means something else here.
    */
-  eligibilityCta: "Requisitos y preguntas frecuentes",
+  eligibilityCta: "Requisitos para participar",
   contactCta: "Contactar con el equipo",
 } as const;
 

@@ -13,7 +13,7 @@ export const LANDING_EN: LandingCopy = {
   ACTIONS: {
     primaryCta: "Check if I can take part",
     exploreCta: "Apply to the study",
-    eligibilityCta: "Requirements and FAQ",
+    eligibilityCta: "Requirements to take part",
     contactCta: "Contact the team",
   },
   NAV: [

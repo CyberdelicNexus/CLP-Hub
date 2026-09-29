@@ -12,7 +12,7 @@ export const LANDING_GL: LandingCopy = {
   ACTIONS: {
     primaryCta: "Comprobar se podo participar",
     exploreCta: "Aplicar ao estudo",
-    eligibilityCta: "Requisitos e preguntas frecuentes",
+    eligibilityCta: "Requisitos para participar",
     contactCta: "Contactar co equipo",
   },
   NAV: [

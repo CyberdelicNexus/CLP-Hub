@@ -38,7 +38,11 @@ export function ClearLightLanding({
       <SiteBar
         brand="Clear Light"
         links={copy.NAV}
-        cta={{ href: "#invitacion", label: copy.ACTIONS.primaryCta }}
+        /* 2026-09-29 request: matches the hero's "Aplicar al estudio"
+           button — same label, same direct destination (D-090), so the
+           persistent nav CTA does not promise something different from
+           what the hero already does. */
+        cta={{ href: "/participar", label: copy.ACTIONS.exploreCta }}
         language={<LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/" />}
       />
       <main id="main">
