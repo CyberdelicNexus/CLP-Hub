@@ -681,12 +681,24 @@
       "CONTEMPLATION": "Contemplation",
       "BUTTON": "Button",
       "TECHNICAL_STEP": "Technical step",
-      "SUPPORT_BOX": "Support box"
+      "SUPPORT_BOX": "Support box",
+      "DIVIDER": "Divider",
+      "COLUMNS": "Columns"
     },
     "calloutTone": {
       "INFO": "Info",
       "WARNING": "Warning",
       "SUPPORT": "Support"
+    },
+    "dividerStyle": {
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted"
+    },
+    "dividerThickness": {
+      "thin": "Thin",
+      "medium": "Medium",
+      "thick": "Thick"
     },
     "blockField": {
       "md": "Text (accepts **bold**, *italic*, `code` and links)",
@@ -702,7 +714,10 @@
       "step": "Step",
       "label": "Label",
       "contactLabel": "Contact label",
-      "contactUrl": "Contact link"
+      "contactUrl": "Contact link",
+      "width": "Width %",
+      "addColumn": "Add column",
+      "removeColumn": "Remove column"
     },
     "error": {
       "invalid": "That change is not allowed.",

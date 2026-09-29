@@ -3969,6 +3969,74 @@ build — confirming via the build's own route table that the two public
 content routes are dynamic, not static, which is what makes the 404 finding
 above trustworthy rather than assumed.
 
+## D-093 · 2026-09-29 · Content editor refinement — lote 3 (DIVIDER, COLUMNS, alignment, block colors)
+
+Second batch of the plan started in D-092. Adds two new block types and two
+new per-block properties to `blockSchema` (`src/domain/content.ts`), staying
+inside the existing "closed, server-validated shape" architecture rather than
+opening any free-form styling:
+
+**A fixed color palette, not free color.** Every new color choice (DIVIDER's
+line, TECHNICAL_STEP's numbered badge, BUTTON's background) picks from a
+closed `TOKEN_COLORS` enum — `default`/`primary`/`chart-1`..`chart-5` — the
+same design tokens `globals.css` already defines and CONTEMPLATION already
+borrows one of (`border-chart-1`). Each token maps to a fixed Tailwind class,
+never a `style="..."` attribute, so a color choice can't become a CSS
+injection surface and every color stays on-brand and dark-mode-correct for
+free. The render-class maps are duplicated between `block-editor.tsx` and
+`components/content/blocks.tsx` rather than shared — matching the existing
+`CALLOUT_STYLES` duplication between those two files, which keeps the public
+renderer's dependencies independent of the staff-only editor's.
+
+**COLUMNS nests one level only.** A column's content is `leafBlockSchema` — the
+same 11 non-COLUMNS block types, not `blockSchema` itself — so a column
+cannot contain another COLUMNS block. `domain/content.ts` builds both
+`blockSchema` and `leafBlockSchema` from one shared `LEAF_BLOCK_VARIANTS`
+array so the two schemas can't drift apart. The editor enforces the same rule
+client-side via a new `allowColumns` prop on `BlockEditor` (false when
+rendering a column's own nested editor, so "Columns" simply doesn't appear in
+that instance's insert menu) — but the server-side schema is what actually
+matters; a hand-crafted payload that skipped the UI would still be rejected
+by `bodySchema.safeParse` in `saveVersionAction`.
+
+**Column width is a free per-column number (10-100), not auto-balanced.** No
+drag-to-resize, no normalization forcing the row to sum to 100 — a staff
+member could technically set three columns to 80% each. Deliberate
+simplification to ship something usable now rather than build a resize
+interaction; revisit if authors find it confusing in practice.
+
+**Alignment applies to standalone content, not full-width cards.** TEXT,
+IMAGE, VIDEO, BOOKMARK and BUTTON got an `align` field; CALLOUT, CHECKLIST,
+TECHNICAL_STEP, SUPPORT_BOX and CONTEMPLATION did not — those are already
+full-width boxes where "align right" has no obvious meaning. For IMAGE/VIDEO/
+BOOKMARK specifically, centering or right-aligning also caps the element to
+`max-w-md`: they're `w-full` by default, so alignment would otherwise be
+invisible (a full-width element centered in its own column looks identical
+to a full-width element sitting on the left).
+
+**A TypeScript closure-narrowing gotcha, worth remembering.** In
+`block-editor.tsx`'s new COLUMNS case, `block` is narrowed to the COLUMNS
+variant by the outer `switch (block.type)`, but that narrowing does not
+survive into the nested `updateColumn`/`removeColumn` function declarations —
+TypeScript widens `block` back to the full `ContentBlock` union inside any
+nested function body, even though `block` is never reassigned. Fixed by
+capturing an explicitly-typed `const columnsBlock: Extract<ContentBlock, {
+type: "COLUMNS" }> = block` before defining those functions, and closing over
+that instead. Same shape of issue would recur for any future block type
+whose inline editor needs a nested closure.
+
+**Types added throughout, not left implicit**: `scripts/seed.ts`'s synthetic
+content literals needed `align`/`color` added explicitly (Zod's `.default()`
+makes a field optional on *input* through `.safeParse()`, but the inferred
+TypeScript output type still requires it — these literals are typed directly
+against `ContentBlock`, not parsed).
+
+Verified: typecheck, lint, full test suite (433 passing), production build.
+Not yet verified with a live browser walkthrough of the new block types
+(DIVIDER/COLUMNS insert-and-edit, alignment/color pickers) — deferred to a
+single end-to-end Playwright pass after lote 5, rather than re-authenticating
+against the staff login for every intermediate batch.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

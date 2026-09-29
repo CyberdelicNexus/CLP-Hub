@@ -124,6 +124,8 @@ export const BLOCK_TYPES = [
   "BUTTON",
   "TECHNICAL_STEP",
   "SUPPORT_BOX",
+  "DIVIDER",
+  "COLUMNS",
 ] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
@@ -141,15 +143,42 @@ export const CALLOUT_TONES = ["INFO", "WARNING", "SUPPORT"] as const;
 export type CalloutTone = (typeof CALLOUT_TONES)[number];
 
 /**
- * The ten block types. Each is a closed shape validated on save AND on render,
- * so a row that somehow acquired an unknown block cannot reach a page.
+ * A closed palette of design tokens (`src/app/globals.css`'s `chart-1`..
+ * `chart-5`, plus `primary` and a "default" no-color-applied option) used for
+ * every author-chosen block color (DIVIDER, TECHNICAL_STEP's badge, BUTTON's
+ * background). Never free hex/CSS: keeps every color on-brand and keeps a
+ * color choice from becoming a `style=` injection surface.
  */
-export const blockSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("TEXT"), md: MD }),
+export const TOKEN_COLORS = ["default", "primary", "chart-1", "chart-2", "chart-3", "chart-4", "chart-5"] as const;
+export type TokenColor = (typeof TOKEN_COLORS)[number];
+const COLOR = z.enum(TOKEN_COLORS);
+
+export const DIVIDER_STYLES = ["solid", "dashed", "dotted"] as const;
+export type DividerStyle = (typeof DIVIDER_STYLES)[number];
+
+export const DIVIDER_THICKNESSES = ["thin", "medium", "thick"] as const;
+export type DividerThickness = (typeof DIVIDER_THICKNESSES)[number];
+
+/** Left/center/right for the block types where that's a meaningful choice —
+ * standalone content (text, media, a button), not full-width cards like
+ * CALLOUT or CHECKLIST, where "alignment" has no clear meaning. */
+export const BLOCK_ALIGNMENTS = ["left", "center", "right"] as const;
+export type BlockAlign = (typeof BLOCK_ALIGNMENTS)[number];
+const ALIGN = z.enum(BLOCK_ALIGNMENTS).default("left");
+
+/**
+ * The leaf block types — everything except COLUMNS, which nests these (one
+ * level only: a column cannot itself contain a COLUMNS block). Each is a
+ * closed shape validated on save AND on render, so a row that somehow
+ * acquired an unknown block cannot reach a page.
+ */
+const LEAF_BLOCK_VARIANTS = [
+  z.object({ type: z.literal("TEXT"), md: MD, align: ALIGN }),
   z.object({
     type: z.literal("VIDEO"),
     url: SAFE_URL,
     caption: z.string().trim().max(300).optional(),
+    align: ALIGN,
   }),
   z.object({
     type: z.literal("IMAGE"),
@@ -157,12 +186,14 @@ export const blockSchema = z.discriminatedUnion("type", [
     /** Required: a decorative-only image has no place in participant guidance. */
     alt: z.string().trim().min(1).max(300),
     caption: z.string().trim().max(300).optional(),
+    align: ALIGN,
   }),
   z.object({
     type: z.literal("BOOKMARK"),
     url: SAFE_URL,
     title: z.string().trim().min(1).max(200),
     description: z.string().trim().max(300).optional(),
+    align: ALIGN,
   }),
   z.object({
     type: z.literal("CHECKLIST"),
@@ -180,6 +211,8 @@ export const blockSchema = z.discriminatedUnion("type", [
     type: z.literal("BUTTON"),
     label: z.string().trim().min(1).max(80),
     url: SAFE_URL,
+    color: COLOR.default("primary"),
+    align: ALIGN,
   }),
   z.object({
     type: z.literal("TECHNICAL_STEP"),
@@ -187,6 +220,7 @@ export const blockSchema = z.discriminatedUnion("type", [
     step: z.number().int().min(1).max(99),
     title: z.string().trim().min(1).max(200),
     md: MD,
+    color: COLOR.default("primary"),
   }),
   z.object({
     type: z.literal("SUPPORT_BOX"),
@@ -195,9 +229,34 @@ export const blockSchema = z.discriminatedUnion("type", [
     contactLabel: z.string().trim().max(120).optional(),
     contactUrl: SAFE_URL.optional(),
   }),
+  z.object({
+    type: z.literal("DIVIDER"),
+    style: z.enum(DIVIDER_STYLES).default("solid"),
+    thickness: z.enum(DIVIDER_THICKNESSES).default("thin"),
+    color: COLOR.default("default"),
+  }),
+] as const;
+
+const leafBlockSchema = z.discriminatedUnion("type", LEAF_BLOCK_VARIANTS);
+
+/** A column's own content is a leaf block list — a mini page, not a mini
+ * rich-text doc, so a column can hold a CALLOUT or CHECKLIST, not just text. */
+const columnSchema = z.object({
+  width: z.number().int().min(10).max(100),
+  blocks: z.array(leafBlockSchema).max(20),
+});
+
+export const blockSchema = z.discriminatedUnion("type", [
+  ...LEAF_BLOCK_VARIANTS,
+  z.object({
+    type: z.literal("COLUMNS"),
+    columns: z.array(columnSchema).min(2).max(4),
+  }),
 ]);
 
 export type ContentBlock = z.infer<typeof blockSchema>;
+/** A leaf block — everything COLUMNS can nest. */
+export type LeafContentBlock = z.infer<typeof leafBlockSchema>;
 
 export const bodySchema = z.array(blockSchema).max(120);
 export type ContentBody = z.infer<typeof bodySchema>;

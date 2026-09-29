@@ -681,12 +681,24 @@
       "CONTEMPLATION": "Contemplación",
       "BUTTON": "Botón",
       "TECHNICAL_STEP": "Paso técnico",
-      "SUPPORT_BOX": "Ayuda"
+      "SUPPORT_BOX": "Ayuda",
+      "DIVIDER": "Línea separadora",
+      "COLUMNS": "Columnas"
     },
     "calloutTone": {
       "INFO": "Información",
       "WARNING": "Aviso",
       "SUPPORT": "Apoyo"
+    },
+    "dividerStyle": {
+      "solid": "Continua",
+      "dashed": "Discontinua",
+      "dotted": "Punteada"
+    },
+    "dividerThickness": {
+      "thin": "Fina",
+      "medium": "Media",
+      "thick": "Gruesa"
     },
     "blockField": {
       "md": "Texto (admite **negrita**, *cursiva*, `código` y enlaces)",
@@ -702,7 +714,10 @@
       "step": "Paso",
       "label": "Etiqueta",
       "contactLabel": "Etiqueta de contacto",
-      "contactUrl": "Enlace de contacto"
+      "contactUrl": "Enlace de contacto",
+      "width": "Ancho %",
+      "addColumn": "Añadir columna",
+      "removeColumn": "Quitar columna"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",

@@ -345,6 +345,7 @@ const DEMO_CONTENT: ReadonlyArray<{
       {
         type: "TEXT",
         md: "Esta guía **sintética** explica cómo dejar el equipo listo antes de una sesión. Si algo no funciona, no pasa nada: puedes escribirnos y lo resolvemos juntos.",
+        align: "left",
       },
       {
         type: "CHECKLIST",
@@ -355,8 +356,8 @@ const DEMO_CONTENT: ReadonlyArray<{
           "Ten el móvil cerca por si necesitas escribirnos",
         ],
       },
-      { type: "TECHNICAL_STEP", step: 1, title: "Enciende el visor", md: "Mantén pulsado el botón lateral hasta que aparezca el logotipo." },
-      { type: "TECHNICAL_STEP", step: 2, title: "Conecta a tu wifi", md: "Elige tu red en la lista y escribe la contraseña con el mando." },
+      { type: "TECHNICAL_STEP", step: 1, title: "Enciende el visor", md: "Mantén pulsado el botón lateral hasta que aparezca el logotipo.", color: "primary" },
+      { type: "TECHNICAL_STEP", step: 2, title: "Conecta a tu wifi", md: "Elige tu red en la lista y escribe la contraseña con el mando.", color: "primary" },
       {
         type: "CALLOUT",
         tone: "WARNING",
@@ -378,10 +379,10 @@ const DEMO_CONTENT: ReadonlyArray<{
     sessionCode: null,
     title: "Preguntas frecuentes (DEMO)",
     body: [
-      { type: "TEXT", md: "Respuestas sintéticas a las dudas más habituales. Puedes escribirnos siempre que quieras." },
-      { type: "TEXT", md: "**¿Puedo dejarlo cuando quiera?**\n\nSí. Participar es voluntario y puedes retirarte en cualquier momento sin dar explicaciones." },
-      { type: "TEXT", md: "**¿Quién ve mis datos?**\n\nSolo el equipo del estudio, y cada persona ve únicamente lo que necesita para su trabajo." },
-      { type: "BUTTON", label: "Volver al inicio", url: "/" },
+      { type: "TEXT", md: "Respuestas sintéticas a las dudas más habituales. Puedes escribirnos siempre que quieras.", align: "left" },
+      { type: "TEXT", md: "**¿Puedo dejarlo cuando quiera?**\n\nSí. Participar es voluntario y puedes retirarte en cualquier momento sin dar explicaciones.", align: "left" },
+      { type: "TEXT", md: "**¿Quién ve mis datos?**\n\nSolo el equipo del estudio, y cada persona ve únicamente lo que necesita para su trabajo.", align: "left" },
+      { type: "BUTTON", label: "Volver al inicio", url: "/", color: "primary", align: "left" },
     ],
   },
   {
@@ -390,7 +391,7 @@ const DEMO_CONTENT: ReadonlyArray<{
     sessionCode: "demo_intro",
     title: "Cómo prepararte para la primera sesión (DEMO)",
     body: [
-      { type: "TEXT", md: "Contenido sintético de demostración. La sesión dura unos 90 minutos." },
+      { type: "TEXT", md: "Contenido sintético de demostración. La sesión dura unos 90 minutos.", align: "left" },
       {
         type: "CONTEMPLATION",
         md: "Antes de venir, tómate un momento para pensar qué te gustaría llevarte de esta experiencia.",

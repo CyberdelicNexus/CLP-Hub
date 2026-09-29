@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { Bookmark, CircleCheck, CircleHelp, Info, LifeBuoy, TriangleAlert } from "lucide-react";
-import type { ContentBlock, ContentBody } from "@/domain/content";
+import type { BlockAlign, ContentBlock, ContentBody, TokenColor } from "@/domain/content";
 import { parseMarkdown, type Inline } from "@/domain/markdown";
 import { resolveVideoEmbed } from "@/domain/video";
 import { cn } from "@/lib/utils";
@@ -97,10 +97,55 @@ const CALLOUT_STYLES = {
   SUPPORT: { surface: "bg-surface-mint text-surface-mint-ink", Icon: LifeBuoy },
 } as const;
 
+/** Same closed token palette as `block-editor.tsx`'s `TOKEN_COLOR_BG` —
+ * duplicated rather than imported, matching this file's existing pattern of
+ * keeping the public renderer's render-class maps independent of the
+ * staff-only editor's. */
+const TOKEN_COLOR_BG: Record<TokenColor, string> = {
+  default: "bg-muted-foreground/30",
+  primary: "bg-primary",
+  "chart-1": "bg-chart-1",
+  "chart-2": "bg-chart-2",
+  "chart-3": "bg-chart-3",
+  "chart-4": "bg-chart-4",
+  "chart-5": "bg-chart-5",
+};
+const TOKEN_COLOR_BORDER: Record<TokenColor, string> = {
+  default: "border-foreground/10",
+  primary: "border-primary",
+  "chart-1": "border-chart-1",
+  "chart-2": "border-chart-2",
+  "chart-3": "border-chart-3",
+  "chart-4": "border-chart-4",
+  "chart-5": "border-chart-5",
+};
+const DIVIDER_THICKNESS_CLASS = { thin: "border-t", medium: "border-t-2", thick: "border-t-4" } as const;
+const DIVIDER_STYLE_CLASS = { solid: "border-solid", dashed: "border-dashed", dotted: "border-dotted" } as const;
+
+const TEXT_ALIGN_CLASS: Record<BlockAlign, string> = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right",
+};
+/** Standalone media/button blocks default to filling the column when
+ * left-aligned (today's look, unchanged); centering or right-aligning them
+ * only reads as intentional once the element isn't full-width any more, so
+ * those two also cap the width. */
+const MEDIA_ALIGN_CLASS: Record<BlockAlign, string> = {
+  left: "",
+  center: "mx-auto max-w-md",
+  right: "ml-auto max-w-md",
+};
+const ROW_ALIGN_CLASS: Record<BlockAlign, string> = {
+  left: "justify-start",
+  center: "justify-center",
+  right: "justify-end",
+};
+
 function Block({ block }: { block: ContentBlock }) {
   switch (block.type) {
     case "TEXT":
-      return <Markdown md={block.md} />;
+      return <Markdown md={block.md} className={TEXT_ALIGN_CLASS[block.align]} />;
 
     case "CALLOUT": {
       const { surface, Icon } = CALLOUT_STYLES[block.tone];
@@ -145,7 +190,10 @@ function Block({ block }: { block: ContentBlock }) {
           <span
             data-numeric
             aria-hidden
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-primary-foreground",
+              TOKEN_COLOR_BG[block.color],
+            )}
           >
             {block.step}
           </span>
@@ -183,11 +231,14 @@ function Block({ block }: { block: ContentBlock }) {
 
     case "BUTTON":
       return (
-        <div>
+        <div className={cn("flex", ROW_ALIGN_CLASS[block.align])}>
           <a
             href={block.url}
             rel="noopener noreferrer"
-            className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className={cn(
+              "inline-flex rounded-xl px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+              TOKEN_COLOR_BG[block.color],
+            )}
           >
             {block.label}
           </a>
@@ -196,7 +247,7 @@ function Block({ block }: { block: ContentBlock }) {
 
     case "IMAGE":
       return (
-        <figure className="flex flex-col gap-2">
+        <figure className={cn("flex flex-col gap-2", MEDIA_ALIGN_CLASS[block.align])}>
           {/* Plain <img>: content images are author-supplied external URLs, which
               next/image would need configured hosts for. A fixed aspect-ratio
               box with object-cover (2026-09-19) keeps a mis-sized or
@@ -233,7 +284,7 @@ function Block({ block }: { block: ContentBlock }) {
 
       if (embed.kind === "file") {
         return (
-          <figure className="flex flex-col gap-2">
+          <figure className={cn("flex flex-col gap-2", MEDIA_ALIGN_CLASS[block.align])}>
             <video
               src={block.url}
               controls
@@ -249,7 +300,7 @@ function Block({ block }: { block: ContentBlock }) {
 
       if (embed.kind === "youtube" || embed.kind === "vimeo") {
         return (
-          <figure className="flex flex-col gap-2">
+          <figure className={cn("flex flex-col gap-2", MEDIA_ALIGN_CLASS[block.align])}>
             <iframe
               src={embed.embedUrl}
               title={block.caption ?? "Video"}
@@ -266,7 +317,7 @@ function Block({ block }: { block: ContentBlock }) {
       }
 
       return (
-        <figure className="flex flex-col gap-2">
+        <figure className={cn("flex flex-col gap-2", MEDIA_ALIGN_CLASS[block.align])}>
           <a
             href={block.url}
             rel="noopener noreferrer"
@@ -292,7 +343,10 @@ function Block({ block }: { block: ContentBlock }) {
         <a
           href={block.url}
           rel="noopener noreferrer"
-          className="flex items-start gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-shadow hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className={cn(
+            "flex items-start gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-shadow hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+            MEDIA_ALIGN_CLASS[block.align],
+          )}
         >
           <Bookmark className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
           <div className="min-w-0">
@@ -303,6 +357,28 @@ function Block({ block }: { block: ContentBlock }) {
             <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{block.url}</p>
           </div>
         </a>
+      );
+
+    case "DIVIDER":
+      return (
+        <hr
+          className={cn(
+            DIVIDER_THICKNESS_CLASS[block.thickness],
+            DIVIDER_STYLE_CLASS[block.style],
+            TOKEN_COLOR_BORDER[block.color],
+          )}
+        />
+      );
+
+    case "COLUMNS":
+      return (
+        <div className="flex flex-col gap-6 sm:flex-row">
+          {block.columns.map((col, i) => (
+            <div key={i} className="min-w-0 flex-1" style={{ flexBasis: `${col.width}%` }}>
+              <ContentBlocks body={col.blocks} />
+            </div>
+          ))}
+        </div>
       );
   }
 }

@@ -19,9 +19,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bookmark,
   CircleCheck,
   CircleHelp,
+  Columns3,
   GripVertical,
   Image as ImageIcon,
   Info,
@@ -32,6 +36,7 @@ import {
   MousePointerClick,
   Plus,
   Quote,
+  SeparatorHorizontal,
   Trash2,
   TriangleAlert,
   Type as TypeIcon,
@@ -49,12 +54,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ContentBlocks } from "@/components/content/blocks";
 import { cn } from "@/lib/utils";
-import { BLOCK_TYPES, CALLOUT_TONES, type BlockType, type CalloutTone, type ContentBlock } from "@/domain/content";
+import {
+  BLOCK_ALIGNMENTS,
+  BLOCK_TYPES,
+  CALLOUT_TONES,
+  DIVIDER_STYLES,
+  DIVIDER_THICKNESSES,
+  TOKEN_COLORS,
+  type BlockAlign,
+  type BlockType,
+  type CalloutTone,
+  type ContentBlock,
+  type LeafContentBlock,
+  type TokenColor,
+} from "@/domain/content";
 
 const CALLOUT_STYLES: Record<CalloutTone, { surface: string; Icon: typeof Info }> = {
   INFO: { surface: "bg-surface-sky text-surface-sky-ink", Icon: Info },
   WARNING: { surface: "bg-surface-peach text-surface-peach-ink", Icon: TriangleAlert },
   SUPPORT: { surface: "bg-surface-mint text-surface-mint-ink", Icon: LifeBuoy },
+};
+
+/** The closed color palette (`domain/content.ts`'s `TOKEN_COLORS`) mapped to
+ * the Tailwind classes each token actually paints — reused for every
+ * swatch picker (DIVIDER, TECHNICAL_STEP's badge, BUTTON's background) and
+ * for the corresponding render classes in `components/content/blocks.tsx`. */
+const TOKEN_COLOR_BG: Record<TokenColor, string> = {
+  default: "bg-muted-foreground/30",
+  primary: "bg-primary",
+  "chart-1": "bg-chart-1",
+  "chart-2": "bg-chart-2",
+  "chart-3": "bg-chart-3",
+  "chart-4": "bg-chart-4",
+  "chart-5": "bg-chart-5",
 };
 
 const BLOCK_ICON: Record<BlockType, typeof TypeIcon> = {
@@ -68,6 +100,8 @@ const BLOCK_ICON: Record<BlockType, typeof TypeIcon> = {
   BUTTON: MousePointerClick,
   TECHNICAL_STEP: ListOrdered,
   SUPPORT_BOX: LifeBuoy,
+  DIVIDER: SeparatorHorizontal,
+  COLUMNS: Columns3,
 };
 
 /** Seamless text input styling shared by every inline-editable field below —
@@ -78,13 +112,13 @@ const SEAMLESS = "w-full min-w-0 bg-transparent outline-none placeholder:text-mu
 function emptyBlock(type: BlockType, stepCount: number): ContentBlock {
   switch (type) {
     case "TEXT":
-      return { type, md: "" };
+      return { type, md: "", align: "left" };
     case "VIDEO":
-      return { type, url: "" };
+      return { type, url: "", align: "left" };
     case "IMAGE":
-      return { type, url: "", alt: "" };
+      return { type, url: "", alt: "", align: "left" };
     case "BOOKMARK":
-      return { type, url: "", title: "" };
+      return { type, url: "", title: "", align: "left" };
     case "CHECKLIST":
       return { type, items: [""] };
     case "CALLOUT":
@@ -92,11 +126,21 @@ function emptyBlock(type: BlockType, stepCount: number): ContentBlock {
     case "CONTEMPLATION":
       return { type, md: "" };
     case "BUTTON":
-      return { type, label: "", url: "" };
+      return { type, label: "", url: "", color: "primary", align: "left" };
     case "TECHNICAL_STEP":
-      return { type, step: stepCount + 1, title: "", md: "" };
+      return { type, step: stepCount + 1, title: "", md: "", color: "primary" };
     case "SUPPORT_BOX":
       return { type, md: "" };
+    case "DIVIDER":
+      return { type, style: "solid", thickness: "thin", color: "default" };
+    case "COLUMNS":
+      return {
+        type,
+        columns: [
+          { width: 50, blocks: [] },
+          { width: 50, blocks: [] },
+        ],
+      };
   }
 }
 
@@ -109,6 +153,8 @@ export interface Labels {
   addMedia: string;
   blockType: Record<BlockType, string>;
   calloutTone: Record<CalloutTone, string>;
+  dividerStyle: Record<(typeof DIVIDER_STYLES)[number], string>;
+  dividerThickness: Record<(typeof DIVIDER_THICKNESSES)[number], string>;
   field: {
     md: string;
     url: string;
@@ -123,6 +169,9 @@ export interface Labels {
     label: string;
     contactLabel: string;
     contactUrl: string;
+    width: string;
+    addColumn: string;
+    removeColumn: string;
   };
 }
 
@@ -152,13 +201,20 @@ export function BlockEditor({
   blocks,
   onChange,
   labels,
+  allowColumns = true,
 }: {
   blocks: ContentBlock[];
   onChange: (next: ContentBlock[]) => void;
   labels: Labels;
+  /** false inside a COLUMNS block's own column — a column cannot contain
+   * another COLUMNS (`domain/content.ts`'s `leafBlockSchema` enforces this
+   * server-side too; this just keeps the type out of the insert menu so a
+   * staff member never sees an option the server would reject). */
+  allowColumns?: boolean;
 }) {
   const [ids, setIds] = useState<string[]>(() => blocks.map(() => crypto.randomUUID()));
   const stepCount = blocks.filter((b) => b.type === "TECHNICAL_STEP").length;
+  const insertTypes = allowColumns ? BLOCK_TYPES : BLOCK_TYPES.filter((t) => t !== "COLUMNS");
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -190,7 +246,7 @@ export function BlockEditor({
     <div className="space-y-0.5">
       {blocks.length === 0 ? <p className="mb-2 text-sm text-muted-foreground">{labels.empty}</p> : null}
 
-      <InsertRow onSelect={(type) => insertAt(0, type)} label={labels.insert} blockTypeLabels={labels.blockType} />
+      <InsertRow onSelect={(type) => insertAt(0, type)} label={labels.insert} blockTypeLabels={labels.blockType} types={insertTypes} />
 
       <DndContext
         id="content-block-editor"
@@ -208,6 +264,7 @@ export function BlockEditor({
                 onSelect={(type) => insertAt(i + 1, type)}
                 label={labels.insert}
                 blockTypeLabels={labels.blockType}
+                types={insertTypes}
               />
             </div>
           ))}
@@ -269,10 +326,12 @@ function InsertRow({
   onSelect,
   label,
   blockTypeLabels,
+  types = BLOCK_TYPES,
 }: {
   onSelect: (type: BlockType) => void;
   label: string;
   blockTypeLabels: Record<BlockType, string>;
+  types?: readonly BlockType[];
 }) {
   return (
     <div className="group/insert relative ml-6 flex h-3 items-center">
@@ -291,7 +350,7 @@ function InsertRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48">
           <DropdownMenuGroup>
-            {BLOCK_TYPES.map((type) => {
+            {types.map((type) => {
               const Icon = BLOCK_ICON[type];
               return (
                 <DropdownMenuItem key={type} onClick={() => onSelect(type)}>
@@ -303,6 +362,87 @@ function InsertRow({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+    </div>
+  );
+}
+
+/** Border-side class maps for DIVIDER, kept in this file rather than shared
+ * with `components/content/blocks.tsx` — same duplication the CALLOUT tone
+ * styles already use, so the staff editor and the public renderer stay
+ * independently editable. */
+const TOKEN_COLOR_BORDER: Record<TokenColor, string> = {
+  default: "border-foreground/10",
+  primary: "border-primary",
+  "chart-1": "border-chart-1",
+  "chart-2": "border-chart-2",
+  "chart-3": "border-chart-3",
+  "chart-4": "border-chart-4",
+  "chart-5": "border-chart-5",
+};
+const DIVIDER_THICKNESS_CLASS: Record<(typeof DIVIDER_THICKNESSES)[number], string> = {
+  thin: "border-t",
+  medium: "border-t-2",
+  thick: "border-t-4",
+};
+const DIVIDER_STYLE_CLASS: Record<(typeof DIVIDER_STYLES)[number], string> = {
+  solid: "border-solid",
+  dashed: "border-dashed",
+  dotted: "border-dotted",
+};
+const SELECT_CLASS =
+  "h-7 rounded-md border border-input bg-card px-1.5 text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+
+const ALIGN_ICON: Record<BlockAlign, typeof AlignLeft> = {
+  left: AlignLeft,
+  center: AlignCenter,
+  right: AlignRight,
+};
+
+/** A small left/center/right picker shown above the block types where
+ * alignment is a meaningful, standalone choice (`domain/content.ts`'s
+ * `ALIGN` field: TEXT, IMAGE, VIDEO, BOOKMARK, BUTTON). */
+function AlignControl({ value, onChange }: { value: BlockAlign; onChange: (a: BlockAlign) => void }) {
+  return (
+    <div className="mb-1 flex items-center justify-end gap-0.5">
+      {BLOCK_ALIGNMENTS.map((a) => {
+        const Icon = ALIGN_ICON[a];
+        return (
+          <button
+            key={a}
+            type="button"
+            title={a}
+            onClick={() => onChange(a)}
+            className={cn(
+              "flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground",
+              value === a && "bg-muted text-foreground",
+            )}
+          >
+            <Icon className="size-3.5" aria-hidden />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A row of color swatches, same visual language as CALLOUT's tone picker —
+ * used for DIVIDER, TECHNICAL_STEP's numbered badge and BUTTON's background. */
+function ColorSwatches({ value, onChange }: { value: TokenColor; onChange: (c: TokenColor) => void }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {TOKEN_COLORS.map((c) => (
+        <button
+          key={c}
+          type="button"
+          title={c}
+          onClick={() => onChange(c)}
+          className={cn(
+            "size-3.5 rounded-full ring-1 ring-inset ring-foreground/15",
+            TOKEN_COLOR_BG[c],
+            value === c && "ring-2 ring-foreground/60",
+          )}
+        />
+      ))}
     </div>
   );
 }
@@ -321,12 +461,15 @@ function InlineBlock({
   switch (block.type) {
     case "TEXT":
       return (
-        <AutoTextarea
-          value={block.md}
-          onChange={(v) => onChange({ ...block, md: v })}
-          placeholder={f.md}
-          className="text-base leading-relaxed"
-        />
+        <div>
+          <AlignControl value={block.align} onChange={(align) => onChange({ ...block, align })} />
+          <AutoTextarea
+            value={block.md}
+            onChange={(v) => onChange({ ...block, md: v })}
+            placeholder={f.md}
+            className={cn("text-base leading-relaxed", block.align === "center" && "text-center", block.align === "right" && "text-right")}
+          />
+        </div>
       );
 
     case "CONTEMPLATION":
@@ -433,15 +576,21 @@ function InlineBlock({
             onChange={(e) => onChange({ ...block, step: Number(e.target.value) || 1 })}
             aria-label={f.step}
             data-numeric
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-center text-sm font-semibold text-primary-foreground outline-none"
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full text-center text-sm font-semibold text-primary-foreground outline-none",
+              TOKEN_COLOR_BG[block.color],
+            )}
           />
           <div className="min-w-0 flex-1 space-y-1 pt-1">
-            <input
-              value={block.title}
-              onChange={(e) => onChange({ ...block, title: e.target.value })}
-              placeholder={f.title}
-              className={cn(SEAMLESS, "font-semibold")}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                value={block.title}
+                onChange={(e) => onChange({ ...block, title: e.target.value })}
+                placeholder={f.title}
+                className={cn(SEAMLESS, "font-semibold")}
+              />
+              <ColorSwatches value={block.color} onChange={(color) => onChange({ ...block, color })} />
+            </div>
             <AutoTextarea
               value={block.md}
               onChange={(v) => onChange({ ...block, md: v })}
@@ -492,14 +641,24 @@ function InlineBlock({
     case "BUTTON":
       return (
         <div className="space-y-1">
-          <div className="inline-flex rounded-xl bg-primary px-5 py-2.5">
-            <input
-              value={block.label}
-              onChange={(e) => onChange({ ...block, label: e.target.value })}
-              placeholder={f.label}
-              className={cn(SEAMLESS, "text-sm font-medium text-primary-foreground placeholder:text-primary-foreground/50")}
-              size={Math.max(block.label.length, f.label.length, 6)}
-            />
+          <AlignControl value={block.align} onChange={(align) => onChange({ ...block, align })} />
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              block.align === "center" && "justify-center",
+              block.align === "right" && "justify-end",
+            )}
+          >
+            <div className={cn("inline-flex rounded-xl px-5 py-2.5", TOKEN_COLOR_BG[block.color])}>
+              <input
+                value={block.label}
+                onChange={(e) => onChange({ ...block, label: e.target.value })}
+                placeholder={f.label}
+                className={cn(SEAMLESS, "text-sm font-medium text-primary-foreground placeholder:text-primary-foreground/50")}
+                size={Math.max(block.label.length, f.label.length, 6)}
+              />
+            </div>
+            <ColorSwatches value={block.color} onChange={(color) => onChange({ ...block, color })} />
           </div>
           <input
             value={block.url}
@@ -513,7 +672,125 @@ function InlineBlock({
     case "IMAGE":
     case "VIDEO":
     case "BOOKMARK":
-      return <MediaBlock block={block} onChange={onChange} labels={labels} />;
+      return (
+        <div>
+          <AlignControl value={block.align} onChange={(align) => onChange({ ...block, align } as ContentBlock)} />
+          <MediaBlock block={block} onChange={onChange} labels={labels} />
+        </div>
+      );
+
+    case "DIVIDER":
+      return (
+        <div className="flex flex-wrap items-center gap-3 py-2">
+          <hr
+            className={cn(
+              "flex-1",
+              DIVIDER_THICKNESS_CLASS[block.thickness],
+              DIVIDER_STYLE_CLASS[block.style],
+              TOKEN_COLOR_BORDER[block.color],
+            )}
+          />
+          <select
+            value={block.style}
+            onChange={(e) => onChange({ ...block, style: e.target.value as typeof block.style })}
+            className={SELECT_CLASS}
+          >
+            {DIVIDER_STYLES.map((s) => (
+              <option key={s} value={s}>
+                {labels.dividerStyle[s]}
+              </option>
+            ))}
+          </select>
+          <select
+            value={block.thickness}
+            onChange={(e) => onChange({ ...block, thickness: e.target.value as typeof block.thickness })}
+            className={SELECT_CLASS}
+          >
+            {DIVIDER_THICKNESSES.map((t) => (
+              <option key={t} value={t}>
+                {labels.dividerThickness[t]}
+              </option>
+            ))}
+          </select>
+          <ColorSwatches value={block.color} onChange={(color) => onChange({ ...block, color })} />
+        </div>
+      );
+
+    case "COLUMNS": {
+      // Captured in a type-annotated const rather than read from the closed-over
+      // `block` param inside the nested functions below: TS's switch narrowing
+      // doesn't survive into a nested function body, so `block` would widen
+      // back to the full ContentBlock union there.
+      const columnsBlock: Extract<ContentBlock, { type: "COLUMNS" }> = block;
+      const columns = columnsBlock.columns;
+      function updateColumn(i: number, next: (typeof columns)[number]) {
+        onChange({ ...columnsBlock, columns: columns.map((c, idx) => (idx === i ? next : c)) });
+      }
+      function removeColumn(i: number) {
+        onChange({ ...columnsBlock, columns: columns.filter((_, idx) => idx !== i) });
+      }
+      return (
+        <div className="space-y-3 rounded-2xl border border-dashed border-border p-3">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            {columns.map((col, ci) => (
+              <div key={ci} className="min-w-0 flex-1 space-y-2" style={{ flexBasis: `${col.width}%` }}>
+                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={10}
+                      max={100}
+                      value={col.width}
+                      onChange={(e) => updateColumn(ci, { ...col, width: Number(e.target.value) || col.width })}
+                      aria-label={f.width}
+                      data-numeric
+                      className="w-14 rounded-md border border-input bg-card px-1.5 py-0.5 text-xs outline-none"
+                    />
+                    %
+                  </label>
+                  {columns.length > 2 ? (
+                    <button
+                      type="button"
+                      aria-label={f.removeColumn}
+                      onClick={() => removeColumn(ci)}
+                      className="rounded p-0.5 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </button>
+                  ) : null}
+                </div>
+                <BlockEditor
+                  blocks={col.blocks}
+                  // Safe: allowColumns={false} keeps "COLUMNS" out of this
+                  // nested editor's own insert menu, so it can never produce
+                  // a block outside LeafContentBlock — and the server
+                  // re-validates the whole tree against leafBlockSchema
+                  // regardless (bodySchema.safeParse in saveVersionAction).
+                  onChange={(next) => updateColumn(ci, { ...col, blocks: next as LeafContentBlock[] })}
+                  labels={labels}
+                  allowColumns={false}
+                />
+              </div>
+            ))}
+          </div>
+          {columns.length < 4 ? (
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...columnsBlock,
+                  columns: [...columns, { width: Math.max(10, Math.floor(100 / (columns.length + 1))), blocks: [] }],
+                })
+              }
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <Plus className="size-4" aria-hidden />
+              {f.addColumn}
+            </button>
+          ) : null}
+        </div>
+      );
+    }
   }
 }
 

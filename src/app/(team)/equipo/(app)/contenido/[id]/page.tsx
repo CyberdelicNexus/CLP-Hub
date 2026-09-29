@@ -216,11 +216,23 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
                     BUTTON: t("content.blockType.BUTTON"),
                     TECHNICAL_STEP: t("content.blockType.TECHNICAL_STEP"),
                     SUPPORT_BOX: t("content.blockType.SUPPORT_BOX"),
+                    DIVIDER: t("content.blockType.DIVIDER"),
+                    COLUMNS: t("content.blockType.COLUMNS"),
                   },
                   calloutTone: {
                     INFO: t("content.calloutTone.INFO"),
                     WARNING: t("content.calloutTone.WARNING"),
                     SUPPORT: t("content.calloutTone.SUPPORT"),
+                  },
+                  dividerStyle: {
+                    solid: t("content.dividerStyle.solid"),
+                    dashed: t("content.dividerStyle.dashed"),
+                    dotted: t("content.dividerStyle.dotted"),
+                  },
+                  dividerThickness: {
+                    thin: t("content.dividerThickness.thin"),
+                    medium: t("content.dividerThickness.medium"),
+                    thick: t("content.dividerThickness.thick"),
                   },
                   field: {
                     md: t("content.blockField.md"),
@@ -236,6 +248,9 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
                     label: t("content.blockField.label"),
                     contactLabel: t("content.blockField.contactLabel"),
                     contactUrl: t("content.blockField.contactUrl"),
+                    width: t("content.blockField.width"),
+                    addColumn: t("content.blockField.addColumn"),
+                    removeColumn: t("content.blockField.removeColumn"),
                   },
                 }}
               />
