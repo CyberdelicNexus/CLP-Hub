@@ -144,6 +144,9 @@ export type BlockType = (typeof BLOCK_TYPES)[number];
  */
 const MD = z.string().max(4000).optional();
 const RICH_TEXT = richTextDocSchema.optional();
+/** Non-optional form, for use as one member of a union (e.g. a CHECKLIST
+ * item is either a plain LINE string or a rich-text doc — never absent). */
+const RICH_TEXT_REQUIRED = richTextDocSchema;
 const LINE = z.string().trim().min(1).max(300);
 
 /** A URL an author may point at. Same scheme rules as inline links. */
@@ -212,12 +215,17 @@ const LEAF_BLOCK_VARIANTS = [
   z.object({
     type: z.literal("CHECKLIST"),
     title: z.string().trim().max(200).optional(),
-    items: z.array(LINE).min(1).max(30),
+    // Each item is EITHER the legacy plain string OR a rich-text doc — same
+    // per-element coexistence as `md`/`content` on the text-bearing block
+    // types, just applied per array entry instead of per block, so touching
+    // one item to add formatting doesn't force-upgrade its siblings.
+    items: z.array(z.union([LINE, RICH_TEXT_REQUIRED])).min(1).max(30),
   }),
   z.object({
     type: z.literal("CALLOUT"),
     tone: z.enum(CALLOUT_TONES).default("INFO"),
     title: z.string().trim().max(200).optional(),
+    titleContent: RICH_TEXT,
     md: MD,
     content: RICH_TEXT,
   }),
@@ -233,7 +241,14 @@ const LEAF_BLOCK_VARIANTS = [
     type: z.literal("TECHNICAL_STEP"),
     /** Step number within its run, so a reader can be told "go back to step 3". */
     step: z.number().int().min(1).max(99),
-    title: z.string().trim().min(1).max(200),
+    // Was required (`min(1)`); relaxed to optional alongside adding
+    // `titleContent` — same dual-field, never-both-required pattern as
+    // `md`/`content`. A fresh step from the editor always has *some*
+    // titleContent (even if just an empty paragraph), so this is a
+    // backward-compatibility relaxation for old rows, not a new way to
+    // ship a title-less step from the UI.
+    title: z.string().trim().max(200).optional(),
+    titleContent: RICH_TEXT,
     md: MD,
     content: RICH_TEXT,
     color: COLOR.default("primary"),
@@ -241,6 +256,7 @@ const LEAF_BLOCK_VARIANTS = [
   z.object({
     type: z.literal("SUPPORT_BOX"),
     title: z.string().trim().max(200).optional(),
+    titleContent: RICH_TEXT,
     md: MD,
     content: RICH_TEXT,
     contactLabel: z.string().trim().max(120).optional(),

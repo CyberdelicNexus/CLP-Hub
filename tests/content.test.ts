@@ -166,6 +166,35 @@ describe("block validation", () => {
   });
 });
 
+describe("rich titles and checklist items", () => {
+  const doc = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "hola" }] }] };
+
+  it("accepts a legacy plain title, a new titleContent, or both, on CALLOUT/TECHNICAL_STEP/SUPPORT_BOX", () => {
+    expect(bodySchema.safeParse([{ type: "CALLOUT", tone: "INFO", title: "Ojo", md: "x" }]).success).toBe(true);
+    expect(
+      bodySchema.safeParse([{ type: "CALLOUT", tone: "INFO", titleContent: doc, md: "x" }]).success,
+    ).toBe(true);
+    // TECHNICAL_STEP's title used to be required; relaxed to optional
+    // alongside titleContent, so a legacy row missing it entirely must still
+    // validate.
+    expect(
+      bodySchema.safeParse([{ type: "TECHNICAL_STEP", step: 1, md: "x" }]).success,
+    ).toBe(true);
+    expect(
+      bodySchema.safeParse([{ type: "SUPPORT_BOX", titleContent: doc, md: "x" }]).success,
+    ).toBe(true);
+  });
+
+  it("accepts a CHECKLIST with a mix of legacy string items and rich-text items", () => {
+    const parsed = bodySchema.safeParse([{ type: "CHECKLIST", items: ["plano", doc] }]);
+    expect(parsed.success).toBe(true);
+    expect(parsed.success && parsed.data[0].type === "CHECKLIST" && parsed.data[0].items).toEqual([
+      "plano",
+      doc,
+    ]);
+  });
+});
+
 describe("publishing workflow", () => {
   it("makes published and archived terminal", () => {
     expect(CONTENT_TRANSITIONS.PUBLISHED).toEqual([]);

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { markdownAstToRichTextDoc, richTextDocSchema } from "@/domain/rich-text";
+import {
+  inlineOfRichTextDoc,
+  markdownAstToRichTextDoc,
+  richTextDocSchema,
+  toItemRichTextDoc,
+  toTitleRichTextDoc,
+} from "@/domain/rich-text";
 
 /**
  * The rich-text schema is the same "closed, server-validated JSON" posture
@@ -136,5 +142,35 @@ describe("legacy Markdown -> rich text migration", () => {
       const doc = markdownAstToRichTextDoc(input);
       expect(richTextDocSchema.safeParse(doc).success).toBe(true);
     }
+  });
+});
+
+describe("title and checklist-item helpers (2026-09-29 request)", () => {
+  it("toTitleRichTextDoc prefers titleContent, falls back to wrapping the legacy plain title, then empty", () => {
+    const rich = { type: "doc" as const, content: [{ type: "paragraph" as const, content: [{ type: "text" as const, text: "rica" }] }] };
+    expect(toTitleRichTextDoc({ titleContent: rich, title: "plano" })).toEqual(rich);
+
+    const fromLegacy = toTitleRichTextDoc({ title: "Solo texto" });
+    expect(richTextDocSchema.safeParse(fromLegacy).success).toBe(true);
+    expect(inlineOfRichTextDoc(fromLegacy)).toEqual([{ type: "text", text: "Solo texto" }]);
+
+    expect(richTextDocSchema.safeParse(toTitleRichTextDoc({})).success).toBe(true);
+  });
+
+  it("toItemRichTextDoc passes a doc through and wraps a legacy string", () => {
+    const rich = { type: "doc" as const, content: [{ type: "paragraph" as const, content: [{ type: "text" as const, text: "x" }] }] };
+    expect(toItemRichTextDoc(rich)).toBe(rich);
+    expect(inlineOfRichTextDoc(toItemRichTextDoc("un elemento"))).toEqual([{ type: "text", text: "un elemento" }]);
+  });
+
+  it("inlineOfRichTextDoc reads only the first block, never drops the field for an odd multi-block edit", () => {
+    const doc = {
+      type: "doc" as const,
+      content: [
+        { type: "heading" as const, attrs: { level: 2 as const }, content: [{ type: "text" as const, text: "título" }] },
+        { type: "paragraph" as const, content: [{ type: "text" as const, text: "segundo bloque, ignorado" }] },
+      ],
+    };
+    expect(inlineOfRichTextDoc(doc)).toEqual([{ type: "text", text: "título" }]);
   });
 });

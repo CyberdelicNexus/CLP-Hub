@@ -95,6 +95,35 @@ const TextColorMark = Mark.create({
 
 const HEADING_ICON = { 1: Heading1, 2: Heading2, 3: Heading3, 4: Heading4 } as const;
 
+/**
+ * Mirrors the exact classes `components/content/blocks.tsx`'s `RichTextBlock`/
+ * `RichTextInline` apply to the same elements on the public page (2026-09-29
+ * request: "so you don't have to guess or publish to see how it looks") —
+ * targets the real `<h1>`/`<p>`/`<ul>`/`<code>`/etc. tags Tiptap renders into
+ * the contentEditable root via Tailwind's descendant-selector variants,
+ * since nothing wraps each node individually here the way `RichText` does
+ * with its own per-block JSX. `[&>*+*]:mt-3` stands in for that component's
+ * `flex flex-col gap-3` — a plain contentEditable can't be a flex container
+ * of independently-keyed children, so margin is the equivalent here. The
+ * `textColor` mark needs no entry: it renders its own literal class
+ * (`text-chart-*`) directly via its `renderHTML`, already identical to the
+ * public renderer's.
+ */
+const PUBLISHED_LOOK_CLASS = [
+  "[&>*+*]:mt-3",
+  "[&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:tracking-tight [&_h1]:text-balance",
+  "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-balance",
+  "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:text-balance",
+  "[&_h4]:text-base [&_h4]:font-semibold [&_h4]:tracking-tight [&_h4]:text-balance",
+  "[&_p]:leading-relaxed",
+  "[&_ul]:ml-5 [&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1.5",
+  "[&_ol]:ml-5 [&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1.5",
+  "[&_li]:leading-relaxed",
+  "[&_strong]:font-semibold",
+  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em]",
+  "[&_a]:underline [&_a]:underline-offset-4",
+].join(" ");
+
 export interface RichTextFieldLabels {
   paragraph: string;
   heading: string;
@@ -178,7 +207,12 @@ function Toolbar({ editor, labels }: { editor: Editor; labels: RichTextFieldLabe
   return (
     <BubbleMenu
       editor={editor}
-      className="flex max-w-[min(90vw,28rem)] flex-wrap items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lift"
+      // w-max + a generous max-width: everything fits on one row at the
+      // widths this toolbar actually needs (~30rem); flex-wrap stays only
+      // as a narrow-viewport safety net and so the link-URL row (its own
+      // basis-full div, appearing conditionally) still drops to its own line
+      // on purpose rather than squeezing into the same row as the buttons.
+      className="flex w-max max-w-[min(92vw,36rem)] flex-wrap items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lift"
     >
       {HEADING_LEVELS.map((level) => {
         const Icon = HEADING_ICON[level];
@@ -384,14 +418,18 @@ export function RichTextField({
     // it's a nice-to-have, not essential — skipped rather than shipped half
     // right. aria-label carries the same hint for screen readers instead.
     editorProps: {
-      attributes: { class: cn("outline-none", className), "aria-label": placeholder },
+      attributes: { class: cn("outline-none", PUBLISHED_LOOK_CLASS, className), "aria-label": placeholder },
     },
   });
 
   if (!editor) return null;
 
   return (
-    <div>
+    // min-w-0/flex-1 are inert outside a flex parent (e.g. this field's most
+    // common use, its own line) and only matter where a caller places it
+    // beside something else in a row (e.g. a CALLOUT title next to its tone
+    // swatches) — one wrapper class list serves both without a second prop.
+    <div className="min-w-0 flex-1">
       <Toolbar editor={editor} labels={labels} />
       <EditorContent editor={editor} />
     </div>

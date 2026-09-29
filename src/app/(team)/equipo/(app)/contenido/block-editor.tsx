@@ -68,7 +68,7 @@ import {
   type LeafContentBlock,
   type TokenColor,
 } from "@/domain/content";
-import { emptyRichTextDoc, toRichTextDoc } from "@/domain/rich-text";
+import { emptyRichTextDoc, toItemRichTextDoc, toRichTextDoc, toTitleRichTextDoc } from "@/domain/rich-text";
 import { ImageUploadButton } from "./image-upload-button";
 import { RichTextField, type RichTextFieldLabels } from "./rich-text-field";
 
@@ -123,17 +123,23 @@ function emptyBlock(type: BlockType, stepCount: number): ContentBlock {
     case "BOOKMARK":
       return { type, url: "", title: "", align: "left" };
     case "CHECKLIST":
-      return { type, items: [""] };
+      return { type, items: [emptyRichTextDoc()] };
     case "CALLOUT":
-      return { type, tone: "INFO", content: emptyRichTextDoc() };
+      return { type, tone: "INFO", titleContent: emptyRichTextDoc(), content: emptyRichTextDoc() };
     case "CONTEMPLATION":
       return { type, content: emptyRichTextDoc() };
     case "BUTTON":
       return { type, label: "", url: "", color: "primary", align: "left" };
     case "TECHNICAL_STEP":
-      return { type, step: stepCount + 1, title: "", content: emptyRichTextDoc(), color: "primary" };
+      return {
+        type,
+        step: stepCount + 1,
+        titleContent: emptyRichTextDoc(),
+        content: emptyRichTextDoc(),
+        color: "primary",
+      };
     case "SUPPORT_BOX":
-      return { type, content: emptyRichTextDoc() };
+      return { type, titleContent: emptyRichTextDoc(), content: emptyRichTextDoc() };
     case "DIVIDER":
       return { type, style: "solid", thickness: "thin", color: "default" };
     case "COLUMNS":
@@ -499,11 +505,12 @@ function InlineBlock({
           <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <input
-                value={block.title ?? ""}
-                onChange={(e) => onChange({ ...block, title: e.target.value })}
+              <RichTextField
+                value={toTitleRichTextDoc(block)}
+                onChange={(titleContent) => onChange({ ...block, titleContent, title: undefined })}
                 placeholder={f.title}
-                className={cn(SEAMLESS, "text-lg font-semibold")}
+                labels={labels.richText}
+                className="min-w-0 flex-1 text-lg font-semibold"
               />
               <div className="flex shrink-0 items-center gap-1">
                 {CALLOUT_TONES.map((tone) => (
@@ -546,12 +553,14 @@ function InlineBlock({
             {block.items.map((item, i) => (
               <li key={i} className="group/item flex items-start gap-2.5">
                 <CircleCheck className="mt-0.5 size-4 shrink-0 text-chart-3" aria-hidden />
-                <input
-                  value={item}
-                  onChange={(e) =>
-                    onChange({ ...block, items: block.items.map((it, idx) => (idx === i ? e.target.value : it)) })
+                <RichTextField
+                  value={toItemRichTextDoc(item)}
+                  onChange={(next) =>
+                    onChange({ ...block, items: block.items.map((it, idx) => (idx === i ? next : it)) })
                   }
-                  className={cn(SEAMLESS, "leading-relaxed")}
+                  placeholder={f.items}
+                  labels={labels.richText}
+                  className="leading-relaxed"
                 />
                 <button
                   type="button"
@@ -566,7 +575,7 @@ function InlineBlock({
           </ul>
           <button
             type="button"
-            onClick={() => onChange({ ...block, items: [...block.items, ""] })}
+            onClick={() => onChange({ ...block, items: [...block.items, emptyRichTextDoc()] })}
             className="mt-2.5 flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <Plus className="size-4" aria-hidden />
@@ -592,11 +601,12 @@ function InlineBlock({
           />
           <div className="min-w-0 flex-1 space-y-1 pt-1">
             <div className="flex items-center gap-2">
-              <input
-                value={block.title}
-                onChange={(e) => onChange({ ...block, title: e.target.value })}
+              <RichTextField
+                value={toTitleRichTextDoc(block)}
+                onChange={(titleContent) => onChange({ ...block, titleContent, title: undefined })}
                 placeholder={f.title}
-                className={cn(SEAMLESS, "font-semibold")}
+                labels={labels.richText}
+                className="font-semibold"
               />
               <ColorSwatches value={block.color} onChange={(color) => onChange({ ...block, color })} />
             </div>
@@ -617,11 +627,12 @@ function InlineBlock({
           <div className="flex items-start gap-3">
             <CircleHelp className="mt-0.5 size-5 shrink-0" aria-hidden />
             <div className="min-w-0 flex-1 space-y-1">
-              <input
-                value={block.title ?? ""}
-                onChange={(e) => onChange({ ...block, title: e.target.value })}
+              <RichTextField
+                value={toTitleRichTextDoc(block)}
+                onChange={(titleContent) => onChange({ ...block, titleContent, title: undefined })}
                 placeholder={f.title}
-                className={cn(SEAMLESS, "font-semibold")}
+                labels={labels.richText}
+                className="font-semibold"
               />
               <RichTextField
                 value={toRichTextDoc(block)}

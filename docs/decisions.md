@@ -4235,6 +4235,74 @@ Verified (code side): typecheck, lint, full test suite (446 passing,
 unchanged — no new schema/domain logic to test here, this lote is
 infrastructure + a thin upload action + UI), production build.
 
+## D-096 · 2026-09-29 · Content editor: rich text on titles and checklist items, WYSIWYG editor styling, selection-only toolbar
+
+Follow-up requests after the founder's first real look at the shipped
+editor (D-092 through D-095), all same-day.
+
+**The Tiptap editor didn't look like the published page.** The founder's
+ask was direct: "so you don't have to guess or publish to see how it
+looks." `rich-text-field.tsx`'s new `PUBLISHED_LOOK_CLASS` targets the
+actual `<h1>`–`<h4>`/`<p>`/`<ul>`/`<ol>`/`<code>`/`<a>` tags Tiptap renders
+into the contentEditable root via Tailwind descendant-selector variants
+(`[&_h1]:text-2xl` etc.), copied field-for-field from
+`components/content/blocks.tsx`'s `RichTextBlock`/`RichTextInline` classes.
+`[&>*+*]:mt-3` stands in for that component's `flex flex-col gap-3` — a
+contentEditable root can't be a flex container the same way, so margin
+does the equivalent spacing. The `textColor` mark needed no entry: it
+already renders its own literal `text-chart-*` class via its own
+`renderHTML`, identical on both sides by construction.
+
+**Toolbar wrapped onto a second line** — the `max-w-[min(90vw,28rem)]` cap
+from D-094 was narrower than the toolbar's actual content width (headings +
+formatting + lists + 5 color swatches + remove-color ≈ 480px), so the last
+button alone wrapped. Widened to `min(92vw,36rem)`, kept `w-max` +
+`flex-wrap` so the deliberate wrap (the link-URL row, `basis-full`, when the
+link button is clicked) still behaves as designed — only the *accidental*
+wrap was the bug.
+
+**The same rich-text menu now also applies to CALLOUT/TECHNICAL_STEP/
+SUPPORT_BOX titles and CHECKLIST items** (asked as "active en todos los
+textos de los componentes"; confirmed scope via a follow-up question — NOT
+extended to BUTTON's label, BOOKMARK's title/description, IMAGE's alt text,
+or any URL field, which stay plain strings on purpose: alt text especially
+must remain plain for accessibility, and URLs have no sensible "rich"
+form). Same dual-field, non-migrating pattern as lote 4's body text:
+- CALLOUT/TECHNICAL_STEP/SUPPORT_BOX gain `titleContent: richTextDocSchema
+  .optional()` alongside the existing `title` (now optional on
+  TECHNICAL_STEP too — it was `min(1)`-required before; relaxed for
+  backward compatibility, not as a new way to ship a title-less step from
+  the UI, since the editor always seeds a fresh step with *some*
+  `titleContent`).
+- CHECKLIST's `items` changed from `z.array(LINE)` to `z.array(z.union([LINE,
+  richTextDocSchema]))` — each item is independently either the legacy
+  plain string or a rich-text doc, so formatting one item never force-
+  upgrades its siblings, mirroring the per-block `md`/`content` coexistence
+  applied per array entry instead.
+- New `domain/rich-text.ts` helpers: `plainTextToRichTextDoc` (wraps a bare
+  string as a one-paragraph doc — titles/items were never Markdown syntax,
+  just literal text, so this is a shape change only, not parsing),
+  `toTitleRichTextDoc`/`toItemRichTextDoc` (the editor's prefer-new-fall-
+  back-to-legacy read path, same shape as `toRichTextDoc`), and
+  `inlineOfRichTextDoc` (the *display* path for these inline-only contexts
+  — reads only the first block's inline nodes, so a title that somehow
+  ends up with a heading/list/multiple paragraphs in it — the toolbar
+  doesn't forbid it — still shows something instead of silently dropping
+  the field or awkwardly rendering multi-block content where a single line
+  is expected).
+
+**Why titles/items could reuse `RichTextField` unmodified**: the earlier
+same-day switch to a selection-only `BubbleMenu` (the correction appended
+to D-094) is what made this extension trivial — a menu that only appears on
+selection looks the same whether the field holds one line (a title) or
+several paragraphs (body text). A permanently-docked toolbar would have
+looked visually heavier than a one-line title field itself, so doing the
+toolbar fix first, before this request even arrived, avoided rework here.
+
+Verified: typecheck, lint, full test suite (451 passing, 5 new — the
+dual-field schema acceptance for titles/checklist items, and the three new
+`rich-text.ts` helpers), production build.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

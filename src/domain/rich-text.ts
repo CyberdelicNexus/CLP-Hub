@@ -124,6 +124,49 @@ export function toRichTextDoc(block: { md?: string; content?: RichTextDoc }): Ri
 }
 
 /**
+ * Wraps a plain string as a single-paragraph rich-text doc, with NO markdown
+ * parsing — titles and checklist items never supported `**bold**`-style
+ * syntax the way body text did, they were always literal text, so there is
+ * nothing to interpret here, just a shape change.
+ */
+export function plainTextToRichTextDoc(text: string): RichTextDoc {
+  const trimmed = text.trim();
+  if (!trimmed) return emptyRichTextDoc();
+  return { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: trimmed }] }] };
+}
+
+/** The doc to show/edit for a title-like `{ title?, titleContent? }` pair
+ * (CALLOUT/TECHNICAL_STEP/SUPPORT_BOX) — same prefer-new-fall-back-to-legacy
+ * shape as `toRichTextDoc`, just plain-text upconversion instead of Markdown
+ * parsing. */
+export function toTitleRichTextDoc(value: { title?: string; titleContent?: RichTextDoc }): RichTextDoc {
+  if (value.titleContent) return value.titleContent;
+  if (value.title) return plainTextToRichTextDoc(value.title);
+  return emptyRichTextDoc();
+}
+
+/** A CHECKLIST item is either the legacy bare string or already a doc. */
+export function toItemRichTextDoc(item: string | RichTextDoc): RichTextDoc {
+  return typeof item === "string" ? plainTextToRichTextDoc(item) : item;
+}
+
+/**
+ * For inline-only display contexts (a title, a checklist item) — the first
+ * block's inline content only. Titles and items are conceptually a single
+ * line; if someone's rich-text edit produced a heading/list/multiple
+ * paragraphs anyway (the toolbar doesn't stop them), only the first block
+ * shows rather than silently dropping the field or rendering a multi-block
+ * layout somewhere text-sized content is expected.
+ */
+export function inlineOfRichTextDoc(doc: RichTextDoc): readonly RichTextInlineNode[] {
+  const first = doc.content[0];
+  if (!first) return [];
+  if (first.type === "paragraph" || first.type === "heading") return first.content ?? [];
+  const item = first.content[0];
+  return item?.content[0]?.content ?? [];
+}
+
+/**
  * Mechanically upconverts a legacy Markdown string (the old `md` field) to
  * the new rich-text doc shape. Lossless for anything the old subset could
  * express: bold/italic/code/link become marks on flattened text leaves

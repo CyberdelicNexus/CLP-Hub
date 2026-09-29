@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Bookmark, CircleCheck, CircleHelp, Info, LifeBuoy, TriangleAlert } from "lucide-react";
 import type { BlockAlign, ContentBlock, ContentBody, TokenColor } from "@/domain/content";
 import { parseMarkdown, type Inline } from "@/domain/markdown";
+import { inlineOfRichTextDoc } from "@/domain/rich-text";
 import type { RichTextBlockNode, RichTextDoc, RichTextInlineNode, TextColorToken } from "@/domain/rich-text";
 import { resolveVideoEmbed } from "@/domain/video";
 import { cn } from "@/lib/utils";
@@ -221,6 +222,24 @@ function BlockBody({ block, className }: { block: { md?: string; content?: RichT
   return null;
 }
 
+/** A title-like field (`{ title?, titleContent? }` on CALLOUT/TECHNICAL_STEP/
+ * SUPPORT_BOX): prefers the rich `titleContent`, rendered inline (marks
+ * only — bold/color/link/etc. — never a heading or list, even if a person's
+ * edit produced one; `inlineOfRichTextDoc` only looks at the first block),
+ * falls back to the legacy plain `title` string. */
+function TitleText({ value }: { value: { title?: string; titleContent?: RichTextDoc } }) {
+  if (value.titleContent) return <RichTextInline nodes={inlineOfRichTextDoc(value.titleContent)} />;
+  if (value.title) return <>{value.title}</>;
+  return null;
+}
+
+/** A CHECKLIST item: either the legacy plain string or a rich-text doc,
+ * rendered inline the same way a title is. */
+function ItemText({ item }: { item: string | RichTextDoc }) {
+  if (typeof item === "string") return <>{item}</>;
+  return <RichTextInline nodes={inlineOfRichTextDoc(item)} />;
+}
+
 const CALLOUT_STYLES = {
   INFO: { surface: "bg-surface-sky text-surface-sky-ink", Icon: Info },
   WARNING: { surface: "bg-surface-peach text-surface-peach-ink", Icon: TriangleAlert },
@@ -283,7 +302,11 @@ function Block({ block }: { block: ContentBlock }) {
         <aside className={cn("flex gap-3 rounded-2xl p-5", surface)}>
           <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="min-w-0">
-            {block.title ? <p className="text-lg font-semibold">{block.title}</p> : null}
+            {block.title || block.titleContent ? (
+              <p className="text-lg font-semibold">
+                <TitleText value={block} />
+              </p>
+            ) : null}
             <BlockBody block={block} className="mt-1" />
           </div>
         </aside>
@@ -307,7 +330,9 @@ function Block({ block }: { block: ContentBlock }) {
             {block.items.map((item, i) => (
               <li key={i} className="flex items-start gap-2.5">
                 <CircleCheck className="mt-0.5 size-4 shrink-0 text-chart-3" aria-hidden />
-                <span className="leading-relaxed">{item}</span>
+                <span className="leading-relaxed">
+                  <ItemText item={item} />
+                </span>
               </li>
             ))}
           </ul>
@@ -330,7 +355,7 @@ function Block({ block }: { block: ContentBlock }) {
           <div className="min-w-0 pt-1">
             <p className="font-semibold">
               <span className="sr-only">Paso {block.step}: </span>
-              {block.title}
+              <TitleText value={block} />
             </p>
             <BlockBody block={block} className="mt-1.5" />
           </div>
@@ -343,7 +368,11 @@ function Block({ block }: { block: ContentBlock }) {
           <div className="flex items-start gap-3">
             <CircleHelp className="mt-0.5 size-5 shrink-0" aria-hidden />
             <div className="min-w-0">
-              {block.title ? <p className="font-semibold">{block.title}</p> : null}
+              {block.title || block.titleContent ? (
+                <p className="font-semibold">
+                  <TitleText value={block} />
+                </p>
+              ) : null}
               <BlockBody block={block} className="mt-1" />
               {block.contactUrl && block.contactLabel ? (
                 <a
