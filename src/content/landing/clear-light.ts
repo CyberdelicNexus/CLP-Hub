@@ -101,7 +101,7 @@ export interface Stage {
   readonly code: string;
   readonly name: string;
   readonly description: string;
-  /** One image under /landing/media, with its intrinsic size so it is shown whole. */
+  /** One transparent editorial illustration per stage, with its intrinsic size. */
   readonly media: { readonly src: string; readonly width: number; readonly height: number; readonly alt: string };
 }
 
@@ -115,10 +115,10 @@ export const STAGES = {
       name: "Preparación",
       description: "Puesta a punto técnica y personal antes de comenzar.",
       media: {
-        src: "/landing/media/etapa-s0.webp",
+        src: "/landing/media/etapa-s0-editorial.webp",
         width: 1536,
         height: 1024,
-        alt: "Unas manos entregan a otras unas gafas de realidad virtual.",
+        alt: "Dos personas ilustradas se entregan unas gafas de realidad virtual entre hojas azules y violetas.",
       },
     },
     {
@@ -126,10 +126,10 @@ export const STAGES = {
       name: "Orientación",
       description: "El grupo se conoce y sitúa la experiencia.",
       media: {
-        src: "/landing/media/etapa-s1.webp",
+        src: "/landing/media/etapa-s1-editorial.webp",
         width: 1536,
         height: 1024,
-        alt: "Un portátil con una videollamada de grupo que comparte la presentación «¿Cómo prepararse para el programa?».",
+        alt: "Una participante sigue una sesión de orientación con una presentación y videollamada en su portátil.",
       },
     },
     {
@@ -137,12 +137,10 @@ export const STAGES = {
       name: "Cuerpos de Luz",
       description: "Explorar cómo se siente habitar una forma hecha de luz.",
       media: {
-        // The founder re-edited S2.png landscape (D-058), so it no longer
-        // needs the portrait-only narrower box (stages.tsx, D-057).
-        src: "/landing/media/etapa-s2-v4.webp",
-        width: 3632,
-        height: 2048,
-        alt: "Una mujer con una luz cálida en el pecho y en las palmas, envuelta en un contorno de luz violeta.",
+        src: "/landing/media/etapa-s2-editorial.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Una mujer medita con luz en el pecho y las palmas abiertas, ante una silueta luminosa.",
       },
     },
     {
@@ -150,10 +148,10 @@ export const STAGES = {
       name: "Vida",
       description: "Recorrer la propia historia con atención y autocompasión.",
       media: {
-        src: "/landing/media/etapa-s3.webp",
-        width: 1915,
-        height: 821,
-        alt: "Una tira de película con escenas de una vida: la mano de un bebé, unas zapatillas infantiles, un cuaderno, unas llaves y una mano anciana.",
+        src: "/landing/media/etapa-s3-editorial.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Una tira de película recorre la vida con un pie infantil, una zapatilla, un diario, una llave y una mano mayor con reloj.",
       },
     },
     {
@@ -161,10 +159,10 @@ export const STAGES = {
       name: "Más Allá del Cuerpo",
       description: "Reflexionar sobre el yo, el cuerpo y la realidad.",
       media: {
-        src: "/landing/media/etapa-s4.webp",
-        width: 1376,
-        height: 768,
-        alt: "Una mujer sentada con gafas de realidad virtual junto a una forma de luz violeta que se eleva a su lado.",
+        src: "/landing/media/etapa-s4-editorial.webp",
+        width: 1536,
+        height: 1024,
+        alt: "Una mujer sentada lleva gafas de realidad virtual mientras una silueta de luz se eleva detrás de ella.",
       },
     },
     {
@@ -172,10 +170,10 @@ export const STAGES = {
       name: "Ofrenda",
       description: "Soltar, agradecer y ofrecer algo significativo al grupo.",
       media: {
-        src: "/landing/media/etapa-s5.webp",
+        src: "/landing/media/etapa-s5-editorial.webp",
         width: 1536,
         height: 1024,
-        alt: "Una persona sentada en el centro de un círculo de cuerpos de luz violeta, con una luz en las manos.",
+        alt: "Una mujer ofrece una luz entre sus manos, acompañada por cuatro participantes sentados en círculo.",
       },
     },
     {
@@ -183,10 +181,10 @@ export const STAGES = {
       name: "Integración Grupal",
       description: "Dar sentido a lo vivido y compartir lo que permanece.",
       media: {
-        src: "/landing/media/etapa-s6.webp",
+        src: "/landing/media/etapa-s6-editorial.webp",
         width: 1536,
         height: 1024,
-        alt: "Un hombre participa desde su portátil en una videollamada con el grupo.",
+        alt: "Una persona mayor escribe en un cuaderno mientras participa en una videollamada de grupo.",
       },
     },
   ] as readonly Stage[],
@@ -199,30 +197,16 @@ export const JOIN = {
       numeral: "01",
       label: "Responde el cuestionario",
       body: "Comparte tu interés mediante el formulario de Qualtrics. Enviarlo no te compromete a participar. En ese primer cuestionario se te entregará toda la información y deberás firmar el consentimiento informado. El equipo tiene que revisar tus respuestas primero para ver si este estudio es adecuado para ti.",
-      visual: {
-        // The founder's enhanced version (D-055), same scene, new file name
-        // since nothing pins the old one and content changed.
-        src: "/landing/media/join-responde-v2.webp",
-        alt: "Una mujer responde un cuestionario en una tableta, sentada a la mesa de su casa al anochecer.",
-      },
     },
     {
       numeral: "02",
       label: "Habla con el equipo",
       body: "Si el estudio es adecuado para ti, el equipo revisará contigo los requisitos, resolverá tus dudas y te explicará el estudio.",
-      visual: {
-        src: "/landing/media/join-habla.webp",
-        alt: "Una mujer conversa por videollamada con una profesional desde un portátil en su casa.",
-      },
     },
     {
       numeral: "03",
       label: "Asignación a tu grupo",
       body: "Si resultas seleccionado/a para participar, te asignaremos a uno de los dos grupos y te explicaremos todo sobre cómo participar.",
-      visual: {
-        src: "/landing/media/join-recibe.webp",
-        alt: "Una integrante del equipo entrega en la puerta de una casa unas gafas de realidad virtual en su estuche.",
-      },
     },
   ],
   supporting: "Mostrar interés no te compromete a participar.",
@@ -555,6 +539,19 @@ export const META = {
     "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
 } as const;
 
+/** Draft introduction; names, credentials and the real team photo are still to come. */
+export const TEAM = {
+  eyebrow: "El equipo de Clear Light",
+  heading: "Personas que acompañan a personas.",
+  body: [
+    "En Clear Light compartimos una pregunta: cómo acompañar mejor a las personas que viven con una enfermedad grave o avanzada. Este estudio explora el encuentro entre la meditación, la realidad virtual y la investigación.",
+    "Detrás de cada paso hay un equipo con el que puedes hablar. Estamos aquí para explicarte el estudio, escuchar tus preguntas y acompañarte durante tu participación, respetando tus decisiones y tu ritmo.",
+  ],
+  contact: "Habla con nosotros",
+  imageAlt: "Ilustración provisional del equipo de Clear Light; pendiente de fotografía.",
+  imageCaption: "Próximamente, la fotografía del equipo.",
+} as const;
+
 /** The language switch (D-063). Language names are endonyms, in src/domain/locale.ts. */
 export const LANGUAGE = {
   label: "Idioma",
@@ -577,6 +574,7 @@ export const LANDING_ES = {
   JOIN,
   SPLIT,
   ELIGIBILITY,
+  TEAM,
   PARTNERS,
   INVITATION,
   APPLY,

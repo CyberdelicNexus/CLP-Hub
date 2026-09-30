@@ -159,13 +159,12 @@ describe("eligibility and questions", () => {
 });
 
 describe("programme stages", () => {
-  it("lists S0 to S6 in order, each with its own image and size", () => {
+  it("lists S0 to S6 in order, each with its own editorial illustration", () => {
     expect(STAGES.items.map((s) => s.code)).toEqual(["S0", "S1", "S2", "S3", "S4", "S5", "S6"]);
     STAGES.items.forEach((s, k) => {
-      // A stage's image may carry a version suffix (etapa-s2-v2.webp) when a
-      // replacement needs a fresh URL to dodge a stale cache (D-056); the
-      // stage-index prefix must still match.
-      expect(s.media.src).toMatch(new RegExp(`^/landing/media/etapa-s${k}(-v\\d+)?\\.webp$`));
+      expect(s.media.src).toBe(`/landing/media/etapa-s${k}-editorial.webp`);
+      const illustration = readFileSync(join(process.cwd(), "public", s.media.src));
+      expect(illustration.toString("ascii", 8, 12)).toBe("WEBP");
       expect(s.media.width).toBeGreaterThan(0);
       expect(s.media.height).toBeGreaterThan(0);
       expect(s.media.alt.length).toBeGreaterThan(10);

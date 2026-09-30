@@ -93,8 +93,9 @@ export function SplitStage({ children }: { children: ReactNode }) {
     const section = stage?.closest<HTMLElement>(".azar");
     const diagram = stage?.querySelector<HTMLElement>(".azar__diagram");
     const svg = stage?.querySelector<SVGSVGElement>(".azar__paths");
-    const root = stage?.closest<HTMLElement>(".cl");
-    const next = root?.querySelector<HTMLElement>(".elegibilidad");
+    // Reordering the page must never send the lights across unrelated sections.
+    const sibling = section?.nextElementSibling;
+    const next = sibling instanceof HTMLElement && sibling.matches(".elegibilidad") ? sibling : null;
     const grid = next?.querySelector<HTMLElement>(".elegibilidad__grid");
     const photo = next?.querySelector<HTMLElement>(".participant");
     if (!stage || !section || !diagram || !svg) return;

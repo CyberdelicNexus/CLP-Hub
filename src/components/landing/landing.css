@@ -7,9 +7,8 @@
    Nothing here restyles .sc-stage, .sc-copy or a [data-sc-*] device, with one
    deliberate exception noted at "resilience".
 
-   One locked dark theme. Lavender, as a gradient on buttons and link
-   highlights, is the interface accent (D-052; it replaced Living Teal).
-   Spectral colour otherwise lives inside the light bodies and the footage.
+   Dark theme with lavender controls. The landing adds a blue/violet ambient
+   light layer; shared legal and application surfaces keep their own ground.
    ========================================================================== */
 
 .cl {
@@ -71,6 +70,67 @@
 body:has(> .cl) { background: #000; }
 @media (max-width: 860px) { .cl { --cl-nav-h: 60px; } }
 
+/* Landing-only atmosphere: broad pools of light, fading into a midnight edge.
+   Negative layers stay above the isolated root's ground, behind every object.
+   Transform/opacity motion avoids repainting gradient stops every frame. */
+.cl--landing {
+  --sc-canvas: #080b14;
+  --sc-surface: #172132;
+  --sc-ink-soft: #c1c8d8;
+  --cl-muted: #a1acc1;
+  isolation: isolate;
+}
+.cl-atmosphere { position: fixed; inset: 0; overflow: hidden; z-index: -2; pointer-events: none; }
+.cl-atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse at 48% 37%, rgb(112 124 156 / 0.06), transparent 48%),
+    radial-gradient(ellipse at 20% 58%, rgb(48 93 155 / 0.48), transparent 57%);
+}
+.cl-atmosphere__violet {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(ellipse at 80% 43%, rgb(102 70 146 / 0.43), transparent 53%);
+}
+.cl-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgb(5 7 14 / 0.48), transparent 64%),
+    radial-gradient(ellipse at 50% 48%, transparent 26%, rgb(5 7 14 / 0.55) 100%);
+}
+.cl--landing .star-field { z-index: -1; opacity: 0.55; }
+/* Let only the hero media blend against the atmosphere in the root context.
+   Isolating the hero or main would trap the blend against a transparent/black
+   backdrop and leave the image's black rectangle visible. */
+.cl--landing .hero { isolation: auto; }
+.cl--landing .hero__media {
+  mix-blend-mode: screen;
+  background: transparent;
+  mask-image: linear-gradient(to bottom, #000 65%, rgb(0 0 0 / 0.75) 80%, transparent 100%);
+}
+.cl--landing .hero__scrim {
+  opacity: 0.45;
+  mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cl-atmosphere::before { animation: cl-atmosphere-drift 38s ease-in-out infinite alternate; }
+  .cl-atmosphere__violet { animation: cl-atmosphere-violet 46s ease-in-out infinite alternate; }
+}
+.cl[data-still] .cl-atmosphere::before,
+.cl[data-still] .cl-atmosphere__violet { animation-play-state: paused; }
+@keyframes cl-atmosphere-drift {
+  from { transform: translate3d(-5%, 3%, 0) scale(1.02); opacity: 0.8; }
+  to { transform: translate3d(7%, -5%, 0) scale(1.13) rotate(4deg); opacity: 1; }
+}
+@keyframes cl-atmosphere-violet {
+  from { transform: translate3d(5%, -3%, 0) scale(1); opacity: 1; }
+  to { transform: translate3d(-7%, 6%, 0) scale(1.12) rotate(-5deg); opacity: 0.75; }
+}
+
 /* --------------------------------------------------------------- resilience
    scrollcraft.css pre-paints every cue at opacity 0 so nothing flashes before
    the engine's first read. Until the engine has actually mounted (it adds
@@ -96,6 +156,7 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    context above it so no section needs a z-index of its own to clear it. */
 .star-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .cl > main { position: relative; z-index: 1; }
+.cl--landing > main { z-index: auto; }
 
 .cl-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -576,11 +637,8 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 }
 .etapas__head { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
 .etapas__head p { margin-top: 1rem; max-width: 30ch; }
-/* The images sit on black and are shown whole (their aspect ratios differ, from
-   3:2 to a 2.33:1 film strip), sized to fit the middle column and the height
-   above the timeline. Each image is its own box, so the feathered mask follows
-   its real edges: several run content right up to an edge, which would
-   otherwise read as a hard line against the page. */
+/* Editorial vignettes retain their native colours and transparency,
+   without blend modes or edge masks. */
 .etapas__media {
   grid-column: 2;
   grid-row: 1 / span 3;
@@ -597,10 +655,6 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   height: auto;
   max-width: 100%;
   max-height: 100%;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
-  mask-composite: intersect;
 }
 .etapas__active { grid-column: 3; grid-row: 3; align-self: end; justify-self: end; position: relative; width: 100%; max-width: 26rem; min-height: 9.5rem; }
 .etapas__text { position: absolute; inset: auto 0 0 0; }
@@ -654,10 +708,6 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .etapas-list__item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .etapas-list__figure { margin: 0; display: flex; justify-content: center; }
 .etapas-list__figure img { width: 100%; }
-/* A portrait stage image runs the mobile column's full width, which makes it
-   far taller than every landscape one; 70% (about 30% smaller) brings its
-   footprint back in line with the rest (D-057). */
-.etapas-list__figure--portrait img { width: 70%; }
 .etapas-list__item h3 { font-size: 1.4rem; letter-spacing: -0.02em; margin-top: 0.25rem; }
 .etapas-list__item p { margin-top: 0.4rem; color: var(--sc-ink-soft); }
 @media (min-width: 640px) {
@@ -665,57 +715,17 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 }
 
 /* ---------------------------------------------------------- 5 · incorporarse */
-/* No `position` here: .sc-stage is sticky and an author rule would un-pin it. */
-/* 6fr/7fr rather than the original 5fr/7fr (D-081): step 01's body grew to a
-   full paragraph (consent + review, not just the questionnaire link) and
-   needed more of the column's width to keep its line count sane in a
-   fixed-height pinned section. */
-.stage--join { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); height: 100svh; }
-.join__media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-.join__visual { position: absolute; inset: 0; }
-/* Each photograph keeps its subject on the right; anchoring the crop there
-   keeps the person in frame as a narrower viewport trims the sides. */
-.join__visual img { object-fit: cover; object-position: 72% 50%; }
-/* Black holds the copy side and releases over the photograph; the top and
-   bottom edges fade too, so no hard photo edge shows while the stage slides in
-   or out against the black sections around it. */
-.join__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg,
-      var(--sc-canvas) 0%,
-      color-mix(in oklab, var(--sc-canvas) 97%, transparent) 37%,
-      color-mix(in oklab, var(--sc-canvas) 62%, transparent) 58%,
-      transparent 78%),
-    linear-gradient(to bottom,
-      var(--sc-canvas) 0%,
-      transparent 22%,
-      transparent 84%,
-      var(--sc-canvas) 100%),
-    /* The horizontal fade above already darkens the top-left; this corner
-       is the one edge with nothing softening it, so the top-right of the
-       stage reads as a hard rectangle sliding in from the black section
-       above it (Etapas). */
-    radial-gradient(ellipse 46% 42% at 100% 0%,
-      color-mix(in oklab, var(--sc-canvas) 88%, transparent) 0%,
-      transparent 72%);
+/* The stage stays sticky; illustrations and descriptions share the right column. */
+.stage--join {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(3rem, 7vw, 8rem);
+  height: 100svh;
+  padding: calc(var(--cl-nav-h) + 2rem) max(var(--sc-gutter), calc((100vw - var(--cl-container)) / 2 + var(--sc-gutter))) 3rem;
 }
-.join__light { --d: var(--cl-light); right: 0; top: 0; --tx: 38%; --ty: -42%; transform: translate(38%, -42%); z-index: 1; }
-.join__copy {
-  position: relative;
-  z-index: 2;
-  grid-column: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: calc(var(--cl-nav-h) + 2rem) 2rem 3rem max(var(--sc-gutter), calc((100vw - var(--cl-container)) / 2 + var(--sc-gutter)));
-}
+.join__copy { min-width: 0; }
 .steps { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 1.4rem; }
-/* Activity per step, read straight from the act's progress: 1 inside the
-   step's window, ramping over --ramp on either side. No duplicated text. */
 .step {
   display: grid;
   grid-template-columns: 2.75rem 1fr;
@@ -731,68 +741,48 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   font-variant-numeric: tabular-nums;
   color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--cl-muted));
 }
-/* The label matches the numeral's colour rather than just brightening, so an
-   active step reads as one accent-coloured unit. */
 .step__label {
-  font-family: var(--sc-font-display);
   font-size: clamp(1.2rem, 1.6vw, 1.5rem);
   letter-spacing: -0.015em;
   color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
 }
-/* All three descriptions share one grid cell, so the slot is as tall as the
-   longest and none spills into the line below. Its own --a (the .step
-   ramp, against the same --from/--to) so the active description also
-   carries the numeral's colour, not just its opacity. */
-.steps__desc { display: grid; margin: 1.5rem 0 0 3.75rem; }
-.steps__body {
-  --ramp: 0.08;
-  --a: clamp(0, min(calc((var(--sc-p, 1) - var(--from)) / var(--ramp)), calc((var(--to) - var(--sc-p, 1)) / var(--ramp))), 1);
-  grid-area: 1 / 1;
-  /* Widened with the column above it (D-081): step 01's longer paragraph now
-     wraps to fewer lines instead of stretching this shared slot (and the
-     pinned section's fixed height) tall. */
-  max-width: 44ch;
-  color: color-mix(in oklab, var(--sc-accent) calc(var(--a, 0) * 100%), var(--sc-ink-soft));
-  line-height: 1.6;
+.steps__desc { display: grid; min-width: 0; }
+.steps__panel { grid-area: 1 / 1; align-self: start; }
+.steps__body { max-width: 46ch; line-height: 1.7; color: var(--sc-ink-soft); }
+.join-illustration {
+  display: block;
+  width: clamp(12rem, 23vw, 21rem);
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 2rem;
+  color: #d5dcee;
+  filter: drop-shadow(0 0 18px rgb(160 145 217 / 0.18));
 }
 .join__supporting { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--cl-line); font-size: 0.875rem; color: var(--cl-muted); max-width: 30rem; }
-
-/* Stacked: each step is a card whose ground is its photograph, with the copy
-   over it (numeral, label, body). The photographs are lit from the right and
-   fade to black on the left, so the copy sits in the dark half they already
-   carry and the scrim only has to finish the job (D-061). */
-.join-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 1.5rem; }
-.join-list__item {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 17rem;
-  padding: clamp(1.25rem, 4vw, 1.75rem);
-  border-radius: var(--cl-radius);
-  overflow: hidden;
-  background: var(--sc-canvas);
-  --a: 1;
+.join__stacked { padding-block: var(--sc-section); }
+.join-list { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; }
+.join-list__item { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding-block: 2.5rem; border-top: 1px solid var(--cl-line); --a: 1; }
+.join-list__heading { display: flex; align-items: baseline; gap: 1rem; }
+.join-list__heading h3 { font-size: 1.3rem; letter-spacing: -0.015em; }
+.join-list__detail p { max-width: 46ch; font-size: 1rem; line-height: 1.7; color: var(--sc-ink-soft); }
+.join-list__detail .join-illustration { width: 14rem; margin-bottom: 1.5rem; }
+@media (max-width: 600px) {
+  .join-list__item { grid-template-columns: 1fr; gap: 1.5rem; }
+  .join-list__detail .join-illustration { margin-left: auto; }
 }
-.join-list__figure { position: absolute; inset: 0; z-index: -1; margin: 0; }
-.join-list__figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 76% 42%; }
-.join-list__figure::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to top, var(--sc-canvas) 0%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 34%, transparent 78%),
-    linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 72%, transparent) 0%, transparent 62%);
+/* Keep the scroll sequence pinned on laptop-height windows, with a compact
+   illustration and tighter spacing so the longest description still fits. */
+@media (max-height: 740px) {
+  .stage--join { gap: clamp(2rem, 5vw, 5rem); padding-top: calc(var(--cl-nav-h) + 1rem); padding-bottom: 1.5rem; }
+  .stage--join .join-illustration { width: clamp(9rem, 30vh, 14rem); margin-bottom: 1rem; }
+  .stage--join .steps { margin-top: 1.5rem; gap: 1rem; }
+  .stage--join .steps__body { font-size: 0.95rem; line-height: 1.55; }
+  .stage--join .join__supporting { margin-top: 1.5rem; padding-top: 1rem; }
 }
-.join-list__copy { max-width: 38ch; }
-.join-list__item .step__num { display: block; font-size: 0.95rem; letter-spacing: 0.06em; }
-.join-list__item h3 { margin-top: 0.15rem; font-size: 1.3rem; letter-spacing: -0.015em; }
-.join-list__item p { margin-top: 0.45rem; font-size: 0.95rem; line-height: 1.5; color: var(--sc-ink-soft); }
-@media (min-width: 640px) {
-  .join-list__item { min-height: 20rem; }
-  .join-list__copy { max-width: 42ch; }
+/* An exceptionally shallow viewport needs normal flow to keep text readable. */
+@media (max-height: 480px) {
+  .join > .cl-pinned { display: none; }
+  .join > .cl-stacked { display: block; }
 }
 
 /* ----------------------------------------------------------- 6 · al azar */
@@ -1027,13 +1017,12 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   text-align: center;
   padding: 0 var(--sc-gutter) 4rem;
 }
-/* The founder's footer frame (D-052): six bodies in an arc around the fire.
-   Its black is true black, so it needs no blend; the mask only softens the
-   outer bodies into the page. */
+/* Blend the entire masked frame so the black matte dissolves into the page. */
 .arc {
   position: relative;
   width: min(72rem, 100%);
   aspect-ratio: 3342 / 1040;
+  mix-blend-mode: screen;
   -webkit-mask-image: radial-gradient(70% 95% at 50% 40%, #000 55%, transparent 100%);
   mask-image: radial-gradient(70% 95% at 50% 40%, #000 55%, transparent 100%);
 }
@@ -1498,6 +1487,25 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (max-width: 760px) {
   .apply__steps { grid-template-columns: 1fr; gap: 1.5rem; }
   .apply__embed { height: min(85dvh, 60rem); }
+}
+
+/* The people behind the study, following eligibility and the FAQ. */
+.team {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(3rem, 7vw, 7rem);
+  padding-block: var(--sc-section);
+}
+.team__copy h2 { margin-top: 1rem; max-width: 16ch; }
+.team__copy .cl-lead { margin-top: 1.5rem; max-width: 46ch; }
+.team__copy .cl-link { display: inline-block; margin-top: 2rem; }
+.team__portrait { margin: 0; }
+.team__portrait img { display: block; width: 100%; height: auto; border-radius: var(--cl-radius); border: 1px solid var(--cl-line); }
+.team__portrait figcaption { margin-top: 1rem; color: var(--cl-muted); font-size: 0.85rem; }
+@media (max-width: 860px) {
+  .team { grid-template-columns: 1fr; gap: 2.5rem; }
+  .team__portrait { max-width: 36rem; width: 100%; }
 }
 
 /* ------------------------------------------------------- reduced motion */

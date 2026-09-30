@@ -13,11 +13,9 @@ import "@/components/landing/landing.css";
  * Public recruitment landing page for the Clear Light trial.
  *
  * Spanish first, with English and Galician translations chosen by the visitor
- * (D-063); one locked dark theme, eight sections in the order fixed by the
- * V3 design handoff (docs/landing-page.md, D-042). The page stores nothing: its
- * single outbound action is the study's Qualtrics screening link, read from
- * `studies.screening_url` of the study open for recruitment (D-031), and the
- * contact dialog sends nothing yet (D-052).
+ * (D-063). The dark atmospheric theme and section order follow the current
+ * team revision in docs/landing-page.md. Application links go to /participar;
+ * the screening URL comes from the study open for recruitment (D-031).
  */
 
 export async function generateMetadata(): Promise<Metadata> {

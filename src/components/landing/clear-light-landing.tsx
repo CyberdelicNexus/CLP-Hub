@@ -7,6 +7,7 @@ import { Join } from "@/components/landing/sections/join";
 import { Opening } from "@/components/landing/sections/opening";
 import { Split } from "@/components/landing/sections/split";
 import { Stages } from "@/components/landing/sections/stages";
+import { Team } from "@/components/landing/sections/team";
 import { LanguageSwitch } from "@/components/landing/language-switch";
 import { SiteBar } from "@/components/landing/site-bar";
 import { StarField } from "@/components/landing/star-field";
@@ -16,7 +17,7 @@ import type { PublicLocale } from "@/domain/locale";
 export const LANDING_ROOT_ID = "clear-light";
 
 /**
- * The eight locked sections, in order (docs/landing-page.md). Essential content
+ * The recruitment story, in order (docs/landing-page.md). Essential content
  * is ordinary document flow; the scroll engine and the pointer reveal are
  * layered on top and the page reads completely without either. The copy is
  * the visitor's language (D-063); layout, media and anchors never vary by it.
@@ -33,7 +34,10 @@ export function ClearLightLanding({
   fontClass: string;
 }) {
   return (
-    <div id={LANDING_ROOT_ID} className={`cl ${fontClass}`} lang={locale}>
+    <div id={LANDING_ROOT_ID} className={`cl cl--landing ${fontClass}`} lang={locale}>
+      <div className="cl-atmosphere" aria-hidden="true">
+        <div className="cl-atmosphere__violet" />
+      </div>
       <StarField rootId={LANDING_ROOT_ID} />
       <SiteBar
         brand="Clear Light"
@@ -47,10 +51,11 @@ export function ClearLightLanding({
       />
       <main id="main">
         <Opening copy={copy} lang={locale} />
+        <Split copy={copy} />
         <Stages copy={copy} />
         <Join copy={copy} />
-        <Split copy={copy} />
         <Eligibility copy={copy} />
+        <Team copy={copy} />
         <Invitation copy={copy} qualtricsUrl={qualtricsUrl} rootId={LANDING_ROOT_ID} />
       </main>
       <ContactDialog copy={copy.CONTACT} />

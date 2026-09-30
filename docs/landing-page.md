@@ -1,5 +1,49 @@
 # Recruitment landing page (Clear Light)
 
+## Current visual revision (2026-09-30)
+
+The team requested a lighter atmosphere within the dark theme. The landing
+now uses a slowly drifting blue, violet and grey radial glow with dark edges,
+behind all content and the existing starfield, with a darker centre and colour
+concentrated toward the sides. The blue and violet layers drift independently
+over 38- and 46-second alternating passes. Hero and closing CTA media use
+screen blending to remove their black ground; both the hero media and its
+text scrim fade to transparency at the bottom so no section edge remains.
+The gradient never overlays content. Both moving layers stop for reduced
+motion and the footer pause control. The effect and brighter text tokens are
+scoped to `.cl--landing`.
+
+All seven programme photographs have been replaced by transparent editorial
+illustrations based on the original images: headset handover, group call with a
+shared presentation, a body of light with illuminated palms, a life-story
+filmstrip, a seated headset wearer with a rising light-body, an offering
+circle, and a group call with a notebook. The team supplied two flat editorial
+references; the new scenes use drawn people, flowing botanical shapes, fine
+grain, blue/lilac colours and warm peach accents. They need no blending or
+edge masks and use the same files in every language and layout; the old
+photographs are no longer requested. The WebP assets preserve the generated alpha.
+Alt text describes each new scene in Spanish, English and Galician. Asset paths
+and the built-in imagegen prompt set are recorded in `landing-illustration-prompts.md`.
+
+The current order is hero, El porqué / El qué (including the video), random
+assignment, programme stages, onboarding, eligibility / FAQ, team, invitation
+and research partners / footer. The assignment lights only hand over to the
+eligibility photograph when the two sections are adjacent; in this order,
+the split animation stays within the assignment section.
+
+Onboarding uses three custom SVG illustrations with glass-like bevels,
+blue/lavender gradients, directional highlights and soft shadows instead of
+generated photographs. SVG paint IDs are unique per instance so the desktop
+and stacked versions render independently. Each desktop illustration appears on the right above its
+step description while the left-hand step highlights. Laptop-height windows
+retain the pinned sequence with more compact spacing. Mobile, exceptionally
+shallow windows (480px high or less), reduced motion and no-JavaScript
+layouts use stacked steps. The team section includes draft introductory copy
+in all three languages and an explicitly labelled SVG photo placeholder;
+replace it with the team's real photograph when supplied. No names or
+credentials have been invented. Earlier visual descriptions below are history
+where they differ from this revision.
+
 The public route `/` is the recruitment landing page for the Clear Light
 randomized controlled trial, in Spanish, with English and Galician translations
 the visitor can choose (D-063). It is built from the V3 design handoff

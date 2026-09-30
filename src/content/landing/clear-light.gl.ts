@@ -57,10 +57,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Preparación",
         description: "Posta a punto técnica e persoal antes de comezar.",
         media: {
-          src: "/landing/media/etapa-s0.webp",
+          src: "/landing/media/etapa-s0-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "Unhas mans entregan a outras unhas gafas de realidade virtual.",
+          alt: "Dúas persoas ilustradas entréganse unhas gafas de realidade virtual entre follas azuis e violetas.",
         },
       },
       {
@@ -68,10 +68,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Orientación",
         description: "O grupo coñécese e sitúa a experiencia.",
         media: {
-          src: "/landing/media/etapa-s1.webp",
+          src: "/landing/media/etapa-s1-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "Un portátil cunha videochamada de grupo que comparte a presentación «Como prepararse para o programa?».",
+          alt: "Unha participante segue unha sesión de orientación cunha presentación e videochamada no seu portátil.",
         },
       },
       {
@@ -79,10 +79,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Corpos de Luz",
         description: "Explorar como se sente habitar unha forma feita de luz.",
         media: {
-          src: "/landing/media/etapa-s2-v4.webp",
-          width: 3632,
-          height: 2048,
-          alt: "Unha muller cunha luz cálida no peito e nas palmas, envolta nun contorno de luz violeta.",
+          src: "/landing/media/etapa-s2-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "Unha muller medita con luz no peito e nas palmas abertas, diante dunha silueta luminosa.",
         },
       },
       {
@@ -90,10 +90,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Vida",
         description: "Percorrer a propia historia con atención e autocompaixón.",
         media: {
-          src: "/landing/media/etapa-s3.webp",
-          width: 1915,
-          height: 821,
-          alt: "Unha tira de película con escenas dunha vida: a man dun bebé, unhas zapatillas infantís, un caderno, unhas chaves e unha man anciá.",
+          src: "/landing/media/etapa-s3-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "Unha tira de película percorre a vida cun pé infantil, unha zapatilla, un diario, unha chave e unha man maior con reloxo.",
         },
       },
       {
@@ -101,10 +101,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Máis Alá do Corpo",
         description: "Reflexionar sobre o eu, o corpo e a realidade.",
         media: {
-          src: "/landing/media/etapa-s4.webp",
-          width: 1376,
-          height: 768,
-          alt: "Unha muller sentada con gafas de realidade virtual xunto a unha forma de luz violeta que se eleva ao seu carón.",
+          src: "/landing/media/etapa-s4-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "Unha muller sentada leva gafas de realidade virtual mentres unha silueta de luz se eleva detrás dela.",
         },
       },
       {
@@ -112,10 +112,10 @@ export const LANDING_GL: LandingCopy = {
         name: "Ofrenda",
         description: "Soltar, agradecer e ofrecer algo significativo ao grupo.",
         media: {
-          src: "/landing/media/etapa-s5.webp",
+          src: "/landing/media/etapa-s5-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "Unha persoa sentada no centro dun círculo de corpos de luz violeta, cunha luz nas mans.",
+          alt: "Unha muller ofrece unha luz entre as mans, acompañada por catro participantes sentados en círculo.",
         },
       },
       {
@@ -123,13 +123,24 @@ export const LANDING_GL: LandingCopy = {
         name: "Integración Grupal",
         description: "Dar sentido ao vivido e compartir o que permanece.",
         media: {
-          src: "/landing/media/etapa-s6.webp",
+          src: "/landing/media/etapa-s6-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "Un home participa desde o seu portátil nunha videochamada co grupo.",
+          alt: "Unha persoa maior escribe nun caderno mentres participa nunha videochamada de grupo.",
         },
       },
     ],
+  },
+  TEAM: {
+    eyebrow: "O equipo de Clear Light",
+    heading: "Persoas que acompañan a persoas.",
+    body: [
+      "En Clear Light compartimos unha pregunta: como acompañar mellor as persoas que viven cunha enfermidade grave ou avanzada. Este estudo explora o encontro entre a meditación, a realidade virtual e a investigación.",
+      "Detrás de cada paso hai un equipo co que podes falar. Estamos aquí para explicarche o estudo, escoitar as túas preguntas e acompañarte durante a túa participación, respectando as túas decisións e o teu ritmo.",
+    ],
+    contact: "Fala connosco",
+    imageAlt: "Ilustración provisional do equipo de Clear Light; pendente de fotografía.",
+    imageCaption: "Proximamente, a fotografía do equipo.",
   },
   JOIN: {
     heading: "Como incorporarse ao estudo",
@@ -138,28 +149,16 @@ export const LANDING_GL: LandingCopy = {
         numeral: "01",
         label: "Responde o cuestionario",
         body: "Comparte o teu interese mediante o formulario de Qualtrics. Envialo non te compromete a participar. Nese primeiro cuestionario recibirás toda a información e deberás asinar o consentimento informado. O equipo ten que revisar primeiro as túas respostas para ver se este estudo é adecuado para ti.",
-        visual: {
-          src: "/landing/media/join-responde-v2.webp",
-          alt: "Unha muller responde un cuestionario nunha tableta, sentada á mesa da súa casa ao anoitecer.",
-        },
       },
       {
         numeral: "02",
         label: "Fala co equipo",
         body: "Se o estudo é adecuado para ti, o equipo revisará contigo os requisitos, resolverá as túas dúbidas e explicarache o estudo.",
-        visual: {
-          src: "/landing/media/join-habla.webp",
-          alt: "Unha muller conversa por videochamada cunha profesional desde un portátil na súa casa.",
-        },
       },
       {
         numeral: "03",
         label: "Asignación á túa cohorte",
         body: "Se resultas seleccionado/a, asignarémoste a unha cohorte do estudo e coordinaremos unha visita para entregarche as gafas de realidade virtual e explicarche como utilizalas.",
-        visual: {
-          src: "/landing/media/join-recibe.webp",
-          alt: "Unha integrante do equipo entrega na porta dunha casa unhas gafas de realidade virtual no seu estoxo.",
-        },
       },
     ],
     supporting: "Amosar interese non te compromete a participar.",

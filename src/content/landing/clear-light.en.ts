@@ -58,10 +58,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Preparation",
         description: "Getting ready, technically and personally, before starting.",
         media: {
-          src: "/landing/media/etapa-s0.webp",
+          src: "/landing/media/etapa-s0-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "One pair of hands passes a virtual reality headset to another.",
+          alt: "Two illustrated people pass a virtual reality headset between blue and violet leaves.",
         },
       },
       {
@@ -69,10 +69,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Orientation",
         description: "The group gets to know one another and places the experience in context.",
         media: {
-          src: "/landing/media/etapa-s1.webp",
+          src: "/landing/media/etapa-s1-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "A laptop with a group video call sharing the presentation “How to prepare for the program?”",
+          alt: "A participant follows an orientation session with a presentation and video call on her laptop.",
         },
       },
       {
@@ -80,10 +80,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Bodies of Light",
         description: "Exploring how it feels to inhabit a form made of light.",
         media: {
-          src: "/landing/media/etapa-s2-v4.webp",
-          width: 3632,
-          height: 2048,
-          alt: "A woman with a warm light in her chest and palms, wrapped in an outline of violet light.",
+          src: "/landing/media/etapa-s2-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "A woman meditates with light in her chest and open palms, in front of a luminous silhouette.",
         },
       },
       {
@@ -91,10 +91,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Life",
         description: "Going through your own story with attention and self-compassion.",
         media: {
-          src: "/landing/media/etapa-s3.webp",
-          width: 1915,
-          height: 821,
-          alt: "A film strip with scenes from a life: a baby's hand, children's sneakers, a notebook, some keys, and an elderly hand.",
+          src: "/landing/media/etapa-s3-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "A filmstrip traces a life through a baby foot, a sneaker, a journal, a key and an older hand wearing a watch.",
         },
       },
       {
@@ -102,10 +102,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Beyond the Body",
         description: "Reflecting on the self, the body, and reality.",
         media: {
-          src: "/landing/media/etapa-s4.webp",
-          width: 1376,
-          height: 768,
-          alt: "A seated woman wearing a virtual reality headset, with a form of violet light rising beside her.",
+          src: "/landing/media/etapa-s4-editorial.webp",
+          width: 1536,
+          height: 1024,
+          alt: "A seated woman wears a virtual reality headset as a silhouette of light rises behind her.",
         },
       },
       {
@@ -113,10 +113,10 @@ export const LANDING_EN: LandingCopy = {
         name: "Offering",
         description: "Letting go, giving thanks, and offering something meaningful to the group.",
         media: {
-          src: "/landing/media/etapa-s5.webp",
+          src: "/landing/media/etapa-s5-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "A person seated at the center of a circle of bodies of violet light, holding a light in their hands.",
+          alt: "A woman offers a light cupped in her hands, accompanied by four participants seated in a circle.",
         },
       },
       {
@@ -124,13 +124,24 @@ export const LANDING_EN: LandingCopy = {
         name: "Group Integration",
         description: "Making sense of what you have lived through and sharing what remains.",
         media: {
-          src: "/landing/media/etapa-s6.webp",
+          src: "/landing/media/etapa-s6-editorial.webp",
           width: 1536,
           height: 1024,
-          alt: "A man takes part in a video call with the group from his laptop.",
+          alt: "An older adult writes in a notebook while participating in a group video call.",
         },
       },
     ] as readonly Stage[],
+  },
+  TEAM: {
+    eyebrow: "The Clear Light team",
+    heading: "People supporting people.",
+    body: [
+      "At Clear Light, we share a question: how can we better support people living with a serious or advanced illness? This study explores the meeting of meditation, virtual reality and research.",
+      "Behind every step is a team you can talk to. We are here to explain the study, listen to your questions and support you throughout your participation, respecting your decisions and your pace.",
+    ],
+    contact: "Talk to us",
+    imageAlt: "Temporary illustration of the Clear Light team, awaiting a team photograph.",
+    imageCaption: "Team photograph coming soon.",
   },
   JOIN: {
     heading: "How to join the study",
@@ -139,28 +150,16 @@ export const LANDING_EN: LandingCopy = {
         numeral: "01",
         label: "Answer the questionnaire",
         body: "Share your interest through the Qualtrics form. Submitting it does not commit you to take part. In this first questionnaire, you will receive all the information and need to sign the informed consent form. The team must first review your answers to see whether this study is suitable for you.",
-        visual: {
-          src: "/landing/media/join-responde-v2.webp",
-          alt: "A woman answers a questionnaire on a tablet, sitting at the table in her home at dusk.",
-        },
       },
       {
         numeral: "02",
         label: "Talk to the team",
         body: "If the study is suitable for you, the team will go over the requirements with you, answer your questions, and explain the study.",
-        visual: {
-          src: "/landing/media/join-habla.webp",
-          alt: "A woman talks with a professional by video call from a laptop in her home.",
-        },
       },
       {
         numeral: "03",
         label: "Assignment to your cohort",
         body: "If you are selected, we will assign you to a study cohort and arrange a visit to give you the virtual reality headset and explain how to use it.",
-        visual: {
-          src: "/landing/media/join-recibe.webp",
-          alt: "A team member, at the door of a home, hands over a virtual reality headset in its case.",
-        },
       },
     ],
     supporting: "Showing interest does not commit you to take part.",
