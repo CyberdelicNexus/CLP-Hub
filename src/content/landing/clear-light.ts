@@ -66,7 +66,7 @@ export const NAV = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "Estudio de investigación  con asignación al azar sobre una experiencia grupal de realidad virtual.",
+  eyebrow: "Estudio de investigación en España con asignación al azar sobre una experiencia grupal de realidad virtual.",
   headline: "¿Puede una experiencia inmersiva transformar cómo nos relacionamos con la mortalidad?",
   support:
     "Este estudio investiga cómo una experiencia inmersiva y compartida influye en la salud mental y el bienestar de personas que viven con una enfermedad grave.",
@@ -262,7 +262,7 @@ export interface FaqItem {
 
 export const ELIGIBILITY = {
   heading: "¿Este estudio puede ser para mí?",
-  intro: "La elegibilidad se confirma con el equipo. Aquí puedes revisar los criterios aprobados y las preguntas más frecuentes.",
+  intro: "Este estudio se centra en España. La elegibilidad se confirma con el equipo. Aquí puedes revisar los criterios aprobados y las preguntas más frecuentes.",
   criteriaHeading: "Criterios de participación",
   /**
    * Criteria supplied by the founder (2026-09-15, D-051). Not necessarily the

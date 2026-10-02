@@ -22,7 +22,7 @@ export const LANDING_EN: LandingCopy = {
     { href: "#elegibilidad", label: "Questions" },
   ],
   HERO: {
-    eyebrow: "Randomized research study of a group virtual reality experience.",
+    eyebrow: "Randomized research study in Spain of a group virtual reality experience.",
     headline: "Can an immersive experience transform how we relate to mortality?",
     support:
       "This study investigates how an immersive, shared experience affects the mental health and well-being of people living with a serious illness.",
@@ -188,7 +188,7 @@ export const LANDING_EN: LandingCopy = {
   },
   ELIGIBILITY: {
     heading: "Could this study be for me?",
-    intro: "Eligibility is confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
+    intro: "This study is focused on Spain. Eligibility is confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
     criteriaHeading: "Participation criteria",
     criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish."],
     criteriaText:

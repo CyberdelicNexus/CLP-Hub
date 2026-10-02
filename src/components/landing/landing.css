@@ -70,11 +70,11 @@
 body:has(> .cl) { background: #000; }
 @media (max-width: 860px) { .cl { --cl-nav-h: 60px; } }
 
-/* Landing-only atmosphere: broad pools of light, fading into a midnight edge.
+/* Landing-only atmosphere: saturated side lights with a deep centre and edge.
    Negative layers stay above the isolated root's ground, behind every object.
    Transform/opacity motion avoids repainting gradient stops every frame. */
 .cl--landing {
-  --sc-canvas: #080b14;
+  --sc-canvas: #050711;
   --sc-surface: #172132;
   --sc-ink-soft: #c1c8d8;
   --cl-muted: #a1acc1;
@@ -85,22 +85,20 @@ body:has(> .cl) { background: #000; }
   content: "";
   position: absolute;
   inset: -20%;
-  background:
-    radial-gradient(ellipse at 48% 37%, rgb(112 124 156 / 0.06), transparent 48%),
-    radial-gradient(ellipse at 20% 58%, rgb(48 93 155 / 0.48), transparent 57%);
+  background: radial-gradient(ellipse at 20% 58%, rgb(35 79 178 / 0.52), transparent 57%);
 }
 .cl-atmosphere__violet {
   position: absolute;
   inset: -20%;
-  background: radial-gradient(ellipse at 80% 43%, rgb(102 70 146 / 0.43), transparent 53%);
+  background: radial-gradient(ellipse at 80% 43%, rgb(104 49 170 / 0.46), transparent 53%);
 }
 .cl-atmosphere::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 46%, rgb(5 7 14 / 0.48), transparent 64%),
-    radial-gradient(ellipse at 50% 48%, transparent 26%, rgb(5 7 14 / 0.55) 100%);
+    radial-gradient(ellipse at 50% 46%, rgb(3 5 12 / 0.68), transparent 62%),
+    radial-gradient(ellipse at 50% 48%, transparent 26%, rgb(3 5 12 / 0.66) 100%);
 }
 .cl--landing .star-field { z-index: -1; opacity: 0.55; }
 /* Let only the hero media blend against the atmosphere in the root context.
@@ -411,11 +409,11 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    label reads as shouting over two lines of running text, so this instance
    drops both and reads as a quiet sentence instead, still in the shared
    accent colour. */
-.hero__eyebrow { text-transform: none; letter-spacing: 0.01em; font-family: var(--sc-font-text); font-weight: 500; font-size: clamp(0.95rem, 1.15vw, 1.05rem); line-height: 1.5; max-width: 32ch; }
+.hero__eyebrow { text-transform: none; letter-spacing: 0.01em; font-family: var(--sc-font-text); font-weight: 500; font-size: clamp(0.95rem, 1.15vw, 1.05rem); line-height: 1.5; max-width: min(100%, 35rem); }
 /* Slightly smaller and narrower than the shared .cl-title scale, so the
    longest lines clear the light bodies on the right instead of sitting on them. */
 .hero__title { margin-top: 1.25rem; max-width: 20ch; font-size: clamp(1.85rem, 3.35vw, 3.15rem); }
-.hero__support { margin-top: 1.5rem; max-width: 34ch; }
+.hero__support { margin-top: 1.5rem; max-width: min(100%, 35rem); }
 .hero__actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; }
 
 /* Density only where the copy sits, as a sibling so it is measured. */
@@ -636,7 +634,9 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   --u: clamp(0, calc((var(--sc-p, 0) - 0.0286) / 0.857), 1);
 }
 .etapas__head { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
-.etapas__head p { margin-top: 1rem; max-width: 30ch; }
+/* The introduction can use the open space above the illustration; the grid's
+   narrow heading column alone forced it into four short lines. */
+.etapas__head p { margin-top: 1rem; width: min(38ch, 40vw); position: relative; z-index: 1; }
 /* Editorial vignettes retain their native colours and transparency,
    without blend modes or edge masks. */
 .etapas__media {

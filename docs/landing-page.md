@@ -1,9 +1,9 @@
 # Recruitment landing page (Clear Light)
 
-## Current visual revision (2026-09-30)
+## Current visual revision (2026-10-02)
 
 The team requested a lighter atmosphere within the dark theme. The landing
-now uses a slowly drifting blue, violet and grey radial glow with dark edges,
+now uses a slowly drifting blue and violet radial glow with dark edges,
 behind all content and the existing starfield, with a darker centre and colour
 concentrated toward the sides. The blue and violet layers drift independently
 over 38- and 46-second alternating passes. Hero and closing CTA media use
@@ -12,6 +12,14 @@ text scrim fade to transparency at the bottom so no section edge remains.
 The gradient never overlays content. Both moving layers stop for reduced
 motion and the footer pause control. The effect and brighter text tokens are
 scoped to `.cl--landing`.
+
+The October 2 contrast refinement removes the faint grey wash, deepens the
+canvas, centre and edges, and increases colour saturation in the side lights
+after the team reported a washed-out appearance on a second laptop. Screen
+appearance still depends on the display; browser review cannot verify physical
+panel calibration. The hero opening line and eligibility introduction now
+explicitly place the study in Spain in all three languages. This describes its
+geographic focus without adding an unconfirmed residency or nationality criterion.
 
 All seven programme photographs have been replaced by transparent editorial
 illustrations based on the original images: headset handover, group call with a

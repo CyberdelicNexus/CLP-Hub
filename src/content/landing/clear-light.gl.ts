@@ -21,7 +21,7 @@ export const LANDING_GL: LandingCopy = {
     { href: "#elegibilidad", label: "Preguntas" },
   ],
   HERO: {
-    eyebrow: "Estudo de investigación con asignación ao azar sobre unha experiencia grupal de realidade virtual.",
+    eyebrow: "Estudo de investigación en España con asignación ao azar sobre unha experiencia grupal de realidade virtual.",
     headline: "Pode unha experiencia inmersiva transformar como nos relacionamos coa mortalidade?",
     support:
       "Este estudo investiga como unha experiencia inmersiva e compartida inflúe na saúde mental e no benestar de persoas que viven cunha enfermidade grave.",
@@ -187,7 +187,7 @@ export const LANDING_GL: LandingCopy = {
   },
   ELIGIBILITY: {
     heading: "Este estudo pode ser para min?",
-    intro: "A elixibilidade confírmase co equipo. Aquí podes revisar os criterios aprobados e as preguntas máis frecuentes.",
+    intro: "Este estudo céntrase en España. A elixibilidade confírmase co equipo. Aquí podes revisar os criterios aprobados e as preguntas máis frecuentes.",
     criteriaHeading: "Criterios de participación",
     criteriaItems: ["Ter unha enfermidade grave ou avanzada.", "Falar castelán."],
     criteriaText:
