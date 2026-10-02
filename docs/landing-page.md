@@ -266,21 +266,31 @@ finished copy; a lit block stays lit; reduced motion and "Pausar animación" opt
 out. Section 4's stages and section 5's steps use the vendored engine's own
 `data-sc-in` instead, which fires once per item on entry.
 
-### The two-light split and the reunion (sections 6 and 7)
+### The two-light split and the descent onto the timeline
 
-`split-stage.tsx` drives one scroll-linked journey from section 6 into
-section 7, reversed by scrolling back (D-049, D-050, D-051): the split below;
-then, after a pause for reading (22% of a viewport of scroll), both lights
-leave their lines (the lines fade over the first third), travel down and meet
-at the section 7 light's resting point, arriving when section 7's grid top is
-at 28% of the viewport. There they hand over to the section 7 light (same
-component, same size, same point), whose descent into the heart now starts
-only after the reunion: the script sets `--t` through `data-journey` / `--jt`
-instead of the section's flow progress. The reunion curve is followed by its
-parameter with a smoothstep, so both lights descend level and start moving
-down on screen promptly. One smoothed scroll position drives all three
-stretches. Under reduced motion or "Pausar animación" the script hands section
-7 back to its CSS.
+`split-stage.tsx` drives one scroll-linked journey from the randomized-trial
+section into the programme stages, reversed by scrolling back (D-049, D-050,
+D-101): the split below; then, after a pause for reading (22% of a viewport of
+scroll), both lights leave their lines at full size (the lines fade over the
+first third) and follow D-051's reunion curve, descending level, to one point
+centred under the diagram that sits at 42% of the viewport height when they
+arrive; there they become one. The light then glides down with the reader,
+shrinking to the timeline light's size over the second half, and lands on S0 exactly when the stages pin starts, handing over to the
+timeline light (same component, size and point), which waits unseen through
+`.etapas[data-journey="waiting"]` until then. One smoothed scroll position
+drives every stretch. The merge and descent run only where the pinned timeline
+is shown; on phones, under reduced motion or "Pausar animación" the lights stay
+at the split's ends.
+
+After the stages, `light-relay.tsx` carries the light on (D-102): when the
+stages pin ends it leaves S6 for the left of step 1 in "Cómo incorporarse",
+arriving as that pin starts; it moves beside step 2 and step 3 as each becomes
+active; after that pin it grows to the photograph light's size and comes down
+onto the eligibility photograph's light (arriving when the grid's top is at 28%
+of the viewport), which then descends into the heart. It is one fixed light
+whose endpoints are read live from the lights and numbers it hands over to and
+from. It runs only where both pinned sections are shown; elsewhere each section
+keeps its own light and the photograph uses its flow-progress descent.
 
 The split itself (D-049, D-050):
 
@@ -663,7 +673,7 @@ through the viewport and back. The event checks above no longer apply.
 | Hover growth stays centred (after the founder saw the lights drift off their lines) | Hovering either light or text: the light's centre stays at 208,292 / 624,292 at 120, 250 and 600 ms while it grows from 144 to 164 px; line ends unchanged. Position is the `translate` property, so `scale` no longer multiplies the offset |
 | Console, `typecheck`, `lint`, `test`, `build` | No errors; pass |
 
-**Reunion and section 7 copy verified 2026-09-15 (D-051)** at 1440x900, 390x844
+**Reunion and section 7 copy verified 2026-09-15 (D-051; the reunion is superseded by D-101)** at 1440x900, 390x844
 and 1440x900 with reduced motion, scrolling from the end of the split down
 1500px and back:
 

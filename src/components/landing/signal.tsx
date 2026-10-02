@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, Ref } from "react";
 import clsx from "clsx";
 
 /**
@@ -11,6 +11,7 @@ export function Signal({
   size,
   breath = false,
   style,
+  ref,
 }: {
   className?: string;
   /** CSS length or token for the diameter; defaults to the section 2/3 token. */
@@ -18,9 +19,12 @@ export function Signal({
   breath?: boolean;
   /** Position tokens only (such as section 6's direction); never colour or size. */
   style?: CSSProperties;
+  /** For a script that moves the light itself (light-relay.tsx). */
+  ref?: Ref<HTMLSpanElement>;
 }) {
   return (
     <span
+      ref={ref}
       aria-hidden
       className={clsx("signal", breath && "signal--breath", className)}
       style={size || style ? ({ ...style, ...(size ? { "--d": size } : null) } as CSSProperties) : undefined}

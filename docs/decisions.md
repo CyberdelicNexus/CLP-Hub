@@ -4439,6 +4439,84 @@ Verified: typecheck, lint, full test suite (451 passing, unchanged),
 production build, and a real screenshot (scrolled to the footer, 900×900
 viewport) confirming the mark actually renders where the text used to be.
 
+## D-101 · 2026-10-02 · The trial section's two lights now land on the stages timeline's S0
+
+The programme stages moved to follow the randomized-trial section, so the
+reunion that carried section 6's two lights into the participant photograph
+(D-051) no longer had a destination: `split-stage.tsx` only runs it when the
+next section is the one it expects, and it had silently stopped. Founder
+request: keep the two lights merging, then have the one light move down with
+the reader, shrinking, until it lands on S0 at the start of the timeline,
+after which the timeline runs as before.
+
+- **Reunion, unchanged from D-051.** After the same reading pause, both
+  lights leave their line ends at full size along the original curve
+  (straight down, in towards each other, down onto the point together, level
+  at every step). Only the meeting point is new: centred under the diagram, at
+  42% of the viewport's height when they arrive. There the second light hands
+  over and one remains. (A first version moved the meeting point with the
+  viewport and shrank the light sooner; the founder preferred the original
+  size and curve.)
+- **Descent.** The one light glides from that point to where S0's light will
+  sit once the stages pin, at full size for the first half, then shrinking to
+  the timeline's small size and blending its blur between the two. Because the
+  stage is sticky at the act's top, that landing point is fixed in the
+  viewport, so the light can travel to it while the timeline rises to meet it.
+  It lands exactly when the pin starts, and hands over to the timeline light
+  (same component, same size, same point), which waits at opacity 0 via
+  `.etapas[data-journey="waiting"]` until then.
+- **Timing.** Reunion and descent split the scroll from leaving the lines to the
+  pin's start 38/62; at 1440x900 that is roughly 0.3 and 0.5 of a viewport.
+- **Where it runs.** Only where the pinned timeline is shown (wide viewport,
+  motion allowed). On phones, reduced motion and "Pausar animación" the lights
+  stay at the split's ends and the timeline light is untouched.
+- Section 7's light keeps descending into the heart on its own flow progress;
+  the unused `data-journey` / `--jt` hand-off rules for it are removed.
+
+Verified at 1440x900 scrolling down and back through the whole journey: the
+travelling lights keep the section's 144px size through the reunion (an
+earlier draft reset the size token and drew them at the hero's 360px, which
+also flattened the split's curves) and arrive at the timeline light's exact
+centre and size (49px), hand-off happens at the pin start, and scrolling back reproduces the
+same states; 390x844 and reduced motion show no journey.
+
+## D-102 · 2026-10-02 · The light carries on through the joining steps into the eligibility photograph
+
+Founder request, following D-101: after the programme stages, move the light
+into the next section beside step 1 while it is active, down to step 3, and
+after that section into the eligibility/FAQ photograph.
+
+`light-relay.tsx` is one fixed-position `Signal` (the same component, so it
+looks like the same light) placed in viewport pixels each frame:
+
+- **Stages to steps.** When the stages pin ends, it takes over from the
+  timeline light at S6 (which goes to opacity 0 through `.etapas[data-relay]`)
+  and travels to the left of step 1's number, arriving as the joining pin
+  starts. Both ends are read live (the S6 light rising with the stages, the
+  step rising with its stage), so the hand-over is exact at both ends.
+- **Down the steps.** While the joining section is pinned it moves beside step
+  2, then step 3, during the overlaps where join.tsx's step windows change
+  (progress 0.27-0.37 and 0.61-0.71), reading the engine's own `--sc-p` so it
+  moves when the highlight does.
+- **Into the photograph.** When that pin ends it grows from the timeline size
+  to the photograph light's size and comes down onto it, arriving when the
+  eligibility grid's top reaches 28% of the viewport (D-051's timing). The
+  photograph's light waits unseen until then and its descent into the heart
+  starts only after (`data-journey` / `--jt`, restored from D-051 and now
+  written by this script).
+- It runs only where both pinned sections are shown and the three sections sit
+  in this order. On phones, short viewports, reduced motion and "Pausar
+  animación" each section keeps its own light and the photograph falls back to
+  its flow-progress descent.
+- The light sits beside the step number at 0.55 of its diameter, clamped
+  inside the viewport, so on the narrowest desktop widths it can touch the
+  number.
+
+`Signal` gained an optional `ref` prop for this. Verified at 1440x900 down and
+back: S6 (1236,811) to beside "01" (91,445 against the number at 118,445),
+then 02 and 03, then 49px growing to 144px onto the photograph light
+(320,363); 390x844 and reduced motion run no relay.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

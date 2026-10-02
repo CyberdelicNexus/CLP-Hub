@@ -4,9 +4,10 @@ import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 7. Eligibility and questions, combined. The documentary participant
- * stays on the left; section 6's two lights reunite at the top of the
- * photograph and hand over to this light, which then descends into the heart
- * centre (split-stage.tsx drives `--t`; without it, landing.css does). Criteria,
+ * stays on the left; the travelling light comes down from the joining steps
+ * onto the top of the photograph and hands over to this light, which then
+ * descends into the heart centre (light-relay.tsx drives `--t`; without it,
+ * landing.css does). Criteria,
  * benefits and risks, equipment, voluntary participation and withdrawal,
  * contact and registry are all reachable through native <details>, keyboard
  * operable, no JavaScript.

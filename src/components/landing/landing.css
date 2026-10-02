@@ -818,10 +818,19 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   transform: translate(-50%, -50%);
 }
 .azar__stage[data-split] .azar__light { left: 0; top: 0; transform: none; }
-/* The reunion (split-stage.tsx): the lights leave for section 7, and on arrival
-   hand over to the participant's light, which is the same component. */
-.azar__stage:is([data-away="moving"], [data-away="met"]) .azar__light { pointer-events: none; }
+/* The merge and descent (split-stage.tsx, D-101): the two lights become one,
+   which travels down to the stages timeline and, on landing on S0, hands over
+   to the timeline's light, the same component at the same size. While
+   travelling it paints above the sticky stage it is landing on. */
+.azar__stage:is([data-away="moving"], [data-away="met"]) .azar__light { pointer-events: none; z-index: 3; }
 .azar__stage[data-away="met"] .azar__light { opacity: 0; }
+.etapas:is([data-journey="waiting"], [data-relay]) .timeline__light { opacity: 0; }
+/* The relay (light-relay.tsx, D-102): from S6 down the joining steps and into
+   the eligibility photograph. Fixed and placed in viewport pixels by the
+   script through `translate`; hidden whenever another light holds the role.
+   Above the sticky stages, below the site bar. */
+.relay-light { position: fixed; left: 0; top: 0; z-index: 3; opacity: 0; }
+.relay-light[data-on] { opacity: 1; }
 
 .azar__branches {
   list-style: none;
@@ -919,10 +928,10 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .elegibilidad {
   position: relative;
   padding: var(--sc-section) var(--sc-gutter);
-  /* Without the journey script: flow progress 0.26 to 0.56, the light descends into the heart. */
+  /* Without the relay script: flow progress 0.26 to 0.56, the light descends into the heart. */
   --t: clamp(0, calc((var(--sc-p, 1) - 0.26) / 0.3), 1);
 }
-/* With it, section 6's two lights arrive first and the descent follows (D-051). */
+/* With it, the travelling light arrives first and the descent follows (D-102). */
 .elegibilidad[data-journey] { --t: var(--jt, 0); }
 .elegibilidad[data-journey="waiting"] .participant__light { opacity: 0; }
 .elegibilidad__grid {
