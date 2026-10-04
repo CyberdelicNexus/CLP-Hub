@@ -22,6 +22,7 @@
  */
 
 import { LEGAL, legalMissing, type LegalCopy } from "@/content/landing/legal";
+import { RESEARCH_ES } from "@/content/landing/research";
 
 export interface Missing {
   readonly missing: true;
@@ -576,6 +577,7 @@ export const LANDING_ES = {
   ELIGIBILITY,
   TEAM,
   PARTNERS,
+  RESEARCH: RESEARCH_ES,
   INVITATION,
   APPLY,
   CONTACT,

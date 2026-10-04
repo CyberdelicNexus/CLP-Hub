@@ -26,12 +26,10 @@ export const LANDING_ROOT_ID = "clear-light";
 export function ClearLightLanding({
   locale,
   copy,
-  qualtricsUrl,
   fontClass,
 }: {
   locale: PublicLocale;
   copy: LandingCopy;
-  qualtricsUrl: string | null;
   fontClass: string;
 }) {
   return (
@@ -57,7 +55,7 @@ export function ClearLightLanding({
         <Join copy={copy} />
         <Eligibility copy={copy} />
         <Team copy={copy} />
-        <Invitation copy={copy} qualtricsUrl={qualtricsUrl} rootId={LANDING_ROOT_ID} />
+        <Invitation copy={copy} rootId={LANDING_ROOT_ID} />
       </main>
       <LightRelay rootId={LANDING_ROOT_ID} />
       <ContactDialog copy={copy.CONTACT} />

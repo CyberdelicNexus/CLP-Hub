@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { Missing } from "@/components/landing/missing";
 import { Partners } from "@/components/landing/sections/partners";
+import { Research } from "@/components/landing/sections/research";
 import { SiteFooter } from "@/components/landing/site-footer";
 import type { LandingCopy } from "@/content/landing/clear-light";
 
@@ -15,7 +15,7 @@ import type { LandingCopy } from "@/content/landing/clear-light";
  * It renders only when the open study has a screening URL configured
  * (studies.screening_url, D-031). The contact action opens ContactDialog.
  */
-export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; qualtricsUrl: string | null; rootId: string }) {
+export function Invitation({ copy, rootId }: { copy: LandingCopy; rootId: string }) {
   const { ACTIONS, INVITATION } = copy;
   return (
     <section id="invitacion" className="invitacion" aria-labelledby="invitacion-title">
@@ -33,28 +33,16 @@ export function Invitation({ copy, qualtricsUrl, rootId }: { copy: LandingCopy; 
         </h2>
         <p className="cl-lead invitacion__support">{INVITATION.support}</p>
         <div className="invitacion__cta">
-          {qualtricsUrl ? (
-            // A plain link (a full document load), like the legal pages: the
-            // scroll engine is a script that mounts on page load.
-            <a href="/participar" className="cl-btn">
-              {ACTIONS.primaryCta}
-            </a>
-          ) : (
-            <>
-              <span className="cl-btn" aria-disabled="true">
-                {ACTIONS.primaryCta}
-              </span>
-              <p className="invitacion__closed">
-                {INVITATION.closed} <Missing item={INVITATION.qualtricsUrl} />
-              </p>
-            </>
-          )}
+          <a href="/participar" className="cl-btn">
+            {ACTIONS.primaryCta}
+          </a>
           <a href="#contacto" className="cl-link">
             {ACTIONS.contactCta}
           </a>
         </div>
       </div>
 
+      <Research copy={copy} />
       <Partners copy={copy} />
       <SiteFooter copy={copy} rootId={rootId} onLanding />
     </section>

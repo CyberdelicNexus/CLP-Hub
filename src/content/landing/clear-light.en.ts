@@ -8,8 +8,10 @@
  */
 
 import { LANDING_ES as ES, type FaqItem, type LandingCopy, type Stage } from "@/content/landing/clear-light";
+import { RESEARCH_EN } from "@/content/landing/research";
 
 export const LANDING_EN: LandingCopy = {
+  RESEARCH: RESEARCH_EN,
   ACTIONS: {
     primaryCta: "Check if I can take part",
     exploreCta: "Apply to the study",

@@ -7,8 +7,10 @@
  */
 
 import { LANDING_ES as ES, type LandingCopy } from "@/content/landing/clear-light";
+import { RESEARCH_GL } from "@/content/landing/research";
 
 export const LANDING_GL: LandingCopy = {
+  RESEARCH: RESEARCH_GL,
   ACTIONS: {
     primaryCta: "Comprobar se podo participar",
     exploreCta: "Aplicar ao estudo",

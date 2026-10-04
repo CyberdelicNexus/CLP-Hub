@@ -41,5 +41,5 @@ export default async function PublicHomePage() {
     );
   }
 
-  return <ClearLightLanding locale={locale} copy={copy} qualtricsUrl={qualtricsUrl} fontClass={PUBLIC_FONT_CLASS} />;
+  return <ClearLightLanding locale={locale} copy={copy} fontClass={PUBLIC_FONT_CLASS} />;
 }

@@ -2,6 +2,23 @@
 
 ## Current visual revision (2026-10-02)
 
+The October 4 research section places four linked rectangular cards between
+the closing CTA and collaborators. It uses four columns from 1100px, two
+from 600px and one below 600px. Each card has a short localized title,
+one sentence, journal/year and an invitation to explore the paper. Full
+English paper titles remain available to assistive technology. Authors and
+figure credits are no longer displayed. Original CSS light-and-orbit graphics
+replace published figures, matching the blue/lavender atmosphere. Hover and
+keyboard focus brighten the card and graphics; movement respects reduced motion.
+
+The closing CTA always links to /participar without an unavailable-message
+beneath it. The application page still resolves study availability and the
+questionnaire URL from the Hub; no URL or recruitment state is hardcoded.
+
+Verified in Chrome at 1440px, 768px and 390px: correct columns and placement,
+no horizontal overflow, active CTA and no unavailable-message beneath it.
+Typecheck and all 52 landing-content tests pass.
+
 The team requested a lighter atmosphere within the dark theme. The landing
 now uses a slowly drifting blue and violet radial glow with dark edges,
 behind all content and the existing starfield, with a darker centre and colour
