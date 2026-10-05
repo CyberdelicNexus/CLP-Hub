@@ -25,6 +25,10 @@ motion (phones only; a
 change to D-054 there). The background's colour washes come from opposite
 corners with no dark centre spot.
 
+The light is positioned in the document rather than fixed to the screen, and
+nothing on the stacked layout sizes itself from the height that changes with
+a phone's address bar, so scrolling does not jitter.
+
 The starfield does not follow touches on a phone and is not laid out again
 when the address bar hides or shows; the stars only twinkle there.
 

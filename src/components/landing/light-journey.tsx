@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Signal } from "@/components/landing/signal";
-import { narrowReunion, splitWindow } from "@/components/landing/split-stage";
+import { narrowReunion, splitWindow, steadyViewportHeight } from "@/components/landing/split-stage";
 
 /**
  * The light's journey on a phone (D-103), driven by scroll and reversed by
@@ -26,6 +26,13 @@ import { narrowReunion, splitWindow } from "@/components/landing/split-stage";
  *    a meaningful point of each (`data-light`, stages.tsx), goes small and
  *    straight down the left of the three joining steps' numbers, and comes
  *    down the middle of the eligibility photograph to rest on the heart.
+ *
+ * The light is positioned in the document, not fixed to the screen: a phone
+ * scrolls on its compositor, ahead of script, so a fixed light that script
+ * moves to follow the page trails it by a frame and visibly jitters. In the
+ * document it scrolls with the page for free, and at rest nothing is written
+ * at all. For the same reason every position uses a viewport height that
+ * ignores the address bar (`steadyViewportHeight`).
  *
  * Every stop is a point on the page, read live from the element it belongs
  * to, with the scroll positions at which the light arrives and leaves. At
@@ -115,6 +122,8 @@ export function LightJourney({ rootId }: { rootId: string }) {
     const active = () =>
       narrow.matches && !reduced.matches && !root.hasAttribute("data-still") && whyTitle.offsetParent !== null;
 
+    // What was last written, so a light at rest costs no style work.
+    let drawn = "";
     // The trial text never hides again once the light has passed it.
     let lit = 0;
     // The glide to the play button and the hand-over to its halo, both 0 to 1 on the clock.
@@ -123,6 +132,7 @@ export function LightJourney({ rootId }: { rootId: string }) {
     let stamp = performance.now();
 
     const release = () => {
+      drawn = "";
       light.style.opacity = "0";
       delete light.dataset.rest;
       delete azar.dataset.journey;
@@ -213,7 +223,7 @@ export function LightJourney({ rootId }: { rootId: string }) {
       }
       const sy = window.scrollY;
       const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      const vh = steadyViewportHeight();
       const { list, fork, meet } = stops(sy, vw, vh);
 
       // The stop the light is on or has last left.
@@ -268,12 +278,24 @@ export function LightJourney({ rootId }: { rootId: string }) {
       const md = list[fork].d;
       const sm = md * SIZE_STEP;
       const blur = BLUR_SMALL + (BLUR_LARGE - BLUR_SMALL) * clamp01((d - sm) / (md - sm));
-      light.style.setProperty("--d", `${d.toFixed(2)}px`);
-      // The warm core grows as the light shrinks (landing.css).
-      light.style.setProperty("--core", clamp01((md - d) / (md - md * SIZE_STAGE)).toFixed(3));
-      light.style.filter = `blur(${(d * blur).toFixed(2)}px)`;
-      light.style.translate = `${(x - d / 2).toFixed(2)}px ${(y - sy - d / 2).toFixed(2)}px`;
-      light.style.opacity = opacity.toFixed(3);
+      // In the root's own coordinates, so the page carries it while it rests.
+      const origin = root.getBoundingClientRect();
+      const next = [
+        `${d.toFixed(2)}px`,
+        // The warm core grows as the light shrinks (landing.css).
+        clamp01((md - d) / (md - md * SIZE_STAGE)).toFixed(3),
+        `blur(${(d * blur).toFixed(2)}px)`,
+        `${(x - origin.left - d / 2).toFixed(1)}px ${(y - sy - origin.top - d / 2).toFixed(1)}px`,
+        opacity.toFixed(3),
+      ];
+      if (next.join("|") !== drawn) {
+        drawn = next.join("|");
+        light.style.setProperty("--d", next[0]);
+        light.style.setProperty("--core", next[1]);
+        light.style.filter = next[2];
+        light.style.translate = next[3];
+        light.style.opacity = next[4];
+      }
       if (i === list.length - 1) light.dataset.rest = "heart";
       else delete light.dataset.rest;
 

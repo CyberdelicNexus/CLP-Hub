@@ -525,7 +525,9 @@ describe("the phone's light journey (D-103)", () => {
 
   it("shares the split's geometry instead of repeating it, so the hand-overs cannot drift", () => {
     const journey = read("src/components/landing/light-journey.tsx");
-    expect(journey).toMatch(/import \{ narrowReunion, splitWindow \} from "@\/components\/landing\/split-stage"/);
+    expect(journey).toMatch(/import \{ narrowReunion, splitWindow, steadyViewportHeight \} from "@\/components\/landing\/split-stage"/);
+    // Neither script may size anything from the height that follows a phone's address bar.
+    expect(journey).not.toMatch(/innerHeight/);
     const stage = read("src/components/landing/split-stage.tsx");
     expect(stage).toMatch(/const \{ startTop, endTop \} = splitWindow\(diagram, vh\)/);
     expect(stage).toMatch(/narrowReunion\(stage, vh, diameter\)/);

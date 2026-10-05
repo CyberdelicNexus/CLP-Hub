@@ -105,6 +105,9 @@ body:has(> .cl) { background: #000; }
    corners in wide, soft washes that overlap across the middle, and the
    darkening is a plain top-and-bottom falloff with no centre spot. */
 @media (max-width: 860px) {
+  /* The largest viewport height, not the current one: `inset: 0` resized the
+     layer, and rescaled both washes, each time the address bar moved. */
+  .cl-atmosphere { inset: 0 0 auto 0; height: 100lvh; }
   .cl-atmosphere::before { background: radial-gradient(150% 62% at -10% 72%, rgb(35 79 178 / 0.5), transparent 78%); }
   .cl-atmosphere__violet { background: radial-gradient(150% 62% at 110% 26%, rgb(104 49 170 / 0.44), transparent 78%); }
   .cl-atmosphere::after {
@@ -472,7 +475,8 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .hero__layer--haze { opacity: 0.3; mix-blend-mode: screen; }
 
 @media (max-width: 860px) {
-  .hero { display: block; padding-bottom: 3rem; }
+  /* svh, not dvh: a height that follows the address bar reflows the page mid-scroll. */
+  .hero { display: block; padding-bottom: 3rem; min-height: 100svh; }
   .hero__scrim { display: none; }
   /* The frame's own composition puts the circle in its right two thirds and
      leaves the left third black for the desktop copy. On a phone there is no
@@ -936,9 +940,10 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    Above the sticky stages, below the site bar. */
 .relay-light { position: fixed; left: 0; top: 0; z-index: 3; opacity: 0; }
 .relay-light[data-on] { opacity: 1; }
-/* The phone's one travelling light (light-journey.tsx, D-103): fixed, placed
-   in viewport pixels and shown by the script. On the heart it breathes. */
-.journey-light { position: fixed; left: 0; top: 0; z-index: 3; opacity: 0; }
+/* The phone's one travelling light (light-journey.tsx, D-103): placed by the
+   script in the page's own coordinates, so the page carries it as it scrolls
+   and it cannot trail behind. On the heart it breathes. */
+.journey-light { position: absolute; left: 0; top: 0; z-index: 3; opacity: 0; }
 .journey-light[data-rest="heart"] { animation: cl-heart 3.8s var(--cl-ease-breath) infinite; }
 @keyframes cl-heart {
   0%, 100% { scale: 1; }

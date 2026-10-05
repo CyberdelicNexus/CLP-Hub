@@ -4615,6 +4615,24 @@ devices (`hover: none` or `pointer: coarse`) there is now no parallax, the
 field is laid out once at the screen's full height, and only a change of
 width lays it out again. Desktop is unchanged.
 
+**Jitter while scrolling on a phone.** Reported from a real phone, worst
+scrolling up. Three things moved with the address bar or trailed the scroll,
+and scrolling up is when the bar returns:
+
+- The travelling light was `position: fixed` and script moved it every frame
+  to follow the page. Phones scroll on the compositor, ahead of script, so it
+  trailed by a frame. It is now positioned in the document (absolute in the
+  landing root), scrolls with the page for free, and writes nothing at rest.
+- Stop positions were fractions of `window.innerHeight`, which changes as the
+  bar hides and shows. Both light scripts now use `steadyViewportHeight()`
+  (a `100svh` probe) on the stacked layout.
+- The atmosphere layer was `inset: 0`, so it resized, and its washes
+  rescaled, with the bar; it is `100lvh` tall on the stacked layout. The
+  hero's `min-height` there is `100svh` instead of `100dvh`.
+
+Not reproducible in desktop Chrome's emulation, which has no address bar;
+checked there only by changing the viewport's height under a resting light.
+
 **Background.** On the stacked layout the two colour lights come from
 opposite corners in wide washes that overlap across the middle, and the
 darkening is a top-and-bottom falloff with no centre ellipse.

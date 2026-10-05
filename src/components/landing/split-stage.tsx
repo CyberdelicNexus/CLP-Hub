@@ -102,6 +102,23 @@ function tAt(c: Curve, s: number): number {
 }
 
 /**
+ * A viewport height that holds still while a phone's address bar hides and
+ * shows. `innerHeight` changes with the bar, mid-scroll, and every position
+ * derived from it moved with it: the lights jittered, most of all scrolling
+ * up, which is when the bar comes back. `100svh` is the height with the bar
+ * showing and does not change until the device is rotated.
+ */
+let probe: HTMLElement | null = null;
+export function steadyViewportHeight(): number {
+  if (!probe || !probe.isConnected) {
+    probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+    document.body.appendChild(probe);
+  }
+  return probe.offsetHeight || window.innerHeight;
+}
+
+/**
  * Where the split starts and ends, as viewport positions of the diagram's top
  * edge. Shared with light-journey.tsx so its light arrives at the fork on the
  * frame the split begins.
@@ -297,7 +314,7 @@ export function SplitStage({ children, flipLabel }: { children: ReactNode; flipL
       // agree on the frame the light changes hands.
       const goal = window.scrollY;
       y = narrow || Math.abs(goal - y) < 0.5 ? goal : y + (goal - y) * FOLLOW;
-      const vh = window.innerHeight;
+      const vh = narrow ? steadyViewportHeight() : window.innerHeight;
       const lag = goal - y;
 
       // Viewport positions as they will be once the smoothing catches up.
