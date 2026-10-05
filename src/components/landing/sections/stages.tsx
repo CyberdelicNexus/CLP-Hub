@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Signal } from "@/components/landing/signal";
-import { LANDING_ES, type LandingCopy } from "@/content/landing/clear-light";
+import { LANDING_ES, STAGE_LIGHT_SPOTS, type LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * Section 4. The programme stages S0 to S6, distinct from the onboarding steps
@@ -115,7 +115,7 @@ export function Stages({ copy }: { copy: LandingCopy }) {
             /* The engine's flow reveal: image and text fade up once, as the
                item arrives, and never re-hide (D-061). */
             <li key={s.code} className="etapas-list__item" data-sc-in>
-              <figure className="etapas-list__figure">
+              <figure className="etapas-list__figure" data-light={STAGE_LIGHT_SPOTS[s.media.src]?.join(" ")}>
                 <Image
                   src={s.media.src}
                   alt={s.media.alt}

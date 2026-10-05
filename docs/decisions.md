@@ -4517,6 +4517,107 @@ back: S6 (1236,811) to beside "01" (91,445 against the number at 118,445),
 then 02 and 03, then 49px growing to 144px onto the photograph light
 (320,363); 390x844 and reduced motion run no relay.
 
+## D-103 · 2026-10-05 · Phone landing: one travelling light, a flip card for the two groups, a softer hero and background
+
+Founder request, phone only (the stacked layout, 860px and below). Three
+things: the hero showed the image's edge and its press-to-reveal did not feel
+like the desktop hover; the light had no journey on a phone (every section
+kept a static light); and the background showed an obvious dark oval.
+
+**Hero.** The frame spans the screen and feathers out by the same amount on
+all four sides (two gradients, intersected), with the layers drawn at 0.9 of
+the box so the outer two bodies clear the feather: the circle sits centred in
+an even fade and the image's rectangle no longer shows. The photograph of the
+people carries its own elliptical vignette, because the room around them is
+not symmetrical. The light bodies are blurred (5px), and the two images
+alternate in a 14s loop: the light bodies alone at full strength, then the
+people fading up to full strength while the light bodies fade out
+completely, a hold, and back; the travelling light at the circle's centre
+stays throughout. Under reduced motion or "Pausar animación" it rests
+on a mixed still (light 0.6, people 0.55). This is a deliberate change to
+D-054 on phones only: there, every visitor now sees the people faintly,
+including keyboard and screen-magnifier users; under reduced motion too, since
+it is a still. Desktop is unchanged (pointer window only).
+
+**Light.** `light-journey.tsx` is one fixed `Signal` that visits a list of
+stops, each a point on the page read live from its element, with the scroll
+positions at which it arrives and leaves. At rest it is fixed to the page;
+between stops it travels a curve tied to scroll (the first stretch, from the
+circle to "El porqué", is a straight line down). In order: the centre of the hero's circle;
+above "El porqué"; the film's play button; the split's fork; the reunion point
+under the group card; one point on each stage illustration; the left of each
+joining step's number, small and in a straight line; the top of the
+eligibility photograph and down its middle onto the heart, where it stays.
+
+- **Glide to the play button.** This one stretch is triggered by scroll but
+  runs on the clock, at the founder's request ("go directly to the
+  destination, smoothly and slowly"). When "El porqué" nears the top of the
+  screen the light is released and glides straight down to the button over
+  3.2s, eased at both ends. It goes all the way, leaving the bottom of the
+  screen if the button is still below it (a first version waited at the
+  bottom edge for the button; the founder asked for that removed), so it is
+  already pulsing there when the reader arrives. Scrolling back above the
+  trigger sends it back up the same way. The pattern (`GLIDE_MS`) can be
+  given to other stretches if wanted.
+- **Play button.** The light does not sit on the button. It hands over to
+  `.film__halo`, a pulse inside the button and under the disc, and returns
+  when the reader scrolls on. The halo leaves with the button, so it is gone
+  while the consent prompt or the film is showing.
+- **Trial text.** `.azar__head` is revealed from the top down by a mask
+  (`--lit`) behind the light as it comes down: the reveal's edge trails the
+  light's centre by 0.6 of its diameter, so text appears only where the light
+  has already been. It latches: scrolling back never
+  hides text again.
+- **Split.** split-stage.tsx still owns the two lights. The journey marks the
+  section `data-journey="narrow"`; there the lights split as before, hold for
+  20% of a viewport of scroll, then come together over 30% at a point under
+  the card, and hand back. Both scripts share `splitWindow` and
+  `narrowReunion` and read the same unsmoothed scroll position on a phone, so
+  both hand-overs land within a pixel.
+- **Illustrations.** The resting points are `STAGE_LIGHT_SPOTS` in
+  `clear-light.ts`, keyed by image file: the headset changing hands, the
+  shared screen, the light at the chest, the sun, the rising light-body, the
+  offering, the lamp. They are presentation, not study content.
+- **Steps.** The step headings are indented 2.5rem on the stacked layout to
+  make room for the light on the left of the numbers. Below 600px each
+  step's illustration is centred; right-aligned, it left half the row empty.
+- **Heart.** The photograph's own light stays hidden on a phone
+  (`data-journey="waiting"`); this light arrives instead, the heart glow rises
+  with it (`--jt`), and it breathes there.
+- Smaller sizes carry a warm pulsing core (`--core`), because the signal's
+  violet haze disappears against the pale illustrations.
+- It runs only on the stacked layout with motion allowed. Reduced motion and
+  "Pausar animación" release every mark and each section shows its own state.
+- light-relay.tsx now undoes only marks it made itself; before, on a phone it
+  cleared the eligibility section's `data-journey` every frame.
+
+This reverses D-078 ("not a fan of the light traveling down") for phones, at
+the founder's request. It is a different mechanism from the removed reading
+light: nothing but the trial section's text depends on it to become visible,
+and that text is fully shown without scripting, under reduced motion and with
+animation paused.
+
+**Two groups on one card.** At phone width two columns set each group in two
+or three words a line. Below 640px the groups now share one card that turns
+over on a tap (on the card, or on the labelled control under it, "Ver el otro
+grupo", with two dots showing which of the two is up). No timer: a card that
+turns by itself can turn mid-sentence. Both faces come from the same
+`SPLIT.branches.map`, at the same size, and both stay in the document, so a
+screen reader reads both. Without scripting the two groups are stacked. The
+programme group is the face shown first, as it is the left column on desktop.
+
+**Background.** On the stacked layout the two colour lights come from
+opposite corners in wide washes that overlap across the middle, and the
+darkening is a top-and-bottom falloff with no centre ellipse.
+
+Verified in Chrome at 390x844 (touch): the light's position and opacity read
+every 120px down the page and at eight positions again on the way back (same
+state); hand-overs at the fork, the reunion and the play button; card flip by
+tap and by control; film press removes the halo; pause control releases
+everything. Also 360x740, 430x932, 768x1024 and reduced motion (no horizontal
+overflow, no journey under reduced motion), and 1440x900 (D-101/D-102 states
+unchanged, card and control not shown).
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

@@ -8,6 +8,7 @@ import { Opening } from "@/components/landing/sections/opening";
 import { Split } from "@/components/landing/sections/split";
 import { Stages } from "@/components/landing/sections/stages";
 import { Team } from "@/components/landing/sections/team";
+import { LightJourney } from "@/components/landing/light-journey";
 import { LightRelay } from "@/components/landing/light-relay";
 import { LanguageSwitch } from "@/components/landing/language-switch";
 import { SiteBar } from "@/components/landing/site-bar";
@@ -58,6 +59,7 @@ export function ClearLightLanding({
         <Invitation copy={copy} rootId={LANDING_ROOT_ID} />
       </main>
       <LightRelay rootId={LANDING_ROOT_ID} />
+      <LightJourney rootId={LANDING_ROOT_ID} />
       <ContactDialog copy={copy.CONTACT} />
       <CookieBanner copy={copy.CONSENT} />
       <ScrollCraftMount rootId={LANDING_ROOT_ID} />

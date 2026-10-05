@@ -186,6 +186,7 @@ export const LANDING_GL: LandingCopy = {
     ],
     labels: ES.SPLIT.labels,
     supporting: "Os dous grupos teñen a mesma importancia para o estudo.",
+    flip: "Ver o outro grupo",
   },
   ELIGIBILITY: {
     heading: "Este estudo pode ser para min?",

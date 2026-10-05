@@ -59,6 +59,8 @@ export function FilmPlayer({
         ) : null}
         {!requested ? (
           <button type="button" className="film__play" onClick={() => setRequested(true)} aria-label={playLabel}>
+            {/* Where the phone's travelling light rests (light-journey.tsx): under the disc, never over it. */}
+            <span className="film__halo" aria-hidden />
             <span className="film__play-disc" aria-hidden />
           </button>
         ) : null}

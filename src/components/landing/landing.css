@@ -100,6 +100,17 @@ body:has(> .cl) { background: #000; }
     radial-gradient(ellipse at 50% 46%, rgb(3 5 12 / 0.68), transparent 62%),
     radial-gradient(ellipse at 50% 48%, transparent 26%, rgb(3 5 12 / 0.66) 100%);
 }
+/* A phone's tall viewport turned the side lights into two tall ellipses with
+   a dark oval between them (D-103). There the colour comes from opposite
+   corners in wide, soft washes that overlap across the middle, and the
+   darkening is a plain top-and-bottom falloff with no centre spot. */
+@media (max-width: 860px) {
+  .cl-atmosphere::before { background: radial-gradient(150% 62% at -10% 72%, rgb(35 79 178 / 0.5), transparent 78%); }
+  .cl-atmosphere__violet { background: radial-gradient(150% 62% at 110% 26%, rgb(104 49 170 / 0.44), transparent 78%); }
+  .cl-atmosphere::after {
+    background: linear-gradient(to bottom, rgb(3 5 12 / 0.5) 0%, rgb(3 5 12 / 0.2) 28%, rgb(3 5 12 / 0.2) 72%, rgb(3 5 12 / 0.52) 100%);
+  }
+}
 .cl--landing .star-field { z-index: -1; opacity: 0.55; }
 /* Let only the hero media blend against the atmosphere in the root context.
    Isolating the hero or main would trap the blend against a transparent/black
@@ -479,6 +490,61 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   }
   /* Vertical placement is moot here: at this ratio the crop only takes width. */
   .hero__layer img { object-position: 100% 50%; }
+  /* D-103. The frame spans the screen and feathers out by the same amount on
+     all four sides (two gradients, intersected), so the image's rectangle
+     never shows and the circle sits centred in an even fade. The layers are
+     drawn slightly smaller than the box so the outer two bodies clear the
+     feather instead of dissolving in it. A finger cannot hover, so the
+     pointer's window is not what shows the people here. The photograph of the
+     people carries its own even, elliptical vignette (the room around them is
+     not symmetrical; the vignette is), and it slowly fades in and out over
+     the light bodies, which thin while it is up: the reader sees the light
+     bodies alone, then the people, in a loop. Without motion (reduced motion,
+     "Pausar animación") it rests on the mixed state below. */
+  .cl--landing .hero__media {
+    margin-inline: calc(var(--sc-gutter) * -1);
+    border-radius: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%), linear-gradient(to bottom, transparent 2%, #000 16%, #000 84%, transparent 98%);
+    mask-image: linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%), linear-gradient(to bottom, transparent 2%, #000 16%, #000 84%, transparent 98%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .cl--landing .hero__layer { scale: 0.9; translate: 0 -2%; }
+  .cl--landing .hero__layer--luminous { opacity: 0.6; filter: blur(5px); }
+  .cl--landing .hero__layer--physical {
+    -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 0%, #000 38%, rgb(0 0 0 / 0.6) 64%, rgb(0 0 0 / 0.18) 86%, transparent 100%);
+    mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 0%, #000 38%, rgb(0 0 0 / 0.6) 64%, rgb(0 0 0 / 0.18) 86%, transparent 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    opacity: 0.55;
+    mix-blend-mode: screen;
+  }
+  .cl--landing .hero__layer--haze { -webkit-mask-image: none; mask-image: none; opacity: 0.3; filter: blur(8px); }
+  @media (prefers-reduced-motion: no-preference) {
+    .cl--landing:not([data-still]) .hero__layer--physical { animation: cl-hero-people 14s var(--cl-ease-breath) infinite; }
+    .cl--landing:not([data-still]) .hero__layer--luminous { animation: cl-hero-bodies 14s var(--cl-ease-breath) infinite; }
+    .cl--landing:not([data-still]) .hero__layer--haze { animation: cl-hero-haze 14s var(--cl-ease-breath) infinite; }
+  }
+}
+/* One loop across the three layers: the light bodies alone, the people rising
+   through them as the light bodies leave altogether, a hold, and back. The
+   travelling light at the circle's centre is a separate element and stays. */
+@keyframes cl-hero-people {
+  0%, 16% { opacity: 0; }
+  46%, 68% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes cl-hero-bodies {
+  0%, 16% { opacity: 1; }
+  46%, 68% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes cl-hero-haze {
+  0%, 16% { opacity: 0.3; }
+  46%, 68% { opacity: 0; }
+  100% { opacity: 0.3; }
 }
 
 /* ------------------------------------------------------------ 2 · porqué
@@ -558,6 +624,28 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   border: 1px solid var(--sc-accent);
   background: color-mix(in oklab, var(--sc-canvas) 60%, transparent);
   transition: transform var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+/* The phone's travelling light rests here as a slow pulse (light-journey.tsx
+   sets `data-halo`, D-103). Inside the button and under the disc, so it never
+   covers the control, and it leaves with the button when the film starts. */
+.film__halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9.5rem;
+  height: 9.5rem;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgb(255 232 208 / 0.6) 0, rgb(240 196 172 / 0.42) 26%, rgb(178 128 236 / 0.36) 48%, rgb(120 78 214 / 0.16) 72%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms var(--sc-ease-out);
+}
+.film__play-disc { position: relative; }
+.film[data-halo] .film__halo { opacity: 1; animation: cl-halo 2.6s var(--cl-ease-breath) infinite; }
+@keyframes cl-halo {
+  0%, 100% { scale: 0.8; }
+  50% { scale: 1.12; }
 }
 .film__play:hover .film__play-disc { background: color-mix(in oklab, var(--sc-accent) 18%, var(--sc-canvas)); transform: scale(1.04); }
 .film__play:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: -6px; border-radius: var(--cl-radius); }
@@ -768,7 +856,13 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 .join-list__detail .join-illustration { width: 14rem; margin-bottom: 1.5rem; }
 @media (max-width: 600px) {
   .join-list__item { grid-template-columns: 1fr; gap: 1.5rem; }
-  .join-list__detail .join-illustration { margin-left: auto; }
+  /* Centred: pushed to the right it left the left half of the row empty. */
+  .join-list__detail .join-illustration { margin-inline: auto; }
+}
+/* Room on the left of each number for the phone's travelling light, which
+   comes straight down beside them (light-journey.tsx, D-103). */
+@media (max-width: 860px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .join-list__heading { padding-left: 2.5rem; }
 }
 /* Keep the scroll sequence pinned on laptop-height windows, with a compact
    illustration and tighter spacing so the longest description still fits. */
@@ -831,6 +925,41 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
    Above the sticky stages, below the site bar. */
 .relay-light { position: fixed; left: 0; top: 0; z-index: 3; opacity: 0; }
 .relay-light[data-on] { opacity: 1; }
+/* The phone's one travelling light (light-journey.tsx, D-103): fixed, placed
+   in viewport pixels and shown by the script. On the heart it breathes. */
+.journey-light { position: fixed; left: 0; top: 0; z-index: 3; opacity: 0; }
+.journey-light[data-rest="heart"] { animation: cl-heart 3.8s var(--cl-ease-breath) infinite; }
+@keyframes cl-heart {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.2; }
+}
+/* The signal's violet haze disappears against the pale illustrations and is
+   faint at the small sizes, so the smaller this light is, the more of a warm,
+   slowly pulsing core it carries (`--core`, 0 at the medium size, where it
+   must match the split's two lights exactly). */
+.journey-light::after {
+  content: "";
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0, rgb(255 238 214) 42%, rgb(255 214 170 / 0) 100%);
+  box-shadow: 0 0 calc(var(--d) * 0.22) calc(var(--d) * 0.07) rgb(255 222 184 / 0.7), 0 0 calc(var(--d) * 0.5) calc(var(--d) * 0.12) rgb(178 128 236 / 0.45);
+  opacity: var(--core, 0);
+  animation: cl-core 2.8s var(--cl-ease-breath) infinite;
+}
+@keyframes cl-core {
+  0%, 100% { scale: 0.85; }
+  50% { scale: 1.2; }
+}
+/* Until that light reaches the fork, the split's own two wait unseen; and the
+   section's text appears from the top down as it passes (`--lit`). */
+.azar__stage[data-wait] .azar__light { opacity: 0; }
+.azar[data-journey="narrow"] .azar__head {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--lit, 0) * 118% - 18%), transparent calc(var(--lit, 0) * 118%));
+  mask-image: linear-gradient(to bottom, #000 calc(var(--lit, 0) * 118% - 18%), transparent calc(var(--lit, 0) * 118%));
+}
+/* The flip control belongs to the phone card below. */
+.azar__flip { display: none; }
 
 .azar__branches {
   list-style: none;
@@ -922,6 +1051,58 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   .azar__head { max-width: 32ch; }
   .azar__body { max-width: 30ch; font-size: 1rem; line-height: 1.55; }
   .azar__supporting { max-width: 22ch; }
+
+  /* Two columns squeeze each group into a few words a line at this width.
+     Without the script the groups stack; with it they share one card, front
+     and back, turned by a tap on it or on the control beneath (D-103). Both
+     faces are the same component at the same size, and both stay in the
+     document for a screen reader. */
+  .azar__branches { grid-template-columns: 1fr; grid-template-rows: auto; row-gap: 1.5rem; }
+  .azar__branch { display: block; grid-row: auto; }
+  .azar__name { font-size: 1rem; letter-spacing: 0.06em; }
+  .azar__line { font-size: 0.98rem; }
+  .azar__stage[data-split] .azar__card {
+    --in: clamp(0, calc((var(--k, 1) - 0.7) / 0.3), 1);
+    margin-top: 1.25rem;
+    perspective: 70rem;
+    cursor: pointer;
+    opacity: var(--in);
+    translate: 0 calc((1 - var(--in)) * 0.6rem);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .azar__stage[data-split] .azar__branches {
+    margin: 0;
+    row-gap: 0;
+    opacity: 1;
+    transform: none;
+    transform-style: preserve-3d;
+    rotate: y calc(var(--face, 0) * 180deg);
+    transition: rotate 800ms var(--cl-ease-presence);
+  }
+  .azar__stage[data-split] .azar__branch {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.6rem 1.35rem 1.7rem;
+    border: 1px solid rgb(183 156 255 / 0.22);
+    border-radius: var(--cl-radius);
+    background: rgb(12 13 29 / 0.72);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .azar__stage[data-split] .azar__branch:nth-child(2) { rotate: y 180deg; }
+  .azar__stage[data-split] .azar__flip {
+    --in: clamp(0, calc((var(--k, 1) - 0.7) / 0.3), 1);
+    display: inline-flex;
+    margin-top: 1rem;
+    opacity: var(--in);
+  }
+  .azar__flip svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: var(--sc-accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .azar__flip-dots { display: inline-flex; gap: 0.3rem; margin-left: 0.15rem; }
+  .azar__flip-dots i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--cl-line-strong); transition: background var(--sc-d-base) var(--sc-ease-out); }
+  .azar__flip-dots[data-face="0"] i:first-child,
+  .azar__flip-dots[data-face="1"] i:last-child { background: var(--sc-accent); }
 }
 
 /* ------------------------------------------------------- 7 · elegibilidad */
@@ -1610,6 +1791,7 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   .hero__layer--physical, .hero__layer--haze, .hero__layer--luminous { transition: none; }
   .elegibilidad { --t: 1; }
   .signal { will-change: auto; }
+  .azar__branches { transition: none; }
 }
 
 /* Holding page: production with unapproved content (D-042). */

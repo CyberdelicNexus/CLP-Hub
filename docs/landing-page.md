@@ -1,5 +1,39 @@
 # Recruitment landing page (Clear Light)
 
+## Phone revision (2026-10-05, D-103)
+
+On the stacked layout (860px and below, motion allowed) one light travels the
+whole page (`light-journey.tsx`): it appears at the centre of the hero's
+circle, comes straight down to rest above "El porqué", then glides by itself,
+slowly, straight down to the film's play button (as a pulsing halo under the
+button, never over it; it goes all the way even when the button is still
+below the screen), comes down through the trial section while its text appears
+behind it from the top, splits in two, comes back
+together under the group card, curves from one stage illustration to the next
+resting on a chosen point of each, goes small and straight down the left of
+the three step numbers, and comes down the middle of the eligibility
+photograph to rest on the heart. Everything is tied to scroll position and
+reverses, except the glide to the play button, which scroll triggers and the
+clock runs, and the trial text, which stays visible once shown.
+
+Below 640px the two groups share one card that turns over on a tap or with
+the control under it; without scripting they are stacked. The hero frame
+spans the screen, feathers equally on all four sides around the centred
+circle, and fades the people (under their own even vignette) in and out of
+the blurred light bodies in a slow loop, resting on a mixed still without
+motion (phones only; a
+change to D-054 there). The background's colour washes come from opposite
+corners with no dark centre spot.
+
+Under reduced motion or "Pausar animación" there is no travelling light: the
+split shows its end state, the trial text is fully visible and each section
+keeps its own light. Desktop is unchanged.
+
+Verified in Chrome at 390x844 with touch emulation, plus 360x740, 430x932,
+768x1024, reduced motion and 1440x900. Not verified: a real phone (momentum
+scrolling, Safari's `rotate` and `mask-image` handling, the address bar
+resizing the viewport mid-scroll) and real assistive technology on the card.
+
 ## Current visual revision (2026-10-02)
 
 The October 4 research section places four linked rectangular cards between
@@ -150,7 +184,7 @@ publish while any remains (see "Publication gate").
 |---|---|
 | Route | `src/app/(public)/page.tsx` (fonts, DB read, publication gate) |
 | Sections | `src/components/landing/sections/*.tsx` (includes `partners.tsx`, D-077) |
-| Client islands | `hero-reveal.tsx`, `star-field.tsx` (D-078), `split-stage.tsx`, `film-player.tsx`, `site-bar.tsx`, `still-toggle.tsx`, `contact-dialog.tsx`, `consent.tsx`, `scrollcraft-mount.tsx` |
+| Client islands | `hero-reveal.tsx`, `star-field.tsx` (D-078), `split-stage.tsx`, `light-relay.tsx` (D-102), `light-journey.tsx` (D-103), `film-player.tsx`, `site-bar.tsx`, `still-toggle.tsx`, `contact-dialog.tsx`, `consent.tsx`, `scrollcraft-mount.tsx` |
 | Footer (landing and legal pages) | `src/components/landing/site-footer.tsx` |
 | Legal pages | `src/app/(public)/{aviso-legal,privacidad,cookies}/page.tsx` → `legal-page.tsx`; copy in `src/content/landing/legal.ts` |
 | Fonts | `src/components/landing/fonts.ts` (shared by the landing and legal pages) |
@@ -306,8 +340,10 @@ active; after that pin it grows to the photograph light's size and comes down
 onto the eligibility photograph's light (arriving when the grid's top is at 28%
 of the viewport), which then descends into the heart. It is one fixed light
 whose endpoints are read live from the lights and numbers it hands over to and
-from. It runs only where both pinned sections are shown; elsewhere each section
-keeps its own light and the photograph uses its flow-progress descent.
+from. It runs only where both pinned sections are shown; on the stacked layout
+`light-journey.tsx` carries the light instead (D-103, "Phone revision" above),
+and under reduced motion each section keeps its own light and the photograph
+uses its flow-progress descent.
 
 The split itself (D-049, D-050):
 
@@ -343,7 +379,7 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
 | Input | Hero reveal | Pinned acts | Lights |
 |---|---|---|---|
 | Fine pointer | Window follows the pointer while the hero is showing; the people never show over the moving clip | Pinned | Breathing, travelling |
-| Touch | Press-and-hold opens the window at the finger; lifting or scrolling closes it | Stacked list below 861px | Same |
+| Touch | Phones (D-103): the people fade in and out of the light bodies in a loop, no press needed | Stacked list below 861px | One light travels the page (D-103) |
 | Keyboard / any other input | No control: only the light bodies show, never the people (D-054) | Stacked or pinned per viewport | Same |
 | Reduced motion | No control, no pointer tracking: only the light bodies show (D-054) | Stacked list | Static end states, no breathing or flicker |
 | No JavaScript | Layered still shows, people never revealed | Stacked list | Static |

@@ -16,6 +16,7 @@ import {
   NAV,
   SPLIT,
   STAGES,
+  STAGE_LIGHT_SPOTS,
   isMissing,
   missingContentList,
   visibleStrings,
@@ -498,5 +499,65 @@ describe("the apply page frames the questionnaire (D-085)", () => {
       expect(APPLY.frame.newTab.length, locale).toBeGreaterThan(0);
       expect(LANDING_COPY[locale].CONSENT.body, locale).toMatch(/Qualtrics/);
     }
+  });
+});
+
+describe("the phone's light journey (D-103)", () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+
+  it("is one light for the whole page, mounted beside the desktop relay", () => {
+    const landing = read("src/components/landing/clear-light-landing.tsx");
+    expect(landing).toMatch(/<LightRelay rootId=\{LANDING_ROOT_ID\} \/>/);
+    expect(landing).toMatch(/<LightJourney rootId=\{LANDING_ROOT_ID\} \/>/);
+    // It visits the sections from outside them: no section renders a light for it.
+    expect(read("src/components/landing/sections/why-what.tsx")).not.toMatch(/<Signal/);
+  });
+
+  it("runs only on the stacked layout with motion allowed, and releases what it marked", () => {
+    const journey = read("src/components/landing/light-journey.tsx");
+    expect(journey).toMatch(/max-width: 860px/);
+    expect(journey).toMatch(/prefers-reduced-motion: reduce/);
+    expect(journey).toMatch(/data-still/);
+    for (const mark of ["azar.dataset.journey", "azarStage.dataset.wait", "film.dataset.halo", "elig.dataset.journey"]) {
+      expect(journey, mark).toContain(`delete ${mark}`);
+    }
+  });
+
+  it("shares the split's geometry instead of repeating it, so the hand-overs cannot drift", () => {
+    const journey = read("src/components/landing/light-journey.tsx");
+    expect(journey).toMatch(/import \{ narrowReunion, splitWindow \} from "@\/components\/landing\/split-stage"/);
+    const stage = read("src/components/landing/split-stage.tsx");
+    expect(stage).toMatch(/const \{ startTop, endTop \} = splitWindow\(diagram, vh\)/);
+    expect(stage).toMatch(/narrowReunion\(stage, vh, diameter\)/);
+  });
+
+  it("gives every stage illustration a resting point inside the image", () => {
+    for (const s of STAGES.items) {
+      const spot = STAGE_LIGHT_SPOTS[s.media.src];
+      expect(spot, s.code).toBeDefined();
+      for (const v of spot) {
+        expect(v).toBeGreaterThan(0);
+        expect(v).toBeLessThan(100);
+      }
+    }
+    expect(Object.keys(STAGE_LIGHT_SPOTS)).toHaveLength(STAGES.items.length);
+  });
+
+  it("keeps the play button clear: the halo is inside the button, under the disc", () => {
+    const film = read("src/components/landing/film-player.tsx");
+    expect(film).toMatch(/<span className="film__halo" aria-hidden \/>\s*<span className="film__play-disc" aria-hidden \/>/);
+    const css = read("src/components/landing/landing.css");
+    expect(css).toMatch(/\.film__halo \{[^}]*pointer-events: none/);
+  });
+
+  it("shows both groups on one phone card from the same markup, with a labelled control in every language", () => {
+    const stage = read("src/components/landing/split-stage.tsx");
+    expect(stage).toMatch(/<div className="azar__card"[^>]*>\s*\{children\}\s*<\/div>/);
+    expect(stage).toMatch(/<button type="button" className="cl-ghost azar__flip" onClick=\{flip\}>/);
+    for (const locale of PUBLIC_LOCALES) expect(LANDING_COPY[locale].SPLIT.flip.length, locale).toBeGreaterThan(0);
+    // Without the script both groups are simply stacked: the flip is gated on it.
+    const css = read("src/components/landing/landing.css");
+    expect(css).toMatch(/\.azar__stage\[data-split\] \.azar__branch:nth-child\(2\) \{ rotate: y 180deg; \}/);
+    expect(css).toMatch(/\.azar__flip \{ display: none; \}/);
   });
 });

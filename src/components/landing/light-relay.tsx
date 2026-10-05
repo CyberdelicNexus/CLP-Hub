@@ -74,7 +74,12 @@ export function LightRelay({ rootId }: { rootId: string }) {
     // The pinned variants are display:none on narrow or very short viewports (landing.css).
     const shown = () => stagesAct.offsetParent !== null && joinAct.offsetParent !== null;
 
+    // Only ever undo its own marks: on a phone light-journey.tsx owns the
+    // eligibility section's, and this script stands down.
+    let claimed = false;
     const release = () => {
+      if (!claimed) return;
+      claimed = false;
       delete light.dataset.on;
       delete stages.dataset.relay;
       delete elig.dataset.journey;
@@ -94,6 +99,7 @@ export function LightRelay({ rootId }: { rootId: string }) {
       }
       const vh = window.innerHeight;
       const y = window.scrollY;
+      claimed = true;
       // Page offsets of each boundary, from the live layout.
       const stagesEnd = stagesAct.getBoundingClientRect().bottom + y - vh;
       const joinRect = joinAct.getBoundingClientRect();
@@ -109,7 +115,8 @@ export function LightRelay({ rootId }: { rootId: string }) {
 
       if (y <= stagesEnd) {
         // Still the timeline's light.
-        release();
+        delete light.dataset.on;
+        delete stages.dataset.relay;
         elig.dataset.journey = "waiting";
         elig.style.setProperty("--jt", "0");
         return;

@@ -28,7 +28,7 @@ export function Split({ copy }: { copy: LandingCopy }) {
         ))}
       </div>
 
-      <SplitStage>
+      <SplitStage flipLabel={SPLIT.flip}>
         <ul className="azar__branches">
           {SPLIT.branches.map((b) => (
             <li key={b.label} className="azar__branch">

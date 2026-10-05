@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Signal } from "@/components/landing/signal";
 
 /**
@@ -29,6 +29,12 @@ import { Signal } from "@/components/landing/signal";
  * Reduced motion and "Pausar animación" show the split's end state and leave
  * the timeline light alone. Without JavaScript the CSS places both lights at
  * their ends and the lines are absent.
+ *
+ * On a phone (D-103) light-journey.tsx owns the light before and after this
+ * section and marks it `data-journey="narrow"`. There the lights still split,
+ * then, after the reading pause, come together at a point under the group
+ * card and hand over to that light. The two groups share one card that flips
+ * (`--face`), because two columns are too narrow to read at that width.
  */
 const DIRS = [-1, 1] as const;
 const SAMPLES = 64;
@@ -51,6 +57,11 @@ const BLUR_FROM = 0.028;
 const BLUR_TO = 0.06;
 /** Share of the remaining scroll distance covered each frame. */
 const FOLLOW = 0.16;
+/** Phone: scroll spent reading before the lights leave, and on the reunion (shares of the viewport). */
+const NARROW_HOLD = 0.2;
+const NARROW_MERGE = 0.3;
+/** Phone: the reunion point, below the stage's bottom edge, as a share of the light's diameter. */
+const NARROW_MEET_BELOW = 0.3;
 
 type Pt = { x: number; y: number };
 type Curve = { p: [Pt, Pt, Pt, Pt]; lengths: number[]; total: number };
@@ -90,8 +101,32 @@ function tAt(c: Curve, s: number): number {
   return (i - 1 + (s - c.lengths[i - 1]) / span) / SAMPLES;
 }
 
-export function SplitStage({ children }: { children: ReactNode }) {
+/**
+ * Where the split starts and ends, as viewport positions of the diagram's top
+ * edge. Shared with light-journey.tsx so its light arrives at the fork on the
+ * frame the split begins.
+ */
+export function splitWindow(diagram: HTMLElement, vh: number) {
+  const endTop = vh * END_TOP;
+  const startTop = Math.max(vh * START_BOTTOM - diagram.offsetHeight, endTop + MIN_TRAVEL_PX);
+  return { startTop, endTop };
+}
+
+/**
+ * The phone reunion: scroll after the split's end at which the lights leave
+ * and meet, and the meeting point's height in diagram pixels (the diagram is
+ * the stage's first child, so the stage's height is measured from its top).
+ */
+export function narrowReunion(stage: HTMLElement, vh: number, diameter: number) {
+  const leaveAt = vh * NARROW_HOLD;
+  return { leaveAt, mergeAt: leaveAt + vh * NARROW_MERGE, meetY: stage.offsetHeight + diameter * NARROW_MEET_BELOW };
+}
+
+export function SplitStage({ children, flipLabel }: { children: ReactNode; flipLabel: string }) {
   const stageRef = useRef<HTMLDivElement>(null);
+  // Which group the phone card shows; wide viewports show both and ignore it.
+  const [face, setFace] = useState(0);
+  const flip = () => setFace((f) => 1 - f);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -160,12 +195,14 @@ export function SplitStage({ children }: { children: ReactNode }) {
 
     /**
      * Split progress k, reunion progress m, descent progress n; meetY is the
-     * reunion point's height in diagram pixels; journey: the timeline takes the light.
+     * reunion point's height in diagram pixels; journey: the timeline takes
+     * the light; narrow: the phone's light takes it at the reunion point.
      */
-    const draw = (k: number, m: number, n: number, meetY: number, journey: boolean) => {
+    const draw = (k: number, m: number, n: number, meetY: number, journey: boolean, narrow: boolean) => {
       // The line stops inside the light's haze, so its end never shows through the core.
       const trim = diameter * 0.15;
-      const away = journey && m > 0 && act !== null && target !== null;
+      const descends = journey && act !== null && target !== null;
+      const away = m > 0 && (descends || narrow);
       curves.forEach((c, i) => {
         const s = ease(k) * c.total;
         const lineT = tAt(c, s - trim);
@@ -178,30 +215,36 @@ export function SplitStage({ children }: { children: ReactNode }) {
         const d = diagram.getBoundingClientRect();
         // The reunion point is fixed on the page, centred under the diagram.
         const meet: Pt = { x: d.width / 2, y: meetY };
-        // Where S0's light will sit once the stages pin: the stage is sticky at
-        // the act's top, so that point is fixed in the viewport while the
-        // timeline rises to meet the light.
-        const tr = target.getBoundingClientRect();
-        const land: Pt = {
-          x: tr.left + tr.width / 2,
-          y: tr.top + tr.height / 2 - Math.max(0, act.getBoundingClientRect().top),
-        };
-        // Full size through the reunion and most of the descent; it shrinks
-        // to the timeline light's size over the final stretch.
-        const u = ease(clamp01((n - SHRINK_FROM) / (1 - SHRINK_FROM)));
-        const size = diameter + ((target.offsetWidth || diameter) - diameter) * u;
-        const blur = size * (BLUR_FROM + (BLUR_TO - BLUR_FROM) * u);
-        // The descent starts where the reunion ended (fixed on the page) and
-        // settles onto a point held in the viewport, so the light comes down
-        // with the reader instead of riding up with the page.
-        const held: Pt = { x: d.left + meet.x, y: window.innerHeight * MERGE_Y };
-        const w = clamp01(n / 0.2);
-        const start = lerp({ x: d.left + meet.x, y: d.top + meet.y }, held, w * w * (3 - 2 * w));
+        let size = diameter;
+        let blur = diameter * BLUR_FROM;
+        let start = meet;
+        let land: Pt | null = null;
+        if (journey && act !== null && target !== null) {
+          // Where S0's light will sit once the stages pin: the stage is sticky at
+          // the act's top, so that point is fixed in the viewport while the
+          // timeline rises to meet the light.
+          const tr = target.getBoundingClientRect();
+          land = {
+            x: tr.left + tr.width / 2,
+            y: tr.top + tr.height / 2 - Math.max(0, act.getBoundingClientRect().top),
+          };
+          // Full size through the reunion and most of the descent; it shrinks
+          // to the timeline light's size over the final stretch.
+          const u = ease(clamp01((n - SHRINK_FROM) / (1 - SHRINK_FROM)));
+          size = diameter + ((target.offsetWidth || diameter) - diameter) * u;
+          blur = size * (BLUR_FROM + (BLUR_TO - BLUR_FROM) * u);
+          // The descent starts where the reunion ended (fixed on the page) and
+          // settles onto a point held in the viewport, so the light comes down
+          // with the reader instead of riding up with the page.
+          const held: Pt = { x: d.left + meet.x, y: window.innerHeight * MERGE_Y };
+          const w = clamp01(n / 0.2);
+          start = lerp({ x: d.left + meet.x, y: d.top + meet.y }, held, w * w * (3 - 2 * w));
+        }
         curves.forEach((c, i) => {
           const light = lights[i];
           if (!light) return;
           let at: Pt;
-          if (n > 0) {
+          if (n > 0 && land) {
             const v = glide(start, land, n);
             at = { x: v.x - d.left, y: v.y - d.top };
           } else {
@@ -226,7 +269,8 @@ export function SplitStage({ children }: { children: ReactNode }) {
       stage.style.setProperty("--k", k.toFixed(4));
       // Lines fade over the first third of the merge.
       stage.style.setProperty("--line", (1 - clamp01(m / 0.35)).toFixed(4));
-      stage.dataset.away = away ? (n >= 1 ? "met" : "moving") : "";
+      // On a phone the hand-over is at the reunion point; otherwise on landing.
+      stage.dataset.away = away ? ((descends ? n : m) >= 1 ? "met" : "moving") : "";
       if (next) {
         // Until the light lands, the timeline's own light waits unseen.
         if (journey) next.dataset.journey = away && n >= 1 ? "met" : "waiting";
@@ -240,22 +284,25 @@ export function SplitStage({ children }: { children: ReactNode }) {
       frame = window.requestAnimationFrame(tick);
       if (still()) {
         y = window.scrollY;
-        draw(1, 0, 0, 0, false);
+        draw(1, 0, 0, 0, false, false);
         return;
       }
       // The pinned timeline is display:none on narrow viewports (landing.css):
       // there the lights stay at the split's ends.
       const journey = target !== null && act !== null && act.offsetParent !== null;
+      // light-journey.tsx marks the section while its light is travelling the page.
+      const narrow = !journey && section.dataset.journey === "narrow";
       // One smoothed scroll position drives every stretch, with a little inertia.
+      // Not on a phone: touch scrolling has its own, and both scripts must
+      // agree on the frame the light changes hands.
       const goal = window.scrollY;
-      y = Math.abs(goal - y) < 0.5 ? goal : y + (goal - y) * FOLLOW;
+      y = narrow || Math.abs(goal - y) < 0.5 ? goal : y + (goal - y) * FOLLOW;
       const vh = window.innerHeight;
       const lag = goal - y;
 
       // Viewport positions as they will be once the smoothing catches up.
       const diagramTop = diagram.getBoundingClientRect().top + lag;
-      const endTop = vh * END_TOP;
-      const startTop = Math.max(vh * START_BOTTOM - diagram.offsetHeight, endTop + MIN_TRAVEL_PX);
+      const { startTop, endTop } = splitWindow(diagram, vh);
       const k = clamp01((startTop - diagramTop) / (startTop - endTop));
 
       let m = 0;
@@ -274,8 +321,12 @@ export function SplitStage({ children }: { children: ReactNode }) {
         n = clamp01((scrolled - mergeAt) / (landAt - mergeAt));
         // Diagram pixels: the point that sits at MERGE_Y of the viewport when the reunion ends.
         meetY = vh * MERGE_Y - (endTop - mergeAt);
+      } else if (narrow) {
+        const r = narrowReunion(stage, vh, diameter);
+        m = clamp01((endTop - diagramTop - r.leaveAt) / (r.mergeAt - r.leaveAt));
+        meetY = r.meetY;
       }
-      draw(k, m, n, meetY, journey);
+      draw(k, m, n, meetY, journey, narrow);
     };
 
     // Run the loop only while the trial section or the stages are near the viewport.
@@ -338,7 +389,20 @@ export function SplitStage({ children }: { children: ReactNode }) {
           <Signal key={dir} className="azar__light" size="var(--cl-light-md)" style={{ "--dir": dir } as CSSProperties} />
         ))}
       </div>
-      {children}
+      {/* Phone only (landing.css): one card, a tap turns it to the other group. */}
+      <div className="azar__card" style={{ "--face": face } as CSSProperties} onClick={flip}>
+        {children}
+      </div>
+      <button type="button" className="cl-ghost azar__flip" onClick={flip}>
+        <svg viewBox="0 0 24 24" aria-hidden>
+          <path d="M4 9a8 8 0 0 1 14.2-3.6M20 4v4.5h-4.5M20 15a8 8 0 0 1-14.2 3.6M4 20v-4.5h4.5" />
+        </svg>
+        {flipLabel}
+        <span className="azar__flip-dots" data-face={face} aria-hidden>
+          <i />
+          <i />
+        </span>
+      </button>
     </div>
   );
 }

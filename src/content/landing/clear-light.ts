@@ -106,6 +106,22 @@ export interface Stage {
   readonly media: { readonly src: string; readonly width: number; readonly height: number; readonly alt: string };
 }
 
+/**
+ * Where the phone's travelling light rests on each stage illustration
+ * (light-journey.tsx, D-103): a light source or the scene's focus, as
+ * percentages of the image's width and height. Keyed by file, so a replaced
+ * illustration cannot silently keep its predecessor's point.
+ */
+export const STAGE_LIGHT_SPOTS: Readonly<Record<string, readonly [number, number]>> = {
+  "/landing/media/etapa-s0-editorial.webp": [55, 50], // the headset changing hands
+  "/landing/media/etapa-s1-editorial.webp": [67, 44], // the shared screen
+  "/landing/media/etapa-s2-editorial.webp": [50, 53], // the light at the chest
+  "/landing/media/etapa-s3-editorial.webp": [70, 27], // the sun behind the filmstrip
+  "/landing/media/etapa-s4-editorial.webp": [70, 22], // the rising light-body
+  "/landing/media/etapa-s5-editorial.webp": [51, 50], // the offering at the circle's centre
+  "/landing/media/etapa-s6-editorial.webp": [82, 50], // the lamp on the desk
+};
+
 export const STAGES = {
   heading: "Etapas del Programa",
   intro: "Una experiencia progresiva para preparar, explorar, compartir e integrar.",
@@ -247,6 +263,8 @@ export const SPLIT = {
   ] as readonly [Branch, Branch],
   labels: missing("ETIQUETAS_GRUPOS", "Nombres aprobados de los dos grupos"),
   supporting: "Los dos grupos tienen la misma importancia para el estudio.",
+  /** Phone only: the two groups share one card, and this turns it over (D-103). */
+  flip: "Ver el otro grupo",
 } as const;
 
 export interface FaqItem {

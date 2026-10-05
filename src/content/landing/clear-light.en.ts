@@ -187,6 +187,7 @@ export const LANDING_EN: LandingCopy = {
     ],
     labels: ES.SPLIT.labels,
     supporting: "Both groups are equally important to the study.",
+    flip: "See the other group",
   },
   ELIGIBILITY: {
     heading: "Could this study be for me?",
