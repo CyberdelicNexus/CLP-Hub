@@ -15,6 +15,13 @@ import { useEffect, useRef } from "react";
  *   checked every frame rather than via a listener, since a plain attribute
  *   read is cheaper than wiring a MutationObserver for something read 60
  *   times a second anyway.
+ *
+ * On a touch device the stars only twinkle (D-103). A finger is not a
+ * pointer hovering: each touch made the whole field lurch towards it. And a
+ * phone's address bar hiding and showing as the page scrolls is a resize,
+ * which used to scatter every star to a new place; there the field is laid
+ * out once for the tallest the viewport gets and only a change of width
+ * (a rotation) lays it out again.
  */
 const DENSITY = 1 / 9000;
 const MAX_STARS = 220;
@@ -39,6 +46,7 @@ export function StarField({ rootId }: { rootId: string }) {
     if (!ctx) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const root = document.getElementById(rootId);
+    const touch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
     let stars: Star[] = [];
     let dpr = 1;
@@ -52,7 +60,8 @@ export function StarField({ rootId }: { rootId: string }) {
     const seed = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = window.innerWidth;
-      h = window.innerHeight;
+      // Tall enough for a phone's viewport with the address bar hidden.
+      h = touch ? Math.max(window.innerHeight, window.screen.height) : window.innerHeight;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -91,6 +100,7 @@ export function StarField({ rootId }: { rootId: string }) {
     if (reduced) {
       paint(0, true);
       const onResize = () => {
+        if (touch && window.innerWidth === w) return;
         seed();
         paint(0, true);
       };
@@ -100,10 +110,14 @@ export function StarField({ rootId }: { rootId: string }) {
 
     let raf = 0;
     const onPointerMove = (e: PointerEvent) => {
+      if (touch || e.pointerType !== "mouse") return;
       targetX = ((e.clientX / w) * 2 - 1) * PARALLAX;
       targetY = ((e.clientY / h) * 2 - 1) * PARALLAX;
     };
-    const onResize = () => seed();
+    const onResize = () => {
+      if (touch && window.innerWidth === w) return;
+      seed();
+    };
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick);
       if (document.hidden) return;

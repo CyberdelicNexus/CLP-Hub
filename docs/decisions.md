@@ -4606,6 +4606,15 @@ turns by itself can turn mid-sentence. Both faces come from the same
 screen reader reads both. Without scripting the two groups are stacked. The
 programme group is the face shown first, as it is the left column on desktop.
 
+**Starfield on touch devices.** Reported from a real phone: the stars
+"glitched" on every touch. Two causes in `star-field.tsx`. The pointer
+parallax treated each touch as a pointer position, so the field lurched
+towards the finger; and the address bar hiding and showing while scrolling
+fires `resize`, which re-seeded every star at a new random place. On touch
+devices (`hover: none` or `pointer: coarse`) there is now no parallax, the
+field is laid out once at the screen's full height, and only a change of
+width lays it out again. Desktop is unchanged.
+
 **Background.** On the stacked layout the two colour lights come from
 opposite corners in wide washes that overlap across the middle, and the
 darkening is a top-and-bottom falloff with no centre ellipse.

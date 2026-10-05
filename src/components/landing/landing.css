@@ -636,18 +636,29 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   height: 9.5rem;
   translate: -50% -50%;
   border-radius: 50%;
-  background: radial-gradient(circle closest-side, rgb(255 232 208 / 0.6) 0, rgb(240 196 172 / 0.42) 26%, rgb(178 128 236 / 0.36) 48%, rgb(120 78 214 / 0.16) 72%, transparent 100%);
+  /* A near-white heart: the first version was too faint to read as the light
+     having arrived. The disc over it is let through while the light is here. */
+  background: radial-gradient(circle closest-side, #fff 0, rgb(255 244 226 / 0.98) 14%, rgb(255 222 188 / 0.8) 30%, rgb(214 160 236 / 0.55) 50%, rgb(120 78 214 / 0.24) 74%, transparent 100%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 360ms var(--sc-ease-out);
 }
-.film__play-disc { position: relative; }
+.film__play-disc { position: relative; transition: transform var(--sc-d-fast) var(--sc-ease-out), background 360ms var(--sc-ease-out), box-shadow 360ms var(--sc-ease-out), border-color 360ms var(--sc-ease-out); }
 .film[data-halo] .film__halo { opacity: 1; animation: cl-halo 2.6s var(--cl-ease-breath) infinite; }
-@keyframes cl-halo {
-  0%, 100% { scale: 0.8; }
-  50% { scale: 1.12; }
+.film[data-halo] .film__play-disc {
+  background: color-mix(in oklab, var(--sc-canvas) 22%, transparent);
+  border-color: rgb(255 238 214 / 0.9);
+  box-shadow: 0 0 1.4rem 0.2rem rgb(255 226 190 / 0.55);
 }
-.film__play:hover .film__play-disc { background: color-mix(in oklab, var(--sc-accent) 18%, var(--sc-canvas)); transform: scale(1.04); }
+.film[data-halo] .film__play-disc::after { border-left-color: var(--sc-accent-ink); }
+@keyframes cl-halo {
+  0%, 100% { scale: 0.82; filter: brightness(0.9); }
+  50% { scale: 1.18; filter: brightness(1.25); }
+}
+/* Hover only grows the disc and brightens its rim. It used to fill the disc
+   with a near-opaque dark, which read as the button going black, and stuck
+   after a tap on a phone. */
+.film__play:hover .film__play-disc { transform: scale(1.04); border-color: var(--cl-accent-strong); }
 .film__play:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: -6px; border-radius: var(--cl-radius); }
 /* Consent asked in place when the visitor presses play without it (D-052). */
 .film__consent {

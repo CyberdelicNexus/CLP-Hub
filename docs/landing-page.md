@@ -25,6 +25,9 @@ motion (phones only; a
 change to D-054 there). The background's colour washes come from opposite
 corners with no dark centre spot.
 
+The starfield does not follow touches on a phone and is not laid out again
+when the address bar hides or shows; the stars only twinkle there.
+
 Under reduced motion or "Pausar animación" there is no travelling light: the
 split shows its end state, the trial text is fully visible and each section
 keeps its own light. Desktop is unchanged.
