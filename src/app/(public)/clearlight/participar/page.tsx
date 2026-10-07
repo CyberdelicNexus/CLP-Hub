@@ -62,14 +62,12 @@ export default async function ApplyPage() {
       <StarField rootId={ROOT_ID} />
       <header className="legal__bar">
         {/* Full document loads, not <Link>, like the legal pages. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="bar__brand">
+        <a href="/clearlight" className="bar__brand">
           Clear Light
         </a>
         <div className="legal__bar-end">
           <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/participar" />
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="cl-link">
+          <a href="/clearlight" className="cl-link">
             {APPLY.back}
           </a>
         </div>

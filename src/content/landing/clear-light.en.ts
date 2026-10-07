@@ -305,9 +305,9 @@ export const LANDING_EN: LandingCopy = {
         {
           heading: "Legal",
           links: [
-            { href: "/aviso-legal", label: "Legal notice and terms of use" },
-            { href: "/privacidad", label: "Privacy policy" },
-            { href: "/cookies", label: "Cookie policy" },
+            { href: "/clearlight/aviso-legal", label: "Legal notice and terms of use" },
+            { href: "/clearlight/privacidad", label: "Privacy policy" },
+            { href: "/clearlight/cookies", label: "Cookie policy" },
           ],
         },
       ],

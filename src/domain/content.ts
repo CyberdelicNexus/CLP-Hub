@@ -13,6 +13,7 @@
  */
 import { z } from "zod";
 import { isSafeHref } from "./markdown";
+import { PUBLIC_BASE_PATH } from "./navigation";
 import { richTextDocSchema } from "./rich-text";
 
 /**
@@ -325,7 +326,7 @@ export function publicPathFor(params: {
   if (isSessionContentType(params.type)) {
     if (!params.sessionCode) return null;
     const part = params.type === "SESSION_PREPARATION" ? "preparacion" : "integracion";
-    return `/estudio/sesiones/${params.sessionCode}/${part}`;
+    return `${PUBLIC_BASE_PATH}/estudio/sesiones/${params.sessionCode}/${part}`;
   }
-  return `/estudio/${params.key}`;
+  return `${PUBLIC_BASE_PATH}/estudio/${params.key}`;
 }

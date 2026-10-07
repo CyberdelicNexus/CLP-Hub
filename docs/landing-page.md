@@ -189,14 +189,14 @@ publish while any remains (see "Publication gate").
 
 | Concern | Path |
 |---|---|
-| Route | `src/app/(public)/page.tsx` (fonts, DB read, publication gate) |
+| Route | `src/app/(public)/clearlight/page.tsx` (fonts, DB read, publication gate) |
 | Sections | `src/components/landing/sections/*.tsx` (includes `partners.tsx`, D-077) |
 | Client islands | `hero-reveal.tsx`, `star-field.tsx` (D-078), `split-stage.tsx`, `light-relay.tsx` (D-102), `light-journey.tsx` (D-103), `film-player.tsx`, `site-bar.tsx`, `still-toggle.tsx`, `contact-dialog.tsx`, `consent.tsx`, `scrollcraft-mount.tsx` |
 | Footer (landing and legal pages) | `src/components/landing/site-footer.tsx` |
-| Legal pages | `src/app/(public)/{aviso-legal,privacidad,cookies}/page.tsx` → `legal-page.tsx`; copy in `src/content/landing/legal.ts` |
+| Legal pages | `src/app/(public)/clearlight/{aviso-legal,privacidad,cookies}/page.tsx` → `legal-page.tsx`; copy in `src/content/landing/legal.ts` |
 | Fonts | `src/components/landing/fonts.ts` (shared by the landing and legal pages) |
 | Copy | `src/content/landing/clear-light.ts` (typed, Spanish source, with `Missing` markers); translations `clear-light.en.ts`, `clear-light.gl.ts`, `legal.en.ts`, `legal.gl.ts`; `copy.ts` picks one per language |
-| Language switch | `language-switch.tsx` (in the bar and the legal pages' bar) → `src/app/(public)/idioma/[locale]/route.ts` |
+| Language switch | `language-switch.tsx` (in the bar and the legal pages' bar) → `src/app/(public)/clearlight/idioma/[locale]/route.ts` |
 | Styles | `src/components/landing/landing.css` (page) over `scrollcraft.css` (vendored floor) |
 | Scroll engine | `public/landing/scrollcraft.js` (vendored from the scroll-craft skill, unmodified) |
 | Media | `public/landing/media/` (derivatives only; originals stay in the handoff) |

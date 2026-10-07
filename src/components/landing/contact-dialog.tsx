@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useId, useRef, useState } from "react";
-import { submitInquiryAction, type InquiryState } from "@/app/(public)/contacto/actions";
+import { submitInquiryAction, type InquiryState } from "@/app/(public)/clearlight/contacto/actions";
 import {
   INQUIRY_EMAIL_MAX_LENGTH,
   INQUIRY_MESSAGE_MAX_LENGTH,
@@ -142,7 +142,7 @@ function ContactForm({
       </p>
       <p className="contact__note">
         {CONTACT.privacyBefore}{" "}
-        <a href="/privacidad" className="cl-link">
+        <a href="/clearlight/privacidad" className="cl-link">
           {CONTACT.privacyLink}
         </a>
         .

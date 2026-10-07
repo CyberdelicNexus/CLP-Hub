@@ -25,6 +25,7 @@ import {
   type ContentType,
 } from "@/domain/content";
 import type { Locale } from "@/domain/locale";
+import { PUBLIC_BASE_PATH } from "@/domain/navigation";
 
 /**
  * Study content (Phase 5).
@@ -334,8 +335,8 @@ export async function listPublishedPages(
     .filter((r) => isPublicContentType(r.type))
     .map((r) => ({
       path: isSessionContentType(r.type)
-        ? `/estudio/sesiones/${r.sessionCode}/${r.type === "SESSION_PREPARATION" ? "preparacion" : "integracion"}`
-        : `/estudio/${r.key}`,
+        ? `${PUBLIC_BASE_PATH}/estudio/sesiones/${r.sessionCode}/${r.type === "SESSION_PREPARATION" ? "preparacion" : "integracion"}`
+        : `${PUBLIC_BASE_PATH}/estudio/${r.key}`,
       title: r.title,
     }));
 }

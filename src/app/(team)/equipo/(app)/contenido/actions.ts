@@ -12,7 +12,7 @@ import {
   bodySchema,
 } from "@/domain/content";
 import { isSafeHref } from "@/domain/markdown";
-import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { PUBLIC_BASE_PATH, TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
 import {
   ConflictError,
@@ -72,7 +72,7 @@ function revalidate(contentId?: string) {
   revalidatePath(`${TEAM_BASE_PATH}/contenido`);
   if (contentId) revalidatePath(`${TEAM_BASE_PATH}/contenido/${contentId}`);
   // Public pages are rendered per request, but revalidate the study index too.
-  revalidatePath("/estudio", "layout");
+  revalidatePath(`${PUBLIC_BASE_PATH}/estudio`, "layout");
 }
 
 const createSchema = z

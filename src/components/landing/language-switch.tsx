@@ -9,7 +9,7 @@ import { PUBLIC_LOCALE_NAMES, PUBLIC_LOCALES, type PublicLocale } from "@/domain
  * opens it, Tab reaches each option), and it closes itself on navigation
  * because each option is a real link to a new page, not a client update.
  *
- * Each option is a plain link to /idioma/[locale], named in its own language
+ * Each option is a plain link to /clearlight/idioma/[locale], named in its own language
  * and marked with `lang`, so a screen reader pronounces "Galego" as Galician.
  * The current language is `aria-current`, not a link target.
  */
@@ -35,7 +35,7 @@ export function LanguageSwitch({
         {PUBLIC_LOCALES.map((l) => (
           <li key={l}>
             <a
-              href={`/idioma/${l}?desde=${encodeURIComponent(from)}`}
+              href={`/clearlight/idioma/${l}?desde=${encodeURIComponent(from)}`}
               className="lang__option"
               lang={l}
               hrefLang={l}

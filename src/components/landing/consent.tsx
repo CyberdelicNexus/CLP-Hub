@@ -87,7 +87,7 @@ export function CookieBanner({ copy: CONSENT }: { copy: LandingCopy["CONSENT"] }
         </h2>
         <p>
           {CONSENT.body}{" "}
-          <a href="/cookies" className="cl-link">
+          <a href="/clearlight/cookies" className="cl-link">
             {CONSENT.policy}
           </a>
         </p>

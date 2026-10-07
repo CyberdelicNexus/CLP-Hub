@@ -1431,7 +1431,7 @@
       "code": "Código",
       "codeWarning": "Cambiar el código rompe cualquier enlace ya compartido con la dirección anterior (p. ej. /estudio/sesiones/{código}/preparacion): no se redirige automáticamente.",
       "stageCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\". Se puede renombrar después desde la lista, si hace falta.",
-      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\" — aparece en la URL pública de la sesión (/estudio/sesiones/{código}/preparacion). Se puede renombrar después desde la lista.",
+      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\" — aparece en la URL pública de la sesión (/clearlight/estudio/sesiones/{código}/preparacion). Se puede renombrar después desde la lista.",
       "nameEs": "Nombre (español)",
       "nameEn": "Nombre (inglés, opcional)",
       "modality": "Modalidad",

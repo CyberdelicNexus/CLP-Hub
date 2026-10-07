@@ -6,15 +6,16 @@ Operations platform for a Spanish-language randomized controlled trial: recruitm
 
 **Nothing in this repository sends anything.** Automation schedules, re-checks and *prepares*; a person copies the message and sends it (D-004, D-039, D-043).
 
-Initial screening happens in Qualtrics: `/participar` collects nothing and hands people off, and identifiable screening data stays there (D-031). Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
+Initial screening happens in Qualtrics: `/clearlight/participar` collects nothing and hands people off, and identifiable screening data stays there (D-031). Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
 ## Surfaces
 
 | Surface | Path | Who | Phase |
 |---|---|---|---|
-| Public recruitment landing page (Clear Light, hands off to Qualtrics, collects nothing) | `/` | Anyone | D-042 |
-| Qualtrics hand-off explanation | `/participar` | Anyone | 1, 4a |
-| Public study content (session prep, integration, VR) | `/estudio/...` | Participants, no login | 5 ✓ |
+| Public recruitment landing page (Clear Light, hands off to Qualtrics, collects nothing) | `/clearlight` | Anyone | D-042 |
+| Placeholder home page for the domain root | `/` | Anyone | D-104 |
+| Qualtrics hand-off explanation | `/clearlight/participar` | Anyone | 1, 4a |
+| Public study content (session prep, integration, VR) | `/clearlight/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
 | VR logistics | `/equipo/logistica-vr` | `logistics.read` | 6 ✓ |
 | Message templates and the prepared queue | `/equipo/comunicaciones` | `communications.read` | 7, 8 ✓ |
@@ -40,7 +41,7 @@ npm run db:seed                 # DEMO study + synthetic staff (needs ALLOW_DEMO
 npm run dev                     # http://localhost:3000/equipo/login
 ```
 
-The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/participar` and `/equipo/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
+The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/clearlight/participar` and `/equipo/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
 
 Demo logins after seeding, password = `SEED_STAFF_PASSWORD`:
 

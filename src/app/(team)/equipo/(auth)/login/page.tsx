@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PUBLIC_BASE_PATH } from "@/domain/navigation";
 import { LoginForm } from "./login-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,7 +38,7 @@ export default async function LoginPage() {
       </div>
 
       <Link
-        href="/"
+        href={PUBLIC_BASE_PATH}
         className="absolute bottom-8 inline-flex items-center gap-1.5 rounded-lg text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <ArrowLeft className="size-3.5" aria-hidden />

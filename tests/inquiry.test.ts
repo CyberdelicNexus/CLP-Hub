@@ -105,7 +105,7 @@ describe("the inquiry inbox keeps as little as possible (D-088)", () => {
   });
 
   it("reads the study on the server and only the four expected fields from the request", () => {
-    const action = read("src/app/(public)/contacto/actions.ts");
+    const action = read("src/app/(public)/clearlight/contacto/actions.ts");
     expect(action).toMatch(/getOpenRecruitmentStudy\(\)/);
     const keys = [...action.matchAll(/text\(form, "([^"]+)"\)/g)].map((m) => m[1]).sort();
     expect(keys).toEqual(["email", "mensaje", "nombre", "website"]);

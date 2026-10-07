@@ -417,9 +417,9 @@ export const INVITATION = {
       {
         heading: "Legal",
         links: [
-          { href: "/aviso-legal", label: "Aviso legal y condiciones de uso" },
-          { href: "/privacidad", label: "Política de privacidad" },
-          { href: "/cookies", label: "Política de cookies" },
+          { href: "/clearlight/aviso-legal", label: "Aviso legal y condiciones de uso" },
+          { href: "/clearlight/privacidad", label: "Política de privacidad" },
+          { href: "/clearlight/cookies", label: "Política de cookies" },
         ],
       },
     ],

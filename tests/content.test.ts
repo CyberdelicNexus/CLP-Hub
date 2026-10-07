@@ -227,14 +227,14 @@ describe("public routing", () => {
 
   it("builds the documented paths", () => {
     expect(publicPathFor({ type: "VR_GUIDE", key: "preparacion-vr", sessionCode: null })).toBe(
-      "/estudio/preparacion-vr",
+      "/clearlight/estudio/preparacion-vr",
     );
     expect(
       publicPathFor({ type: "SESSION_PREPARATION", key: "s1-prep", sessionCode: "demo_intro" }),
-    ).toBe("/estudio/sesiones/demo_intro/preparacion");
+    ).toBe("/clearlight/estudio/sesiones/demo_intro/preparacion");
     expect(
       publicPathFor({ type: "SESSION_INTEGRATION", key: "s1-int", sessionCode: "demo_intro" }),
-    ).toBe("/estudio/sesiones/demo_intro/integracion");
+    ).toBe("/clearlight/estudio/sesiones/demo_intro/integracion");
   });
 
   it("has no path for session content with no session", () => {

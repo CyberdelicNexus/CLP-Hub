@@ -73,7 +73,7 @@ describe("landing copy rules", () => {
     // actual outbound link stays inside /participar's own component.
     expect(NAV.every((n) => n.href.startsWith("#"))).toBe(true);
     const hero = readFileSync(join(process.cwd(), "src/components/landing/sections/hero.tsx"), "utf8");
-    expect(hero).toContain('href="/participar"');
+    expect(hero).toContain('href="/clearlight/participar"');
     expect(hero).toContain('href="#elegibilidad"');
     expect(hero).not.toMatch(/qualtricsUrl/);
   });
@@ -199,7 +199,7 @@ describe("missing approved content", () => {
   it("renders as nothing in production, so a marker can never be published", () => {
     const source = readFileSync(join(process.cwd(), "src/components/landing/missing.tsx"), "utf8");
     expect(source).toMatch(/if \(isProduction\(\)\) return null/);
-    const page = readFileSync(join(process.cwd(), "src/app/(public)/page.tsx"), "utf8");
+    const page = readFileSync(join(process.cwd(), "src/app/(public)/clearlight/page.tsx"), "utf8");
     expect(page).toMatch(/isProduction\(\) && missingContentList/);
   });
 });
@@ -217,8 +217,8 @@ describe("footer, contact, consent and legal pages (D-052)", () => {
   it("links the three legal pages from the footer, and each route exists", () => {
     const hrefs = INVITATION.footer.groups.flatMap((g) => g.links.map((l) => l.href));
     for (const page of LEGAL.pages) {
-      expect(hrefs).toContain(`/${page.slug}`);
-      expect(read(`src/app/(public)/${page.slug}/page.tsx`)).toMatch(new RegExp(`slug="${page.slug}"`));
+      expect(hrefs).toContain(`/clearlight/${page.slug}`);
+      expect(read(`src/app/(public)/clearlight/${page.slug}/page.tsx`)).toMatch(new RegExp(`slug="${page.slug}"`));
     }
   });
 
@@ -435,24 +435,24 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
       expect(source, f).not.toMatch(/import \{[^}]*\b(ACTIONS|NAV|HERO|WHY|WHAT|STAGES|JOIN|SPLIT|ELIGIBILITY|INVITATION|CONTACT|CONSENT|META|LEGAL)\b[^}]*\} from "@\/content\/landing/);
       expect(source, f).not.toMatch(/lang="es"/);
     }
-    expect(read("src/app/(public)/page.tsx")).not.toMatch(/lang="es"/);
+    expect(read("src/app/(public)/clearlight/page.tsx")).not.toMatch(/lang="es"/);
   });
 
   it("switches language with a plain link that sets only the language cookie and returns to a public page", async () => {
-    const { GET } = await import("@/app/(public)/idioma/[locale]/route");
+    const { GET } = await import("@/app/(public)/clearlight/idioma/[locale]/route");
     const call = (locale: string, query = "") =>
-      GET(new NextRequest(`https://example.org/idioma/${locale}${query}`), { params: Promise.resolve({ locale }) });
+      GET(new NextRequest(`https://example.org/clearlight/idioma/${locale}${query}`), { params: Promise.resolve({ locale }) });
 
     const ok = await call("gl", "?desde=%2Fprivacidad");
     expect(ok.status).toBe(303);
-    expect(ok.headers.get("location")).toBe("https://example.org/privacidad");
+    expect(ok.headers.get("location")).toBe("https://example.org/clearlight/privacidad");
     expect(ok.cookies.get(PUBLIC_LOCALE_COOKIE)?.value).toBe("gl");
     expect(ok.cookies.getAll()).toHaveLength(1);
 
     // Anything but a public page goes home: the link is not an open redirect.
     for (const from of ["https://evil.example", "//evil.example", "/equipo"]) {
       const res = await call("en", `?desde=${encodeURIComponent(from)}`);
-      expect(res.headers.get("location")).toBe("https://example.org/");
+      expect(res.headers.get("location")).toBe("https://example.org/clearlight");
     }
 
     const unknown = await call("fr");
@@ -466,7 +466,7 @@ describe("the apply page frames the questionnaire (D-085)", () => {
 
   it("sends the primary CTA to /participar and never hands the Qualtrics URL to the landing markup", () => {
     const source = read("src/components/landing/sections/invitation.tsx");
-    expect(source).toMatch(/href="\/participar"/);
+    expect(source).toMatch(/href="\/clearlight\/participar"/);
     expect(source).not.toMatch(/href=\{qualtricsUrl\}/);
   });
 
@@ -481,14 +481,14 @@ describe("the apply page frames the questionnaire (D-085)", () => {
   });
 
   it("reads the URL from the open study, renders nothing when there is none, and is reachable from the language switch", async () => {
-    const page = read("src/app/(public)/participar/page.tsx");
+    const page = read("src/app/(public)/clearlight/participar/page.tsx");
     expect(page).toMatch(/openScreeningUrl/);
     expect(page).toMatch(/\{url \? \(\s*<ApplyFlow/);
-    const { GET } = await import("@/app/(public)/idioma/[locale]/route");
-    const res = await GET(new NextRequest("https://example.org/idioma/en?desde=%2Fparticipar"), {
+    const { GET } = await import("@/app/(public)/clearlight/idioma/[locale]/route");
+    const res = await GET(new NextRequest("https://example.org/clearlight/idioma/en?desde=%2Fparticipar"), {
       params: Promise.resolve({ locale: "en" }),
     });
-    expect(res.headers.get("location")).toBe("https://example.org/participar");
+    expect(res.headers.get("location")).toBe("https://example.org/clearlight/participar");
   });
 
   it("says the same three things in every language: what happens first, who hosts it, and how to open it elsewhere", () => {

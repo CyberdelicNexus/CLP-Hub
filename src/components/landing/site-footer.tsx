@@ -5,17 +5,17 @@ import type { LandingCopy } from "@/content/landing/clear-light";
 /**
  * The public site's footer, shared by the landing page and the legal pages
  * (D-052): brand and tagline, the study links, the legal links, cookie
- * settings and the pause control. In-page anchors get `/` prepended off the
- * landing page. `#contacto` stays a bare hash everywhere: ContactDialog opens on it.
+ * settings and the pause control. In-page anchors get `/clearlight` prepended off
+ * the landing page. `#contacto` stays a bare hash everywhere: ContactDialog opens on it.
  */
 export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; rootId: string; onLanding: boolean }) {
   const f = copy.INVITATION.footer;
-  const href = (h: string) => (!onLanding && h.startsWith("#") && h !== "#contacto" ? `/${h}` : h);
+  const href = (h: string) => (!onLanding && h.startsWith("#") && h !== "#contacto" ? `/clearlight${h}` : h);
   return (
     <footer className="foot">
       <div className="foot__inner">
         <div className="foot__brandcol">
-          <a href={onLanding ? "#inicio" : "/"} className="foot__brand">
+          <a href={onLanding ? "#inicio" : "/clearlight"} className="foot__brand">
             Clear Light
           </a>
           <p className="foot__tagline">{f.tagline}</p>
@@ -30,7 +30,7 @@ export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; roo
                     <a href={href(l.href)}>{l.label}</a>
                   </li>
                 ))}
-                {g.links.some((l) => l.href === "/cookies") ? (
+                {g.links.some((l) => l.href === "/clearlight/cookies") ? (
                   <li>
                     <CookieSettingsButton label={f.cookieSettings} />
                   </li>

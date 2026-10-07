@@ -1,45 +1,38 @@
 import type { Metadata } from "next";
-import { ClearLightLanding } from "@/components/landing/clear-light-landing";
-import { HOLDING_FONT_CLASS, PUBLIC_FONT_CLASS } from "@/components/landing/fonts";
-import { isProduction } from "@/config/env";
-import { missingContentList } from "@/content/landing/clear-light";
-import { LANDING_COPY } from "@/content/landing/copy";
+import { HOLDING_FONT_CLASS } from "@/components/landing/fonts";
+import { HOME_COPY } from "@/content/home";
+import { PUBLIC_BASE_PATH } from "@/domain/navigation";
 import { getPublicLocale } from "@/i18n/public-locale";
-import { openScreeningUrl } from "./screening-url";
 import "@/components/landing/scrollcraft.css";
 import "@/components/landing/landing.css";
 
 /**
- * Public recruitment landing page for the Clear Light trial.
- *
- * Spanish first, with English and Galician translations chosen by the visitor
- * (D-063). The dark atmospheric theme and section order follow the current
- * team revision in docs/landing-page.md. Application links go to /participar;
- * the screening URL comes from the study open for recruitment (D-031).
+ * Placeholder home page for the domain's root (D-104). The Clear Light site
+ * lives under /clearlight; this page only keeps the root from being empty
+ * until the organisation has a site of its own to put here.
  */
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { META } = LANDING_COPY[await getPublicLocale()];
-  return { title: { absolute: META.title }, description: META.description };
+  const copy = HOME_COPY[await getPublicLocale()];
+  return { title: { absolute: copy.title }, description: copy.body };
 }
 
-export default async function PublicHomePage() {
-  const qualtricsUrl = await openScreeningUrl();
+export default async function HomePage() {
   const locale = await getPublicLocale();
-  const copy = LANDING_COPY[locale];
+  const copy = HOME_COPY[locale];
 
-  // Unapproved protocol content never reaches production. Development and
-  // staging show the markers; production shows a holding page instead.
-  if (isProduction() && missingContentList({ qualtricsUrl }).length > 0) {
-    return (
-      <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang={locale}>
-        <div>
-          <h1 className="cl-title--md">{copy.HOLDING.title}</h1>
-          <p className="cl-lead">{copy.HOLDING.body}</p>
-        </div>
-      </main>
-    );
-  }
-
-  return <ClearLightLanding locale={locale} copy={copy} fontClass={PUBLIC_FONT_CLASS} />;
+  return (
+    <main id="main" className={`cl holding ${HOLDING_FONT_CLASS}`} lang={locale}>
+      <div>
+        <h1 className="cl-title--md">{copy.title}</h1>
+        <p className="cl-lead">{copy.body}</p>
+        <p>
+          {/* Full document load, not <Link>: the landing's scroll engine mounts on page load. */}
+          <a href={PUBLIC_BASE_PATH} className="cl-link">
+            {copy.study}
+          </a>
+        </p>
+      </div>
+    </main>
+  );
 }

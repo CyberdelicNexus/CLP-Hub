@@ -31,7 +31,7 @@ export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: strin
         the SiteBar nav CTA and the invitation section's own button.
       */}
       <div className="hero__actions">
-        <a href="/participar" className="cl-btn">
+        <a href="/clearlight/participar" className="cl-btn">
           {ACTIONS.exploreCta}
         </a>
         <a href="#elegibilidad" className="cl-link">

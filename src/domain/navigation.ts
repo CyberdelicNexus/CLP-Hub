@@ -37,6 +37,12 @@ export const TEAM_NAV: readonly NavSection[] = [
 
 export const TEAM_BASE_PATH = "/equipo";
 
+/**
+ * Where the Clear Light public site lives. The domain's root is a separate
+ * placeholder home page (D-104), so every public study page sits under this.
+ */
+export const PUBLIC_BASE_PATH = "/clearlight";
+
 export function sectionByPath(path: string): NavSection | undefined {
   return TEAM_NAV.find((s) => s.path === path);
 }

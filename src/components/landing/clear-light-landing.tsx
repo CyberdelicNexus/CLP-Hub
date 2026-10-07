@@ -46,7 +46,7 @@ export function ClearLightLanding({
            button — same label, same direct destination (D-090), so the
            persistent nav CTA does not promise something different from
            what the hero already does. */
-        cta={{ href: "/participar", label: copy.ACTIONS.exploreCta }}
+        cta={{ href: "/clearlight/participar", label: copy.ACTIONS.exploreCta }}
         language={<LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/" />}
       />
       <main id="main">

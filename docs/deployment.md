@@ -136,12 +136,23 @@ State on 2026-09-25 (public DNS lookups; the account is held by David):
 - The root already has **live email hosting**: MX records at `mx0/mx1.123-reg.co.uk`.
   Never change or remove them. It has no SPF and no DMARC record, and its
   `A` records look like a parked page.
-- `clearlight.numadelic.org` is free, so the site goes there: **CNAME `clearlight` to Vercel**
-  (`cname.vercel-dns.com`, or whatever target the Vercel Domains page shows for
-  the project, which wins if different). Add the domain in the Vercel project
-  first (Settings, Domains). Then set `APP_URL=https://clearlight.numadelic.org` in
-  Vercel and add that address to Supabase Auth's Site URL and redirect URLs, or
-  staff login will send people back to the old address.
+- The site is served from the **root**, `numadelic.org`, with Clear Light under
+  `/clearlight` and a placeholder home page at `/` (D-104, replacing the
+  `clearlight.numadelic.org` subdomain planned on 2026-09-25). A path cannot be
+  set in DNS, so the root itself points at Vercel:
+  - `A` `@` to `216.198.79.1` (the value the Vercel Domains page showed on
+    2026-10-07; its legacy `76.76.21.21` also works, and whatever that page
+    shows wins if different).
+  - Delete the root's two parked `A` records, `76.223.67.189` and
+    `13.248.213.45` (GoDaddy's parking page). While they exist Vercel reports
+    "Invalid Configuration" and most visitors land on the parking page.
+  - `CNAME` `www` to `cname.vercel-dns.com`, with `www.numadelic.org` added in
+    Vercel as a redirect to the root.
+  - Never touch the `MX` records.
+
+  Then set `APP_URL=https://numadelic.org` in Vercel and add that address to
+  Supabase Auth's Site URL and redirect URLs, or staff login will send people
+  back to the old address. Staff sign in at `numadelic.org/equipo/login`.
 - Email is sent from the **root** `numadelic.org` registered in Resend (EU
   Ireland), as `Clear Light <consultas@numadelic.org>`. The records Resend issued
   (2026-09-25) all live on their own names and do not touch the root's MX:

@@ -153,7 +153,7 @@ it neither mismatches on hydration nor trips the React `set-state-in-effect` rul
 
 ## Landing page
 
-`src/app/(public)/page.tsx` is the **Clear Light recruitment landing page**, and
+`src/app/(public)/clearlight/page.tsx` is the **Clear Light recruitment landing page**, and
 it does not use the soft-modern system above. It is one locked dark theme with
 Living Teal as the only interface accent, Manrope for the interface and IBM Plex
 Mono for identifiers, themed over the vendored scroll-craft floor

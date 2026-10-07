@@ -20,7 +20,7 @@ import {
   type RuleConditions,
 } from "@/domain/automation";
 import { LOCALES } from "@/domain/locale";
-import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { PUBLIC_BASE_PATH, TEAM_BASE_PATH } from "@/domain/navigation";
 import {
   SESSION_MODALITIES,
   SESSION_TEMPLATE_CODE_PATTERN,
@@ -570,7 +570,7 @@ export async function renameSessionTemplateCodeAction(
 
   revalidate();
   // Public preparation/integration pages read this code directly.
-  revalidatePath("/estudio", "layout");
+  revalidatePath(`${PUBLIC_BASE_PATH}/estudio`, "layout");
   return { error: null, ok: true };
 }
 

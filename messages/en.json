@@ -1431,7 +1431,7 @@
       "code": "Code",
       "codeWarning": "Changing the code breaks any link already shared with the old address (e.g. /estudio/sesiones/{code}/preparacion): there is no automatic redirect.",
       "stageCodeHelp": "Internal lowercase identifier, e.g. \"s0\". Can be renamed later from the list if needed.",
-      "templateCodeHelp": "Internal lowercase identifier, e.g. \"s0\" — appears in the session's public URL (/estudio/sesiones/{code}/preparacion). Can be renamed later from the list.",
+      "templateCodeHelp": "Internal lowercase identifier, e.g. \"s0\" — appears in the session's public URL (/clearlight/estudio/sesiones/{code}/preparacion). Can be renamed later from the list.",
       "nameEs": "Name (Spanish)",
       "nameEn": "Name (English, optional)",
       "modality": "Modality",

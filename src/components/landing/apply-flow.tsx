@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { submitInterestAction, type InterestState } from "@/app/(public)/participar/actions";
+import { submitInterestAction, type InterestState } from "@/app/(public)/clearlight/participar/actions";
 import { ApplyFrame } from "@/components/landing/apply-frame";
 import {
   INTEREST_EMAIL_MAX_LENGTH,
@@ -83,7 +83,7 @@ export function ApplyFlow({ url, apply: APPLY }: { url: string; apply: LandingCo
         <input id="interest-privacy" name="privacy" type="checkbox" required />
         <label htmlFor="interest-privacy">
           {form.privacyBefore}{" "}
-          <a href="/privacidad" className="cl-link" target="_blank" rel="noopener">
+          <a href="/clearlight/privacidad" className="cl-link" target="_blank" rel="noopener">
             {form.privacyLink}
           </a>
           {form.privacyAfter}

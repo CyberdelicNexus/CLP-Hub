@@ -159,7 +159,7 @@ describe("application sources", () => {
  */
 describe("the public page takes three contact fields and nothing else (D-086)", () => {
   const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
-  const action = read("src/app/(public)/participar/actions.ts");
+  const action = read("src/app/(public)/clearlight/participar/actions.ts");
   const flow = read("src/components/landing/apply-flow.tsx");
 
   it("reads only name, email, phone, the privacy tick and the honeypot from the request", () => {

@@ -4645,6 +4645,45 @@ everything. Also 360x740, 430x932, 768x1024 and reduced motion (no horizontal
 overflow, no journey under reduced motion), and 1440x900 (D-101/D-102 states
 unchanged, card and control not shown).
 
+## D-104 · 2026-10-07 · The site moves to numadelic.org, with Clear Light under `/clearlight` and a placeholder at the root
+
+The founder's direction: the address is `numadelic.org/clearlight`, not the
+`clearlight.numadelic.org` subdomain planned on 2026-09-25, and the root gets
+a placeholder home page for now because the organisation has no site of its
+own yet.
+
+**Folders, not `basePath`.** A Next.js `basePath` moves the whole application
+under the prefix, which leaves nothing able to render `/`. So the public Clear
+Light pages moved one folder down instead: `src/app/(public)/clearlight/`
+holds the landing page, `participar`, the three legal pages, `estudio/...`,
+`idioma/[locale]` and the contact action. `PUBLIC_BASE_PATH` in
+`src/domain/navigation.ts` is the prefix for code that builds a path
+(`publicPathFor`, the language route, revalidation, the back links); markup
+and the copy files spell `/clearlight/...` out, as they spelt the old paths.
+The language switch's `desde` value still names a page of the Clear Light site
+(`/`, `/participar`, ...); the route adds the prefix, and anything else still
+falls back to the landing page.
+
+**The placeholder** (`src/app/(public)/page.tsx`, copy in
+`src/content/home.ts`): the name, "this site is in preparation" in the
+visitor's language, and a link to the study. It states nothing about the
+organisation, because nothing has been supplied to state. It is still
+`noindex` and `robots.txt` still disallows everything, like the rest of the
+site.
+
+**Not done, deliberately.**
+- The staff area stays at `/equipo`. Moving it would rename every path the
+  tests and docs name for no visitor-facing gain; it is unlinked from the
+  public site. It does mean `numadelic.org/equipo` is the staff login.
+- No redirects from the old root-level paths (`/participar`, `/privacidad`,
+  `/estudio/...`): the root's namespace belongs to the future organisation
+  site, and nothing real has been sent to participants. A link typed into
+  published content by hand as `/estudio/...` has to be re-typed.
+- Sharing a hostname: the staff session cookie is scoped to `numadelic.org`,
+  so it will be sent to whatever else is later served on that hostname. When
+  the organisation's own site arrives, the staff area should move to its own
+  hostname, or that site must be one the team controls to the same standard.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

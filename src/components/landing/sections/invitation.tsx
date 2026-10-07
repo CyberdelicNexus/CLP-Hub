@@ -33,7 +33,7 @@ export function Invitation({ copy, rootId }: { copy: LandingCopy; rootId: string
         </h2>
         <p className="cl-lead invitacion__support">{INVITATION.support}</p>
         <div className="invitacion__cta">
-          <a href="/participar" className="cl-btn">
+          <a href="/clearlight/participar" className="cl-btn">
             {ACTIONS.primaryCta}
           </a>
           <a href="#contacto" className="cl-link">
