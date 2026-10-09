@@ -47,9 +47,11 @@
     radial-gradient(60% 55% at 28% 62%, rgb(var(--home-blue) / 0.2), transparent 70%),
     radial-gradient(60% 55% at 72% 34%, rgb(var(--home-violet) / 0.22), transparent 70%);
 }
-/* Screened, and a little transparent (the opacity is set with the other liquid
-   settings in home-liquid.tsx), so a trail tints the ground and never hides the stars. */
-.home__liquid { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; }
+/* Fixed to the viewport, above the stars and behind `main`, so the trail
+   follows the pointer down the whole page. Screened, and as transparent as
+   the `opacity` in home-liquid.tsx says, so it tints the ground and never
+   hides the stars. */
+.home__liquid { position: fixed; inset: 0; z-index: 0; pointer-events: none; mix-blend-mode: screen; }
 .home__hero-inner {
   position: relative;
   z-index: 1;

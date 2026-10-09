@@ -47,10 +47,11 @@ export default async function HomePage() {
         </div>
       </header>
 
+      {/* Behind the whole page, not only the hero: fixed to the viewport like the starfield. */}
+      <HomeLiquid />
+
       <main id="main">
         <section className="home__hero" aria-labelledby="home-title">
-          <HomeLiquid />
-
           <div className="home__hero-inner">
             <div className="breath" aria-hidden>
               <span className="breath__halo" />

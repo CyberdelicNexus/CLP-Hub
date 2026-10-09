@@ -108,7 +108,7 @@ export function HomeLiquid() {
 
   return (
     <>
-      {/* Behind the text. It listens on the window, so it needs no pointer events of its own. */}
+      {/* Behind the page, fixed to the viewport. It listens on the window, so it needs no pointer events of its own. */}
       <div className="home__liquid" style={{ opacity }} aria-hidden>
         <Liquid style={{ position: "absolute", inset: 0 }} {...options}>
           <span />
