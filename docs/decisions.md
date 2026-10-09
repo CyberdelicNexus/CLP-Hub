@@ -4684,6 +4684,111 @@ site.
   the organisation's own site arrives, the staff area should move to its own
   hostname, or that site must be one the team controls to the same standard.
 
+## D-105 · 2026-10-09 · numadelic.org gets a home page: a breathing light, a liquid pointer trail, and the research
+
+The founder's brief, replacing D-104's placeholder: one hero on a starry black
+ground with a blue, white and purple light that guides a box breath, the
+Canvas UI "Liquid" pointer effect, the title "Making the invisible visible",
+the definition of *numadelic*, three calls to action (the Clear Light
+programme, anuma.com, Numadelic Labs) and a section listing the research from
+`numadeliclabs.org/the-science`.
+
+**Where it lives.** `src/app/(public)/page.tsx`, copy and the paper list in
+`src/content/home.ts`, styles in `src/components/landing/home.css` on top of
+`landing.css` (same tokens, buttons, language switch, starfield and pause
+control as the Clear Light site). Nothing in it is study configuration and it
+reads nothing from the database.
+
+**The breath is CSS.** Four equal phases of `--breath-phase` (4s): in, hold,
+out, hold. The light, its wide glow and the phase word all run on the one
+`--breath-cycle`, so they cannot drift and the page breathes without
+JavaScript. "Pausar animación" (`data-still`) pauses all of it; under
+`prefers-reduced-motion` the light is still and the words are not shown,
+since there is no movement to follow. A first version also drew a rounded
+square with a dot walking one side per phase; the founder asked for it removed
+the same day.
+
+**The light is a particle of energy, not a disc.** `energy-orb.tsx` draws a
+white-blue centre inside a cloud whose edge is lumpy and drifts, from a
+reference image the founder supplied: noise in a small WebGL canvas. It draws
+only the texture. The swelling and settling is the CSS animation on its
+wrapper, and where WebGL is missing a plain CSS light shows instead (the
+canvas marks its wrapper `data-orb` only once it has drawn).
+
+**The liquid is vendored.** `src/components/canvasui/Liquid.tsx` is Canvas
+UI's `liquid-react` registry item (unmodified here; modified by D-106) under a licence notice (MIT +
+Commons Clause: use in a site is allowed, redistribution of the component is
+not). It has no dependencies. In today's browsers it draws a WebGL2 fluid on a
+transparent canvas; the page-warping mode it also has needs an experimental
+browser feature and is not relied on. It sits behind the text, screened, so a
+trail tints the ground and never covers the words. It does nothing on reduced
+motion, and without WebGL2 the page is simply without it.
+
+**The liquid is tunable by the founder.** Every simulation parameter, plus the
+layer's opacity, is one object, `LIQUID_SETTINGS` in
+`src/components/landing/home-liquid.tsx`. Opening the page with `?liquid`
+in the address shows a panel with a control for each; changes apply live in
+that browser only and nothing is stored. "Copy values" copies the object to
+paste back into the file, which is the only way a change reaches visitors.
+
+**Languages.** English is the founder's wording. Spanish and Galician are
+translations made here and still need a native review, including the word
+"numadélico" itself. The page follows D-063 like the rest of the public site:
+the visitor's chosen language, otherwise Spanish. `HOME_RETURN` lets the
+language switch come back to `/` instead of a Clear Light page.
+
+**Corrected from the brief.** `numadeliclabs.com` does not resolve; the link
+goes to `numadeliclabs.org`, the address the research list came from. The
+papers are the seven on that page on 2026-10-09 with that page's links; the
+list is a copy and will not follow later changes there.
+
+**Still true.** The whole site remains `noindex` with crawling disallowed
+(`src/app/robots.ts`), so this page is not findable by search yet.
+
+## D-106 · 2026-10-09 · Home page: the liquid takes the light's texture and a bright core, and the research becomes a row of cards
+
+Two requests from the founder on seeing D-105.
+
+**The liquid component is now a modified copy.** The founder wanted the trail
+to have the same cloud texture as the breathing light, and a brighter colour
+inside it "like an HDR colour, with intensity and a gradient fade". The
+component draws its trail in one flat colour and offers no hook for either,
+so `src/components/canvasui/Liquid.tsx` is no longer the unmodified copy
+D-105 describes: its display shader and its options gained what is marked
+"D-106" in the file. Its licence allows modification; the notice at the top
+now says the file is modified.
+
+- Three colours instead of one: `edgeColor` where the trail thins,
+  `color` for its body, `coreColor` where it is densest.
+- `fade` sets how tight that core is, and `glow` pushes it past its colour
+  towards white, the way an overexposed light reads. This is a look, not real
+  HDR output: a web canvas here cannot exceed the screen's normal white.
+- `texture`, `textureScale` and `textureSpeed`: the same noise as
+  `energy-orb.tsx`, bending where the trail is read (a lumpy edge) and
+  thinning and thickening it (cloud).
+
+With those options at their defaults the file draws exactly what the original
+draws, so a newer upstream copy can replace it and the marked parts be
+reapplied. All of them are in `LIQUID_SETTINGS` and in the `?liquid`
+panel with the rest.
+
+**The research is a sideways row of cards**, not a list: the same card the
+Clear Light page uses (`.research__paper`: a drawn thumbnail, journal and
+year, title, authors, "read the paper"), in one row that scrolls
+(`paper-rail.tsx`). The row is a plain scrolling list, so touch, trackpad,
+keyboard and scrollbar work without script; two arrow buttons move it one card
+at a time for a mouse with no sideways wheel, and are hidden on a phone.
+
+The four papers both pages list reuse the Clear Light page's four drawn
+thumbnails, so a paper looks the same in both places. The other three got new
+ones in the same vocabulary (`home.css`): a line with pulses for the
+autonomic study, a crescent holding a light for the lucid-dreaming study, and
+three lights sharing a ring for the first Isness paper. They are drawings, as
+the existing four are; no figure from any paper is reproduced. Unlike the
+Clear Light cards these show each paper's own title and authors rather than a
+short translated headline, since no such headlines have been written for the
+three new papers.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

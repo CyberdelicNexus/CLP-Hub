@@ -43,6 +43,9 @@ export const TEAM_BASE_PATH = "/equipo";
  */
 export const PUBLIC_BASE_PATH = "/clearlight";
 
+/** The language switch's `desde` value that returns to the domain's home page, not a Clear Light page. */
+export const HOME_RETURN = "inicio";
+
 export function sectionByPath(path: string): NavSection | undefined {
   return TEAM_NAV.find((s) => s.path === path);
 }

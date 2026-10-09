@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isPublicLocale } from "@/domain/locale";
-import { PUBLIC_BASE_PATH } from "@/domain/navigation";
+import { HOME_RETURN, PUBLIC_BASE_PATH } from "@/domain/navigation";
 import { PREFERENCE_COOKIE_OPTIONS, PUBLIC_LOCALE_COOKIE } from "@/i18n/cookies";
 
 /**
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/clearlight/i
   // `desde` names a page of the Clear Light site; "/" is its landing page.
   const from = request.nextUrl.searchParams.get("desde");
   const page = (RETURN_PATHS as readonly (string | null)[]).includes(from) ? from! : "/";
-  const path = page === "/" ? PUBLIC_BASE_PATH : `${PUBLIC_BASE_PATH}${page}`;
+  const path = from === HOME_RETURN ? "/" : page === "/" ? PUBLIC_BASE_PATH : `${PUBLIC_BASE_PATH}${page}`;
 
   const response = NextResponse.redirect(new URL(path, request.url), 303);
   response.cookies.set(PUBLIC_LOCALE_COOKIE, locale, PREFERENCE_COOKIE_OPTIONS);

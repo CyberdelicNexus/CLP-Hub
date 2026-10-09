@@ -13,7 +13,7 @@ Initial screening happens in Qualtrics: `/clearlight/participar` collects nothin
 | Surface | Path | Who | Phase |
 |---|---|---|---|
 | Public recruitment landing page (Clear Light, hands off to Qualtrics, collects nothing) | `/clearlight` | Anyone | D-042 |
-| Placeholder home page for the domain root | `/` | Anyone | D-104 |
+| numadelic.org home page (hero, research cards) | `/` | Anyone | D-105, D-106 |
 | Qualtrics hand-off explanation | `/clearlight/participar` | Anyone | 1, 4a |
 | Public study content (session prep, integration, VR) | `/clearlight/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
