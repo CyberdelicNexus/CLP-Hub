@@ -9,6 +9,8 @@
  * white, and a drifting cloud texture. Every change is marked "D-106". With
  * the new options left at their defaults it draws exactly what the original
  * does, so a newer copy can still be dropped in and the marked parts reapplied.
+ * MODIFIED again (D-112): a finger is followed through touch events, so the
+ * trail carries on while the page scrolls. Marked "D-112".
  */
 "use client";
 
@@ -1154,37 +1156,67 @@ export function createLiquid(
 
   const rectCache = createRectCache(output);
 
-  function onPointerMove(event: PointerEvent) {
+  // D-112: the body of the original onPointerMove / onPointerDown, taking an
+  // id and a position so a touch can drive it too.
+  function trackMove(id: number, clientX: number, clientY: number) {
     if (destroyed || reducedMotion || !visible || document.hidden) return;
     const rect = rectCache.current;
-    const px = event.clientX - rect.left;
-    const py = event.clientY - rect.top;
+    const px = clientX - rect.left;
+    const py = clientY - rect.top;
     if (px < 0 || px > rect.width || py < 0 || py > rect.height) {
-      pointers.delete(event.pointerId);
+      pointers.delete(id);
       return;
     }
-    const previous = pointers.get(event.pointerId);
-    pointers.set(event.pointerId, { x: px, y: py });
+    const previous = pointers.get(id);
+    pointers.set(id, { x: px, y: py });
     if (!previous) return;
     const dx = (px - previous.x) * config.force;
     const dy = -(py - previous.y) * config.force;
-    enqueuePointerSplat(event.pointerId, [px / rect.width, 1 - py / rect.height, dx, dy]);
+    enqueuePointerSplat(id, [px / rect.width, 1 - py / rect.height, dx, dy]);
     start();
   }
 
-  function onPointerDown(event: PointerEvent) {
+  function trackDown(id: number, clientX: number, clientY: number) {
     if (destroyed || reducedMotion || !visible || document.hidden) return;
     const rect = output.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
-    pointers.set(event.pointerId, { x, y });
-    enqueuePointerSplat(event.pointerId, [x / rect.width, 1 - y / rect.height, 1, 1]);
+    pointers.set(id, { x, y });
+    enqueuePointerSplat(id, [x / rect.width, 1 - y / rect.height, 1, 1]);
     start();
+  }
+
+  // D-112: a finger is followed through touch events, not pointer events. Once
+  // the browser takes a touch to scroll the page it cancels the pointer and
+  // sends no more pointermove, so the trail stopped the moment a scroll began;
+  // touchmove keeps arriving for the whole gesture.
+  const isTouch = (event: PointerEvent) => event.pointerType === "touch";
+  // Kept clear of pointer ids, which are small positive numbers.
+  const touchId = (touch: Touch) => -1 - touch.identifier;
+
+  function onPointerMove(event: PointerEvent) {
+    if (!isTouch(event)) trackMove(event.pointerId, event.clientX, event.clientY);
+  }
+
+  function onPointerDown(event: PointerEvent) {
+    if (!isTouch(event)) trackDown(event.pointerId, event.clientX, event.clientY);
   }
 
   function onPointerLeave(event: PointerEvent) {
     pointers.delete(event.pointerId);
+  }
+
+  function onTouchStart(event: TouchEvent) {
+    for (const touch of Array.from(event.changedTouches)) trackDown(touchId(touch), touch.clientX, touch.clientY);
+  }
+
+  function onTouchMove(event: TouchEvent) {
+    for (const touch of Array.from(event.changedTouches)) trackMove(touchId(touch), touch.clientX, touch.clientY);
+  }
+
+  function onTouchEnd(event: TouchEvent) {
+    for (const touch of Array.from(event.changedTouches)) pointers.delete(touchId(touch));
   }
 
   const listenTarget = window;
@@ -1205,6 +1237,11 @@ export function createLiquid(
     "pointercancel",
     onPointerLeave as EventListener,
   );
+  // D-112. Passive: these only watch, and must never hold up a scroll.
+  listenTarget.addEventListener("touchstart", onTouchStart, { passive: true });
+  listenTarget.addEventListener("touchmove", onTouchMove, { passive: true });
+  listenTarget.addEventListener("touchend", onTouchEnd, { passive: true });
+  listenTarget.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
   const observer = createCanvasResizeObserver(() => {
     if (destroyed) return;
@@ -1294,6 +1331,10 @@ export function createLiquid(
         "pointercancel",
         onPointerLeave as EventListener,
       );
+      listenTarget.removeEventListener("touchstart", onTouchStart);
+      listenTarget.removeEventListener("touchmove", onTouchMove);
+      listenTarget.removeEventListener("touchend", onTouchEnd);
+      listenTarget.removeEventListener("touchcancel", onTouchEnd);
     },
   };
 }

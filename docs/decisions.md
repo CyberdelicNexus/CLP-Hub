@@ -4950,6 +4950,32 @@ appeared, which is the ordinary use of a press logo. Nobody asked the outlets.
 If one objects, removing its entry from `HOME_PRESS_LOGOS` is the whole change
 needed, once the card is made to do without (it is required today).
 
+## D-112 · 2026-10-12 · Home page on a phone: the light is drawn at full precision, and the liquid follows a scrolling finger
+
+Two faults the founder saw on an Android phone that a laptop did not show.
+
+**The light looked coarse and lopsided.** Its shader asked for `mediump`
+floats. A laptop computes those at full precision regardless, so it looked
+right; a phone honours the request with 16-bit floats, at which the noise
+function's arithmetic collapses into coarse blocks. The cloud went blocky and
+the warp that should leave the centre alone pushed the bright core to one
+side of the nucleus. `energy-orb.tsx` now asks for `highp`, which is what the
+laptop was using all along, so the two should now match. A device with no
+`highp` in fragment shaders draws nothing and keeps the plain CSS light.
+
+**The liquid stopped when a scroll began.** The component followed pointer
+events only. When a finger starts to scroll, the browser cancels that pointer
+and sends no further `pointermove`, so the trail ended at the first movement.
+`Liquid.tsx` (the vendored copy, marked "D-112") now follows fingers through
+touch events, which keep arriving for the whole gesture, and ignores the
+pointer events a touch also produces so nothing is counted twice. The
+listeners are passive: they watch and cannot delay a scroll. Mouse and pen
+behave as before.
+
+Neither fix was checked on a phone when it was written: there was no device
+to test on, and the cause of each is reasoned from the code and the founder's
+screenshot.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

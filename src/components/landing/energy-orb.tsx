@@ -24,8 +24,12 @@ void main() {
   gl_Position = vec4(aPos, 0.0, 1.0);
 }`;
 
+// highp, not mediump (D-112). A laptop computes mediump at full precision
+// anyway, so it looked right there; a phone really does use 16-bit floats, and
+// at that precision the noise below breaks into coarse blocks: the cloud went
+// blocky and the core was pushed off its centre.
 const FRAG = `
-precision mediump float;
+precision highp float;
 varying vec2 vUv;
 uniform float uTime;
 
@@ -96,6 +100,8 @@ export function EnergyOrb({ rootId }: { rootId: string }) {
     if (!canvas) return;
     const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return;
+    // Without full-precision floats the cloud cannot be drawn properly: leave the plain CSS light.
+    if (!gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)?.precision) return;
 
     const compile = (type: number, source: string) => {
       const shader = gl.createShader(type)!;
