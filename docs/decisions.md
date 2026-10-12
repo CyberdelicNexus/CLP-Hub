@@ -4699,7 +4699,7 @@ programme, anuma.com, Numadelic Labs) and a section listing the research from
 control as the Clear Light site). Nothing in it is study configuration and it
 reads nothing from the database.
 
-**The breath is CSS.** Four equal phases of `--breath-phase` (4s): in, hold,
+**The breath is CSS.** (Rhythm and words changed by D-108.) Four equal phases of `--breath-phase` (4s): in, hold,
 out, hold. The light, its wide glow and the phase word all run on the one
 `--breath-cycle`, so they cannot drift and the page breathes without
 JavaScript. "Pausar animación" (`data-still`) pauses all of it; under
@@ -4788,6 +4788,167 @@ the existing four are; no figure from any paper is reproduced. Unlike the
 Clear Light cards these show each paper's own title and authors rather than a
 short translated headline, since no such headlines have been written for the
 three new papers.
+
+## D-107 · 2026-10-09 · The team section shows eight people, each in a circle
+
+The founder's request: replace the single team photograph placeholder with one
+round portrait per person, with their name, role, a short biography and a
+link. The team is eight people.
+
+**Shape.** The section keeps its draft introduction and contact link, now
+above a grid of eight (four to a row, three on a tablet, two on a phone). What
+does not change with the language (name, photograph, link) is in
+`src/content/landing/team.ts`; the role and biography are copy, in each
+language's `TEAM.members`, in the same order. The portrait is decorative
+(`alt=""`): the name beside it is the text.
+
+**Nobody is invented.** A slot that lacks something is drawn with a labelled
+placeholder for that part in development, and a new marker,
+`EQUIPO_MIEMBROS`, joins the publication gate until every slot has a name,
+a photograph and a Spanish role and biography. A link is optional per person.
+
+**What has been supplied (2026-10-09).** All eight names and biographies, and
+three roles (David Glowacki, Joe Hardy, Justin "Lama Karma" Wall). Still to
+come: the other five roles, every photograph, and the links. Seven
+biographies arrived in English and one (Joana Vidal) in Spanish; the other two
+languages of each are translations made here and need the person's or a native
+speaker's check. They are otherwise as supplied, including that Joana Vidal's
+is in the first person and the rest in the third, and that two of them name
+aNUma, which D-077 took out of the rest of the page.
+
+**Gone.** The single-photograph figure and its two caption strings.
+`public/landing/media/team-placeholder.svg` is no longer referenced.
+
+## D-108 · 2026-10-12 · Home page: the light breathes 4-1-4-1 with no instruction, and the button names the research study
+
+Two requests from the founder, changing D-105.
+
+**The rhythm.** Four seconds in, one held, four out, one held: a ten-second
+cycle instead of the sixteen-second box breath. `home.css` holds the two
+durations (`--breath-move`, `--breath-hold`) and derives `--breath-cycle` from
+them; the keyframes place the phases at 40%, 50% and 90% of that cycle, so the
+durations and those percentages have to change together.
+
+**No instruction.** The word under the light ("Inhala", "Sostén"…) is gone,
+and with it the hidden sentence that described the box breath to a screen
+reader. The light is now decoration only (`aria-hidden`), and the `breath`
+strings are removed from `src/content/home.ts`. Pausing and reduced motion
+behave as before.
+
+**The button.** The first call to action reads "Clear Light Research Study"
+(was "Clear Light program"). Spanish "Estudio de investigación Clear Light"
+and Galician "Estudo de investigación Clear Light" are translations made here
+and need the same native review as the rest of the page.
+
+## D-109 · 2026-10-12 · Home page: a sharper centre to the light, and a film between the hero and the research
+
+Two more requests from the founder the same day.
+
+**The light.** "A bit too cloudy": a more defined core and less diffusion,
+keeping the cloud's texture. In `energy-orb.tsx` the shader gained a small
+white nucleus measured from the true centre (so it stays round whatever the
+cloud does), the core is tighter, and the two cloud layers fall off sooner and
+carry far less even haze: their brightness now comes almost wholly from the
+noise, with its contrast raised, so what is left of the cloud is texture
+rather than fog. The CSS glow behind it (`.breath__halo`) is unchanged.
+
+**The film.** `youtube.com/watch?v=r6_VOOe8SMg` (Essentia Foundation, with
+David Glowacki) sits in its own section between the hero and the research. It
+uses the Clear Light page's `FilmPlayer` unchanged in behaviour, so D-052
+holds here too: nothing loads from YouTube until the visitor presses play, and
+only with consent, which is asked in place and shared with the Clear Light
+site (same stored choice). The embed is `youtube-nocookie.com`.
+
+- **No thumbnail.** (Changed by D-110: the thumbnail is now used, from a
+  copy on this site.) `FilmPlayer`'s `poster` is now optional. Without one the
+  frame is drawn in CSS (`.film__poster` in `home.css`: the hero's blue and
+  violet meeting behind the play button). YouTube's own thumbnail is not used:
+  loading it would contact YouTube before consent, and copying it would mean
+  republishing another publisher's image. A still of our own can be passed as
+  `poster` later.
+- **Words.** The label in the frame is the video's own title, in English. The
+  heading above it ("David Glowacki, with Essentia Foundation") is a draft
+  made here. The video is in English, and the Spanish and Galician play labels
+  say so.
+- **Not done.** The cookies page (`legal*.ts`) still describes the YouTube
+  video as the one in the Clear Light page's "El qué" section. The same
+  provider and purpose apply to this second video, but the wording should
+  name both pages; left for whoever owns the legal text.
+
+## D-110 · 2026-10-12 · Home page: the film shows its thumbnail, and a press row sits under the research
+
+**The thumbnail.** The founder asked for the video's thumbnail behind the
+gradients D-109 drew. It is a copy (`public/landing/media/home-film-poster.jpg`,
+YouTube's 1280×720 thumbnail for the video, fetched 2026-10-12), so the
+browser gets it from this site and D-052 still holds: nothing is requested
+from YouTube before the click and consent. The gradients moved from the empty
+frame to a layer over the picture (`.home__film .film__frame::after`), darker
+in the middle where the play button sits over the thumbnail's own lettering.
+The image is Essentia Foundation's; it is used as the poster of their own
+video, by the founder's decision.
+
+**The press row.** "Numadelic in the media", under the research: the same
+sideways row (`PaperRail`) and the same card as the papers, without a
+thumbnail. Each card gives the outlet, the date, the piece's own title in its
+own language, and "Read", "Watch" or "Listen". The list is `HOME_PRESS` in
+`src/content/home.ts`, thirteen items, newest first.
+
+The list came from the founder as a draft compiled by a search assistant, with
+a request to take what was useful. Every link was opened on 2026-10-12, and
+the list differs from the draft where the pages did:
+
+- **Cadena SER.** The draft's audio link opens a different programme segment
+  that does not mention the project. The card links to the station's own
+  article on the broadcast, with that article's title.
+- **TVE Galicia and RNE.** The draft had no links. Both recordings are in the
+  CiTIUS media archive and the cards link to the files CiTIUS hosts (an .mp4
+  and an .mp3), with the titles and dates the archive gives. RNE's date,
+  unknown in the draft, is 2025-02-27.
+- **EL PAÍS in Spanish.** Links to the article itself (2025-02-25), not to the
+  blog post about it. That address refuses automated requests, so it was not
+  opened here; it is the address both David Glowacki's post and the CiTIUS
+  archive give.
+- **ABC and Lion's Roar.** The ABC title is the page's own, which differs from
+  the draft's. "Bringing Death Into Clear Light" carries the date its page
+  gives, 2024-04-23, not the draft's 2024-06-21.
+- **CiTIUS video.** No date: the page does not state one clearly.
+- **Left out.** "Ripple" (2023) is a piece of David Glowacki's own work, not
+  coverage. The draft's filters, position counter and "some links may require
+  verification" note were not built: one row with the type on each card is
+  enough for thirteen items, and nothing unverified is listed.
+
+The CiTIUS archive lists many more pieces about this work (La Voz de Galicia,
+El Correo Gallego, Faro de Vigo, MIT Technology Review and others). They were
+not added: the founder's list is the selection.
+
+The first card is the film shown two sections above. It is in the row as a
+press item in its own right and opens on YouTube.
+
+## D-111 · 2026-10-12 · Home page: each press card carries its outlet's logo
+
+The founder found the press row too plain and asked for the outlet's logo at
+the top of each card, in place of a thumbnail.
+
+Ten logos for the thirteen cards (EL PAÍS, Lion's Roar and CiTIUS each appear
+twice), in `public/landing/media/press/`, listed as `HOME_PRESS_LOGOS` in
+`src/content/home.ts`. Each was fetched on 2026-10-12 and redrawn as a white
+shape on a transparent ground, at most 480 × 160 pixels, so that ten marks in
+ten colours sit alike on the dark card. The shapes are unaltered; only the
+colour is.
+
+| Logo | Source |
+|---|---|
+| ABC, EL PAÍS, Cadena SER, Infobae, CiTIUS, Lion's Roar, Essentia Foundation, Enfoques.gal | the logo file each outlet's own website serves |
+| TVE, RNE | Wikimedia Commons (`TVE.svg`, `Logo RNE.svg`): RTVE's site serves these only as 70-pixel images |
+
+The logo sits in the band where a research card has its drawing, and is
+decorative to a screen reader (`alt=""`, `aria-hidden`): the outlet is named
+in the line beneath it.
+
+These are other organisations' trademarks, shown to say where a piece
+appeared, which is the ordinary use of a press logo. Nobody asked the outlets.
+If one objects, removing its entry from `HOME_PRESS_LOGOS` is the whole change
+needed, once the card is made to do without (it is required today).
 
 ## Open questions for researchers
 

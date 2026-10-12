@@ -65,11 +65,18 @@ void main() {
   float cloud = fbm(q * 3.1 + vec2(-t * 0.16, t * 0.12));
   float wisp = fbm(q * 6.3 + vec2(t * 0.21, t * 0.17) + 7.7);
 
-  float core = exp(-r * r * 34.0);
-  float body = exp(-r * r * 8.5) * (0.3 + 0.95 * cloud);
-  float veil = exp(-r * r * 2.8) * (0.2 + 0.8 * wisp) * 0.5;
+  // D-109: a defined centre and a closer cloud. The nucleus is measured from
+  // the true centre, so it stays round and sharp whatever the cloud does; the
+  // cloud layers fall off sooner and carry less even haze, so what remains of
+  // them is texture (the noise) and not fog.
+  float d = length(p);
+  float nucleus = exp(-d * d * 150.0);
+  float core = exp(-r * r * 46.0);
+  float body = exp(-r * r * 13.0) * (0.1 + 1.25 * smoothstep(0.22, 0.8, cloud));
+  float veil = exp(-r * r * 5.2) * (0.05 + 0.95 * smoothstep(0.3, 0.78, wisp)) * 0.42;
 
-  vec3 col = vec3(0.95, 0.97, 1.0) * core * 0.95
+  vec3 col = vec3(1.0, 1.0, 1.0) * nucleus * 1.6
+    + vec3(0.93, 0.96, 1.0) * core * 0.9
     + vec3(0.6, 0.71, 1.0) * body * 0.8
     + vec3(0.42, 0.38, 0.98) * veil;
   // A soft shoulder instead of a clipped white disc.

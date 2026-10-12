@@ -3,14 +3,16 @@
    type, buttons, language switch and starfield. Only the home's own markup is
    styled here.
 
-   The breath is a box breath: four equal phases of --breath-phase each. Every
-   animation below shares the one --breath-cycle, so the light, its glow and the
-   phase words cannot drift apart.
+   The breath (D-108): in for --breath-move, held for --breath-hold, out for
+   --breath-move, held again. The light and its glow share the one
+   --breath-cycle, so they cannot drift apart. The keyframe percentages below
+   are these durations as shares of the cycle: change them together.
    ========================================================================== */
 
 .home {
-  --breath-phase: 4s;
-  --breath-cycle: calc(var(--breath-phase) * 4);
+  --breath-move: 4s;
+  --breath-hold: 1s;
+  --breath-cycle: calc((var(--breath-move) + var(--breath-hold)) * 2);
   --breath-size: clamp(10rem, 27vmin, 17rem);
   --home-blue: 74 122 255;
   --home-violet: 150 112 255;
@@ -117,56 +119,30 @@
 }
 .breath__orb[data-orb] .breath__core { display: none; }
 
-.breath__phases {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 1.6rem;
-  margin-top: clamp(0.75rem, 2vh, 1.25rem);
-  font-family: var(--cl-font-label);
-  font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--cl-accent-strong);
-}
-.breath__phase { grid-area: 1 / 1; opacity: 0; }
-
 @media (prefers-reduced-motion: no-preference) {
   .breath__halo { animation: breath-halo var(--breath-cycle) infinite; }
   .breath__orb { animation: breath-orb var(--breath-cycle) infinite; }
-  .breath__phase { animation: breath-phase var(--breath-cycle) linear infinite backwards; }
-  .breath__phase--1 { animation-delay: var(--breath-phase); }
-  .breath__phase--2 { animation-delay: calc(var(--breath-phase) * 2); }
-  .breath__phase--3 { animation-delay: calc(var(--breath-phase) * 3); }
 }
-/* No movement, so no instruction to follow: the words go, the light stays. */
+/* No movement: the light stays, held open. */
 @media (prefers-reduced-motion: reduce) {
-  .breath__phases { display: none; }
   .breath__halo { transform: scale(0.95); opacity: 0.9; }
   .breath__orb { transform: scale(0.95); opacity: 1; }
 }
-.home[data-still] :is(.breath__halo, .breath__orb, .breath__phase) { animation-play-state: paused; }
+.home[data-still] :is(.breath__halo, .breath__orb) { animation-play-state: paused; }
 
-/* In, hold, out, hold. The timing function on a keyframe eases the stretch
-   that follows it. */
+/* In (0 to 40%), hold (to 50%), out (to 90%), hold. The timing function on a
+   keyframe eases the stretch that follows it. */
 @keyframes breath-halo {
   0% { transform: scale(0.74); opacity: 0.72; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  25% { transform: scale(1.08); opacity: 1; }
+  40% { transform: scale(1.08); opacity: 1; }
   50% { transform: scale(1.08); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  75%, 100% { transform: scale(0.74); opacity: 0.72; }
+  90%, 100% { transform: scale(0.74); opacity: 0.72; }
 }
 @keyframes breath-orb {
   0% { transform: scale(0.66); opacity: 0.86; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  25% { transform: scale(1.12); opacity: 1; }
+  40% { transform: scale(1.12); opacity: 1; }
   50% { transform: scale(1.12); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  75%, 100% { transform: scale(0.66); opacity: 0.86; }
-}
-/* Each word owns the first quarter of its own (delayed) cycle. */
-@keyframes breath-phase {
-  0% { opacity: 0; }
-  3%, 21% { opacity: 1; }
-  25%, 100% { opacity: 0; }
+  90%, 100% { transform: scale(0.66); opacity: 0.86; }
 }
 
 /* ------------------------------------------------------------------- copy */
@@ -203,6 +179,54 @@
 @media (max-width: 560px) {
   .home__ctas { flex-direction: column; align-items: stretch; width: 100%; max-width: 20rem; }
   .home__site { justify-content: center; }
+}
+
+/* ------------------------------------------------------------------- film
+   The Clear Light page's player (film-player.tsx, .film in landing.css) with
+   the hero's two colours laid over the video's thumbnail (D-109, D-110): the
+   picture shows through, tinted, and the page's black holds the edges. */
+.home__film {
+  display: grid;
+  justify-items: center;
+  gap: clamp(1.5rem, 3.5vw, 2.5rem);
+  padding: var(--sc-section) var(--sc-gutter) 0;
+  text-align: center;
+}
+.home__film .film { width: 100%; max-width: 62rem; }
+.home__film .film__frame {
+  border: 1px solid var(--cl-line-strong);
+  background: #000;
+  box-shadow: 0 0 5rem rgb(var(--home-violet) / 0.16), 0 18px 56px rgb(0 0 0 / 0.5);
+}
+/* The frame with no picture (film-player.tsx): the gradients on plain dark. */
+.film__poster { position: absolute; inset: 0; background: #05060f; }
+/* The gradients, over the picture. This replaces landing.css's lower fade,
+   so the last layer here does that job for the label. */
+.home__film .film__frame::after {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(5 6 15 / 0.62) 0, rgb(5 6 15 / 0.3) 16%, transparent 34%),
+    radial-gradient(70% 90% at 16% 84%, rgb(var(--home-blue) / 0.46), transparent 70%),
+    radial-gradient(70% 90% at 84% 16%, rgb(var(--home-violet) / 0.5), transparent 70%),
+    linear-gradient(to top, rgb(5 6 15 / 0.82), rgb(5 6 15 / 0.22) 42%, rgb(5 6 15 / 0.3));
+}
+/* Above that layer, which is last in the frame and would otherwise tint them. */
+.home__film :is(.film__play, .film__label, .film__embed) { z-index: 1; }
+.home__film .film__play-disc {
+  width: clamp(4.25rem, 8vw, 5.5rem);
+  height: clamp(4.25rem, 8vw, 5.5rem);
+  border-color: rgb(var(--home-white) / 0.7);
+  background: rgb(8 9 20 / 0.5);
+  box-shadow: 0 0 2.2rem rgb(var(--home-violet) / 0.5);
+}
+.home__film .film__play-disc::after { border-left-color: rgb(var(--home-white)); }
+.home__film .film__label {
+  right: 1.25rem;
+  font-family: var(--cl-font-label);
+  font-size: clamp(0.72rem, 1.1vw, 0.85rem);
+  letter-spacing: 0.08em;
+  text-align: left;
+  color: var(--sc-ink-soft);
 }
 
 /* --------------------------------------------------------------- research
@@ -256,6 +280,44 @@
 .home__rail .research__description { font-size: 0.8rem; color: var(--cl-muted); }
 @media (max-width: 560px) {
   .home__rail-buttons { display: none; }
+}
+
+/* ------------------------------------------------------------------ press
+   The same row and the same card as the research (D-110): the outlet's logo,
+   outlet and date, the piece's own title, and what the link does. */
+.home__press { padding-top: 0; }
+/* The outlet's logo where a paper has its drawing (D-111): white, on the same
+   soft violet ground, in a box that gives a wide wordmark and a square one
+   about the same weight. */
+.press__logo {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  padding: 1.5rem;
+  background: radial-gradient(ellipse at 50% 90%, rgb(83 69 159 / 0.3), transparent 70%);
+  border-bottom: 1px solid rgb(183 156 255 / 0.12);
+}
+.press__logo img {
+  width: auto;
+  height: auto;
+  max-width: min(11rem, 100%);
+  max-height: 3.4rem;
+  object-fit: contain;
+  opacity: 0.86;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .press__logo img { transition: opacity 300ms ease, transform 400ms ease; }
+  .press__card:hover .press__logo img, .press__card:focus-visible .press__logo img { transform: scale(1.05); }
+}
+.press__card:hover .press__logo img, .press__card:focus-visible .press__logo img { opacity: 1; }
+.press__card .research__content { padding-top: 1.1rem; }
+.press__card h3 {
+  margin-bottom: 1.5rem;
+  /* Some headlines are a whole quoted sentence. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
 }
 
 /* Three more drawn thumbnails, for the papers the Clear Light page does not

@@ -10,11 +10,13 @@ export interface HomeCopy {
   title: string;
   /** The word, where it comes from, and what it names. */
   definition: { term: string; origin: string; meaning: string };
-  /** Box breathing: four equal phases, in the order the light moves through them. */
-  breath: { label: string; phases: readonly [string, string, string, string] };
   ctaLabel: string;
   clearLight: string;
+  /** The film between the hero and the research (D-109). */
+  film: { heading: string; play: string; posterAlt: string };
   research: { heading: string; intro: string; read: string; newTab: string; previous: string; next: string };
+  /** The press row under the research (D-110). The three verbs are what the card's link does. */
+  press: { heading: string; intro: string; read: string; watch: string; listen: string; previous: string; next: string };
   language: string;
   still: { pause: string; resume: string };
 }
@@ -31,12 +33,9 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       origin: "del latín numen (espíritu) y del griego delos (hacer visible)",
       meaning: "tecnologías que hacen visible y sentida la experiencia de una interconexión profunda.",
     },
-    breath: {
-      label: "Respiración cuadrada: inhala cuatro segundos, sostén cuatro, exhala cuatro, sostén cuatro.",
-      phases: ["Inhala", "Sostén", "Exhala", "Sostén"],
-    },
     ctaLabel: "Seguir explorando",
-    clearLight: "Programa Clear Light",
+    clearLight: "Estudio de investigación Clear Light",
+    film: { heading: "David Glowacki, con Essentia Foundation", play: "Reproducir el vídeo (en inglés)", posterAlt: "Dos hombres en primer plano, uno a cada lado, sobre un fondo de ondas azules; entre ellos, la frase en inglés «Darkness is actually full of light.»" },
     research: {
       heading: "La investigación",
       intro: "Estudios publicados sobre experiencias numadélicas en realidad virtual.",
@@ -44,6 +43,15 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       newTab: "se abre en una nueva pestaña",
       previous: "Artículos anteriores",
       next: "Artículos siguientes",
+    },
+    press: {
+      heading: "Numadelic en los medios",
+      intro: "Prensa, entrevistas, radio, televisión y vídeos sobre el trabajo numadélico de David Glowacki.",
+      read: "Leer",
+      watch: "Ver",
+      listen: "Escuchar",
+      previous: "Anteriores",
+      next: "Siguientes",
     },
     language: "Idioma",
     still: { pause: "Pausar animación", resume: "Reanudar animación" },
@@ -59,12 +67,9 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       origin: "from Latin numen (spirit) and Greek delos (to make visible)",
       meaning: "technologies that make the experience of deep interconnection visible and felt.",
     },
-    breath: {
-      label: "Box breathing: breathe in for four seconds, hold for four, breathe out for four, hold for four.",
-      phases: ["Breathe in", "Hold", "Breathe out", "Hold"],
-    },
     ctaLabel: "Keep exploring",
-    clearLight: "Clear Light program",
+    clearLight: "Clear Light Research Study",
+    film: { heading: "David Glowacki, with Essentia Foundation", play: "Play the video", posterAlt: "Two men in close-up, one on each side, against waves of blue light; between them, the words “Darkness is actually full of light.”" },
     research: {
       heading: "The research",
       intro: "Published studies of numadelic experiences in virtual reality.",
@@ -72,6 +77,15 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       newTab: "opens in a new tab",
       previous: "Previous papers",
       next: "Next papers",
+    },
+    press: {
+      heading: "Numadelic in the media",
+      intro: "Press, interviews, broadcasts, and videos about David Glowacki’s Numadelic work.",
+      read: "Read",
+      watch: "Watch",
+      listen: "Listen",
+      previous: "Previous",
+      next: "Next",
     },
     language: "Language",
     still: { pause: "Pause animation", resume: "Resume animation" },
@@ -87,12 +101,9 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       origin: "do latín numen (espírito) e do grego delos (facer visible)",
       meaning: "tecnoloxías que fan visible e sentida a experiencia dunha interconexión profunda.",
     },
-    breath: {
-      label: "Respiración cadrada: inspira catro segundos, mantén catro, expira catro, mantén catro.",
-      phases: ["Inspira", "Mantén", "Expira", "Mantén"],
-    },
     ctaLabel: "Seguir explorando",
-    clearLight: "Programa Clear Light",
+    clearLight: "Estudo de investigación Clear Light",
+    film: { heading: "David Glowacki, con Essentia Foundation", play: "Reproducir o vídeo (en inglés)", posterAlt: "Dous homes en primeiro plano, un a cada lado, sobre un fondo de ondas azuis; entre eles, a frase en inglés «Darkness is actually full of light.»" },
     research: {
       heading: "A investigación",
       intro: "Estudos publicados sobre experiencias numadélicas en realidade virtual.",
@@ -101,10 +112,30 @@ export const HOME_COPY: Record<PublicLocale, HomeCopy> = {
       previous: "Artigos anteriores",
       next: "Artigos seguintes",
     },
+    press: {
+      heading: "Numadelic nos medios",
+      intro: "Prensa, entrevistas, radio, televisión e vídeos sobre o traballo numadélico de David Glowacki.",
+      read: "Ler",
+      watch: "Ver",
+      listen: "Escoitar",
+      previous: "Anteriores",
+      next: "Seguintes",
+    },
     language: "Idioma",
     still: { pause: "Pausar animación", resume: "Reanudar animación" },
   },
 };
+
+/**
+ * The film (D-109): youtube.com/watch?v=r6_VOOe8SMg, published by Essentia
+ * Foundation. The title is the video's own, kept in its original language.
+ */
+export const HOME_FILM = {
+  youtubeId: "r6_VOOe8SMg",
+  title: "Molecular Physicist Visualised The Process of Dying | David Glowacki",
+  /** The video's own thumbnail, copied here so it is served by this site and not by YouTube (D-110). */
+  poster: "/landing/media/home-film-poster.jpg",
+} as const;
 
 /** The two sister sites. Shown as their addresses, which need no translation. */
 export const HOME_SITES = [
@@ -179,3 +210,155 @@ export const HOME_PAPERS = [
     art: 6,
   },
 ] as const;
+
+/**
+ * The outlets' logos (D-111), each redrawn in white on a transparent ground
+ * from the outlet's own file so they sit on the dark card alike. Sizes are the
+ * files' own, in pixels.
+ */
+export const HOME_PRESS_LOGOS = {
+  essentia: { src: "/landing/media/press/essentia.png", width: 303, height: 160 },
+  tve: { src: "/landing/media/press/tve.png", width: 259, height: 160 },
+  ser: { src: "/landing/media/press/ser.png", width: 480, height: 149 },
+  abc: { src: "/landing/media/press/abc.png", width: 480, height: 159 },
+  rne: { src: "/landing/media/press/rne.png", width: 316, height: 160 },
+  elpais: { src: "/landing/media/press/elpais.png", width: 480, height: 111 },
+  infobae: { src: "/landing/media/press/infobae.png", width: 480, height: 112 },
+  enfoques: { src: "/landing/media/press/enfoques.png", width: 480, height: 84 },
+  citius: { src: "/landing/media/press/citius.png", width: 460, height: 160 },
+  lionsroar: { src: "/landing/media/press/lionsroar.png", width: 480, height: 77 },
+} as const;
+
+/**
+ * Press and broadcasts (D-110), newest first. Every link was opened on
+ * 2026-10-12; outlet, title and date are the ones the page itself (or, for the
+ * two recordings, the CiTIUS media archive that hosts them) gives. Titles stay
+ * in their own language, which `lang` names. `date` is left out where the
+ * page does not state one.
+ */
+export const HOME_PRESS: readonly {
+  outlet: string;
+  logo: keyof typeof HOME_PRESS_LOGOS;
+  title: string;
+  date?: string;
+  kind: "read" | "watch" | "listen";
+  lang: "es" | "en";
+  href: string;
+}[] = [
+  {
+    outlet: "Essentia Foundation",
+    logo: "essentia",
+    title: "Molecular Physicist Visualised The Process of Dying",
+    date: "2026-05-29",
+    kind: "watch",
+    lang: "en",
+    href: "https://www.youtube.com/watch?v=r6_VOOe8SMg",
+  },
+  {
+    outlet: "TVE Galicia",
+    logo: "tve",
+    title: "«Imagina que tienes un pedazo de hielo y lo pones en el mar. El hielo sí desaparece, pero todavía está dentro, mezclado con todo lo que hay». Entrevista a David Glowacki",
+    date: "2025-06-06",
+    kind: "watch",
+    lang: "es",
+    href: "https://apps.citius.gal/xici2/backend/media/news/1608/video_file/2025-06-06_telexornal_galicia_davidglowacki_20250611064935375.mp4",
+  },
+  {
+    outlet: "Cadena SER · A vivir que son dos días",
+    logo: "ser",
+    title: "Juanjo Millás, un sacerdote, un científico y una escéptica periodista prueban una experiencia cercana a la muerte",
+    date: "2025-04-13",
+    kind: "read",
+    lang: "es",
+    href: "https://cadenaser.com/nacional/2025/04/13/juanjo-millas-un-sacerdote-un-cientifico-y-una-esceptica-periodista-prueban-una-experiencia-cercana-a-la-muerte-cadena-ser/",
+  },
+  {
+    outlet: "ABC",
+    logo: "abc",
+    title: "David Glowacki: esta experiencia puede ayudar a acercarse a la muerte sin miedo",
+    date: "2025-03-08",
+    kind: "watch",
+    lang: "es",
+    href: "https://www.abc.es/ciencia/david-glowacki-experiencia-puede-ayudar-acercarse-muerte-20250308120018-vi.html",
+  },
+  {
+    outlet: "RNE · Las mañanas de RNE",
+    logo: "rne",
+    title: "«NUMADELIC es una forma de terapia de grupo. Se puede recibir como una meditación en la mortalidad». Entrevista a David Glowacki",
+    date: "2025-02-27",
+    kind: "listen",
+    lang: "es",
+    href: "https://citius.usc.es/sites/default/files/prensa/Entrevista_DavidGlowacki_RNE_27-02-2025.mp3",
+  },
+  {
+    outlet: "EL PAÍS English",
+    logo: "elpais",
+    title: "David Glowacki, physicist: ‘The idea of living for 500 years scares me more than death’",
+    date: "2025-02-26",
+    kind: "read",
+    lang: "en",
+    href: "https://english.elpais.com/science-tech/2025-02-26/david-glowacki-physicist-the-idea-of-living-for-500-years-scares-me-more-than-death.html",
+  },
+  {
+    outlet: "EL PAÍS",
+    logo: "elpais",
+    title: "David Glowacki, físico: “La idea de vivir 500 años me asusta más que la muerte”",
+    date: "2025-02-25",
+    kind: "read",
+    lang: "es",
+    href: "https://elpais.com/salud-y-bienestar/2025-02-25/david-glowacki-fisico-la-idea-de-vivir-500-anos-me-asusta-mas-que-la-muerte.html",
+  },
+  {
+    outlet: "Infobae España",
+    logo: "infobae",
+    title: "Viajar a la muerte para dejar de tenerle miedo: unos investigadores utilizan la realidad virtual para reforzar la salud mental de enfermos terminales",
+    date: "2025-02-17",
+    kind: "read",
+    lang: "es",
+    href: "https://www.infobae.com/espana/2025/02/17/viajar-a-la-muerte-para-dejar-de-tenerle-miedo-unos-investigadores-utilizan-la-realidad-virtual-para-reforzar-la-salud-mental-de-enfermos-terminales/",
+  },
+  {
+    outlet: "Enfoques.gal",
+    logo: "enfoques",
+    title: "Realidad virtual desde la USC para aliviar la ansiedad ante la muerte",
+    date: "2025-02-12",
+    kind: "read",
+    lang: "es",
+    href: "https://enfoques.gal/compostela/santiago/realidad-virtual-desde-la-usc-para-aliviar-la-ansiedad-ante-la-muerte/",
+  },
+  {
+    outlet: "CiTIUS",
+    logo: "citius",
+    title: "‘Numadelic’: Virtual Reality to alleviate anxiety about death",
+    kind: "watch",
+    lang: "en",
+    href: "https://citius.gal/en/videos/numadelic-virtualreality-to-relieve-anxiety-about-death/",
+  },
+  {
+    outlet: "Lion’s Roar",
+    logo: "lionsroar",
+    title: "Bringing Death Into Clear Light",
+    date: "2024-04-23",
+    kind: "read",
+    lang: "en",
+    href: "https://www.lionsroar.com/bringing-death-into-clear-light/",
+  },
+  {
+    outlet: "Lion’s Roar en español",
+    logo: "lionsroar",
+    title: "Tras el Velo Digital: Meditación en Realidad Virtual",
+    date: "2024-03-04",
+    kind: "read",
+    lang: "es",
+    href: "https://www.lionsroar.com/es/tras-el-velo-digital-meditacion-en-realidad-virtual/",
+  },
+  {
+    outlet: "CiTIUS",
+    logo: "citius",
+    title: "A pioneering project in the world will explore the restorative use of virtual reality to alleviate death anxiety",
+    date: "2022-09-08",
+    kind: "read",
+    lang: "en",
+    href: "https://citius.gal/en/news/news/a-world-pioneering-project-will-explore-the-restorative-use-of-virtual-reality-to-alleviate-death-anxiety/",
+  },
+];

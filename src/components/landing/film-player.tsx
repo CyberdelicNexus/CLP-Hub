@@ -23,8 +23,9 @@ export function FilmPlayer({
   lang,
 }: {
   youtubeId: string;
-  poster: string;
-  alt: string;
+  /** A still of ours. Without one the frame is drawn in CSS (`.film__poster`): never YouTube's own thumbnail, which would load from YouTube before the click. */
+  poster?: string;
+  alt?: string;
   label: string;
   playLabel: string;
   consent: LandingCopy["CONSENT"];
@@ -39,7 +40,11 @@ export function FilmPlayer({
   return (
     <div className={clsx("film", playing && "is-playing")}>
       <div className="film__frame">
-        <Image src={poster} alt={alt} fill sizes="(max-width: 860px) 100vw, 45vw" quality={90} />
+        {poster ? (
+          <Image src={poster} alt={alt ?? ""} fill sizes="(max-width: 860px) 100vw, 45vw" quality={90} />
+        ) : (
+          <span className="film__poster" aria-hidden />
+        )}
         {asking ? (
           <div className="film__consent" role="group" aria-label={CONSENT.title}>
             <p>{CONSENT.filmBlocked}</p>
