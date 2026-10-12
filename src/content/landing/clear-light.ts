@@ -23,6 +23,7 @@
 
 import { LEGAL, legalMissing, type LegalCopy } from "@/content/landing/legal";
 import { RESEARCH_ES } from "@/content/landing/research";
+import { teamMissing, type TeamMemberCopy } from "@/content/landing/team";
 
 export interface Missing {
   readonly missing: true;
@@ -64,6 +65,7 @@ export const NAV = [
   { href: "#porque", label: "El estudio" },
   { href: "#incorporarse", label: "Cómo participar" },
   { href: "#elegibilidad", label: "Preguntas" },
+  { href: "#equipo", label: "Equipo" },
 ] as const;
 
 export const HERO = {
@@ -558,17 +560,35 @@ export const META = {
     "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
 } as const;
 
-/** Draft introduction; names, credentials and the real team photo are still to come. */
+/** The introduction is a draft; the eight people's details are still to come (team.ts, D-107). */
 export const TEAM = {
   eyebrow: "El equipo de Clear Light",
-  heading: "Personas que acompañan a personas.",
+  heading: "Conoce al equipo.",
   body: [
-    "En Clear Light compartimos una pregunta: cómo acompañar mejor a las personas que viven con una enfermedad grave o avanzada. Este estudio explora el encuentro entre la meditación, la realidad virtual y la investigación.",
-    "Detrás de cada paso hay un equipo con el que puedes hablar. Estamos aquí para explicarte el estudio, escuchar tus preguntas y acompañarte durante tu participación, respetando tus decisiones y tu ritmo.",
+    "Unimos investigación, diseño de experiencias y tecnología para dar forma a Clear Light y acompañarte en cada etapa del estudio.",
   ],
-  contact: "Habla con nosotros",
-  imageAlt: "Ilustración provisional del equipo de Clear Light; pendiente de fotografía.",
-  imageCaption: "Próximamente, la fotografía del equipo.",
+  /** The link under each person, followed for a screen reader by their name. */
+  profile: "Ver perfil",
+  newTab: "se abre en una nueva pestaña",
+  /** Shown in a slot the team has not filled in yet (development only: the page is not published meanwhile). */
+  pending: { name: "Nombre pendiente", role: "Rol en el estudio", bio: "Biografía breve, pendiente de recibir." },
+  /**
+   * Each person's role and short biography, in the order of TEAM_MEMBERS
+   * (team.ts). Translated from the English the founder supplied, except the
+   * last, which was supplied in Spanish. A missing role has not been supplied.
+   */
+  previous: "Equipo anterior",
+    next: "Equipo siguiente",
+    members: [
+    { role: "Supervisor", bio: "David Glowacki es un investigador interdisciplinar cuyos intereses abarcan la informática, la nanociencia, la estética, la teoría cultural y la espiritualidad." },
+    { role: "Responsable de tecnología", bio: "El Dr. Joe Hardy es cofundador y director científico de aNUma. Es doctor en Psicología Cognitiva por la Universidad de California en Berkeley, donde también obtuvo su MBA." },
+    { role: "Responsable de diseño de experiencias", bio: "Lama Karma es facilitador principal y diseñador de experiencias en aNUma. En este papel incorpora prácticas basadas en la evidencia y tradiciones de sabiduría a un diseño de experiencias de vanguardia." },
+    { role: "Asistente de investigación", bio: "Valérie realizó su doctorado y los primeros años de su carrera investigadora en neuroimagen cognitiva en el Imperial College, el UCL y la Universidad de Oxford." },
+    { role: "Responsable de logística y operaciones", bio: "Con formación en música y conciencia corporal, la variada trayectoria profesional de Sila abarca también la gestión de eventos, la coordinación de proyectos y el coaching de idiomas." },
+    { role: "Responsable de investigación · Facilitación", bio: "Catherine obtuvo su licenciatura en Biología y su doctorado en Neurociencia en Chile. Investigó los efectos de la práctica de la meditación mediante medidas electrofisiológicas. Ha desarrollado distintos proyectos posdoctorales en universidades de Chile y España, y recientemente trabaja con la realidad virtual como tecnología de apoyo a la práctica de la meditación." },
+    { role: "Diseño de experiencias · Infraestructura de investigación · Facilitación", bio: "Investigador, diseñador de experiencias inmersivas y tecnólogo creativo que explora cómo los medios inmersivos y las tecnologías emergentes pueden favorecer experiencias significativas, bienestar y desarrollo humano. En Clear Light, contribuye al diseño de experiencias, la implementación técnica, la infraestructura de investigación y la realización del estudio." },
+    { role: "Asistente de investigación · Psicóloga · Facilitadora", bio: "Soy psicóloga general sanitaria y doctora (PhD) en psicología clínica y de la salud por la Universitat de València. Especializada en psicooncología con experiencia clínica en centros de referencia como el Instituto Valenciano de Oncología." },
+  ] as readonly TeamMemberCopy[],
 } as const;
 
 /** The language switch (D-063). Language names are endonyms, in src/domain/locale.ts. */
@@ -633,6 +653,7 @@ export function missingContentList(resolved: { qualtricsUrl: string | null } = {
   add(INVITATION.footer.privacy);
   add(INVITATION.footer.version);
   for (const m of legalMissing()) add(m);
+  for (const m of teamMissing(TEAM.members)) add(m);
   return [...seen.values()];
 }
 

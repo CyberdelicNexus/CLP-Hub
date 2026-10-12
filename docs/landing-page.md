@@ -105,8 +105,9 @@ step description while the left-hand step highlights. Laptop-height windows
 retain the pinned sequence with more compact spacing. Mobile, exceptionally
 shallow windows (480px high or less), reduced motion and no-JavaScript
 layouts use stacked steps. The team section includes draft introductory copy
-in all three languages and an explicitly labelled SVG photo placeholder;
-replace it with the team's real photograph when supplied. No names or
+in all three languages and, since D-107, eight round portraits with a name,
+role, short biography and link each (`src/content/landing/team.ts`). Until the
+team supplies them the slots are labelled placeholders. No names or
 credentials have been invented. Earlier visual descriptions below are history
 where they differ from this revision.
 
@@ -522,6 +523,7 @@ the legal pages draw their own keys.
 | `PRIVACIDAD` | Legal approval of the privacy policy page (`/privacidad`) |
 | `VERSION_MATERIAL` | Version and date of the recruitment material (not rendered as a marker since D-052) |
 | ~~`CONTACTO_FORMULARIO`~~ | Resolved by D-088: contact form messages go to the Hub inbox (`/equipo/consultas`); no longer a publication marker |
+| `EQUIPO_MIEMBROS` | Name, role, short biography, photograph and link for each of the eight team members (D-107). Filled in `src/content/landing/team.ts` and each language's `TEAM.members` |
 | `TITULAR_WEB` | Site owner for the legal notice (LSSI-CE art. 10): name, NIF, address, email, registry details |
 | `RESPONSABLE_TRATAMIENTO` | Data controller: entity, NIF, address, contact |
 | `BASE_JURIDICA` | Approved legal basis for each processing activity |

@@ -1783,23 +1783,85 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   .apply__embed { height: min(85dvh, 60rem); }
 }
 
-/* The people behind the study, following eligibility and the FAQ. */
-.team {
+/* Portrait rail: the page's blue and lavender light behind the supplied cutouts. */
+.team { padding-block: var(--sc-section); }
+.team__copy { display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: clamp(2rem, 5vw, 5rem); }
+.team__copy h2 { margin-top: 1rem; }
+.team__copy .cl-title { font-size: clamp(2.25rem, 4.5vw, 4rem); }
+.team__intro { max-width: 36rem; }
+.team__intro .cl-lead { margin: 0; font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.65; }
+.team__carousel { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
+.team__members {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(3rem, 7vw, 7rem);
-  padding-block: var(--sc-section);
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 4.5rem) / 4);
+  gap: 1.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  margin: 0;
+  padding: 5px 3px 12px;
 }
-.team__copy h2 { margin-top: 1rem; max-width: 16ch; }
-.team__copy .cl-lead { margin-top: 1.5rem; max-width: 46ch; }
-.team__copy .cl-link { display: inline-block; margin-top: 2rem; }
-.team__portrait { margin: 0; }
-.team__portrait img { display: block; width: 100%; height: auto; border-radius: var(--cl-radius); border: 1px solid var(--cl-line); }
-.team__portrait figcaption { margin-top: 1rem; color: var(--cl-muted); font-size: 0.85rem; }
-@media (max-width: 860px) {
-  .team { grid-template-columns: 1fr; gap: 2.5rem; }
-  .team__portrait { max-width: 36rem; width: 100%; }
+.team__members::-webkit-scrollbar { display: none; }
+.team__member { min-width: 0; scroll-snap-align: start; }
+.team__card {
+  --team-card-height: clamp(26rem, 33vw, 30rem);
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--team-card-height);
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgb(183 156 255 / 0.16);
+  border-radius: 1.5rem;
+  text-align: left;
+  color: var(--sc-ink);
+  font: inherit;
+  cursor: pointer;
+  background: radial-gradient(ellipse at 50% 55%, #6a5db4 0%, #303b72 42%, #11152d 80%);
+}
+.team__portrait { position: absolute; inset: 1.5rem 0 0; transition: opacity 700ms var(--cl-ease-presence), transform 850ms var(--cl-ease-presence); }
+.team__portrait img { object-fit: cover; object-position: 50% 15%; }
+.team__member--0 .team__portrait img { object-position: 52% top; }
+.team__member--4 .team__portrait img { object-position: left top; }
+.team__member--5 .team__portrait img { object-position: 50% top; }
+.team__member--3 .team__portrait img { object-position: 95% top; }
+.team__card::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(0deg, #111125 0%, rgb(17 17 37 / 0.92) 14%, transparent 58%); transition: opacity 350ms; }
+.team__identity { position: absolute; z-index: 2; inset: 2rem 1.35rem auto; display: grid; gap: 0.65rem; transform: translateY(calc(var(--team-card-height) - 100% - 3.8rem)); transition: transform 750ms var(--cl-ease-presence); }
+.team__name { display: block; font-size: clamp(1.2rem, 1.7vw, 1.65rem); line-height: 1.15; letter-spacing: -0.045em; font-weight: 500; }
+.team__role { display: block; font-size: 0.8rem; line-height: 1.5; color: #d3c2ff; text-wrap: pretty; }
+.team__bio { position: absolute; inset: auto 1.35rem 1.8rem; z-index: 2; font-size: 0.86rem; line-height: 1.65; max-height: calc(100% - 12rem); overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(18px); transition: opacity 550ms ease, transform 750ms var(--cl-ease-presence), visibility 550ms; }
+.team__card:focus-visible { outline: 2px solid var(--cl-accent-strong); outline-offset: 2px; }
+.team__member[data-open] .team__portrait, .team__card:focus-visible .team__portrait { opacity: 0.07; transform: scale(1.025); }
+.team__member[data-open] .team__card::after, .team__card:focus-visible::after { opacity: 0; }
+.team__member[data-open] .team__identity, .team__card:focus-visible .team__identity { transform: translateY(0); }
+.team__member[data-open] .team__bio, .team__card:focus-visible .team__bio { opacity: 1; visibility: visible; transform: none; }
+@media (hover: hover) {
+  .team__card:hover .team__portrait { opacity: 0.07; transform: scale(1.025); }
+  .team__card:hover::after { opacity: 0; }
+  .team__card:hover .team__identity { transform: translateY(0); }
+  .team__card:hover .team__bio { opacity: 1; visibility: visible; transform: none; }
+}
+.team__navigation { display: flex; align-items: center; justify-content: center; gap: 2rem; margin-top: 1.5rem; }
+.team__arrow { display: grid; place-items: center; flex-shrink: 0; width: 3rem; height: 3rem; border: 1px solid var(--cl-line-strong); border-radius: 50%; background: rgb(183 156 255 / 0.05); color: var(--sc-ink); cursor: pointer; transition: background 200ms, opacity 200ms; }
+.team__arrow:hover:not(:disabled) { background: rgb(183 156 255 / 0.18); }
+.team__arrow:disabled { opacity: 0.25; cursor: default; }
+.team__arrow:focus-visible, .team__link:focus-visible { outline: 2px solid var(--cl-accent-strong); outline-offset: 4px; }
+.team__progress { width: min(30rem, 60%); height: 2px; background: var(--cl-line); overflow: hidden; }
+.team__progress span { display: block; height: 100%; background: var(--cl-accent-strong); }
+.team__link { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; color: var(--cl-accent-strong); font-size: 0.85rem; }
+@media (max-width: 1100px) { .team__members { grid-auto-columns: calc((100% - 3rem) / 3); } }
+@media (max-width: 700px) {
+  .team__copy { grid-template-columns: 1fr; gap: 1.25rem; }
+  .team__members { grid-auto-columns: 82%; gap: 1rem; }
+  .team__card { --team-card-height: 29rem; }
+  .team__name { font-size: 1.6rem; }
+  .team__navigation { gap: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .team__portrait, .team__identity, .team__bio, .team__card::after, .team__arrow { transition: none; }
 }
 
 /* ------------------------------------------------------- reduced motion */

@@ -563,3 +563,28 @@ describe("the phone's light journey (D-103)", () => {
     expect(css).toMatch(/\.azar__flip \{ display: none; \}/);
   });
 });
+
+describe("the team section shows eight people (D-107)", () => {
+  it("has eight slots, and holds the page back until each has a name, a photograph, a role and a biography", async () => {
+    const { TEAM_MEMBERS, TEAM_PENDING, isComplete, teamMissing } = await import("@/content/landing/team");
+    expect(TEAM_MEMBERS).toHaveLength(8);
+    const done = TEAM_MEMBERS.every((m, i) => isComplete(m, LANDING_COPY.es.TEAM.members[i]));
+    expect(missingContentList().some((m) => m.key === TEAM_PENDING.key)).toBe(!done);
+
+    const full = { role: "Rol", bio: "Bio" };
+    expect(isComplete({ name: "A", photo: "/a.webp", href: null }, full)).toBe(true);
+    expect(isComplete({ name: "A", photo: null, href: "https://example.org" }, full)).toBe(false);
+    expect(isComplete({ name: null, photo: "/a.webp", href: null }, full)).toBe(false);
+    expect(isComplete({ name: "A", photo: "/a.webp", href: null }, undefined)).toBe(false);
+    expect(teamMissing([])).toEqual([TEAM_PENDING]);
+    expect(teamMissing(LANDING_COPY.es.TEAM.members)).toEqual(done ? [] : [TEAM_PENDING]);
+  });
+
+  it("never gives a language more people than there are slots, and opens each person's link safely", async () => {
+    const { TEAM_MEMBERS } = await import("@/content/landing/team");
+    for (const locale of PUBLIC_LOCALES) expect(LANDING_COPY[locale].TEAM.members.length, locale).toBeLessThanOrEqual(TEAM_MEMBERS.length);
+    for (const m of TEAM_MEMBERS) if (m.href) expect(m.href).toMatch(/^https:\/\//);
+    const section = readFileSync(join(process.cwd(), "src/components/landing/sections/team.tsx"), "utf8");
+    expect(section).toMatch(/target="_blank" rel="noopener noreferrer"/);
+  });
+});
