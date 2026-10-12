@@ -59,35 +59,41 @@ void main() {
   vec2 p = vUv;
   float t = uTime;
 
-  // Push each point by a slow field before measuring its distance from the
-  // centre: that is what makes the edge lumpy instead of a circle. The push
-  // grows with distance, so the bright centre stays where it is.
-  vec2 warp = vec2(fbm(p * 1.7 + vec2(t * 0.11, -t * 0.07)), fbm(p * 1.7 + vec2(-t * 0.09, t * 0.1) + 31.7)) - 0.47;
-  vec2 q = p + warp * 0.5 * smoothstep(0.0, 0.45, length(p));
+  float d = length(p);
+
+  // Push each point by a slow, broad field before measuring its distance from
+  // the centre: that is what makes the outline uneven instead of a circle. The
+  // push grows with distance, so the bright centre stays where it is.
+  vec2 warp = vec2(fbm(p * 1.25 + vec2(t * 0.09, -t * 0.06)), fbm(p * 1.25 + vec2(-t * 0.07, t * 0.08) + 31.7)) - 0.47;
+  vec2 q = p + warp * 0.42 * smoothstep(0.04, 0.4, d);
   float r = length(q);
 
   float cloud = fbm(q * 3.1 + vec2(-t * 0.16, t * 0.12));
   float wisp = fbm(q * 6.3 + vec2(t * 0.21, t * 0.17) + 7.7);
 
-  // D-109: a defined centre and a closer cloud. The nucleus is measured from
-  // the true centre, so it stays round and sharp whatever the cloud does; the
-  // cloud layers fall off sooner and carry less even haze, so what remains of
-  // them is texture (the noise) and not fog.
-  float d = length(p);
+  // D-113: a body with an edge. The light used to thin out into cloud for as
+  // far as the canvas went; now it is one compact shape that ends, softly but
+  // in one place (edge), with the cloud kept as texture inside it and as a
+  // thin fringe just outside. The nucleus is measured from the true centre, so
+  // it stays round and sharp whatever the body does.
+  float edge = 0.41 + 0.045 * (wisp - 0.5);
+  float fill = smoothstep(edge, edge * 0.5, r);
+  float body = fill * (0.68 + 0.46 * smoothstep(0.25, 0.8, cloud));
+  float fringe = smoothstep(edge * 1.28, edge * 0.85, r) * (0.25 + 0.75 * smoothstep(0.3, 0.75, wisp));
+  float glow = exp(-r * r * 11.0);
+  float core = exp(-r * r * 50.0);
   float nucleus = exp(-d * d * 150.0);
-  float core = exp(-r * r * 46.0);
-  float body = exp(-r * r * 13.0) * (0.1 + 1.25 * smoothstep(0.22, 0.8, cloud));
-  float veil = exp(-r * r * 5.2) * (0.05 + 0.95 * smoothstep(0.3, 0.78, wisp)) * 0.42;
 
-  vec3 col = vec3(1.0, 1.0, 1.0) * nucleus * 1.6
+  vec3 col = vec3(1.0, 1.0, 1.0) * nucleus * 1.5
     + vec3(0.93, 0.96, 1.0) * core * 0.9
-    + vec3(0.6, 0.71, 1.0) * body * 0.8
-    + vec3(0.42, 0.38, 0.98) * veil;
+    + vec3(0.72, 0.78, 1.0) * glow * 0.55
+    + vec3(0.52, 0.57, 1.0) * body * 0.58
+    + vec3(0.3, 0.27, 0.82) * fringe * 0.22;
   // A soft shoulder instead of a clipped white disc.
   col = 1.0 - exp(-col * 1.5);
 
   // Nothing may reach the square's edge.
-  col *= smoothstep(1.0, 0.55, length(p));
+  col *= smoothstep(1.0, 0.55, d);
   float alpha = clamp(max(col.r, max(col.g, col.b)), 0.0, 1.0);
   gl_FragColor = vec4(col, alpha);
 }`;

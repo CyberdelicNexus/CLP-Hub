@@ -4976,6 +4976,33 @@ Neither fix was checked on a phone when it was written: there was no device
 to test on, and the cause of each is reasoned from the code and the founder's
 screenshot.
 
+## D-113 · 2026-10-12 · Home page: the light is a compact body with an edge
+
+The founder, with the phone fixed: still "a bit too cloudy on the outside",
+and two low-resolution stills of the reference the light was first drawn
+from, asking to come closer to its shape without copying it or losing the
+fidelity reached so far.
+
+The reference is one compact, uneven body: a white centre, a fairly even
+periwinkle fill, and an outline that ends in one place. What was on the page
+thinned out into cloud for as far as its canvas went. So in `energy-orb.tsx`:
+
+- the body is now a filled shape with a soft edge at a set radius, not a
+  falloff with no end;
+- the outline is bent by a broader, slower field, so it reads as a lumpy
+  body, not a frayed one;
+- the cloud is kept as texture inside the body and as a thin indigo fringe
+  just past the edge;
+- the nucleus and core are as D-109 left them, with a wider pale glow between
+  them and the fill.
+
+The CSS glow behind the light (`.breath__halo`) is about a third fainter, since
+a strong glow blurred the new edge. Same on desktop and phone: there is one
+shader.
+
+The shape was judged from stills computed outside a browser by a line-for-line
+copy of the shader's arithmetic, not from the page itself.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

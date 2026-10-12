@@ -73,7 +73,8 @@
   display: grid;
   place-items: center;
 }
-/* The wide glow: violet near the light, blue as it thins out. */
+/* The wide glow: violet near the light, blue as it thins out. Faint (D-113):
+   the light is a body with an edge, and a strong glow blurred that edge. */
 .breath__halo {
   position: absolute;
   width: 330%;
@@ -81,10 +82,10 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgb(var(--home-violet) / 0.46) 0%,
-    rgb(104 98 232 / 0.32) 18%,
-    rgb(var(--home-blue) / 0.18) 36%,
-    rgb(var(--home-blue) / 0.07) 52%,
+    rgb(var(--home-violet) / 0.3) 0%,
+    rgb(104 98 232 / 0.19) 18%,
+    rgb(var(--home-blue) / 0.1) 36%,
+    rgb(var(--home-blue) / 0.04) 52%,
     transparent 68%
   );
   transform: scale(0.74);
