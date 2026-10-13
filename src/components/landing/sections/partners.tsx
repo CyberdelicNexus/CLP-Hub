@@ -2,10 +2,10 @@ import Image from "next/image";
 import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
- * Research partners and funding credit (D-077, team request). Not one of the
- * eight locked sections (docs/landing-page.md): an institutional trust band
- * between the final invitation and the footer, logos and names only, no claim
- * about what each partner contributes to the study.
+ * Research partners (D-077, team request). Not one of the eight locked
+ * sections (docs/landing-page.md): an institutional trust band between the
+ * final invitation and the footer, logos and names only, no claim about what
+ * each partner contributes to the study. One row, the funder included (D-114).
  */
 export function Partners({ copy }: { copy: LandingCopy }) {
   const { PARTNERS } = copy;
@@ -26,17 +26,6 @@ export function Partners({ copy }: { copy: LandingCopy }) {
           </li>
         ))}
       </ul>
-      <div className="partners__funding">
-        <p className="partners__heading">{PARTNERS.funding.heading}</p>
-        <Image
-          src={PARTNERS.funding.logo.src}
-          alt={PARTNERS.funding.name}
-          width={PARTNERS.funding.logo.width}
-          height={PARTNERS.funding.logo.height}
-          sizes="(max-width: 640px) 60vw, 16rem"
-          className="partners__funding-logo"
-        />
-      </div>
     </div>
   );
 }

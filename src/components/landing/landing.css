@@ -1404,8 +1404,7 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (max-width: 599px) { .research__grid { grid-template-columns: minmax(0, 1fr); } }
 
 .partners {
-  /* One heading-to-logos gap for both groups (D-084), so the two headings
-     sit the same distance above what they introduce. */
+  /* The heading-to-logos gap (D-084). */
   --partners-head-gap: clamp(3.25rem, 5vw, 4.75rem);
   border-top: 1px solid var(--cl-line);
   padding: clamp(4.5rem, 7vw, 6.5rem) var(--sc-gutter) clamp(5rem, 8vw, 7rem);
@@ -1440,16 +1439,23 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   max-width: 16rem;
   object-fit: contain;
 }
-.partners__funding { margin-top: clamp(5.5rem, 9vw, 8rem); }
-.partners__funding-logo {
-  /* next/image renders a block-level <img>, so the ancestor's text-align
-     does nothing here (D-079, team feedback: it wasn't centred) — margin
-     auto is the actual centring mechanism for a block box. */
-  margin: var(--partners-head-gap) auto 0;
-  height: clamp(3.5rem, 7.5vw, 5.5rem);
-  width: auto;
-  max-width: 20rem;
-  object-fit: contain;
+/* D-114: every collaborator on one line on a wide screen, the funder first
+   and no different from the rest. Equal columns, each mark fitted inside its
+   own, so the row cannot wrap however wide a wordmark is. Narrower screens
+   keep the wrapping row above. */
+@media (min-width: 1000px) {
+  .partners__list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 3.2vw, 3.5rem);
+  }
+  .partners__logo {
+    height: auto;
+    max-height: 4.5rem;
+    max-width: 100%;
+    margin-inline: auto;
+  }
 }
 
 /* ----------------------------------------------------------------- footer */

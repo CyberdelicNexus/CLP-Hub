@@ -52,7 +52,7 @@ export const LANDING_GL: LandingCopy = {
   },
   STAGES: {
     heading: "Etapas do Programa",
-    intro: "Unha experiencia progresiva para preparar, explorar, compartir e integrar.",
+    intro: "Se te asignan ao grupo do programa, percorrerás estas etapas de Clear Light: preparación, experiencias inmersivas e integración.",
     approval: ES.STAGES.approval,
     items: [
       {
@@ -149,7 +149,7 @@ export const LANDING_GL: LandingCopy = {
       { role: "Supervisor", bio: "David Glowacki é un investigador interdisciplinar cuxos intereses abranguen a informática, a nanociencia, a estética, a teoría cultural e a espiritualidade." },
       { role: "Responsable de tecnoloxía", bio: "O Dr. Joe Hardy é cofundador e director científico de aNUma. É doutor en Psicoloxía Cognitiva pola Universidade de California en Berkeley, onde tamén obtivo o seu MBA." },
       { role: "Responsable de deseño de experiencias", bio: "Lama Karma é facilitador principal e deseñador de experiencias en aNUma. Neste papel incorpora prácticas baseadas na evidencia e tradicións de sabedoría a un deseño de experiencias de vangarda." },
-      { role: "Asistente de investigación", bio: "Valérie realizou o seu doutoramento e os primeiros anos da súa carreira investigadora en neuroimaxe cognitiva no Imperial College, no UCL e na Universidade de Oxford." },
+      { role: "Investigadora sénior - Análise de datos e publicacións", bio: "Valérie realizou o seu doutoramento e os primeiros anos da súa carreira investigadora en neuroimaxe cognitiva no Imperial College, no UCL e na Universidade de Oxford." },
       { role: "Responsable de loxística e operacións", bio: "Con formación en música e conciencia corporal, a variada traxectoria profesional de Sila abrangue tamén a xestión de eventos, a coordinación de proxectos e o coaching de idiomas." },
       { role: "Responsable de investigación · Facilitación", bio: "Catherine obtivo a súa licenciatura en Bioloxía e o seu doutoramento en Neurociencia en Chile. Investigou os efectos da práctica da meditación mediante medidas electrofisiolóxicas. Desenvolveu distintos proxectos posdoutorais en universidades de Chile e España, e recentemente traballa coa realidade virtual como tecnoloxía de apoio á práctica da meditación." },
       { role: "Deseño de experiencias · Infraestrutura de investigación · Facilitación", bio: "Investigador, deseñador de experiencias inmersivas e tecnólogo creativo que explora como os medios inmersivos e as tecnoloxías emerxentes poden favorecer experiencias significativas, benestar e desenvolvemento humano. En Clear Light, contribúe ao deseño de experiencias, á implementación técnica, á infraestrutura de investigación e á realización do estudo." },
@@ -171,9 +171,14 @@ export const LANDING_GL: LandingCopy = {
       },
       {
         numeral: "03",
-        label: "Asignación á túa cohorte",
-        body: "Se resultas seleccionado/a, asignarémoste a unha cohorte do estudo e coordinaremos unha visita para entregarche as gafas de realidade virtual e explicarche como utilizalas.",
-      },
+      label: "Asignación ao teu grupo",
+      body: "Se resultas seleccionado/a para participar, asignaráseche ao azar a un dos dous grupos do estudo: o grupo do programa ou o grupo de comparación. Explicarémosche que implica a túa asignación.",
+    },
+    {
+      numeral: "04",
+      label: "O programa, desde a túa casa",
+      body: "Se te asignan ao grupo do programa, o noso equipo visitarate na casa ao comezo do estudo para entregarche as gafas de realidade virtual e acompañarte nunha primeira experiencia. Despois, as sesións serán a distancia desde a túa casa. Na última sesión volveremos visitarte para recoller as gafas.",
+    }
     ],
     supporting: "Amosar interese non te compromete a participar.",
   },
@@ -289,12 +294,8 @@ export const LANDING_GL: LandingCopy = {
       { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },
       { name: ES.PARTNERS.items[2].name, logo: ES.PARTNERS.items[2].logo },
       { name: ES.PARTNERS.items[3].name, logo: ES.PARTNERS.items[3].logo },
+      { name: ES.PARTNERS.items[4].name, logo: ES.PARTNERS.items[4].logo },
     ],
-    funding: {
-      heading: "Coa financiación de",
-      name: ES.PARTNERS.funding.name,
-      logo: ES.PARTNERS.funding.logo,
-    },
   },
   INVITATION: {
     heading: "Decide con toda a información.",

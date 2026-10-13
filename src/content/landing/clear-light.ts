@@ -126,7 +126,7 @@ export const STAGE_LIGHT_SPOTS: Readonly<Record<string, readonly [number, number
 
 export const STAGES = {
   heading: "Etapas del Programa",
-  intro: "Una experiencia progresiva para preparar, explorar, compartir e integrar.",
+  intro: "Si te asignan al grupo del programa, recorrerás estas etapas de Clear Light: preparación, experiencias inmersivas e integración.",
   approval: missing("DESCRIPCION_ETAPAS", "Aprobación de los nombres y descripciones de las etapas S0 a S6"),
   items: [
     {
@@ -225,8 +225,13 @@ export const JOIN = {
     {
       numeral: "03",
       label: "Asignación a tu grupo",
-      body: "Si resultas seleccionado/a para participar, te asignaremos a uno de los dos grupos y te explicaremos todo sobre cómo participar.",
+      body: "Si resultas seleccionado/a para participar, se te asignará al azar a uno de los dos grupos del estudio: el grupo del programa o el grupo de comparación. Te explicaremos qué implica tu asignación.",
     },
+    {
+      numeral: "04",
+      label: "El programa, desde tu casa",
+      body: "Si te asignan al grupo del programa, nuestro equipo te visitará en casa al comienzo del estudio para entregarte las gafas de realidad virtual y acompañarte en una primera experiencia. Después, las sesiones serán a distancia desde tu casa. En la última sesión volveremos a visitarte para recoger las gafas.",
+    }
   ],
   supporting: "Mostrar interés no te compromete a participar.",
 } as const;
@@ -378,24 +383,21 @@ export interface Partner {
 }
 
 /**
- * Research partners and funding credit (D-077, added at the team's request
- * alongside the hero simplification). Institutional, not participant-facing
- * explanation: names and marks only, no claim about what each partner does on
- * the study. Sits just above the footer, after the final invitation.
+ * Research partners (D-077, added at the team's request alongside the hero
+ * simplification). Institutional, not participant-facing explanation: names
+ * and marks only, no claim about what each partner does on the study. One
+ * undifferentiated row (D-114): the funder is a collaborator like the rest,
+ * first in line. Sits just above the footer, after the final invitation.
  */
 export const PARTNERS = {
   heading: "Colaboran en este estudio",
   items: [
+    { name: "Tiny Blue Dot Foundation", logo: { src: "/landing/media/partners/tiny-blue-dot-foundation.png", width: 1500, height: 308 } },
     { name: "CiTIUS · Centro Singular de Investigación en Tecnoloxías Intelixentes", logo: { src: "/landing/media/partners/citius.png", width: 3367, height: 1218 } },
     { name: "Xunta de Galicia", logo: { src: "/landing/media/partners/xunta-de-galicia.png", width: 7000, height: 2000 } },
     { name: "Universidade de Santiago de Compostela", logo: { src: "/landing/media/partners/usc.webp", width: 3840, height: 2498 } },
     { name: "Intangible Realities Laboratory", logo: { src: "/landing/media/partners/irl.png", width: 280, height: 140 } },
   ] as readonly Partner[],
-  funding: {
-    heading: "Con la financiación de",
-    name: "Tiny Blue Dot Foundation",
-    logo: { src: "/landing/media/partners/tiny-blue-dot-foundation.png", width: 1500, height: 308 },
-  },
 } as const;
 
 export const INVITATION = {
@@ -583,7 +585,7 @@ export const TEAM = {
     { role: "Supervisor", bio: "David Glowacki es un investigador interdisciplinar cuyos intereses abarcan la informática, la nanociencia, la estética, la teoría cultural y la espiritualidad." },
     { role: "Responsable de tecnología", bio: "El Dr. Joe Hardy es cofundador y director científico de aNUma. Es doctor en Psicología Cognitiva por la Universidad de California en Berkeley, donde también obtuvo su MBA." },
     { role: "Responsable de diseño de experiencias", bio: "Lama Karma es facilitador principal y diseñador de experiencias en aNUma. En este papel incorpora prácticas basadas en la evidencia y tradiciones de sabiduría a un diseño de experiencias de vanguardia." },
-    { role: "Asistente de investigación", bio: "Valérie realizó su doctorado y los primeros años de su carrera investigadora en neuroimagen cognitiva en el Imperial College, el UCL y la Universidad de Oxford." },
+    { role: "Investigadora sénior - Análisis de datos y publicaciones", bio: "Valérie realizó su doctorado y los primeros años de su carrera investigadora en neuroimagen cognitiva en el Imperial College, el UCL y la Universidad de Oxford." },
     { role: "Responsable de logística y operaciones", bio: "Con formación en música y conciencia corporal, la variada trayectoria profesional de Sila abarca también la gestión de eventos, la coordinación de proyectos y el coaching de idiomas." },
     { role: "Responsable de investigación · Facilitación", bio: "Catherine obtuvo su licenciatura en Biología y su doctorado en Neurociencia en Chile. Investigó los efectos de la práctica de la meditación mediante medidas electrofisiológicas. Ha desarrollado distintos proyectos posdoctorales en universidades de Chile y España, y recientemente trabaja con la realidad virtual como tecnología de apoyo a la práctica de la meditación." },
     { role: "Diseño de experiencias · Infraestructura de investigación · Facilitación", bio: "Investigador, diseñador de experiencias inmersivas y tecnólogo creativo que explora cómo los medios inmersivos y las tecnologías emergentes pueden favorecer experiencias significativas, bienestar y desarrollo humano. En Clear Light, contribuye al diseño de experiencias, la implementación técnica, la infraestructura de investigación y la realización del estudio." },

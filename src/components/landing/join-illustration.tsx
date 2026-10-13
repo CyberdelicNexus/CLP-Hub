@@ -66,6 +66,16 @@ export function JoinIllustration({ step }: { step: string }) {
           </g>
           <path d="M155 124h43" stroke="#e3edff" strokeWidth="2.5" strokeOpacity=".55" strokeLinecap="round" />
         </>
+      ) : step === "04" ? (
+        <>
+          {/* Home delivery and a shared first VR experience. */}
+          <path d="m72 91 78-60 78 60v68H72Z" fill={paint("glass")} fillOpacity=".25" stroke={paint("rim")} strokeWidth="2" />
+          <path d="m59 94 91-70 91 70" stroke={paint("trace")} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="94" y="87" width="112" height="57" rx="20" fill={paint("glass")} stroke={paint("rim")} strokeWidth="2" />
+          <path d="M108 99h84v27h-26l-16-9-16 9h-26Z" fill={paint("edge")} stroke={paint("rim")} />
+          <path d="M97 105H82v26h15m106-26h15v26h-15" stroke={paint("trace")} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M110 92q40-16 80 0" stroke="#f3f1ff" strokeOpacity=".5" strokeLinecap="round" />
+        </>
       ) : (
         <>
           {/* A shared origin divides into two equally weighted, luminous groups. */}

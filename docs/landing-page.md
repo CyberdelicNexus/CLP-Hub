@@ -143,8 +143,8 @@ publish while any remains (see "Publication gate").
 
 - Eight sections in a locked order: hero, El porqué, El qué, Etapas del Programa
   (S0 to S6), Cómo incorporarse al estudio, Asignación al azar, Elegibilidad y
-  preguntas, Invitación final. A ninth, unlocked band (research partners and
-  funding credit, D-077) sits between the invitation and the footer.
+  preguntas, Invitación final. A ninth, unlocked band (research partners, the
+  funder among them, D-077 and D-114) sits between the invitation and the footer.
 - One locked dark theme on a true black ground (`--sc-canvas: #000`, D-047),
   lavender as the interface accent, as a gradient on buttons and link
   highlights (D-052, replacing Living Teal), Manrope for the interface, Poppins
@@ -614,9 +614,10 @@ logo.
   breathing orb that used to rest half outside the bottom of one section and
   half outside the top of the other ("the section with the video") is gone,
   team feedback, and not replaced with anything.
-- **The funding logo is centred (D-079 fix).** `next/image` renders a
-  block-level `<img>`, so the ancestor's `text-align: center` never reached
-  it; `.partners__funding-logo` now centres itself with `margin-inline: auto`.
+- **One row of collaborators, the funder among them (D-114).** The separate
+  "Con la financiación de" group is gone: Tiny Blue Dot Foundation is the
+  first of five marks under "Colaboran en este estudio", on one line from
+  1000px up.
 
 ## Verification
 

@@ -4,18 +4,19 @@ import type { LandingCopy } from "@/content/landing/clear-light";
 
 /** Desktop crossfades a drawing and description on the right of the step list.
  * Mobile, reduced motion and no-JS present the same steps in document flow. */
-const CUES = ["0 0.42 0 0.35", "0.34 0.72 0.32 0.32", "0.64 1 0.32 0"] as const;
+const CUES = ["0 0.3 0 0.24", "0.24 0.55 0.24 0.24", "0.49 0.8 0.24 0.24", "0.74 1 0.24 0"] as const;
 const WINDOWS = [
-  { from: -1, to: 0.36 },
-  { from: 0.3, to: 0.7 },
-  { from: 0.64, to: 2 },
+  { from: -1, to: 0.27 },
+  { from: 0.24, to: 0.52 },
+  { from: 0.49, to: 0.77 },
+  { from: 0.74, to: 2 },
 ] as const;
 
 export function Join({ copy }: { copy: LandingCopy }) {
   const { JOIN } = copy;
   return (
     <section id="incorporarse" className="join" aria-label={JOIN.heading}>
-      <div className="cl-pinned" data-sc-act="pin" data-sc-span="3.2">
+      <div className="cl-pinned" data-sc-act="pin" data-sc-span="4.2">
         <div data-sc-stage className="sc-stage stage stage--join">
           <div className="join__copy">
             <h2 className="cl-title--md">{JOIN.heading}</h2>

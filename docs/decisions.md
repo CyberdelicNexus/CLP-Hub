@@ -5003,6 +5003,27 @@ shader.
 The shape was judged from stills computed outside a browser by a line-for-line
 copy of the shader's arithmetic, not from the page itself.
 
+## D-114 · 2026-10-13 · Clear Light: one row of collaborators, the funder among them
+
+The founder: David does not like the collaborators being differentiated, so
+Tiny Blue Dot goes at the beginning of the same line as the others.
+
+Until now the band under the final invitation had two groups: four logos
+under "Colaboran en este estudio", then Tiny Blue Dot alone under "Con la
+financiación de" (D-077). Now there is one group and one heading:
+
+- `PARTNERS.items` holds five marks, Tiny Blue Dot Foundation first.
+  `PARTNERS.funding` and its heading are gone in all three languages, so the
+  page no longer says who funds the study; it says who collaborates on it.
+- `partners.tsx` renders the one list. `.partners__funding` and
+  `.partners__funding-logo` are removed from `landing.css`.
+- From 1000px up the list is a row of equal columns with each mark fitted
+  inside its own, so five logos stay on one line whatever their proportions.
+  The Tiny Blue Dot wordmark is far wider than it is tall, so it sits lower
+  than the others in the row. Below 1000px the row wraps as before.
+
+Not looked at in a browser: typecheck, lint, tests and build only.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

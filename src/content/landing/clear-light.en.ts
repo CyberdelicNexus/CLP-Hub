@@ -53,7 +53,7 @@ export const LANDING_EN: LandingCopy = {
   },
   STAGES: {
     heading: "Program stages",
-    intro: "A progressive experience to prepare, explore, share, and integrate.",
+    intro: "If you are assigned to the program group, you will follow these Clear Light stages: preparation, immersive experiences and integration.",
     approval: ES.STAGES.approval,
     items: [
       {
@@ -150,7 +150,7 @@ export const LANDING_EN: LandingCopy = {
       { role: "Supervisor", bio: "David Glowacki is a cross-disciplinary researcher, whose interests span computer science, nanoscience, aesthetics, cultural theory, & spirituality." },
       { role: "Tech Lead", bio: "Dr. Joe Hardy is a co-founder and the Chief Science Officer at aNUma. Joe has a PhD in Cognitive Psychology from UC Berkeley, where he also received his MBA." },
       { role: "Experience Design Lead", bio: "Lama Karma is the Lead Facilitator and Experience Designer at aNUma. In this role he incorporates evidence-based practices and wisdom traditions into state-of-the-art experiential design." },
-      { role: "Research Assistant", bio: "Valerie did her PhD and early research career in cognitive neuroimaging at the Imperial College, UCL and Oxford University." },
+      { role: "Senior Researcher - Data analysis and Publications", bio: "Valerie did her PhD and early research career in cognitive neuroimaging at the Imperial College, UCL and Oxford University." },
       { role: "Logistics & Operations Lead", bio: "With a background in music and body awareness, Sila’s diverse professional history also encompasses event management, project coordination and language coaching." },
       { role: "Research Lead · Facilitation", bio: "Catherine obtained her biological degree and PhD in Neuroscience in Chile. She investigated the effects of meditation practice using electrophysiological measures. She has developed different postdoctoral projects at universities in Chile and Spain, recently working with virtual reality as a technology to support meditation practice." },
       { role: "Experience Design · Research Infrastructure · Facilitation", bio: "Researcher, immersive experience designer, and creative technologist exploring how immersive media and emerging technologies can support meaningful experiences, wellbeing, and human flourishing. Within Clear Light, he contributes to experience design, technical implementation, research infrastructure, and study delivery." },
@@ -172,9 +172,14 @@ export const LANDING_EN: LandingCopy = {
       },
       {
         numeral: "03",
-        label: "Assignment to your cohort",
-        body: "If you are selected, we will assign you to a study cohort and arrange a visit to give you the virtual reality headset and explain how to use it.",
-      },
+      label: "Assignment to your group",
+      body: "If you are selected to participate, you will be randomly assigned to one of the two study groups: the program group or the comparison group. We will explain what your assignment involves.",
+    },
+    {
+      numeral: "04",
+      label: "The program, from home",
+      body: "If you are assigned to the program group, our team will visit you at home at the start of the study to deliver your virtual reality headset and guide you through an initial experience. After that, sessions will take place remotely from your home. At the final session, we will visit again to collect the headset.",
+    }
     ],
     supporting: "Showing interest does not commit you to take part.",
   },
@@ -290,12 +295,8 @@ export const LANDING_EN: LandingCopy = {
       { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },
       { name: ES.PARTNERS.items[2].name, logo: ES.PARTNERS.items[2].logo },
       { name: ES.PARTNERS.items[3].name, logo: ES.PARTNERS.items[3].logo },
+      { name: ES.PARTNERS.items[4].name, logo: ES.PARTNERS.items[4].logo },
     ],
-    funding: {
-      heading: "Funded by",
-      name: ES.PARTNERS.funding.name,
-      logo: ES.PARTNERS.funding.logo,
-    },
   },
   INVITATION: {
     heading: "Decide with all the information.",

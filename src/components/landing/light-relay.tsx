@@ -28,10 +28,11 @@ const MEET_TOP = 0.28;
 /** Heart: scroll after the arrival before the descent starts, and its length (shares of the viewport). */
 const HEART_GAP = 0.04;
 const HEART_RANGE = 0.6;
-/** Join progress at which the light moves from step 1 to 2, and from 2 to 3 (join.tsx windows). */
+/** Join progress for each step transition (join.tsx windows). */
 const STEP_MOVES = [
-  [0.27, 0.37],
-  [0.61, 0.71],
+  [0.20, 0.30],
+  [0.45, 0.55],
+  [0.70, 0.80],
 ] as const;
 /** Gap between the light's centre and the step number's left edge, as a share of its diameter. */
 const BESIDE = 0.55;
@@ -67,7 +68,7 @@ export function LightRelay({ rootId }: { rootId: string }) {
     const nums = Array.from(join.querySelectorAll<HTMLElement>(".stage--join .step__num"));
     const grid = elig.querySelector<HTMLElement>(".elegibilidad__grid");
     const photoLight = elig.querySelector<HTMLElement>(".participant__light");
-    if (!stagesAct || !joinAct || !timelineLight || nums.length < 3 || !grid || !photoLight) return;
+    if (!stagesAct || !joinAct || !timelineLight || nums.length < 4 || !grid || !photoLight) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const still = () => reduced.matches || root.hasAttribute("data-still");
@@ -132,11 +133,11 @@ export function LightRelay({ rootId }: { rootId: string }) {
           at = mix(at, beside(i + 1, d), smooth(clamp01((p - from) / (to - from))));
         });
       } else if (y < arriveAt) {
-        // 3. From step 3, rising with the steps, down onto the photograph's light.
+        // 3. From the final step, down onto the photograph's light.
         const t = smooth(clamp01((y - joinEnd) / (arriveAt - joinEnd)));
         d = small + (large - small) * t;
         blur = BLUR_SMALL + (BLUR_LARGE - BLUR_SMALL) * t;
-        const from = beside(2, small);
+        const from = beside(nums.length - 1, small);
         const to = centre(photoLight);
         // Leave sideways and arrive from above, like the reunion's curve.
         at = { x: from.x + (to.x - from.x) * smooth(clamp01(t * 1.4)), y: from.y + (to.y - from.y) * t };

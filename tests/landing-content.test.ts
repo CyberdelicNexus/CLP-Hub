@@ -175,7 +175,7 @@ describe("programme stages", () => {
   it("keeps the onboarding steps separate from the programme stages", () => {
     const stageNames = STAGES.items.map((s) => s.name);
     for (const step of JOIN.steps) expect(stageNames).not.toContain(step.label);
-    expect(JOIN.steps).toHaveLength(3);
+    expect(JOIN.steps).toHaveLength(4);
   });
 });
 

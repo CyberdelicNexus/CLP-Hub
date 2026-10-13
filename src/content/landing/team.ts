@@ -20,7 +20,7 @@ export const TEAM_MEMBERS: readonly TeamMember[] = [
   { name: "Justin \"Lama Karma\" Wall", photo: "/landing/media/portraits/Transparent/justin-wall 1.png", href: null },
   { name: "Valérie Bonnelle", photo: "/landing/media/portraits/Transparent/Valérie+Bonnelle 1.png", href: null },
   { name: "Sila Sobrado", photo: "/landing/media/portraits/Transparent/20240711_193214+(1) (1) 1.png", href: null },
-  { name: "Catherine Andreu", photo: "/landing/media/portraits/Transparent/Catherine+Andreu 1.png", href: null },
+  { name: "Catherine Andreu", photo: "/landing/media/portraits/Transparent/cathherine-andrew.png", href: null },
   { name: "Jose Montemayor Alba", photo: "/landing/media/portraits/Transparent/JEMA Headshot_Color_2 1.png", href: null },
   { name: "Joana Vidal", photo: "/landing/media/portraits/Transparent/joana-hero 1.png", href: null },
 ];
