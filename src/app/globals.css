@@ -466,6 +466,72 @@
       transition-duration: 0s;
     }
   }
+
+  /* Edge glow on the cohort cards (2026-10-14 request). A 1.5px ring drawn by
+   * a masked pseudo-element: a radial light that sits at the top edge at rest
+   * and follows the pointer (--glow-x / --glow-y, set by CohortWorkspace) on
+   * hover, plus a soft outer halo as a box-shadow, which the card's own
+   * `overflow: hidden` does not clip. --glow-color is the card's study group
+   * colour (ArmBadge), so the glow also says which group it is. */
+  .edge-glow {
+    --glow-color: var(--chart-1);
+    position: relative;
+    isolation: isolate;
+    transition:
+      box-shadow 0.3s var(--ease-out-soft),
+      translate 0.3s var(--ease-out-soft),
+      background-color 0.2s var(--ease-out-soft);
+  }
+  .edge-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: radial-gradient(
+      16rem circle at var(--glow-x, 30%) var(--glow-y, 0%),
+      color-mix(in oklch, var(--glow-color) 85%, white) 0%,
+      color-mix(in oklch, var(--glow-color) 55%, transparent) 35%,
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.45;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease-out-soft);
+  }
+  .edge-glow:hover,
+  .edge-glow:focus-visible {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--glow-color) 25%, transparent),
+      0 10px 36px -10px color-mix(in oklch, var(--glow-color) 55%, transparent);
+  }
+  .edge-glow:hover::before,
+  .edge-glow:focus-visible::before {
+    opacity: 1;
+  }
+
+  /* A cohort's details fade in beside the list once its card has moved
+   * (2026-10-14 request). Delayed so the cards' FLIP move reads first;
+   * `both` holds the start frame during the delay. The global reduced-motion
+   * rule below shortens it to nothing. */
+  .cohort-detail-in {
+    animation: cohort-detail-in 0.42s var(--ease-out-soft) 0.16s both;
+  }
+  @keyframes cohort-detail-in {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 /* Honour motion preferences globally. */

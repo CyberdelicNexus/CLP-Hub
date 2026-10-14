@@ -52,10 +52,12 @@ grant execute on function content_images_can_manage(uuid) to authenticated;
 
 -- Read: public, same as the images these get embedded next to (public study
 -- pages contain no participant data and require no sign-in, D-003).
+drop policy if exists "content-images public read" on storage.objects;
 create policy "content-images public read"
   on storage.objects for select
   using (bucket_id = 'content-images');
 
+drop policy if exists "content-images staff upload" on storage.objects;
 create policy "content-images staff upload"
   on storage.objects for insert
   with check (
@@ -63,6 +65,7 @@ create policy "content-images staff upload"
     and content_images_can_manage(((storage.foldername(name))[1])::uuid)
   );
 
+drop policy if exists "content-images staff update" on storage.objects;
 create policy "content-images staff update"
   on storage.objects for update
   using (
@@ -70,6 +73,7 @@ create policy "content-images staff update"
     and content_images_can_manage(((storage.foldername(name))[1])::uuid)
   );
 
+drop policy if exists "content-images staff delete" on storage.objects;
 create policy "content-images staff delete"
   on storage.objects for delete
   using (

@@ -426,7 +426,10 @@
       "sizeHelp": "Configuration for this cohort. It never refuses an assignment: it is checked when the cohort is activated.",
       "arm": "Study arm",
       "armHelp": "If you pick an arm, only participants with that allocation recorded can be assigned.",
-      "armAny": "Any arm"
+      "armAny": "Any arm",
+      "pair": "Follows the calendar of",
+      "pairHelp": "For a control-group cohort: its automatic emails are timed by the sessions of the chosen cohort. Leave it empty if the cohort has its own sessions.",
+      "pairNone": "None (own sessions)"
     },
     "error": {
       "invalid": "That change is not allowed.",
@@ -441,7 +444,8 @@
       "armNotRecorded": "This cohort runs one arm and no allocation has been recorded for this person yet.",
       "sameCohort": "They are already in that cohort.",
       "sizeUnder": "The cohort is below its configured minimum.",
-      "sizeOver": "The cohort is above its configured maximum."
+      "sizeOver": "The cohort is above its configured maximum.",
+      "pairUnavailable": "That cohort already has a pair, or pairing it would make a chain. Each cohort pairs with exactly one."
     },
     "glance": {
       "title": "At a glance",
@@ -478,7 +482,18 @@
     "transfer": "Move to another cohort",
     "transferTarget": "New cohort",
     "transferReason": "Reason for the move (optional)",
-    "transferReasonHelp": "Recorded alongside the change. Operational information, not clinical."
+    "transferReasonHelp": "Recorded alongside the change. Operational information, not clinical.",
+    "pair": {
+      "follows": "Follows the calendar of {code}",
+      "followedBy": "Followed by {code}"
+    },
+    "filter": {
+      "all": "All",
+      "noArm": "No group",
+      "aria": "Filter cohorts by group",
+      "empty": "No cohorts in this group yet."
+    },
+    "backToGrid": "All cohorts"
   },
   "sessions": {
     "subtitle": "Scheduled cohort sessions.",
@@ -945,7 +960,10 @@
       "task__created": "Task created",
       "user__locale_changed": "Language changed",
       "user_role__granted": "Role granted",
-      "user_role__revoked": "Role revoked"
+      "user_role__revoked": "Role revoked",
+      "communication__sent_automatically": "Email sent automatically",
+      "scheduled_action__sent": "Scheduled action sent by email",
+      "study_arm__created": "Study group created"
     }
   },
   "logistics": {
@@ -1163,7 +1181,9 @@
     },
     "openTasks": "{count, plural, one {# open task} other {# open tasks}}",
     "openAlerts": "{count, plural, one {# unresolved alert} other {# unresolved alerts}}",
-    "preparedMessages": "{count, plural, one {# message prepared to send} other {# messages prepared to send}}"
+    "preparedMessages": "{count, plural, one {# message prepared to send} other {# messages prepared to send}}",
+    "columnInquiries": "Inquiries",
+    "newInquiries": "{count, plural, one {# unanswered question} other {# unanswered questions}}"
   },
   "tasks": {
     "subtitle": "What somebody has to do. Created by hand or by a study rule.",
@@ -1253,7 +1273,9 @@
       "mailRejected": "The email provider rejected the message. If the sending domain is not yet verified at Resend, emails can only be sent to the address of the Resend account. The inquiry is still pending.",
       "mailFailed": "The email provider could not be reached. The inquiry is still pending; try again.",
       "failed": "The action could not be completed."
-    }
+    },
+    "newCount": "{count, plural, one {# unanswered question} other {# unanswered questions}}",
+    "viaEmail": "Email"
   },
   "alerts": {
     "subtitle": "What does not add up in the study's records. Nothing has been concluded: somebody should look.",
@@ -1285,7 +1307,9 @@
       "EXCLUSION_WITHOUT_REASON": "Exclusions recorded with no reason",
       "VR_NOT_READY_BEFORE_SESSION": "VR setup unconfirmed before the session",
       "SCHEDULED_ACTION_FAILED": "A scheduled action failed to process",
-      "RULE_MISCONFIGURED": "Automation rule misconfigured"
+      "RULE_MISCONFIGURED": "Automation rule misconfigured",
+      "EMAIL_NOT_CONFIGURED": "Automatic emails waiting: no sender configured",
+      "EMAIL_NOT_SENT": "An automatic email was not sent"
     },
     "errors": {
       "forbidden": "You do not have permission to do this.",
@@ -1297,7 +1321,7 @@
   "automation": {
     "title": "Automation",
     "subtitle": "When something happens, what gets prepared, and how long before. All of it configuration.",
-    "nothingSends": "CLP Hub sends nothing. A prepared action appears in the queue and a person copies it and sends it.",
+    "nothingSends": "WhatsApp messages never go out on their own: a prepared action appears in the queue and a person copies and sends it. Only a rule in Automatic mode sends, and only an email to each person.",
     "rules": "Rules",
     "noRules": "No rules configured yet.",
     "rule": "Rule",
@@ -1348,7 +1372,7 @@
     "delivery": {
       "MANUAL": "Manual",
       "APPROVAL_REQUIRED": "Approval required",
-      "AUTOMATIC": "Automatic"
+      "AUTOMATIC": "Automatic (email only)"
     },
     "condition": {
       "participantActive": "is still in the study",
@@ -1368,7 +1392,8 @@
       "unavailableDeliveryMode": "Automatic delivery is not available.",
       "invalidOffset": "The offset is outside the permitted bounds.",
       "shape": "That action kind is missing required data.",
-      "failed": "The action could not be completed."
+      "failed": "The action could not be completed.",
+      "automaticTemplate": "Automatic sending only accepts an email template addressed to one person, whose only variables are name, code or cohort."
     },
     "inactive": "Inactive",
     "conditionNot": "NOT {condition}",
@@ -1384,6 +1409,17 @@
         "hours": "{value, plural, one {# hour after} other {# hours after}}",
         "days": "{value, plural, one {# day after} other {# days after}}"
       }
+    },
+    "deliveryHelp": "Automatic: the Hub sends the email itself when the time comes, to each person separately. Only for email templates addressed to one person. WhatsApp is always manual.",
+    "scope": {
+      "arm": "Only group: {arm}",
+      "session": "Only session: {session}",
+      "armField": "Group",
+      "armAll": "All groups",
+      "armHelp": "Limits the rule to cohorts of this group. A control cohort with no sessions of its own uses the sessions of the cohort it is paired with.",
+      "sessionField": "Session",
+      "sessionAny": "Any session",
+      "sessionHelp": "Limits the rule to sessions of this template, for example S0."
     }
   },
   "settings": {
@@ -1410,8 +1446,11 @@
       "title": "The title cannot be empty.",
       "timezone": "That timezone is not valid.",
       "screeningUrl": "The URL must start with https and contain no spaces.",
-      "failed": "The action could not be completed."
-    }
+      "failed": "The action could not be completed.",
+      "contactEmail": "Enter a valid email address."
+    },
+    "contactEmail": "Team mailbox",
+    "contactEmailHelp": "Gets the notice for every new inquiry, alongside the people who answer inquiries, and is the reply-to address of the emails the Hub sends on its own. Leave it empty to not use one."
   },
   "program": {
     "title": "Programme",
@@ -1429,9 +1468,9 @@
     "inactive": "Inactive",
     "field": {
       "code": "Code",
-      "codeWarning": "Changing the code breaks any link already shared with the old address (e.g. /estudio/sesiones/{code}/preparacion): there is no automatic redirect.",
+      "codeWarning": "Changing the code breaks any link already shared with the old address (e.g. /clearlight/estudio/sesiones/s0/preparacion for the code s0): there is no automatic redirect.",
       "stageCodeHelp": "Internal lowercase identifier, e.g. \"s0\". Can be renamed later from the list if needed.",
-      "templateCodeHelp": "Internal lowercase identifier, e.g. \"s0\" — appears in the session's public URL (/clearlight/estudio/sesiones/{code}/preparacion). Can be renamed later from the list.",
+      "templateCodeHelp": "Internal lowercase identifier, e.g. \"s0\" — appears in the session's public URL (with the code s0: /clearlight/estudio/sesiones/s0/preparacion). Can be renamed later from the list.",
       "nameEs": "Name (Spanish)",
       "nameEn": "Name (English, optional)",
       "modality": "Modality",
@@ -1445,5 +1484,16 @@
     "errors": {
       "duplicateCode": "A stage or session with that code already exists in this study."
     }
+  },
+  "arms": {
+    "title": "Study groups",
+    "intro": "The trial's groups, for example Control group and Programme group. A cohort can name its group, and an automation rule can be limited to one. Creating a group assigns nobody: allocations are recorded from the approved system.",
+    "none": "No groups configured yet.",
+    "create": "Add group",
+    "code": "Code",
+    "name": "Name",
+    "physicalConsent": "Signs in person",
+    "physicalConsentField": "This group also signs a consent in person",
+    "help": "The code appears in the history and cannot be changed here: choose it carefully."
   }
 }

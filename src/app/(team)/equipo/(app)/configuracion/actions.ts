@@ -31,6 +31,12 @@ import { STUDY_STATUSES } from "@/domain/study";
 import { logger } from "@/lib/logger";
 import { createRule, NotFoundError, RuleError, setRuleActive } from "@/services/automation";
 import {
+  ARM_CODE_PATTERN,
+  ARM_NAME_MAX_LENGTH,
+  ConflictError as CohortConflictError,
+  createStudyArm,
+} from "@/services/cohorts";
+import {
   createProgramStage,
   ConflictError as ProgramStageConflictError,
   NotFoundError as ProgramStageNotFoundError,
@@ -47,6 +53,7 @@ import {
 } from "@/services/sessions";
 import {
   InvalidSettingError,
+  CONTACT_EMAIL_MAX_LENGTH,
   SCREENING_URL_MAX_LENGTH,
   TITLE_MAX_LENGTH,
   updateStudySettings,
@@ -69,6 +76,8 @@ export type SettingsState = {
     | "title"
     | "timezone"
     | "screeningUrl"
+    | "contactEmail"
+    | "automaticTemplate"
     | "duplicateKey"
     | "unavailableDeliveryMode"
     | "invalidOffset"
@@ -117,6 +126,7 @@ const settingsSchema = z.object({
   timezone: z.string().trim().min(1).max(64),
   recruitmentOpen: z.union([z.literal("on"), z.literal("")]).optional(),
   screeningUrl: z.string().trim().max(SCREENING_URL_MAX_LENGTH).optional(),
+  contactEmail: z.string().trim().max(CONTACT_EMAIL_MAX_LENGTH).optional(),
 });
 
 export async function updateSettingsAction(
@@ -133,6 +143,7 @@ export async function updateSettingsAction(
     timezone: formData.get("timezone"),
     recruitmentOpen: formData.get("recruitmentOpen") ?? "",
     screeningUrl: formData.get("screeningUrl") ?? undefined,
+    contactEmail: formData.get("contactEmail") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -150,6 +161,7 @@ export async function updateSettingsAction(
         // An empty box clears the URL, which is a real choice: recruitment open
         // with nowhere to send people is a state the team may be mid-way through.
         screeningUrl: parsed.data.screeningUrl ?? "",
+        contactEmail: parsed.data.contactEmail ?? "",
       },
     });
   } catch (err) {
@@ -184,6 +196,8 @@ const ruleSchema = z
     taskPriority: z.enum(TASK_PRIORITIES).default("NORMAL"),
     alertKind: z.union([z.enum(ALERT_KINDS), z.literal("")]).optional(),
     conditions: z.array(z.enum(CONDITION_KEYS)).default([]),
+    armId: z.union([uuid, z.literal("")]).optional(),
+    sessionTemplateId: z.union([uuid, z.literal("")]).optional(),
   })
   // The same shape the database enforces, checked here so the form gets a
   // useful message rather than a constraint violation.
@@ -215,6 +229,8 @@ export async function createRuleAction(
     // There is no operator and no value to submit — that is the whole point of
     // the allow-list (D-043).
     conditions: formData.getAll("conditions"),
+    armId: formData.get("armId") ?? undefined,
+    sessionTemplateId: formData.get("sessionTemplateId") ?? undefined,
   });
   if (!parsed.success) return { error: "shape" };
 
@@ -237,6 +253,8 @@ export async function createRuleAction(
       taskPriority: parsed.data.taskPriority,
       alertKind: parsed.data.alertKind || null,
       conditions,
+      armId: parsed.data.armId || null,
+      sessionTemplateId: parsed.data.sessionTemplateId || null,
     });
   } catch (err) {
     return fail(err, "rule.create");
@@ -602,5 +620,50 @@ export async function toggleSessionTemplateAction(
   }
 
   revalidate();
+  return { error: null, ok: true };
+}
+
+// --- Study arms (D-116) -----------------------------------------------------
+
+const armSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => ARM_CODE_PATTERN.test(v)),
+  nameEs: z.string().trim().min(1).max(ARM_NAME_MAX_LENGTH),
+  requiresPhysicalConsent: z.union([z.literal("on"), z.literal("")]).optional(),
+});
+
+export async function createArmAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = armSchema.safeParse({
+    code: formData.get("code"),
+    nameEs: formData.get("nameEs"),
+    requiresPhysicalConsent: formData.get("requiresPhysicalConsent") ?? "",
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "study.settings.manage");
+    await createStudyArm({
+      studyId: ctx.study.id,
+      actorId: ctx.session.userId,
+      code: parsed.data.code,
+      nameEs: parsed.data.nameEs,
+      requiresPhysicalConsent: parsed.data.requiresPhysicalConsent === "on",
+    });
+  } catch (err) {
+    if (err instanceof CohortConflictError) return { error: "duplicateCode" };
+    return fail(err, "study_arm.create");
+  }
+
+  revalidate();
+  revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
   return { error: null, ok: true };
 }

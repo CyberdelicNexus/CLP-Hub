@@ -2,11 +2,13 @@
 
 Model: **STATE + EVENT + RULE → ACTION**. Communication logic lives in rules, never scattered through UI components.
 
-## Nothing sends
+## What sends, and what never does
 
-The processor **prepares**; it never delivers. An action that comes due and still makes sense reaches `READY` and waits for a person, who copies the message and says they sent it (D-004, D-039, D-043). There is no HTTP client, credential or endpoint anywhere in the feature, and `tests/automation.test.ts` asserts their absence over `src/domain/automation.ts`, `src/services/automation.ts` and the processor route rather than trusting it.
+A MANUAL or APPROVAL_REQUIRED action that comes due and still makes sense reaches `READY` and waits for a person, who copies the message and says they sent it (D-004, D-039, D-043). **WhatsApp is always this way.**
 
-`scheduled_actions.status` has no `SENT` and no `DELIVERED`. `DONE` is a human statement.
+Since D-116 an AUTOMATIC action **sends**, under three limits: the template is an EMAIL, it is addressed to one participant (`audience = PARTICIPANT`), and its body uses only `{{nombre}}`, `{{codigo}}` and `{{cohorte}}`. `createRule` refuses anything else, and the processor re-checks the template when the action comes due. Sending goes through `src/services/email-delivery.ts`, one email per person, each recorded as a `communications` row (`sent_by` null) with a SYSTEM audit row. The automation domain, service and processor route still hold no HTTP client or credential; `tests/automation.test.ts` asserts that, and that `sendMail` has no caller other than the delivery module and the inquiry inbox.
+
+`scheduled_actions.status` has no `SENT` and no `DELIVERED`: what went out is the `communications` rows. An automatic action is claimed (PENDING → READY) before sending and ends DONE, or FAILED if nobody could be emailed. Recipients that failed raise a CRITICAL `EMAIL_NOT_SENT` alert by code; nothing is retried. With no sender configured nothing is claimed, the action stays PENDING behind an `EMAIL_NOT_CONFIGURED` alert, and goes out late once mail works.
 
 ## Tables
 
@@ -35,11 +37,17 @@ This is the design that lets one engine serve every rule:
 |---|---|---|
 | MANUAL | Prepared, appears in the queue, copied and sent by a person | ✓ |
 | APPROVAL_REQUIRED | Same, with the expectation that it is reviewed before sending | ✓ |
-| AUTOMATIC | Would be sent without review | **No** |
+| AUTOMATIC | Sent by the Hub when due, one email per person | **Email only** (D-116) |
 
-AUTOMATIC stays in the vocabulary because the design asked for it, and is refused in three places: `isDeliveryModeAvailable` in the domain, `createRule` in the service, and a check constraint in migration 0015. It is refused **at save time** rather than at execution time, because a rule stored as AUTOMATIC and quietly downgraded when it fires would tell the team their reminders were going out.
+AUTOMATIC is refused **at save time** for anything but an individual email template with always-known values (`isDeliveryModeAvailable(mode, channel)` and `automaticTemplateProblem` in the domain, `createRule` in the service), because a rule stored as AUTOMATIC and quietly downgraded when it fires would tell the team their messages were going out. Migration 0026 keeps a database guard: only a MESSAGE action can be AUTOMATIC.
 
-Whether logistics email may ever be AUTOMATIC is a founder decision, still open.
+## Scopes: which group a rule is for (D-116)
+
+A rule may name an **arm** and, for session events, a **session template**. Both are configuration, not conditions; `CONDITION_KEYS` is unchanged.
+
+- The arm scope reads the arm a **cohort** was configured with, never a participant's allocation. For an event about a participant, their own current cohort must run the arm. For a session or cohort event, the event's cohort must run it, or a cohort **paired** with it must (`cohorts.paired_cohort_id`, "follows the calendar of").
+- A control cohort has no sessions. Pair it with the programme cohort, and a rule "control arm, SESSION_SCHEDULED, S0, +7 days" emails the control cohort's members a week after the programme cohort's S0. The action records whose members it is for in `scheduled_actions.audience_cohort_id`.
+- The scope is re-checked when the action comes due; a person no longer in a cohort of that arm is skipped as `outOfScope`.
 
 ## What a rule may test
 
@@ -64,7 +72,7 @@ Rescheduling or cancelling a session, and withdrawing a participant, **cancel** 
 Vercel Cron → `POST /api/internal/process-scheduled-actions` → for every ACTIVE study: process due actions, then run the sweeps.
 
 - Authorised with `Authorization: Bearer <CRON_SECRET>`. **Unset means closed**: the endpoint refuses every request with 503 rather than skipping the check, so an unconfigured deployment is not an open processor.
-- `GET` is refused with 405: the endpoint changes state, and a GET that did would be retried by a prefetch or a link checker.
+- `GET` and `POST` share the same secret check. Vercel Cron calls with GET (it used to be refused with 405, so the cron never ran; D-116); a GET without the secret is refused like any other request, so a prefetch or a link checker cannot run it.
 - Safe to run twice. Materialisation is unique per `(rule_id, event_id)`, alerts deduplicate per subject, and an action is only picked up while `PENDING`.
 - Capped at 200 actions per run. A backlog is worked through over several ticks rather than in one request that times out halfway.
 - Failures are per action and per study: one rule pointing at a deleted template marks that action `FAILED` and raises a CRITICAL alert; the other ninety-nine still run.
@@ -120,7 +128,7 @@ Inside the transaction that made the change, via `recordStudyEvent(tx, …)` —
 
 ## WhatsApp manual flow
 
-Unchanged by Phase 8 and still the only way a message reaches anyone. The prepared queue appears on `/equipo/comunicaciones` and on the overview's attention panel; each item opens the composer with its template already chosen. The person copies, pastes into WhatsApp, clicks "Marcar como enviado" → a `communications` row (`channel = WHATSAPP`, `status = SENT`, `sent_by`) plus audit, and the scheduled action is closed against that communication.
+Unchanged by Phase 8 and D-116: the only way a WhatsApp message reaches anyone. The prepared queue appears on `/equipo/comunicaciones` and on the overview's attention panel; each item opens the composer with its template already chosen. The person copies, pastes into WhatsApp, clicks "Marcar como enviado" → a `communications` row (`channel = WHATSAPP`, `status = SENT`, `sent_by`) plus audit, and the scheduled action is closed against that communication.
 
 Marking a prepared message **skipped** does not close the queue item: a skip says the person decided not to send it, and the action should stay visible rather than disappear as if it had gone out.
 

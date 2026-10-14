@@ -25,6 +25,12 @@ export const studies = pgTable("studies", {
    * live mode, because no transfer is implemented and none is authorized.
    */
   qualtricsMode: integrationModeEnum("qualtrics_mode").notNull().default("DISABLED"),
+  /**
+   * The team's shared mailbox (D-116). It receives the "new inquiry" notice
+   * alongside the staff who answer inquiries, and it is the Reply-To of every
+   * email the Hub sends on its own, so a participant's answer reaches a person.
+   */
+  contactEmail: text("contact_email"),
   recruitmentStart: date("recruitment_start"),
   recruitmentEnd: date("recruitment_end"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -101,7 +101,8 @@ export function EditProgramStageForm({
 }) {
   const [state, action, pending] = useActionState(updateProgramStageAction, initial);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    // Keyed on the saved values so fields remount with new defaults (Base UI warns otherwise).
+    <form key={JSON.stringify(stage)} action={action} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="stageId" value={stage.id} />
       <div className="space-y-1.5">
         <Label htmlFor={`edit-stage-nameEs-${stage.id}`}>{labels.nameEs}</Label>
@@ -314,7 +315,7 @@ export function EditSessionTemplateForm({
   const [state, action, pending] = useActionState(updateSessionTemplateAction, initial);
   const p = template.id;
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    <form key={JSON.stringify(template)} action={action} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="templateId" value={template.id} />
       <div className="space-y-1.5">
         <Label htmlFor={`edit-tpl-nameEs-${p}`}>{labels.nameEs}</Label>
@@ -429,7 +430,7 @@ export function RenameSessionTemplateCodeForm({
 }) {
   const [state, action, pending] = useActionState(renameSessionTemplateCodeAction, initial);
   return (
-    <form action={action} className="flex flex-col gap-2">
+    <form key={currentCode} action={action} className="flex flex-col gap-2">
       <input type="hidden" name="templateId" value={templateId} />
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-40 flex-1 space-y-1.5">

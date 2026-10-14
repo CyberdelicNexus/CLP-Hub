@@ -52,6 +52,7 @@ export function StudySettingsForm({
     timezone: string;
     recruitmentOpen: boolean;
     screeningUrl: string | null;
+    contactEmail: string | null;
   };
   statuses: { value: string; label: string }[];
   locales: { value: string; label: string }[];
@@ -65,13 +66,16 @@ export function StudySettingsForm({
     recruitmentOpen: string;
     screeningUrl: string;
     screeningUrlHelp: string;
+    contactEmail: string;
+    contactEmailHelp: string;
     saved: string;
   };
 }) {
   const [state, action, pending] = useActionState(updateSettingsAction, initial);
 
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2">
+    // Keyed on the saved values so fields remount with new defaults (Base UI warns otherwise).
+    <form key={JSON.stringify(study)} action={action} className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="studyTitle">{labels.title}</Label>
         <Input id="studyTitle" name="title" defaultValue={study.title} required maxLength={200} />
@@ -156,6 +160,19 @@ export function StudySettingsForm({
         <p className="text-xs text-muted-foreground">{labels.screeningUrlHelp}</p>
       </div>
 
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor="contactEmail">{labels.contactEmail}</Label>
+        <Input
+          id="contactEmail"
+          name="contactEmail"
+          type="email"
+          defaultValue={study.contactEmail ?? ""}
+          maxLength={200}
+          placeholder="equipo@…"
+        />
+        <p className="text-xs text-muted-foreground">{labels.contactEmailHelp}</p>
+      </div>
+
       <div className="sm:col-span-2">
         <ErrorLine state={state} errors={labels.errors} />
         {state.ok ? <p className="text-sm text-muted-foreground">{labels.saved}</p> : null}
@@ -184,12 +201,18 @@ export function CreateRuleForm({
   alertKinds,
   priorities,
   conditions,
+  arms,
+  sessionTemplates,
   labels,
 }: {
   events: { value: string; label: string }[];
   actionKinds: { value: ActionKind; label: string }[];
   deliveryModes: { value: string; label: string; available: boolean }[];
   templates: { value: string; label: string }[];
+  /** Study arms a rule can be scoped to (D-116). Empty hides the field. */
+  arms: { value: string; label: string }[];
+  /** Session templates a session rule can be scoped to (D-116). */
+  sessionTemplates: { value: string; label: string }[];
   alertKinds: { value: string; label: string }[];
   priorities: { value: string; label: string }[];
   conditions: { value: string; label: string }[];
@@ -208,10 +231,19 @@ export function CreateRuleForm({
     alertKind: string;
     conditions: string;
     conditionsHelp: string;
+    deliveryHelp: string;
+    arm: string;
+    armAll: string;
+    armHelp: string;
+    sessionTemplate: string;
+    sessionTemplateAny: string;
+    sessionTemplateHelp: string;
   };
 }) {
   const [state, action, pending] = useActionState(createRuleAction, initial);
   const [kind, setKind] = useState<ActionKind>("MESSAGE");
+  const [eventType, setEventType] = useState(events[0]?.value ?? "");
+  const sessionEvent = eventType.startsWith("SESSION_");
 
   return (
     <form key={state.ok ? "done" : "new"} action={action} className="grid gap-3 sm:grid-cols-2">
@@ -227,7 +259,14 @@ export function CreateRuleForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="ruleEvent">{labels.event}</Label>
-        <select id="ruleEvent" name="eventType" required className={SELECT_CLASS}>
+        <select
+          id="ruleEvent"
+          name="eventType"
+          required
+          value={eventType}
+          onChange={(e) => setEventType(e.target.value)}
+          className={SELECT_CLASS}
+        >
           {events.map((e) => (
             <option key={e.value} value={e.value}>
               {e.label}
@@ -291,8 +330,45 @@ export function CreateRuleForm({
                 </option>
               ))}
             </select>
+            {/* What AUTOMATIC means is said where it is chosen (D-116). */}
+            <p className="text-xs text-muted-foreground">{labels.deliveryHelp}</p>
           </div>
         </>
+      ) : null}
+
+      {arms.length > 0 ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="ruleArm">{labels.arm}</Label>
+          <select id="ruleArm" name="armId" defaultValue="" className={SELECT_CLASS}>
+            <option value="">{labels.armAll}</option>
+            {arms.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.armHelp}</p>
+        </div>
+      ) : null}
+
+      {sessionEvent && sessionTemplates.length > 0 ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="ruleSessionTemplate">{labels.sessionTemplate}</Label>
+          <select
+            id="ruleSessionTemplate"
+            name="sessionTemplateId"
+            defaultValue=""
+            className={SELECT_CLASS}
+          >
+            <option value="">{labels.sessionTemplateAny}</option>
+            {sessionTemplates.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{labels.sessionTemplateHelp}</p>
+        </div>
       ) : null}
 
       {kind === "TASK" ? (

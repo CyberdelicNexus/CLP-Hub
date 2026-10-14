@@ -9,13 +9,20 @@ import { ENROLLMENT_TONES } from "@/components/team/participant-status-badge";
 import { Accordion, AccordionItem, AccordionPanel, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ArmBadge } from "@/components/team/arm-badge";
 import { CohortOccupancy } from "@/components/team/cohort-occupancy";
 import { publicPathFor } from "@/domain/content";
 import { assessCohortSize, nextCohortStatus, sizeIsCheckedAt } from "@/domain/cohort";
 import { TASK_PRIORITIES } from "@/domain/automation";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import type { Locale } from "@/domain/locale";
-import { getCohortDetail, listAssignableStaff, listCohortNotes, listStudyArms } from "@/services/cohorts";
+import {
+  getCohortDetail,
+  listAssignableStaff,
+  listCohortNotes,
+  listCohorts,
+  listStudyArms,
+} from "@/services/cohorts";
 import { listProgramStages } from "@/services/program-stages";
 import { listSessionTemplates, listSessions } from "@/services/sessions";
 import { getPublishedForSession, listContentsByType } from "@/services/content";
@@ -85,12 +92,15 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     notes,
     assignablePrep,
     assignableIntegration,
+    studyCohorts,
   ] = await Promise.all([
     canManage ? listAssignableStaff(ctx.study.id) : Promise.resolve([]),
     canManage
       ? listParticipants(ctx.study.id, { includeContact, eligibility: "ELIGIBLE" })
       : Promise.resolve([]),
-    canManage ? listStudyArms(ctx.study.id) : Promise.resolve([]),
+    // Everyone who can read the cohort sees its group badge (D-116), so arms
+    // are no longer a manager-only read.
+    listStudyArms(ctx.study.id),
     listProgramStages(ctx.study.id),
     listSessionTemplates(ctx.study.id),
     listSessions(ctx.study.id, { scope: ctx.cohortScope, cohortId }),
@@ -99,7 +109,19 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     canReadTasks ? listCohortNotes(ctx.study.id, cohortId) : Promise.resolve([]),
     canManageContent ? listContentsByType(ctx.study.id, locale as Locale, "SESSION_PREPARATION") : Promise.resolve([]),
     canManageContent ? listContentsByType(ctx.study.id, locale as Locale, "SESSION_INTEGRATION") : Promise.resolve([]),
+    listCohorts(ctx.study.id, { scope: ctx.cohortScope }),
   ]);
+
+  // The pair (D-116): the cohort whose calendar this one follows, or the one
+  // that follows it. Shown so nobody wonders why a control cohort has no
+  // sessions, or which group a programme cohort's dates also time.
+  const followsCohort = studyCohorts.find((c) => c.id === cohort.pairedCohortId) ?? null;
+  const followedBy = studyCohorts.find((c) => c.pairedCohortId === cohort.id) ?? null;
+  const armPosition = arms.findIndex((a) => a.id === cohort.armId);
+  const arm = armPosition >= 0 ? arms[armPosition] : null;
+  const pairOptions = studyCohorts
+    .filter((c) => c.id !== cohort.id)
+    .map((c) => ({ id: c.id, label: `${c.code} · ${c.name}` }));
 
   // Each template's published content — what to share going in (prep) and
   // going out (integration). Not every session needs both: e.g. an opening
@@ -157,6 +179,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     cohortClosed: t("cohorts.error.cohortClosed"),
     badReference: t("participants.error.badReference"),
     deleteReasonRequired: t("cohorts.error.deleteReasonRequired"),
+    pairUnavailable: t("cohorts.error.pairUnavailable"),
     failed: t("cohorts.error.failed"),
   };
   const base = { submit: t("common.save"), submitting: t("common.loading"), errors };
@@ -186,6 +209,20 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
             <p data-numeric className="text-sm text-muted-foreground">
               {cohort.plannedStartDate ?? "—"} → {cohort.plannedEndDate ?? "—"}
             </p>
+            {followsCohort || followedBy ? (
+              <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                {followsCohort ? (
+                  <Link href={`${TEAM_BASE_PATH}/cohortes?cohorte=${followsCohort.id}`} className="underline-offset-2 hover:underline">
+                    {t("cohorts.pair.follows", { code: followsCohort.code })}
+                  </Link>
+                ) : null}
+                {followedBy ? (
+                  <Link href={`${TEAM_BASE_PATH}/cohortes?cohorte=${followedBy.id}`} className="underline-offset-2 hover:underline">
+                    {t("cohorts.pair.followedBy", { code: followedBy.code })}
+                  </Link>
+                ) : null}
+              </p>
+            ) : null}
           </div>
 
           {/* Status badge and the "next status" action sit side by side
@@ -193,6 +230,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
               status badge") — this replaces the full-width lifecycle card
               that used to live further down the page. */}
           <div className="flex flex-wrap items-center gap-2">
+            {arm ? <ArmBadge name={arm.nameEs} position={armPosition} className="text-sm" /> : null}
             <StatusBadge tone={cohortTone(cohort.status)}>{t(`cohorts.status.${cohort.status}`)}</StatusBadge>
             {canManage ? (
               <AdvanceCohortForm
@@ -245,8 +283,10 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
                     armId: cohort.armId,
                     minSize: cohort.minSize,
                     maxSize: cohort.maxSize,
+                    pairedCohortId: cohort.pairedCohortId,
                   }}
                   arms={arms.map((a) => ({ id: a.id, label: `${a.code} · ${a.nameEs}` }))}
+                  pairOptions={pairOptions}
                   labels={{
                     ...base,
                     code: t("cohorts.field.code"),
@@ -259,6 +299,9 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
                     arm: t("cohorts.field.arm"),
                     armHelp: t("cohorts.field.armHelp"),
                     armAny: t("cohorts.field.armAny"),
+                    pair: t("cohorts.field.pair"),
+                    pairHelp: t("cohorts.field.pairHelp"),
+                    pairNone: t("cohorts.field.pairNone"),
                     saved: t("settings.saved"),
                     errors,
                   }}

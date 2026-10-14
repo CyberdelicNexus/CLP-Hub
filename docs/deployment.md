@@ -79,16 +79,20 @@ before the variables are set, and then serve 500s — set them first.
 
 ## Scheduled actions (Phase 8, optional)
 
-The processor is a plain endpoint; Vercel Cron calls it (D-005). It is not
-needed for a landing-page review. To enable it, add `vercel.json`:
+The processor is a plain endpoint; Vercel Cron calls it (D-005). `vercel.json`
+schedules it once a day at 07:00 UTC (09:00 in Madrid in summer, 08:00 in
+winter), because Vercel's Hobby plan allows only daily cron jobs. On Pro,
+`*/15 * * * *` works and emails go out within a quarter of an hour.
 
-```json
-{ "crons": [{ "path": "/api/internal/process-scheduled-actions", "schedule": "*/15 * * * *" }] }
-```
+Set `CRON_SECRET` (16+ characters) in Vercel: Vercel sends it as
+`Authorization: Bearer` on its GET. Without it the endpoint answers 503 to
+everything, so an unconfigured deployment is closed rather than open
+(`docs/automations.md`). Since D-116 this run **sends** AUTOMATIC emails, so it
+also needs the email variables below.
 
-and set `CRON_SECRET`. Vercel sends it as `Authorization: Bearer`. Without the
-secret the endpoint answers 503 to everything, so an unconfigured deployment is
-closed rather than open (`docs/automations.md`).
+**Order matters for migration 0026** (D-116): run `npm run db:migrate` against
+the deployment's database *before* the code that reads the new columns is
+deployed, or the team pages that read them answer 500.
 
 ## Email (inquiry inbox, D-088)
 
@@ -130,6 +134,23 @@ kept out of the app's environment).
 
 ### The domain: numadelic.org
 
+**State on 2026-10-14** (public lookups against `ns1.vercel-dns.com` and
+`8.8.8.8`). This supersedes the GoDaddy notes below where they disagree:
+
+- The nameservers are now **Vercel's** (`ns1/ns2.vercel-dns.com`), so every
+  record has to exist in Vercel's DNS for the domain (Vercel, Domains,
+  numadelic.org, DNS Records), not at GoDaddy.
+- **None of the Resend records exist there**: no TXT `resend._domainkey`, no
+  CNAME `send` or `rsend`, no TXT `_dmarc`. A wildcard answers every name with an
+  `A` record instead, which is why Resend shows DKIM and `rsend` as Failed. The
+  `send` "Verified" in Resend is very likely left over from the GoDaddy zone.
+- **There is no MX record either.** The root's 123-reg mailboxes (`mx0/mx1.123-reg.co.uk`)
+  did not move with the nameservers, so mail to `@numadelic.org` is probably not
+  being delivered. Re-create the MX records first.
+- To fix: in Vercel's DNS add the MX pair, then the four Resend records exactly
+  as the Resend dashboard shows them (TXT `resend._domainkey`, CNAME `send`,
+  CNAME `rsend`, TXT `_dmarc` `v=DMARC1; p=none;`), and press Verify in Resend.
+
 State on 2026-09-25 (public DNS lookups; the account is held by David):
 
 - DNS is hosted at **GoDaddy** (`ns49/ns50.domaincontrol.com`).
@@ -154,7 +175,9 @@ State on 2026-09-25 (public DNS lookups; the account is held by David):
   Supabase Auth's Site URL and redirect URLs, or staff login will send people
   back to the old address. Staff sign in at `numadelic.org/equipo/login`.
 - Email is sent from the **root** `numadelic.org` registered in Resend (EU
-  Ireland), as `Clear Light <consultas@numadelic.org>`. The records Resend issued
+  Ireland), as `info@numadelic.org` (2026-10-14: a general address rather than
+  a study-specific one, so a later study, in English or otherwise, can send from
+  it too; only the display name before it needs to change). The records Resend issued
   (2026-09-25) all live on their own names and do not touch the root's MX:
   CNAME `send` to `send.forge.rmta.net`, CNAME `rsend` to
   `rsend-euw1.forge.rmta.net`, TXT `resend._domainkey` (the DKIM public key,
@@ -162,8 +185,22 @@ State on 2026-09-25 (public DNS lookups; the account is held by David):
   (`v=DMARC1; p=none;`, monitoring only, since none existed). Resend generates
   the values per domain, so re-copy them from its dashboard if the domain is ever
   re-added.
-- Until Resend shows the domain as verified, keep
-  `MAIL_FROM=Clear Light <onboarding@resend.dev>`.
+- **Verified in Resend on 2026-10-14** (records re-created in Vercel's DNS after
+  the nameserver move). `MAIL_FROM=Clear Light <info@numadelic.org>`.
+- **Mail sent to `info@numadelic.org` lands in Consultas** (D-118), through
+  Resend's receiving, not a mailbox. To switch it on:
+  1. In Resend, Domains, numadelic.org: enable **Receiving**. Resend shows an
+     **MX** record for the root (`@`); add it in Vercel's DNS exactly as shown
+     (host, value, priority). There is no other MX record, so nothing conflicts.
+  2. In Resend, Webhooks: add an endpoint
+     `https://numadelic.org/api/webhooks/resend` for the event
+     **`email.received`**, and copy its signing secret (`whsec_...`).
+  3. In Vercel, set `RESEND_WEBHOOK_SECRET` to that secret and redeploy.
+     Without it the endpoint answers 503 to everything (closed).
+  4. Send a test email to info@ and check Consultas.
+  Any address at the domain reaches the inbox, not only `info@`. Replies to
+  answered inquiries still go to the staff member who wrote them, and automatic
+  emails reply to the team mailbox (`studies.contact_email`).
 
 ## Before anything real
 

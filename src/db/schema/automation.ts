@@ -23,8 +23,8 @@ import {
   taskPriorityEnum,
   taskStatusEnum,
 } from "./enums";
-import { cohorts } from "./cohorts";
-import { cohortSessions } from "./sessions";
+import { cohorts, studyArms } from "./cohorts";
+import { cohortSessions, sessionTemplates } from "./sessions";
 import { communicationTemplates, communications } from "./communications";
 import { devices } from "./logistics";
 import { participants } from "./participants";
@@ -35,11 +35,12 @@ import type { RuleConditions } from "@/domain/automation";
 /**
  * Automation (Phase 8): events, rules, scheduled actions, tasks and alerts.
  *
- * NOTHING IN THIS FILE SENDS ANYTHING, and nothing in it could. There is no
- * recipient column, no address, no credential, no provider, no delivery receipt
- * and no retry counter. The furthest a scheduled action moves on its own is
- * READY — prepared, re-checked, and waiting for a person (D-004, D-039, D-043).
- * `tests/automation.test.ts` asserts the absence rather than trusting it.
+ * NOTHING IN THIS FILE SENDS ANYTHING. There is no recipient column, no
+ * address, no credential, no provider, no delivery receipt and no retry
+ * counter. A MANUAL or APPROVAL_REQUIRED action stops at READY, waiting for a
+ * person (D-004, D-039, D-043). An AUTOMATIC one (D-116, email only) is sent
+ * by `src/services/email-delivery.ts`, and the record of it is a
+ * `communications` row, not a column here.
  */
 
 /**
@@ -103,9 +104,10 @@ export type NewStudyEvent = typeof studyEvents.$inferInsert;
  * field access — a rule that could read an arbitrary column would eventually
  * branch on a screening result.
  *
- * `deliveryMode` may not be AUTOMATIC. The enum keeps the value because
- * docs/automations.md designed for it; a check constraint refuses to store it,
- * because this application has no way to deliver anything.
+ * `deliveryMode` may be AUTOMATIC only for a MESSAGE rule whose template is an
+ * individually-addressed EMAIL (D-116). The database enforces the MESSAGE
+ * half; `createRule` and the processor enforce the email half, because the
+ * channel lives on the template.
  */
 export const automationRules = pgTable(
   "automation_rules",
@@ -130,6 +132,14 @@ export const automationRules = pgTable(
     taskPriority: taskPriorityEnum("task_priority").notNull().default("NORMAL"),
     /** ALERT rules only. */
     alertKind: alertKindEnum("alert_kind"),
+    /**
+     * Scope: the rule applies only to cohorts running this arm (D-116). It reads
+     * the arm a COHORT was configured with, never a participant's allocation.
+     * Null means every cohort, which is how every rule before 0026 behaves.
+     */
+    armId: uuid("arm_id").references(() => studyArms.id),
+    /** Scope: the rule applies only to sessions of this template. Null = any. */
+    sessionTemplateId: uuid("session_template_id").references(() => sessionTemplates.id),
     conditionsJson: jsonb("conditions_json")
       .$type<RuleConditions>()
       .notNull()
@@ -183,6 +193,12 @@ export const scheduledActions = pgTable(
     cohortId: uuid("cohort_id").references(() => cohorts.id),
     sessionId: uuid("session_id").references(() => cohortSessions.id),
     deviceId: uuid("device_id").references(() => devices.id),
+    /**
+     * Whose members this action is for, when the rule is scoped to an arm
+     * (D-116). For a session of the programme cohort, a rule scoped to the
+     * control arm targets the paired control cohort, which is named here.
+     */
+    audienceCohortId: uuid("audience_cohort_id").references(() => cohorts.id),
     actionKind: automationActionKindEnum("action_kind").notNull(),
     deliveryMode: automationDeliveryModeEnum("delivery_mode").notNull().default("MANUAL"),
     scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),

@@ -107,6 +107,15 @@ export const cohorts = pgTable(
      * (migration 0024).
      */
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+    /**
+     * The cohort whose calendar this one follows (D-116). A control-arm cohort
+     * has no sessions of its own: its emails are timed against the sessions of
+     * the cohort it is paired with. One pair per cohort (unique index in
+     * migration 0026), never itself. Declared without `.references()` because
+     * a self-reference would make the table type circular; the foreign key is
+     * in SQL.
+     */
+    pairedCohortId: uuid("paired_cohort_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -1,3 +1,10 @@
+import {
+  extractVariables,
+  type CommunicationAudience,
+  type CommunicationChannel,
+  type TemplateVariable,
+} from "./communication";
+
 /**
  * Automation: events, rules, scheduled actions, tasks and alerts (Phase 8).
  *
@@ -7,13 +14,13 @@
  *
  * THREE THINGS THIS MODULE DOES NOT DO, AND WILL NOT.
  *
- * 1. **It does not deliver anything.** An action that comes due is PREPARED and
- *    handed to a person; the system never sends. That is D-004 and D-039, and
- *    Phase 8 does not weaken it — a processor that could send a message to a
- *    participant in a psychological trial would eventually send one by accident.
- *    `DELIVERY_MODES` keeps AUTOMATIC in the vocabulary because the design asked
- *    for it, and `isDeliveryModeAvailable` refuses it, in one place, with the
- *    reason attached.
+ * 1. **It delivers only what it was explicitly allowed to.** A MANUAL or
+ *    APPROVAL_REQUIRED action that comes due is PREPARED and handed to a
+ *    person. Since D-116 an AUTOMATIC action is sent, but only as an EMAIL
+ *    (`AUTOMATIC_CHANNELS`), only from an individually-addressed template, and
+ *    only with the variables that are always known (`AUTOMATIC_VARIABLES`).
+ *    WhatsApp is never automatic (D-004). `isDeliveryModeAvailable` and
+ *    `automaticTemplateProblem` hold that line in one place.
  *
  * 2. **It does not judge a participant.** Rule conditions are a CLOSED LIST of
  *    operational predicates (`CONDITION_KEYS`) — is this person still active, is
@@ -122,9 +129,8 @@ export function isActionKind(v: unknown): v is ActionKind {
 /**
  * How a prepared message reaches a person.
  *
- * READ `isDeliveryModeAvailable` BEFORE ADDING A SENDER. All three modes exist
- * in the vocabulary because docs/automations.md designed for all three, but only
- * two of them describe something this application can actually do.
+ * READ `isDeliveryModeAvailable` BEFORE WIDENING A SENDER. MANUAL and
+ * APPROVAL_REQUIRED stop at a person; AUTOMATIC sends, and only email (D-116).
  */
 export const DELIVERY_MODES = ["MANUAL", "APPROVAL_REQUIRED", "AUTOMATIC"] as const;
 export type DeliveryMode = (typeof DELIVERY_MODES)[number];
@@ -134,28 +140,106 @@ export function isDeliveryMode(v: unknown): v is DeliveryMode {
 }
 
 /**
- * Whether nothing in this repository can send a message on its own.
+ * The channels the Hub may send on its own (D-116). Email, and nothing else.
  *
- * Stated as a constant, like `STORES_RENDERED_MESSAGE`, so the claim is one
- * grep away and a test can pin it. AUTOMATIC delivery would need an outbound
- * client, a credential and an endpoint; none exist, and `tests/automation.test.ts`
- * asserts their absence across the whole feature rather than trusting it.
+ * Stated as a constant so the claim is one grep away and a test can pin it.
+ * WhatsApp is absent on purpose: there is no WhatsApp client in this
+ * repository, and D-004 keeps it a person's job.
  */
-export const CAN_DELIVER_WITHOUT_A_PERSON = false;
+export const AUTOMATIC_CHANNELS: readonly CommunicationChannel[] = ["EMAIL"];
 
 /**
- * AUTOMATIC is refused at save time rather than at execution time.
+ * Whether a delivery mode can be used for a message on this channel.
  *
- * A rule saved as AUTOMATIC and then quietly downgraded to MANUAL when it fires
- * would tell the team their reminders were going out. Refusing the rule means
- * the misunderstanding surfaces while someone is still looking at the form.
- *
- * Whether logistics email may ever be AUTOMATIC is a founder decision, recorded
- * as an open question in docs/decisions.md, not one this code should make.
+ * AUTOMATIC is refused for anything but email, at save time (`createRule`) and
+ * again when the action comes due. A rule saved as AUTOMATIC and quietly
+ * downgraded when it fires would tell the team their messages were going out.
+ * `channel` is null for a TASK or ALERT action, which is never AUTOMATIC.
  */
-export function isDeliveryModeAvailable(mode: DeliveryMode): boolean {
-  if (mode === "AUTOMATIC") return CAN_DELIVER_WITHOUT_A_PERSON;
+export function isDeliveryModeAvailable(
+  mode: DeliveryMode,
+  channel: CommunicationChannel | null = null,
+): boolean {
+  if (mode === "AUTOMATIC") return channel !== null && AUTOMATIC_CHANNELS.includes(channel);
   return true;
+}
+
+/**
+ * The variables an email sent with nobody watching may contain.
+ *
+ * A person sending by hand sees `⟨fecha⟩` and fixes it; an unattended send
+ * cannot. So an AUTOMATIC template may use only what is always known for a
+ * participant: their first name, their code, their cohort. A date, a place, a
+ * link or instructions belong in the template's own wording.
+ */
+export const AUTOMATIC_VARIABLES: readonly TemplateVariable[] = ["nombre", "codigo", "cohorte"];
+
+export type AutomaticTemplateProblem = "channel" | "audience" | "variables";
+
+/**
+ * Why a template cannot be sent automatically, or null if it can.
+ *
+ * Individually addressed only: an email to a group would put every member's
+ * address in front of the others, and a cohort-channel template is by
+ * definition something pasted into a group (D-041).
+ */
+export function automaticTemplateProblem(template: {
+  channel: CommunicationChannel;
+  audience: CommunicationAudience;
+  bodyEs: string;
+}): AutomaticTemplateProblem | null {
+  if (!AUTOMATIC_CHANNELS.includes(template.channel)) return "channel";
+  if (template.audience !== "PARTICIPANT") return "audience";
+  const used = extractVariables(template.bodyEs);
+  if (used.some((v) => !(AUTOMATIC_VARIABLES as readonly string[]).includes(v))) return "variables";
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Rule scopes (D-116)
+// ---------------------------------------------------------------------------
+
+/** The configuration of a cohort that a scoped rule reads. Nothing about a person. */
+export interface ScopeCohort {
+  id: string;
+  armId: string | null;
+}
+
+export type ScopeResult = { applies: false } | { applies: true; audienceCohortId: string | null };
+
+/**
+ * Whether a rule scoped to an arm applies to an event, and whose members it is for.
+ *
+ * Reads the arm a COHORT was configured with (D-034), never a participant's
+ * allocation row, so a scoped rule still decides nothing about anybody: the
+ * team placed the person in a cohort, and the cohort says which arm it runs.
+ *
+ * - No arm on the rule: it applies as every rule did before D-116, and has no
+ *   audience of its own.
+ * - The event's cohort runs the rule's arm: that cohort is the audience.
+ * - Otherwise, a cohort PAIRED with it that runs the arm is the audience. This
+ *   is how a control cohort, with no sessions of its own, is emailed a week
+ *   after the programme cohort's S0. `partners` must be empty for an event
+ *   about one participant: their own cohort is the only one that can apply.
+ */
+export function resolveScope(
+  ruleArmId: string | null,
+  cohort: ScopeCohort | null,
+  partners: readonly ScopeCohort[],
+): ScopeResult {
+  if (!ruleArmId) return { applies: true, audienceCohortId: null };
+  if (!cohort) return { applies: false };
+  if (cohort.armId === ruleArmId) return { applies: true, audienceCohortId: cohort.id };
+  const partner = partners.find((p) => p.armId === ruleArmId);
+  return partner ? { applies: true, audienceCohortId: partner.id } : { applies: false };
+}
+
+/** A rule tied to a session template matches only sessions of that template. */
+export function sessionScopeMatches(
+  ruleSessionTemplateId: string | null,
+  eventSessionTemplateId: string | null,
+): boolean {
+  return !ruleSessionTemplateId || ruleSessionTemplateId === eventSessionTemplateId;
 }
 
 /**
@@ -344,16 +428,18 @@ export function unmetConditions(
 /**
  * The life of one scheduled action.
  *
- * READ THE ABSENCE: there is no SENT and no DELIVERED. The furthest this
- * application can move an action on its own is READY — prepared, re-checked,
- * and waiting for a person. DONE is a human saying they acted (D-004).
+ * READ THE ABSENCE: there is no SENT and no DELIVERED. A MANUAL action stops at
+ * READY, waiting for a person, and DONE is that person saying they acted
+ * (D-004). An AUTOMATIC email (D-116) passes through READY while it is being
+ * sent and ends DONE; the record of what went out is the `communications`
+ * rows, one per recipient, never a status here.
  */
 export const SCHEDULED_ACTION_STATUSES = [
   /** Scheduled, not yet due. */
   "PENDING",
   /** Due, re-checked, and waiting for a person. The system goes no further. */
   "READY",
-  /** A person acted: pasted the message and marked it, or closed the task. */
+  /** A person acted, or the Hub sent an AUTOMATIC email to every recipient. */
   "DONE",
   /** Due, re-checked, and no longer appropriate. Carries the unmet condition. */
   "SKIPPED",
@@ -378,9 +464,9 @@ export function isOpenAction(status: ScheduledActionStatus): boolean {
 /**
  * The verdict the processor reaches for one due action.
  *
- * `prepare` is as far as it goes. There is no `deliver`, and adding one would
- * have to pass `tests/automation.test.ts`, which asserts that no HTTP client,
- * credential or endpoint exists anywhere in this feature.
+ * `prepare` means "go ahead": for a MANUAL action, put it in front of a
+ * person; for an AUTOMATIC email, hand it to `src/services/email-delivery.ts`.
+ * The verdict itself never sends.
  */
 export type ProcessVerdict =
   | { decision: "prepare" }
@@ -397,8 +483,10 @@ export function decide(params: {
   conditions: RuleConditions;
   facts: ConditionFacts;
   deliveryMode: DeliveryMode;
+  /** The template's channel for a MESSAGE action; null for a task or alert. */
+  channel?: CommunicationChannel | null;
 }): ProcessVerdict {
-  if (!isDeliveryModeAvailable(params.deliveryMode)) {
+  if (!isDeliveryModeAvailable(params.deliveryMode, params.channel ?? null)) {
     return { decision: "refuse", reason: "unavailableDeliveryMode" };
   }
   const unmet = unmetConditions(params.conditions, params.facts);
@@ -510,6 +598,10 @@ export const ALERT_KINDS = [
   "SCHEDULED_ACTION_FAILED",
   /** A rule references a template or session that no longer exists or is retired. */
   "RULE_MISCONFIGURED",
+  /** An automatic email came due and the Hub has no mail sender configured (D-116). */
+  "EMAIL_NOT_CONFIGURED",
+  /** An automatic email could not be sent to one or more recipients (D-116). */
+  "EMAIL_NOT_SENT",
 ] as const;
 export type AlertKind = (typeof ALERT_KINDS)[number];
 
@@ -548,6 +640,8 @@ export const ALERT_SEVERITY_BY_KIND: Record<AlertKind, AlertSeverity> = {
   VR_NOT_READY_BEFORE_SESSION: "WARNING",
   SCHEDULED_ACTION_FAILED: "CRITICAL",
   RULE_MISCONFIGURED: "INFO",
+  EMAIL_NOT_CONFIGURED: "CRITICAL",
+  EMAIL_NOT_SENT: "CRITICAL",
 };
 
 export function severityFor(kind: AlertKind): AlertSeverity {

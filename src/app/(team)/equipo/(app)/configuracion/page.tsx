@@ -33,6 +33,7 @@ import {
   ToggleProgramStageForm,
   ToggleSessionTemplateForm,
 } from "./program-forms";
+import { CreateArmForm } from "./arm-forms";
 import { CreateRuleForm, StudySettingsForm, ToggleRuleForm } from "./settings-forms";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -87,6 +88,8 @@ export default async function SettingsPage() {
     title: t("settings.errors.title"),
     timezone: t("settings.errors.timezone"),
     screeningUrl: t("settings.errors.screeningUrl"),
+    contactEmail: t("settings.errors.contactEmail"),
+    automaticTemplate: t("automation.errors.automaticTemplate"),
     duplicateKey: t("automation.errors.duplicateKey"),
     unavailableDeliveryMode: t("automation.errors.unavailableDeliveryMode"),
     invalidOffset: t("automation.errors.invalidOffset"),
@@ -129,6 +132,7 @@ export default async function SettingsPage() {
               timezone: study.timezone,
               recruitmentOpen: study.recruitmentOpen,
               screeningUrl: study.screeningUrl,
+              contactEmail: study.contactEmail,
             }}
             statuses={STUDY_STATUSES.map((s) => ({ value: s, label: t(`status.study.${s}`) }))}
             locales={LOCALES.map((l) => ({ value: l, label: t(`locale.${l}`) }))}
@@ -143,6 +147,8 @@ export default async function SettingsPage() {
               recruitmentOpen: t("settings.recruitmentOpen"),
               screeningUrl: t("settings.screeningUrl"),
               screeningUrlHelp: t("settings.screeningUrlHelp"),
+              contactEmail: t("settings.contactEmail"),
+              contactEmailHelp: t("settings.contactEmailHelp"),
               saved: t("settings.saved"),
             }}
           />
@@ -342,6 +348,44 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Study arms (D-116) ------------------------------------------------- */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("arms.title")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="max-w-2xl text-sm text-muted-foreground">{t("arms.intro")}</p>
+          {arms.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("arms.none")}</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {arms.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center gap-2 py-2">
+                  <code className="font-mono text-xs text-muted-foreground">{a.code}</code>
+                  <span className="font-medium">{a.nameEs}</span>
+                  {a.requiresPhysicalConsent ? (
+                    <StatusBadge tone="neutral">{t("arms.physicalConsent")}</StatusBadge>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="border-t border-border pt-4">
+            <h3 className="mb-3 text-sm font-medium">{t("arms.create")}</h3>
+            <CreateArmForm
+              labels={{
+                ...labels,
+                submit: t("arms.create"),
+                code: t("arms.code"),
+                name: t("arms.name"),
+                physicalConsent: t("arms.physicalConsentField"),
+                help: t("arms.help"),
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Automation rules --------------------------------------------------- */}
       <Card>
         <CardHeader>
@@ -374,6 +418,18 @@ export default async function SettingsPage() {
                           {t(`automation.action.${rule.actionKind}`)}
                           {rule.templateName ? ` · ${rule.templateName}` : ""}
                         </p>
+                        {rule.armName || rule.sessionTemplateName ? (
+                          <p className="text-xs text-muted-foreground">
+                            {[
+                              rule.armName ? t("automation.scope.arm", { arm: rule.armName }) : null,
+                              rule.sessionTemplateName
+                                ? t("automation.scope.session", { session: rule.sessionTemplateName })
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        ) : null}
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <code className="font-mono">{rule.key}</code>
                           <StatusBadge tone={rule.active ? "success" : "neutral"}>
@@ -433,9 +489,18 @@ export default async function SettingsPage() {
               deliveryModes={DELIVERY_MODES.map((m) => ({
                 value: m,
                 label: t(`automation.delivery.${m}`),
-                available: isDeliveryModeAvailable(m),
+                // Offered for every channel here; the server refuses AUTOMATIC
+                // for anything but an individual email template (D-116).
+                available: isDeliveryModeAvailable(m, "EMAIL"),
               }))}
-              templates={templates.map((tpl) => ({ value: tpl.id, label: tpl.nameEs }))}
+              templates={templates.map((tpl) => ({
+                value: tpl.id,
+                label: `${tpl.nameEs} · ${t(`communications.channel.${tpl.channel}`)}`,
+              }))}
+              arms={arms.map((a) => ({ value: a.id, label: a.nameEs }))}
+              sessionTemplates={sessionTemplates
+                .filter((s) => s.active)
+                .map((s) => ({ value: s.id, label: `${s.code} · ${s.nameEs}` }))}
               alertKinds={ALERT_KINDS.map((k) => ({
                 value: k,
                 label: t(`alerts.kind.${k}`),
@@ -465,6 +530,13 @@ export default async function SettingsPage() {
                 alertKind: t("nav.alerts"),
                 conditions: t("automation.conditions"),
                 conditionsHelp: t("settings.conditionsHelp"),
+                deliveryHelp: t("automation.deliveryHelp"),
+                arm: t("automation.scope.armField"),
+                armAll: t("automation.scope.armAll"),
+                armHelp: t("automation.scope.armHelp"),
+                sessionTemplate: t("automation.scope.sessionField"),
+                sessionTemplateAny: t("automation.scope.sessionAny"),
+                sessionTemplateHelp: t("automation.scope.sessionHelp"),
               }}
             />
           </div>

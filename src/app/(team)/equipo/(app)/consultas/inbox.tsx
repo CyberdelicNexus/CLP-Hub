@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, MessageCircleQuestionMark } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircleQuestionMark } from "lucide-react";
 import { INQUIRY_STATUSES, type InquiryStatus } from "@/domain/inquiry";
 import { avatarInitials, inquiryPreview, listTimeLabel } from "@/domain/inquiry-view";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ export interface InboxLabels extends InquiryLabels {
   closedNote: (by: string | null, when: string) => string;
   handledBy: string;
   listAria: string;
+  /** Badge for an inquiry that arrived by email to the study's address (D-118). */
+  viaEmail: string;
 }
 
 /**
@@ -125,8 +127,11 @@ export function InquiryInbox({
                     <Avatar name={row.name} muted={!isNew} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className={cn("truncate text-sm", isNew ? "font-semibold" : "text-muted-foreground")}>
-                          {isNew ? row.name : labels.handledTitle[row.status as "ANSWERED" | "CLOSED"]}
+                        <span className={cn("flex min-w-0 items-center gap-1.5 text-sm", isNew ? "font-semibold" : "text-muted-foreground")}>
+                          <span className="truncate">
+                            {isNew ? row.name : labels.handledTitle[row.status as "ANSWERED" | "CLOSED"]}
+                          </span>
+                          {row.source === "EMAIL" ? <ViaEmail label={labels.viaEmail} /> : null}
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground" data-numeric>
                           {listTimeLabel(when, now, timeZone)}
@@ -165,8 +170,11 @@ export function InquiryInbox({
               </Link>
               <Avatar name={selected.name} muted={selected.status !== "NEW"} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">
-                  {selected.status === "NEW" ? selected.name : labels.handledTitle[selected.status as "ANSWERED" | "CLOSED"]}
+                <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+                  <span className="truncate">
+                    {selected.status === "NEW" ? selected.name : labels.handledTitle[selected.status as "ANSWERED" | "CLOSED"]}
+                  </span>
+                  {selected.source === "EMAIL" ? <ViaEmail label={labels.viaEmail} /> : null}
                 </p>
                 {selected.status === "NEW" ? (
                   <p className="truncate text-xs text-muted-foreground" data-numeric>
@@ -211,6 +219,16 @@ export function InquiryInbox({
         )}
       </section>
     </div>
+  );
+}
+
+/** Arrived as an email to the study's address rather than through the form (D-118). */
+function ViaEmail({ label }: { label: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-sky px-1.5 py-0.5 text-[0.65rem] font-medium text-surface-sky-ink">
+      <Mail className="size-3" aria-hidden />
+      {label}
+    </span>
   );
 }
 

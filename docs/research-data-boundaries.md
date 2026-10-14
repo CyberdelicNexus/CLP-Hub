@@ -59,6 +59,15 @@ inquiry is pending: answering or closing it erases the name, email and message
 notification email does not contain the question. It asks visitors not to
 include health information.
 
+Since D-118 an email sent to the study's address (`info@numadelic.org`) becomes
+the same kind of inquiry, under the same erasure: the Hub reads it from the
+provider, keeps only its sender, subject and new text (quoted history dropped,
+up to 5000 characters) while it is pending, and stores no attachment. An email
+cannot carry a warning about health information the way the form does, so this
+door is more likely to receive Category C text; it is erased on answer like
+everything else, but it does sit in the inbox until then. Resend also keeps its
+own copy of received mail under its retention policy, outside the Hub.
+
 `/participar` takes exactly three facts before the Qualtrics questionnaire:
 name (as first name and surname), email and phone (D-086, D-087), so the team
 can contact the person. A test pins that the server action reads only those
@@ -126,9 +135,13 @@ and no reply column: this application never holds a WhatsApp conversation.
   scheduled pull exists in this repository. `tests/intake.test.ts` asserts that
   `src/domain/intake.ts` contains none, the same absolute-guarantee argument
   D-018 makes about randomization.
-- **No message sending.** No API token, queue, webhook or scheduled send exists
-  (D-004, D-039). `tests/communication.test.ts` asserts the absence across the
-  domain module, the service and the server actions.
+- **No WhatsApp sending, and email only through one module.** No WhatsApp
+  client, token or webhook exists (D-004, D-039). An automatic email (D-116)
+  goes to one participant's own address, rendered only with their first name,
+  code and cohort code, never with a date, place or anything clinical; the
+  rendered text is not stored. `tests/communication.test.ts` asserts the
+  communications feature itself has no client, and `tests/automation.test.ts`
+  pins the mailer's callers.
 - No flow-diagram percentages or retention rates. `getStudyFlowCounts` returns
   categories, never a single folded figure (the argument of D-024).
 

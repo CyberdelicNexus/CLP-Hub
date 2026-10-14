@@ -95,10 +95,26 @@ const fromHex = (hex: string) =>
 const noSubscription = () => () => {};
 const wantsPanel = () => new URLSearchParams(window.location.search).has("liquid");
 
+/**
+ * Only where there is a mouse or trackpad (D-115). On a phone the trail
+ * followed the finger as it scrolled and drew the eye away from the text, so
+ * a touch screen gets no liquid at all, not a hidden one still running.
+ */
+const FINE_POINTER = "(hover: hover) and (pointer: fine)";
+const subscribePointer = (onChange: () => void) => {
+  const query = window.matchMedia(FINE_POINTER);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const hasFinePointer = () => window.matchMedia(FINE_POINTER).matches;
+
 export function HomeLiquid() {
   const [settings, setSettings] = useState<Settings>(LIQUID_SETTINGS);
   const [copied, setCopied] = useState(false);
   const tuning = useSyncExternalStore(noSubscription, wantsPanel, () => false);
+  const finePointer = useSyncExternalStore(subscribePointer, hasFinePointer, () => false);
+  // `?liquid` still shows it on a touch screen, so it can be tuned there.
+  const shown = finePointer || tuning;
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     setCopied(false);
@@ -109,11 +125,13 @@ export function HomeLiquid() {
   return (
     <>
       {/* Behind the page, fixed to the viewport. It listens on the window, so it needs no pointer events of its own. */}
-      <div className="home__liquid" style={{ opacity }} aria-hidden>
-        <Liquid style={{ position: "absolute", inset: 0 }} {...options}>
-          <span />
-        </Liquid>
-      </div>
+      {shown ? (
+        <div className="home__liquid" style={{ opacity }} aria-hidden>
+          <Liquid style={{ position: "absolute", inset: 0 }} {...options}>
+            <span />
+          </Liquid>
+        </div>
+      ) : null}
 
       {tuning ? (
         // A tool for whoever is tuning the effect, not part of the page: English only.

@@ -44,12 +44,48 @@ function ErrorLine({ state, errors }: { state: CohortState; errors: Record<strin
 const SELECT_CLASS =
   "h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
+/**
+ * "Follows the calendar of" (D-116). A control cohort has no sessions of its
+ * own; pairing it with the programme cohort times its emails against that
+ * cohort's sessions. Hidden when there is nothing to pair with.
+ */
+function PairField({
+  id,
+  options,
+  defaultValue,
+  labels,
+}: {
+  id: string;
+  options: { id: string; label: string }[];
+  defaultValue: string;
+  labels: { pair: string; pairHelp: string; pairNone: string };
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div className="space-y-1.5 sm:col-span-2">
+      <Label htmlFor={id}>{labels.pair}</Label>
+      <select id={id} name="pairedCohortId" defaultValue={defaultValue} className={SELECT_CLASS}>
+        <option value="">{labels.pairNone}</option>
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <p className="text-xs text-muted-foreground">{labels.pairHelp}</p>
+    </div>
+  );
+}
+
 export function CreateCohortForm({
   arms,
+  pairOptions = [],
   labels,
 }: {
   /** Empty when the study has no arms configured; the field is then hidden. */
   arms: { id: string; label: string }[];
+  /** Cohorts this one could follow (D-116). */
+  pairOptions?: { id: string; label: string }[];
   labels: Labels & {
     code: string;
     name: string;
@@ -61,6 +97,9 @@ export function CreateCohortForm({
     arm: string;
     armHelp: string;
     armAny: string;
+    pair: string;
+    pairHelp: string;
+    pairNone: string;
   };
 }) {
   const [state, action, pending] = useActionState(createCohortAction, initial);
@@ -102,6 +141,8 @@ export function CreateCohortForm({
         </div>
       ) : null}
 
+      <PairField id="pairedCohortId" options={pairOptions} defaultValue="" labels={labels} />
+
       <div className="space-y-1.5">
         <Label htmlFor="minSize">{labels.minSize}</Label>
         <Input id="minSize" name="minSize" type="number" min={1} inputMode="numeric" />
@@ -133,6 +174,7 @@ export function CreateCohortForm({
 export function EditCohortForm({
   cohort,
   arms,
+  pairOptions = [],
   labels,
 }: {
   cohort: {
@@ -144,8 +186,11 @@ export function EditCohortForm({
     armId: string | null;
     minSize: number | null;
     maxSize: number | null;
+    pairedCohortId: string | null;
   };
   arms: { id: string; label: string }[];
+  /** Cohorts this one could follow (D-116), excluding itself. */
+  pairOptions?: { id: string; label: string }[];
   labels: Labels & {
     code: string;
     name: string;
@@ -157,13 +202,23 @@ export function EditCohortForm({
     arm: string;
     armHelp: string;
     armAny: string;
+    pair: string;
+    pairHelp: string;
+    pairNone: string;
     saved: string;
   };
 }) {
   const [state, action, pending] = useActionState(updateCohortAction, initial);
 
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    // Keyed on the saved values: after a save the page re-renders with the new
+    // cohort, and Base UI's inputs warn if an uncontrolled field's default
+    // changes under them. A new key mounts fresh fields with the new defaults.
+    <form
+      key={JSON.stringify(cohort)}
+      action={action}
+      className="grid gap-3 sm:grid-cols-2"
+    >
       <input type="hidden" name="cohortId" value={cohort.id} />
       <div className="space-y-1.5">
         <Label htmlFor="edit-code">{labels.code}</Label>
@@ -206,6 +261,13 @@ export function EditCohortForm({
           <p className="text-xs text-muted-foreground">{labels.armHelp}</p>
         </div>
       ) : null}
+
+      <PairField
+        id="edit-pairedCohortId"
+        options={pairOptions}
+        defaultValue={cohort.pairedCohortId ?? ""}
+        labels={labels}
+      />
 
       <div className="space-y-1.5">
         <Label htmlFor="edit-minSize">{labels.minSize}</Label>

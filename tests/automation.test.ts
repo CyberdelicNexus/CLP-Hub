@@ -1,11 +1,12 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ACTION_KINDS,
   ALERT_KINDS,
   ALERT_SEVERITY_BY_KIND,
-  CAN_DELIVER_WITHOUT_A_PERSON,
+  AUTOMATIC_CHANNELS,
+  AUTOMATIC_VARIABLES,
   CONDITION_KEYS,
   DELIVERY_MODES,
   EVENT_TYPES,
@@ -14,6 +15,7 @@ import {
   SCHEDULED_ACTION_STATUSES,
   TASK_PRIORITIES,
   alertDedupeKey,
+  automaticTemplateProblem,
   decide,
   describeOffset,
   invalidatesPriorSchedule,
@@ -22,7 +24,9 @@ import {
   isOverdue,
   isValidOffset,
   parseConditions,
+  resolveScope,
   scheduledFor,
+  sessionScopeMatches,
   severityFor,
   unmetConditions,
   type ConditionFacts,
@@ -52,14 +56,14 @@ const facts = (over: Partial<ConditionFacts> = {}): ConditionFacts => ({
 
 const minute = 60_000;
 
-describe("nothing sends a message", () => {
+describe("what the Hub may send on its own (D-116)", () => {
   /**
-   * Phase 8 is the phase where a send would creep in: a processor that walks a
-   * queue of due reminders is one HTTP client away from being a mailer. The
-   * guarantee is an absolute — "no send path exists" — for the same reason D-018
-   * makes randomization an absolute rather than a set of guards.
+   * D-043 made "nothing sends" an absolute. D-116 narrows it instead of
+   * dropping it: the automation feature itself still holds no client and no
+   * credential, and the one path to an inbox is a named module that can only
+   * send an individual email. These tests pin the narrowed line.
    */
-  it("has no HTTP client, credential or endpoint anywhere in the feature", () => {
+  it("keeps the automation feature itself free of any HTTP client or credential", () => {
     for (const rel of SOURCES) {
       const source = read(rel);
       expect(source, rel).not.toMatch(/\bfetch\s*\(/);
@@ -69,49 +73,135 @@ describe("nothing sends a message", () => {
     }
   });
 
-  it("states the absence as a constant, not as a hope", () => {
-    expect(CAN_DELIVER_WITHOUT_A_PERSON).toBe(false);
+  it("reaches an inbox only through the mailer, called from two named places", () => {
+    const callers: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(join(process.cwd(), dir), { withFileTypes: true })) {
+        const rel = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) walk(rel);
+        else if (/\.tsx?$/.test(entry.name) && /\bsendMail\s*\(/.test(read(rel))) callers.push(rel);
+      }
+    };
+    walk("src");
+    expect(callers.sort()).toEqual([
+      "src/services/email-delivery.ts",
+      "src/services/inquiries.ts",
+      "src/services/mailer.ts",
+    ]);
+  });
+
+  it("may send automatically by email and by nothing else", () => {
+    expect(DELIVERY_MODES).toContain("AUTOMATIC");
+    expect([...AUTOMATIC_CHANNELS]).toEqual(["EMAIL"]);
+    expect(isDeliveryModeAvailable("AUTOMATIC", "EMAIL")).toBe(true);
+    // WhatsApp is a person's job, always (D-004).
+    expect(isDeliveryModeAvailable("AUTOMATIC", "WHATSAPP")).toBe(false);
+    // No channel means a task or an alert, which is never automatic.
+    expect(isDeliveryModeAvailable("AUTOMATIC")).toBe(false);
+    expect(isDeliveryModeAvailable("MANUAL", "WHATSAPP")).toBe(true);
+    expect(isDeliveryModeAvailable("APPROVAL_REQUIRED", "EMAIL")).toBe(true);
+  });
+
+  it("refuses at the database that a task or an alert be automatic", () => {
+    const migration = read("supabase/migrations/0026_automatic_email.sql");
+    expect(migration).toMatch(/automation_rules_automatic_is_message/);
+    expect(migration).toMatch(/scheduled_actions_automatic_is_message/);
+    expect(migration).toMatch(/delivery_mode <> 'AUTOMATIC' or action_kind = 'MESSAGE'/);
   });
 
   /**
-   * AUTOMATIC stays in the vocabulary because docs/automations.md designed for
-   * it. What must never happen is a rule stored as AUTOMATIC: the team would
-   * believe their reminders were going out on their own.
+   * An unattended email cannot show `⟨fecha⟩` to a person who would fix it, and
+   * an email to a group would show every member's address to the others.
    */
-  it("refuses AUTOMATIC delivery while nothing can deliver", () => {
-    expect(DELIVERY_MODES).toContain("AUTOMATIC");
-    expect(isDeliveryModeAvailable("AUTOMATIC")).toBe(false);
-    expect(isDeliveryModeAvailable("MANUAL")).toBe(true);
-    expect(isDeliveryModeAvailable("APPROVAL_REQUIRED")).toBe(true);
+  it("sends only an individual email that uses always-known values", () => {
+    const ok = { channel: "EMAIL", audience: "PARTICIPANT", bodyEs: "Hola {{nombre}} ({{codigo}}, {{cohorte}})" } as const;
+    expect(automaticTemplateProblem(ok)).toBeNull();
+    expect(automaticTemplateProblem({ ...ok, channel: "WHATSAPP" })).toBe("channel");
+    expect(automaticTemplateProblem({ ...ok, audience: "COHORT_CHANNEL" })).toBe("audience");
+    expect(automaticTemplateProblem({ ...ok, bodyEs: "Nos vemos el {{fecha}}" })).toBe("variables");
+    expect(automaticTemplateProblem({ ...ok, bodyEs: "Enlace: {{enlace}}" })).toBe("variables");
+    expect(automaticTemplateProblem({ ...ok, bodyEs: "Sin variables, con https://example.com" })).toBeNull();
   });
 
-  it("refuses it at the database too, not only in code", () => {
-    const migration = read("supabase/migrations/0015_automation.sql");
-    expect(migration).toMatch(/automation_rules_no_automatic_delivery/);
-    expect(migration).toMatch(/delivery_mode <> 'AUTOMATIC'/);
+  it("names no email or phone among the values it may fill in", () => {
+    for (const v of AUTOMATIC_VARIABLES) expect(v).not.toMatch(/email|correo|phone|telefono/i);
   });
 
   /**
    * A status the application cannot observe would be a claim, not a record —
-   * the same argument `communication_status` makes by having only SENT and
-   * SKIPPED. Here the system never even gets to SENT: READY is the end of what
-   * it can do alone, and DONE is a person's statement.
+   * the same argument `communication_status` makes. What went out is the
+   * `communications` rows, one per recipient; the action's status only says
+   * the work is finished.
    */
-  it("offers no status that would mean the system delivered something", () => {
+  it("offers no status that would mean a delivery was observed", () => {
     expect(SCHEDULED_ACTION_STATUSES).not.toContain("SENT");
     expect(SCHEDULED_ACTION_STATUSES).not.toContain("DELIVERED");
     expect(SCHEDULED_ACTION_STATUSES).toContain("READY");
   });
 
-  it("refuses an unavailable delivery mode before it looks at anything else", () => {
+  it("refuses an automatic WhatsApp before it looks at anything else", () => {
     const verdict = decide({
       conditions: { participantActive: true },
       facts: facts({ participantActive: false }),
       deliveryMode: "AUTOMATIC",
+      channel: "WHATSAPP",
     });
     // Not "skip". The mode is wrong regardless of whether the conditions hold,
     // and reporting it as a skip would hide a misconfiguration as a normal day.
     expect(verdict).toEqual({ decision: "refuse", reason: "unavailableDeliveryMode" });
+  });
+
+  it("lets an automatic email go ahead only when its conditions still hold", () => {
+    const base = { conditions: { participantActive: true }, deliveryMode: "AUTOMATIC", channel: "EMAIL" } as const;
+    expect(decide({ ...base, facts: facts() })).toEqual({ decision: "prepare" });
+    expect(decide({ ...base, facts: facts({ participantActive: false }) })).toEqual({
+      decision: "skip",
+      unmet: ["participantActive"],
+    });
+  });
+});
+
+describe("rule scopes (D-116)", () => {
+  const programme = { id: "c-prog", armId: "arm-prog" };
+  const control = { id: "c-ctrl", armId: "arm-ctrl" };
+
+  it("leaves an unscoped rule exactly as it was", () => {
+    expect(resolveScope(null, programme, [control])).toEqual({ applies: true, audienceCohortId: null });
+    expect(resolveScope(null, null, [])).toEqual({ applies: true, audienceCohortId: null });
+  });
+
+  it("targets the event's own cohort when it runs the rule's arm", () => {
+    expect(resolveScope("arm-prog", programme, [control])).toEqual({
+      applies: true,
+      audienceCohortId: "c-prog",
+    });
+  });
+
+  /**
+   * The control cohort has no sessions. A rule for the control arm on the
+   * programme cohort's S0 reaches the control cohort it is paired with.
+   */
+  it("reaches the paired cohort for a session of the programme cohort", () => {
+    expect(resolveScope("arm-ctrl", programme, [control])).toEqual({
+      applies: true,
+      audienceCohortId: "c-ctrl",
+    });
+  });
+
+  it("does not apply where neither the cohort nor a pair runs the arm", () => {
+    expect(resolveScope("arm-ctrl", programme, [])).toEqual({ applies: false });
+    expect(resolveScope("arm-ctrl", null, [])).toEqual({ applies: false });
+  });
+
+  it("matches a session template only when the rule names it, or names none", () => {
+    expect(sessionScopeMatches(null, "s0")).toBe(true);
+    expect(sessionScopeMatches("s0", "s0")).toBe(true);
+    expect(sessionScopeMatches("s0", "s1")).toBe(false);
+    expect(sessionScopeMatches("s0", null)).toBe(false);
+  });
+
+  it("is configuration, not a condition: the closed condition list is unchanged", () => {
+    expect(CONDITION_KEYS.join(" ")).not.toMatch(/arm|allocation|scope/i);
   });
 });
 
@@ -410,9 +500,14 @@ describe("the processor endpoint", () => {
     expect(route).toMatch(/if \(!env\.CRON_SECRET\) return \{ ok: false, status: 503 \}/);
   });
 
-  it("refuses GET, because it changes state", () => {
-    expect(route).toMatch(/export async function GET\(\)/);
-    expect(route).toMatch(/status: 405/);
+  /**
+   * Vercel Cron calls with GET (D-116). Both methods go through the same
+   * secret check, so a GET without it is refused like a POST without it.
+   */
+  it("runs GET and POST through the same secret check", () => {
+    expect(route).toMatch(/export async function GET\(request: NextRequest\) \{\n  return run\(request\);/);
+    expect(route).toMatch(/export async function POST\(request: NextRequest\) \{\n  return run\(request\);/);
+    expect(route).toMatch(/async function run\(request: NextRequest\) \{\n  const auth = authorize\(request\);/);
   });
 
   it("returns counts and study codes, never message content", () => {
@@ -433,7 +528,7 @@ describe("the prepared queue is addressable", () => {
    */
   it("resolves a session action's cohort through the session", () => {
     expect(service).toMatch(
-      /coalesce\(\$\{scheduledActions\.cohortId\}, \$\{cohortSessions\.cohortId\}\)/,
+      /coalesce\(\$\{scheduledActions\.audienceCohortId\}, \$\{scheduledActions\.cohortId\}, \$\{cohortSessions\.cohortId\}\)/,
     );
     expect(service).toMatch(/targetCohortId: cohorts\.id/);
   });
@@ -478,7 +573,9 @@ describe("permissions", () => {
 });
 
 describe("the vocabulary matches the migration", () => {
-  const migration = read("supabase/migrations/0015_automation.sql");
+  // 0026 adds the two email alert kinds (D-116) with ALTER TYPE ... ADD VALUE.
+  const migration =
+    read("supabase/migrations/0015_automation.sql") + read("supabase/migrations/0026_automatic_email.sql");
 
   it("declares every event type the domain knows", () => {
     for (const event of EVENT_TYPES) expect(migration, event).toContain(`'${event}'`);

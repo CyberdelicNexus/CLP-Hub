@@ -16,11 +16,10 @@ import { processDueActions, runSweeps } from "@/services/automation";
  *    recorded.
  * 2. Sweep for operational anomalies and raise alerts, deduplicated by subject.
  *
- * IT SENDS NOTHING. There is no outbound call in this file, in the service it
- * calls, or anywhere in this repository. A message that passes its re-check
- * becomes READY and appears in the team's queue; a person copies it and sends it
- * themselves (D-004, D-039, D-043). `tests/automation.test.ts` asserts the
- * absence over this file rather than trusting it.
+ * There is no outbound call in this file. A MANUAL message that passes its
+ * re-check becomes READY and appears in the team's queue; a person copies it and
+ * sends it themselves (D-004, D-039, D-043). An AUTOMATIC email (D-116) is sent
+ * by the service through `email-delivery.ts`, the one path to an inbox.
  *
  * It is safe to run twice. Materialisation is unique per (rule, event), alerts
  * are deduplicated per subject, and an action is only picked up while PENDING.
@@ -70,7 +69,22 @@ function authorize(request: NextRequest): { ok: true } | { ok: false; status: nu
   return { ok: true };
 }
 
+/**
+ * Vercel Cron calls with GET and the `Authorization: Bearer <CRON_SECRET>` it
+ * adds itself (D-116: the endpoint used to refuse GET, so the documented cron
+ * never ran). A GET without the secret is refused exactly like a POST without
+ * it, so a browser, a prefetch or a link checker still cannot run it.
+ */
+export async function GET(request: NextRequest) {
+  return run(request);
+}
+
+/** For a manual run or another scheduler: same secret, same work. */
 export async function POST(request: NextRequest) {
+  return run(request);
+}
+
+async function run(request: NextRequest) {
   const auth = authorize(request);
   if (!auth.ok) {
     // Nothing about why. A 401 that explains itself is a 401 that helps.
@@ -121,13 +135,3 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ranAt: now.toISOString(), results });
 }
 
-/**
- * GET is refused even with the right secret.
- *
- * This endpoint changes state. A GET that did would be retried by a browser, a
- * prefetch or a link checker, and the one property worth protecting here is that
- * it only runs when something meant to run it.
- */
-export async function GET() {
-  return NextResponse.json({ error: "method" }, { status: 405 });
-}

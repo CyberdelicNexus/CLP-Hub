@@ -29,6 +29,13 @@ export interface NavItem {
   key: string;
   href: string;
   label: string;
+  /**
+   * Something waiting in this section (D-116: new inquiries). Shown as a pill
+   * beside the label, or a dot on the icon when the rail is collapsed.
+   */
+  count?: number;
+  /** Screen-reader wording for the count, e.g. "3 sin responder". */
+  countLabel?: string;
 }
 
 /**
@@ -81,7 +88,7 @@ export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+              "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
               collapsed && "justify-center px-0",
               active
                 ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
@@ -98,6 +105,23 @@ export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate
               />
             ) : null}
             <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+            {item.count ? (
+              collapsed ? (
+                <span
+                  aria-hidden
+                  className="absolute top-1.5 right-2 size-2 rounded-full bg-primary ring-2 ring-sidebar"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  data-numeric
+                  className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[0.6875rem] leading-none font-semibold text-primary-foreground"
+                >
+                  {item.count}
+                </span>
+              )
+            ) : null}
+            {item.count && item.countLabel ? <span className="sr-only">{item.countLabel}</span> : null}
           </Link>
         );
 

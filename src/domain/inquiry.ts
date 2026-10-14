@@ -13,6 +13,10 @@
 export const INQUIRY_STATUSES = ["NEW", "ANSWERED", "CLOSED"] as const;
 export type InquiryStatus = (typeof INQUIRY_STATUSES)[number];
 
+/** Where an inquiry came from: the contact form, or an email to the study's address (D-118). */
+export const INQUIRY_SOURCES = ["FORM", "EMAIL"] as const;
+export type InquirySource = (typeof INQUIRY_SOURCES)[number];
+
 export const INQUIRY_NAME_MAX_LENGTH = 120;
 export const INQUIRY_EMAIL_MAX_LENGTH = 200;
 export const INQUIRY_MESSAGE_MAX_LENGTH = 1000;

@@ -51,9 +51,12 @@ curl -X POST http://localhost:3000/api/internal/process-scheduled-actions   -H "
 
 `CRON_SECRET` is optional in `.env.local` and the endpoint **refuses every
 request when it is unset** (503) — an unconfigured deployment is closed, not
-open. `GET` is refused with 405 because the endpoint changes state.
+open. GET (what Vercel Cron uses) and POST need the same secret.
 
-It prepares work and never delivers any of it. See `docs/automations.md`.
+It prepares WhatsApp work for a person, and sends AUTOMATIC emails itself
+(D-116). **With `RESEND_API_KEY` set in `.env.local`, a local run sends real
+email** to the participants' addresses, so test automatic rules on synthetic
+participants whose addresses you control. See `docs/automations.md`.
 
 ## Testing
 

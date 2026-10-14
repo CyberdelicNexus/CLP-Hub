@@ -1,21 +1,23 @@
 import "server-only";
-import { and, count, desc, eq, getTableColumns, gt, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getEnv } from "@/config/env";
 import { getDb } from "@/db/client";
-import { inquiries, userRoles, users, type Inquiry } from "@/db/schema";
+import { inquiries, studies, userRoles, users, type Inquiry } from "@/db/schema";
 import {
   INQUIRY_HOURLY_CAP,
   INQUIRY_NOTIFY_PER_HOUR,
   type InquiryInput,
+  type InquirySource,
   type InquiryStatus,
 } from "@/domain/inquiry";
+import { ignoreReason, inquiryFromEmail } from "@/domain/inbound-email";
 import { replyEmail, staffNotification, type InquiryLocale } from "@/domain/inquiry-mail";
 import { hasPermission } from "@/domain/permissions";
 import { isStaffRole, type StaffRole } from "@/domain/roles";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
-import { sendMail } from "./mailer";
+import { fetchReceivedEmail, ownSenderAddress, sendMail } from "./mailer";
 
 /**
  * The inquiry inbox (D-088). Questions from the public contact form, answered
@@ -57,7 +59,23 @@ export async function submitInquiry(params: {
   locale: InquiryLocale;
   input: InquiryInput;
 }): Promise<SubmitInquiryResult> {
-  const { studyId, locale, input } = params;
+  const result = await fileInquiry({ ...params, source: "FORM", externalRef: null });
+  return result === "unavailable" ? "unavailable" : "ok";
+}
+
+/**
+ * Insert one inquiry under the hourly cap, audit it, and tell staff. Shared by
+ * the contact form and by emails to the study's address (D-118). "duplicate"
+ * is an email whose provider id was already filed: a webhook delivered twice.
+ */
+async function fileInquiry(params: {
+  studyId: string;
+  locale: InquiryLocale;
+  input: InquiryInput;
+  source: InquirySource;
+  externalRef: string | null;
+}): Promise<"ok" | "unavailable" | "duplicate"> {
+  const { studyId, locale, input, source, externalRef } = params;
   const since = new Date(Date.now() - HOUR_MS);
 
   const recentCount = await getDb().transaction(async (tx) => {
@@ -69,8 +87,10 @@ export async function submitInquiry(params: {
 
     const [row] = await tx
       .insert(inquiries)
-      .values({ studyId, locale, name: input.name, email: input.email, message: input.message })
+      .values({ studyId, locale, name: input.name, email: input.email, message: input.message, source, externalRef })
+      .onConflictDoNothing()
       .returning({ id: inquiries.id });
+    if (!row) return "duplicate" as const;
 
     await recordAuditEvent(tx, {
       studyId,
@@ -78,20 +98,103 @@ export async function submitInquiry(params: {
       action: "inquiry.received",
       entityType: "inquiry",
       entityId: row.id,
-      after: { status: "NEW", locale },
+      after: { status: "NEW", locale, source },
     });
     return n + 1;
   });
 
   if (recentCount === null) return "unavailable";
+  if (recentCount === "duplicate") return "duplicate";
   if (recentCount <= INQUIRY_NOTIFY_PER_HOUR) await notifyStaff(studyId);
   return "ok";
 }
 
-/** Emails everyone who holds `inquiries.manage` in the study. Best effort, logged. */
+export type ReceiveEmailResult =
+  | "filed"
+  /** Already filed: the webhook was delivered again. */
+  | "duplicate"
+  /** Not an inquiry: our own mail, an auto-reply, a list, nothing to read. */
+  | "ignored"
+  /** Over the hourly cap. The caller answers so the provider retries later. */
+  | "busy"
+  /** The content could not be read from the provider. Retried by the provider. */
+  | "unreadable"
+  /** No study is taking inquiries. */
+  | "noStudy";
+
+/**
+ * An email received at the study's address (D-118) becomes an inquiry, exactly
+ * as if it had come from the contact form: same inbox, same notification, same
+ * erasure once it is answered or closed.
+ *
+ * The study is the one open for recruitment, as for the contact form; failing
+ * that, the one active study that has a team mailbox. The email's text is read
+ * from the provider, held in memory, and stored only as the inquiry's message.
+ */
+export async function receiveEmailInquiry(providerEmailId: string): Promise<ReceiveEmailResult> {
+  const fetched = await fetchReceivedEmail(providerEmailId);
+  if (!fetched.ok) return "unreadable";
+  const email = fetched.email;
+
+  const own = [ownSenderAddress()].filter((a): a is string => Boolean(a));
+  const reason = ignoreReason(email, own);
+  if (reason) {
+    logger.info({ event: "inquiry.email_ignored", reason }, "received email not filed");
+    return "ignored";
+  }
+  const input = inquiryFromEmail(email);
+  if (!input) {
+    logger.info({ event: "inquiry.email_ignored", reason: "empty" }, "received email not filed");
+    return "ignored";
+  }
+
+  const studyId = await inquiryStudyId();
+  if (!studyId) {
+    logger.error({ event: "inquiry.email_no_study" }, "received email has no study to go to");
+    return "noStudy";
+  }
+
+  const result = await fileInquiry({
+    studyId,
+    locale: "es",
+    input,
+    source: "EMAIL",
+    externalRef: providerEmailId,
+  });
+  if (result === "unavailable") return "busy";
+  if (result === "duplicate") return "duplicate";
+  return "filed";
+}
+
+async function inquiryStudyId(): Promise<string | null> {
+  const db = getDb();
+  const [open] = await db
+    .select({ id: studies.id })
+    .from(studies)
+    .where(and(eq(studies.status, "ACTIVE"), eq(studies.recruitmentOpen, true)))
+    .orderBy(asc(studies.createdAt))
+    .limit(1);
+  if (open) return open.id;
+  const withMailbox = await db
+    .select({ id: studies.id })
+    .from(studies)
+    .where(and(eq(studies.status, "ACTIVE"), isNotNull(studies.contactEmail)))
+    .limit(2);
+  return withMailbox.length === 1 ? withMailbox[0].id : null;
+}
+
+/**
+ * Emails everyone who holds `inquiries.manage` in the study, and the team
+ * mailbox when one is set (`studies.contact_email`, D-116). Best effort, logged.
+ */
 async function notifyStaff(studyId: string): Promise<void> {
   try {
     const db = getDb();
+    const [study] = await db
+      .select({ contactEmail: studies.contactEmail })
+      .from(studies)
+      .where(eq(studies.id, studyId))
+      .limit(1);
     const rows = await db
       .select({ email: users.email, role: userRoles.role })
       .from(userRoles)
@@ -104,6 +207,8 @@ async function notifyStaff(studyId: string): Promise<void> {
       byEmail.set(r.email, [...(byEmail.get(r.email) ?? []), r.role]);
     }
     const to = [...byEmail].filter(([, roles]) => hasPermission(roles, "inquiries.manage")).map(([email]) => email);
+    const mailbox = study?.contactEmail?.trim();
+    if (mailbox && !to.some((e) => e.toLowerCase() === mailbox.toLowerCase())) to.push(mailbox);
     if (to.length === 0) return;
 
     const [{ n }] = await db

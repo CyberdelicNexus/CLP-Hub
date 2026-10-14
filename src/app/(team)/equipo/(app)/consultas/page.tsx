@@ -68,6 +68,7 @@ export default async function InquiriesPage({
     answeredNote: note("answeredNote"),
     closedNote: note("closedNote"),
     handledBy: t("inquiries.handledBy"),
+    viaEmail: t("inquiries.viaEmail"),
     listAria: t("inquiries.listAria"),
     replyLabel: t("inquiries.replyLabel"),
     placeholder: t("inquiries.placeholder"),

@@ -6,6 +6,7 @@ import { CohortOccupancy } from "@/components/team/cohort-occupancy";
 import { StatusBadge } from "@/components/status-badge";
 import type { StudyContext } from "@/auth/study-context";
 import { needsAttention } from "@/domain/logistics";
+import { countNewInquiries } from "@/services/inquiries";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import {
   countOpenTasks,
@@ -51,8 +52,9 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
   const canReadTasks = ctx.permissions.has("tasks.read");
   const canReadAlerts = ctx.permissions.has("alerts.read");
   const canReadComms = ctx.permissions.has("communications.read");
+  const canAnswerInquiries = ctx.permissions.has("inquiries.manage");
 
-  const [ops, cohorts, assignments, openTasks, openAlerts, prepared] = await Promise.all([
+  const [ops, cohorts, assignments, openTasks, openAlerts, prepared, newInquiries] = await Promise.all([
     canReadParticipants ? countParticipantOps(ctx.study.id) : null,
     canReadCohorts ? listCohorts(ctx.study.id, { scope: ctx.cohortScope }) : [],
     canReadLogistics ? listOpenAssignments(ctx.study.id) : [],
@@ -62,6 +64,9 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
     // send. It belongs here rather than only on Comunicaciones: a prepared
     // reminder nobody opens is the failure mode this whole phase has to avoid.
     canReadComms ? listPreparedActions(ctx.study.id, { limit: 50 }) : [],
+    // A public question nobody has answered (D-116): the person who asked is
+    // waiting, so it sits next to alerts rather than in a menu nobody opens.
+    canAnswerInquiries ? countNewInquiries(ctx.study.id) : 0,
   ]);
 
   // "Nearly complete" means inside its bounds and with places left, plus any
@@ -87,6 +92,21 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
           key: "alerts",
           href: `${TEAM_BASE_PATH}/alertas?estado=OPEN`,
           primary: t("openAlerts", { count: openAlerts }),
+        },
+      ],
+    });
+  }
+
+  if (newInquiries > 0) {
+    columns.push({
+      key: "inquiries",
+      title: t("columnInquiries"),
+      tone: "warning",
+      cards: [
+        {
+          key: "inquiries",
+          href: `${TEAM_BASE_PATH}/consultas`,
+          primary: t("newInquiries", { count: newInquiries }),
         },
       ],
     });

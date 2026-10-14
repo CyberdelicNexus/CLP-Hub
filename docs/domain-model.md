@@ -215,6 +215,20 @@ to. The demo seed links all seven of its templates one-to-one with its seven
 stages (D-068), but the column is optional: an ad-hoc session, or a study
 that hasn't configured stages, is still a valid template without one.
 
+## Implemented (D-116 · migration 0026)
+
+| Column | Purpose |
+|---|---|
+| `cohorts.paired_cohort_id` | The cohort whose calendar this one follows. A control cohort has no sessions; its emails are timed by the paired programme cohort's sessions. One pair per cohort, never itself, never a chain |
+| `automation_rules.arm_id` | Scope: the rule applies only to cohorts configured with this arm (read from the cohort, never from an allocation) |
+| `automation_rules.session_template_id` | Scope: a session rule applies only to sessions of this template, e.g. S0 |
+| `scheduled_actions.audience_cohort_id` | Whose members a scoped action is for, e.g. the control cohort for the programme cohort's S0 |
+| `studies.contact_email` | Team mailbox: gets inquiry notices, and is the Reply-To of automatic emails |
+
+`alert_kind` gains `EMAIL_NOT_CONFIGURED` and `EMAIL_NOT_SENT`. The "never
+AUTOMATIC" constraints become "AUTOMATIC only for a MESSAGE"; that the message is
+an individual email is enforced in the service (see `docs/automations.md`).
+
 ## Planned by phase
 
 Every table in the original brief now exists. Further work is refinement of what

@@ -3,6 +3,7 @@ import type { StudyContext } from "@/auth/study-context";
 import { PageFade } from "@/components/page-fade";
 import { TEAM_NAV, TEAM_BASE_PATH } from "@/domain/navigation";
 import { countUnresolvedAlerts } from "@/services/automation";
+import { countNewInquiries } from "@/services/inquiries";
 import { SidebarNav, type NavItem } from "./sidebar-nav";
 import { SidebarShell } from "./sidebar-shell";
 import { Header } from "./header";
@@ -32,6 +33,18 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
   // own attention tile uses — an acknowledged-but-not-resolved alert is still
   // something the badge should count, not just a brand-new OPEN one.
   const openAlertCount = alertsItem ? await countUnresolvedAlerts(ctx.study.id) : null;
+
+  // New public inquiries waiting for an answer (D-116), on the Consultas
+  // entry itself. Only for people who can answer them: the item is only in
+  // the list for `inquiries.manage` holders.
+  const inquiriesItem = sidebarItems.find((i) => i.key === "inquiries");
+  if (inquiriesItem) {
+    const n = await countNewInquiries(ctx.study.id);
+    if (n > 0) {
+      inquiriesItem.count = n;
+      inquiriesItem.countLabel = t("inquiries.newCount", { count: n });
+    }
+  }
 
   const studies = uniqueStudies(ctx);
 

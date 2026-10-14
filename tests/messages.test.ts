@@ -74,6 +74,35 @@ describe("message files", () => {
     expect(broken).toEqual([]);
   });
 
+  /**
+   * THE BUG THIS EXISTS FOR. An example address written as
+   * `/estudio/sesiones/{código}/preparacion` is valid ICU, so the parse test
+   * above passes, but `{código}` is an ARGUMENT nobody supplies, and the page
+   * logged FORMATTING_ERROR at runtime. Arguments are ASCII identifiers that a
+   * caller passes; anything else in braces is text that needed quoting or a
+   * literal example instead.
+   */
+  it("uses only ASCII identifiers as arguments, never a placeholder inside a path", () => {
+    const offenders: string[] = [];
+    for (const locale of LOCALES) {
+      const visit = (node: unknown, path: string) => {
+        if (typeof node === "string") {
+          if (/\/\{[^}]*\}/.test(node) || /\{[^},\s]*[^\x00-\x7F][^},]*[,}]/.test(node)) {
+            offenders.push(`${locale}:${path}`);
+          }
+          return;
+        }
+        if (node && typeof node === "object") {
+          for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+            visit(value, path ? `${path}.${key}` : key);
+          }
+        }
+      };
+      visit(messages[locale], "");
+    }
+    expect(offenders).toEqual([]);
+  });
+
   /** A key present in Spanish and missing in English is an untranslated screen. */
   it("defines the same keys in every locale", () => {
     const [first, ...rest] = LOCALES;

@@ -5024,6 +5024,188 @@ financiación de" (D-077). Now there is one group and one heading:
 
 Not looked at in a browser: typecheck, lint, tests and build only.
 
+## D-115 · 2026-10-14 · Home page: no liquid on a touch screen
+
+The founder: on a phone the liquid distracts. Since D-112 it follows a finger
+through the whole scroll, so every swipe through the text left a trail across it.
+
+`home-liquid.tsx` now mounts the liquid only where the browser reports a
+mouse or trackpad (`(hover: hover) and (pointer: fine)`). On a touch screen
+it is not rendered at all, so no WebGL simulation runs and no touch listeners
+are attached; hiding it with CSS would have kept both. A laptop with a touch
+screen and a trackpad still gets it. The server renders without it, and it
+appears after hydration where it applies. `?liquid` still shows it, and the
+tuning panel, on a phone. The D-112 touch handling in `Liquid.tsx` stays: it
+is now reached only through `?liquid` or a device that reports both.
+
+Not looked at on a phone: typecheck, lint, tests and build only.
+
+## D-116 · 2026-10-14 · The Hub may send email on its own, for the control group and only by email
+
+The founder, with the team's communications diagram: the control group is
+reached only by email, and those emails are automated (welcome and group
+assignment, a Qualtrics link a week after S0, another a week after the end,
+a follow-up at three months). The programme group stays on WhatsApp and in
+person. The founder asked to "expand the rules and allow automated messages to
+be sent from the hub, but only those who we need to". This narrows D-043 and
+D-004; it does not remove them.
+
+**What may send.** An automation rule in AUTOMATIC mode, whose template is an
+EMAIL addressed to ONE participant (`audience = PARTICIPANT`), and whose body
+uses only `{{nombre}}`, `{{codigo}}` and `{{cohorte}}` (`AUTOMATIC_VARIABLES`).
+A person sending by hand sees `⟨fecha⟩` and fixes it; an unattended send cannot,
+so a date or a link is written into the template itself. WhatsApp is never
+automatic (`AUTOMATIC_CHANNELS = ["EMAIL"]`). An email to a cohort goes to each
+member separately, never as one email with every address on it.
+
+**Where it is enforced.** `createRule` refuses AUTOMATIC for any other template;
+the processor re-checks the template as it is when the action comes due (edited
+to WhatsApp since → refused, FAILED, alert); migration 0026 replaces the "never
+AUTOMATIC" constraints with "AUTOMATIC only for a MESSAGE". The single path to an
+inbox is `src/services/email-delivery.ts`, and a test pins that `sendMail` is
+called only from there and from the inquiry inbox. `services/automation.ts` and
+the processor route still contain no HTTP client and no credential.
+
+**What is recorded.** One `communications` row per recipient (template body
+with placeholders intact, `sent_by` null, D-039 unchanged) and an audit row
+`communication.sent_automatically` with SYSTEM as actor. The scheduled action
+ends DONE. Each send carries a Resend idempotency key per action and person,
+and an action is claimed (PENDING → READY) before sending, so an overlapping run
+cannot send twice. Nothing is retried: a recipient who did not get it (no email
+on file, a value missing, the provider refused) is named by code in a CRITICAL
+`EMAIL_NOT_SENT` alert and a person decides. With no sender configured nothing
+is claimed; the action stays PENDING behind a CRITICAL `EMAIL_NOT_CONFIGURED`
+alert and goes out, visibly late, once mail works (the existing "no grace
+window" rule). The template's name is the email's subject.
+
+**Telling the groups apart: paired cohorts, and rule scopes.** A wave is two
+cohorts, each running one arm (D-034): "Cohorte 1" for the programme and
+"Cohorte 1 control". The control cohort has no sessions of its own; its new
+`paired_cohort_id` says whose calendar it follows. One pair per cohort, never
+itself, never a chain (unique index and service check). A rule can now be
+scoped to an arm and, for session events, to one session template. Scoping reads
+the arm the COHORT was configured with, never a participant's allocation row,
+and is configuration rather than a condition: `CONDITION_KEYS` is unchanged. A
+rule for the control arm on the programme cohort's S0 is addressed to the paired
+control cohort (`scheduled_actions.audience_cohort_id`), so "a week after S0" is
+one rule. The scope is re-checked when the action comes due; someone moved to
+another cohort since is skipped as `outOfScope`. The arms themselves had no
+screen (the real study had none); Configuración now has "Grupos del estudio" to
+add one. Adding an arm allocates nobody (D-018 unchanged).
+
+**Inquiry notifications.** Already emailed to everyone who answers inquiries
+(D-088); now also to the team mailbox, the new `studies.contact_email`, which is
+also the Reply-To of every automatic email. In the Hub, the Consultas entry
+shows the number waiting and the overview's attention board gets an Inquiries
+column.
+
+**A bug found on the way.** Vercel Cron calls with GET, and the processor
+refused GET with 405, so the cron that `docs/deployment.md` described could
+never have run. GET and POST now share the same secret check (a GET without the
+secret is still refused). `vercel.json` adds a daily run at 07:00 UTC (09:00 in
+Madrid in summer): Vercel's Hobby plan allows only daily cron jobs, and a
+morning batch suits these emails. On Pro it can run every 15 minutes.
+
+**The application email stays in Qualtrics.** The Hub only knows that someone
+left their details on `/participar`, not whether they finished the
+questionnaire. The "thanks for applying" email belongs in Qualtrics's own
+end-of-survey email, which needs no data to move into the Hub (D-031). A Hub rule
+on `APPLICATION_SUBMITTED` can still send an "we have your details" email; that
+is configuration, not code.
+
+**Not done.** Eligibility emails (yes / no) are not automated: a rule that sent a
+different email by outcome would decide by eligibility, which CLAUDE.md rule 3
+forbids. They stay staff-sent. There is no opt-out link and no screen listing
+sent messages (the communications log has no page; the participant's history
+shows the audit rows). Verified end to end against the real schema inside a
+transaction that was rolled back, with `fetch` stubbed (21 checks); not looked at
+in a browser, because the screens need migration 0026 applied first.
+
+## D-117 · 2026-10-14 · Cohortes: a grid by default, group badges, and a group filter
+
+The founder: make the control / programme difference visible on the cohort
+card and on its details, add filter tags (all, control, intervention), and show
+a grid of every cohort by default that moves to the left, with the details
+fading in, when one is opened.
+
+- **Badge.** `ArmBadge` (`components/team/arm-badge.tsx`) shows the arm a cohort
+  runs, on its card and next to its status in the details. The colour comes
+  from the arm's position among the study's configured arms, not from its
+  name, so "control" is never matched in code (CLAUDE.md rule 6); the same arm
+  has the same colour everywhere, and the filter tags use it too. Arms are now
+  read for every role that can read cohorts, not only managers.
+- **Filter.** `?grupo=<arm code>` (or `sin-grupo` for cohorts naming none), as
+  links like every other filter in the app. Tags are "Todas", one per arm with
+  its configured name, and "Sin grupo" only when some cohort has no arm. The
+  glance tiles count what the filter shows. Tags appear only once the study has
+  arms.
+- **Grid, then list.** With no `?cohorte=` the page is a grid of cards (the old
+  default opened the first cohort). Opening one keeps the cards in a 15rem
+  column on the left and the details on the right; "Todas las cohortes" returns
+  to the grid. On a phone the open cohort takes the screen and the same link
+  goes back. Card links use `scroll={false}` so the page does not jump.
+- **Animation.** `cohort-workspace.tsx` animates each card from where it was to
+  where it is (FLIP with the Web Animations API, positions measured on the click
+  that changes the layout), so the grid visibly slides into the column; the
+  details fade and slide in 160 ms later (`.cohort-detail-in`). Cards that
+  appear when a filter widens fade in. No movement with reduced motion. React's
+  `<ViewTransition>` would do this natively, but D-091 keeps the app off the
+  canary React it needs.
+
+Not looked at in a browser (no test account with a role exists in the shared
+database, and logging in as a real staff member was not appropriate):
+typecheck, lint, tests and build only.
+
+**Follow-up, same day: bigger cards with an edge glow.** In the grid the cards
+are larger (at least 19rem wide, taller, more padding, a larger name) and lift
+slightly on hover; once a cohort is open the left column keeps the compact
+size. Every card has an edge glow (`.edge-glow` in `globals.css`): a thin lit
+border, faint at rest, that brightens on hover and follows the pointer along
+the edge, with a soft halo outside. The glow is the card's group colour
+(`armGlowColor`, the same position-based tone as its badge), brand purple when
+the cohort has no group.
+
+## D-118 · 2026-10-14 · Email to info@numadelic.org lands in Consultas
+
+The founder: any message that comes in to info@numadelic.org should go into the
+Consultas inbox and notify the addresses set in the study's settings. This
+reverses the note in `docs/deployment.md` (same day) that Resend's receiving
+would not be used; it is the founder's call, and it fits D-088's model, because
+an email to the study is the same thing as a question from the contact form.
+
+- **Path.** Resend receives mail for the domain (an MX record Resend issues) and
+  posts `email.received` to `POST /api/webhooks/resend` with the email's id only.
+  The route checks the Svix-style signature against `RESEND_WEBHOOK_SECRET`
+  (`src/lib/webhook-signature.ts`, no new dependency; closed with 503 when the
+  secret is unset), then `receiveEmailInquiry` reads the content from Resend
+  (`fetchReceivedEmail` in `mailer.ts`, still the only provider client) and files
+  it with the form's own `fileInquiry`: the same hourly cap, audit row and staff
+  notification (everyone who answers inquiries plus the team mailbox, D-116).
+- **What is kept.** Sender name and address, subject plus the new text (quoted
+  history dropped, HTML read as text, capped at 5000 characters; the form stays
+  at 1000), `source = EMAIL`, and Resend's id in `external_ref`. No attachment.
+  Answering or closing erases name, email and message exactly as for the form
+  (0023's checks unchanged). The inbox marks these with an "Email" badge.
+- **Guards.** The provider id is unique, so a webhook delivered twice files once.
+  The Hub's own sender address, auto-replies (Auto-Submitted, X-Autoreply) and
+  bulk or list mail are ignored, so a notification that bounces back cannot
+  loop. Over the hourly cap, or when the content cannot be read, the route
+  answers 503 so Resend retries later instead of the email being lost.
+- **Which study.** The one open for recruitment, as for the form; failing that,
+  the one active study with a team mailbox; otherwise nothing is filed and it is
+  logged. Every email arrives in Spanish context (`locale = es`).
+- **Verified** with real emails to the founder's address from
+  `info@numadelic.org`: a plain send, the team notification produced by filing
+  a received email, the reply produced by answering it, and an automatic
+  control-group email (D-116). The database work ran in a transaction that was
+  rolled back, with the provider's stored copy of the inbound email stubbed,
+  since receiving needs the MX record and a deployed webhook. Not yet exercised
+  end to end through Resend's real receiving.
+
+Open: whether Category C text arriving by email (which, unlike the form, carries
+no warning) needs an auto-acknowledgement asking people not to send health
+information; and Resend's own retention of received mail, outside the Hub.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the
@@ -5157,9 +5339,17 @@ Not looked at in a browser: typecheck, lint, tests and build only.
 - Confirm that contact details for a Qualtrics-route participant are only ever
   entered when the initial visit is being arranged (D-031). Nothing enforces the
   timing today.
-- Whether email reminders may ever be AUTOMATIC. Refused everywhere today
-  (D-043); answering yes means adding a provider, a credential and a delivery
-  record, and re-opening D-004.
+- ~~Whether email reminders may ever be AUTOMATIC.~~ Answered by D-116: yes,
+  for individually-addressed email only; WhatsApp stays manual.
+- Do the automatic control-group emails need ethics committee approval of their
+  wording and timing, and should they carry an opt-out line? Nothing adds one
+  today (D-116).
+- Should a programme cohort's session that is moved also move the control
+  cohort's emails? There is still no reschedule path, so today a moved S0 means
+  cancelling it and scheduling a new one, which cancels and re-plans them
+  (D-043, D-116).
+- Should the communications log get its own screen? Sent messages, automatic
+  ones included, are recorded but only visible as audit rows (D-116).
 - Should a study be able to turn an individual sweep off, or is the fixed set
   the right one? Severity is deliberately not configurable (D-043).
 - Which timings from the previous study apply to this one? The four rules in the

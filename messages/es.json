@@ -426,7 +426,10 @@
       "sizeHelp": "Configuración de esta cohorte. No impide asignar participantes: solo se comprueba al activarla.",
       "arm": "Grupo del estudio",
       "armHelp": "Si eliges un grupo, solo podrán asignarse participantes con esa asignación registrada.",
-      "armAny": "Cualquier grupo"
+      "armAny": "Cualquier grupo",
+      "pair": "Sigue el calendario de",
+      "pairHelp": "Para una cohorte del grupo control: sus emails automáticos se programan con las sesiones de la cohorte elegida. Déjalo vacío si la cohorte tiene sus propias sesiones.",
+      "pairNone": "Ninguna (sesiones propias)"
     },
     "error": {
       "invalid": "Ese cambio no es posible.",
@@ -441,7 +444,8 @@
       "armNotRecorded": "Esta cohorte es de un grupo concreto y aún no hay asignación registrada para esta persona.",
       "sameCohort": "Ya pertenece a esa cohorte.",
       "sizeUnder": "La cohorte está por debajo del mínimo configurado.",
-      "sizeOver": "La cohorte está por encima del máximo configurado."
+      "sizeOver": "La cohorte está por encima del máximo configurado.",
+      "pairUnavailable": "Esa cohorte ya tiene pareja, o emparejarla formaría una cadena. Cada cohorte solo se empareja con una."
     },
     "glance": {
       "title": "De un vistazo",
@@ -478,7 +482,18 @@
     "transfer": "Cambiar de cohorte",
     "transferTarget": "Nueva cohorte",
     "transferReason": "Motivo del cambio (opcional)",
-    "transferReasonHelp": "Queda registrado junto al cambio. Información operativa, no clínica."
+    "transferReasonHelp": "Queda registrado junto al cambio. Información operativa, no clínica.",
+    "pair": {
+      "follows": "Sigue el calendario de {code}",
+      "followedBy": "La sigue {code}"
+    },
+    "filter": {
+      "all": "Todas",
+      "noArm": "Sin grupo",
+      "aria": "Filtrar cohortes por grupo",
+      "empty": "Ninguna cohorte de este grupo todavía."
+    },
+    "backToGrid": "Todas las cohortes"
   },
   "sessions": {
     "subtitle": "Sesiones programadas de las cohortes.",
@@ -945,7 +960,10 @@
       "task__created": "Tarea creada",
       "user__locale_changed": "Cambio de idioma",
       "user_role__granted": "Rol concedido",
-      "user_role__revoked": "Rol retirado"
+      "user_role__revoked": "Rol retirado",
+      "communication__sent_automatically": "Email enviado automáticamente",
+      "scheduled_action__sent": "Acción programada enviada por email",
+      "study_arm__created": "Grupo del estudio creado"
     }
   },
   "logistics": {
@@ -1163,7 +1181,9 @@
     },
     "openTasks": "{count, plural, one {# tarea abierta} other {# tareas abiertas}}",
     "openAlerts": "{count, plural, one {# alerta sin resolver} other {# alertas sin resolver}}",
-    "preparedMessages": "{count, plural, one {# mensaje preparado para enviar} other {# mensajes preparados para enviar}}"
+    "preparedMessages": "{count, plural, one {# mensaje preparado para enviar} other {# mensajes preparados para enviar}}",
+    "columnInquiries": "Consultas",
+    "newInquiries": "{count, plural, one {# consulta sin responder} other {# consultas sin responder}}"
   },
   "tasks": {
     "subtitle": "Lo que alguien tiene que hacer. Creado a mano o por una regla del estudio.",
@@ -1253,7 +1273,9 @@
       "mailRejected": "El proveedor de correo rechazó el envío. Si el dominio de envío aún no está verificado en Resend, solo se pueden enviar correos a la dirección de la cuenta de Resend. La consulta sigue pendiente.",
       "mailFailed": "No se pudo contactar con el proveedor de correo. La consulta sigue pendiente; inténtalo de nuevo.",
       "failed": "No se ha podido completar la acción."
-    }
+    },
+    "newCount": "{count, plural, one {# consulta sin responder} other {# consultas sin responder}}",
+    "viaEmail": "Email"
   },
   "alerts": {
     "subtitle": "Lo que no cuadra en los registros del estudio. Nadie ha concluido nada: hay que mirarlo.",
@@ -1285,7 +1307,9 @@
       "EXCLUSION_WITHOUT_REASON": "Exclusiones registradas sin motivo",
       "VR_NOT_READY_BEFORE_SESSION": "Configuración de RV sin confirmar antes de la sesión",
       "SCHEDULED_ACTION_FAILED": "Ha fallado el procesado de una acción programada",
-      "RULE_MISCONFIGURED": "Regla de automatización mal configurada"
+      "RULE_MISCONFIGURED": "Regla de automatización mal configurada",
+      "EMAIL_NOT_CONFIGURED": "Emails automáticos en espera: no hay remitente configurado",
+      "EMAIL_NOT_SENT": "Un email automático no llegó a enviarse"
     },
     "errors": {
       "forbidden": "No tienes permiso para hacer esto.",
@@ -1297,7 +1321,7 @@
   "automation": {
     "title": "Automatización",
     "subtitle": "Cuándo pasa algo, qué se prepara y con cuánta antelación. Todo es configuración.",
-    "nothingSends": "CLP Hub no envía nada. Una acción preparada aparece en la cola y una persona la copia y la manda.",
+    "nothingSends": "Los mensajes de WhatsApp nunca se envían solos: una acción preparada aparece en la cola y una persona la copia y la manda. Solo una regla en modo Automático envía, y solo un email a cada persona.",
     "rules": "Reglas",
     "noRules": "Todavía no hay reglas configuradas.",
     "rule": "Regla",
@@ -1348,7 +1372,7 @@
     "delivery": {
       "MANUAL": "Manual",
       "APPROVAL_REQUIRED": "Requiere aprobación",
-      "AUTOMATIC": "Automática"
+      "AUTOMATIC": "Automática (solo email)"
     },
     "condition": {
       "participantActive": "sigue en el estudio",
@@ -1368,7 +1392,8 @@
       "unavailableDeliveryMode": "La entrega automática no está disponible.",
       "invalidOffset": "El desfase está fuera de los límites permitidos.",
       "shape": "Faltan datos para ese tipo de acción.",
-      "failed": "No se ha podido completar la acción."
+      "failed": "No se ha podido completar la acción.",
+      "automaticTemplate": "El envío automático solo admite una plantilla de email dirigida a una persona, cuyas únicas variables sean nombre, código o cohorte."
     },
     "inactive": "Inactiva",
     "conditionNot": "NO {condition}",
@@ -1384,6 +1409,17 @@
         "hours": "{value, plural, one {# hora después} other {# horas después}}",
         "days": "{value, plural, one {# día después} other {# días después}}"
       }
+    },
+    "deliveryHelp": "Automática: el Hub envía el email solo, cuando llega el momento, a cada persona por separado. Solo para plantillas de email dirigidas a una persona. WhatsApp siempre es manual.",
+    "scope": {
+      "arm": "Solo grupo: {arm}",
+      "session": "Solo sesión: {session}",
+      "armField": "Grupo",
+      "armAll": "Todos los grupos",
+      "armHelp": "Limita la regla a las cohortes de este grupo. Una cohorte del grupo control sin sesiones propias usa las sesiones de la cohorte con la que está emparejada.",
+      "sessionField": "Sesión",
+      "sessionAny": "Cualquier sesión",
+      "sessionHelp": "Limita la regla a las sesiones de esta plantilla, por ejemplo S0."
     }
   },
   "settings": {
@@ -1410,8 +1446,11 @@
       "title": "El título no puede estar vacío.",
       "timezone": "Esa zona horaria no es válida.",
       "screeningUrl": "La URL debe empezar por https y no contener espacios.",
-      "failed": "No se ha podido completar la acción."
-    }
+      "failed": "No se ha podido completar la acción.",
+      "contactEmail": "Escribe una dirección de email válida."
+    },
+    "contactEmail": "Buzón del equipo",
+    "contactEmailHelp": "Recibe el aviso de cada consulta nueva, además de las personas que responden consultas, y es la dirección de respuesta de los emails que el Hub envía solo. Déjalo vacío para no usarlo."
   },
   "program": {
     "title": "Programa",
@@ -1429,9 +1468,9 @@
     "inactive": "Inactiva",
     "field": {
       "code": "Código",
-      "codeWarning": "Cambiar el código rompe cualquier enlace ya compartido con la dirección anterior (p. ej. /estudio/sesiones/{código}/preparacion): no se redirige automáticamente.",
+      "codeWarning": "Cambiar el código rompe cualquier enlace ya compartido con la dirección anterior (p. ej. /clearlight/estudio/sesiones/s0/preparacion para el código s0): no se redirige automáticamente.",
       "stageCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\". Se puede renombrar después desde la lista, si hace falta.",
-      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\" — aparece en la URL pública de la sesión (/clearlight/estudio/sesiones/{código}/preparacion). Se puede renombrar después desde la lista.",
+      "templateCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\" — aparece en la URL pública de la sesión (con el código s0: /clearlight/estudio/sesiones/s0/preparacion). Se puede renombrar después desde la lista.",
       "nameEs": "Nombre (español)",
       "nameEn": "Nombre (inglés, opcional)",
       "modality": "Modalidad",
@@ -1445,5 +1484,16 @@
     "errors": {
       "duplicateCode": "Ya existe una etapa o sesión con ese código en este estudio."
     }
+  },
+  "arms": {
+    "title": "Grupos del estudio",
+    "intro": "Los grupos del ensayo, por ejemplo Grupo control y Grupo del programa. Una cohorte puede indicar su grupo, y una regla automática puede limitarse a uno. Crear un grupo no asigna a nadie: la asignación se registra desde el sistema aprobado.",
+    "none": "Todavía no hay grupos configurados.",
+    "create": "Añadir grupo",
+    "code": "Código",
+    "name": "Nombre",
+    "physicalConsent": "Firma en persona",
+    "physicalConsentField": "Este grupo firma también un consentimiento en persona",
+    "help": "El código aparece en el historial y no se puede cambiar desde aquí: elígelo con cuidado."
   }
 }

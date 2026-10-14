@@ -19,6 +19,8 @@ import type { StudyStatus } from "@/domain/study";
  *   to work through (D-043).
  * - `recruitmentOpen` is what the public landing page and `/participar` check
  *   before offering the hand-off at all.
+ * - `contactEmail` is the team mailbox (D-116): told about every new inquiry,
+ *   and the Reply-To of the emails the Hub sends on its own.
  *
  * EVERY CHANGE IS AUDITED WITH BEFORE AND AFTER, in full. These are
  * configuration, not participant data, so the whole value is safe to snapshot —
@@ -36,7 +38,7 @@ export class NotFoundError extends Error {
 }
 
 export class InvalidSettingError extends Error {
-  readonly field: "screeningUrl" | "timezone" | "title";
+  readonly field: "screeningUrl" | "timezone" | "title" | "contactEmail";
   constructor(field: InvalidSettingError["field"]) {
     super(field);
     this.name = "InvalidSettingError";
@@ -46,6 +48,12 @@ export class InvalidSettingError extends Error {
 
 export const TITLE_MAX_LENGTH = 200;
 export const SCREENING_URL_MAX_LENGTH = 500;
+export const CONTACT_EMAIL_MAX_LENGTH = 200;
+
+/** The same shape migration 0026 checks. */
+export function isValidContactEmail(email: string): boolean {
+  return email.length <= CONTACT_EMAIL_MAX_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
 
 /**
  * The same rule the database enforces (migration 0013): https, no whitespace,
@@ -88,6 +96,8 @@ export interface StudySettingsPatch {
   recruitmentOpen?: boolean;
   /** Empty string clears it, which is a real choice: recruitment with no URL. */
   screeningUrl?: string | null;
+  /** The team mailbox (D-116). Empty string clears it. */
+  contactEmail?: string | null;
 }
 
 /**
@@ -116,6 +126,9 @@ export async function updateStudySettings(params: {
   if (patch.screeningUrl) {
     if (!isValidScreeningUrl(patch.screeningUrl)) throw new InvalidSettingError("screeningUrl");
   }
+  if (patch.contactEmail && !isValidContactEmail(patch.contactEmail.trim())) {
+    throw new InvalidSettingError("contactEmail");
+  }
 
   await getDb().transaction(async (tx) => {
     const [current] = await tx.select().from(studies).where(eq(studies.id, studyId)).limit(1);
@@ -131,6 +144,10 @@ export async function updateStudySettings(params: {
         patch.screeningUrl === undefined
           ? current.screeningUrl
           : patch.screeningUrl?.trim() || null,
+      contactEmail:
+        patch.contactEmail === undefined
+          ? current.contactEmail
+          : patch.contactEmail?.trim() || null,
     };
 
     const before: Record<string, unknown> = {};

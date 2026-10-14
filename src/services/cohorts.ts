@@ -97,7 +97,9 @@ export class ConflictError extends Error {
     /** Already in the cohort being moved to; nothing to do. */
     | "sameCohort"
     /** `deleteCohort` was called with an empty or missing reason. */
-    | "deleteReasonRequired";
+    | "deleteReasonRequired"
+    /** The cohort to pair with already has a pair, or pairing would make a chain (D-116). */
+    | "pairUnavailable";
   constructor(reason: ConflictError["reason"]) {
     super(reason);
     this.name = "ConflictError";
@@ -246,6 +248,104 @@ export async function getCohortDetail(
   return { cohort, staff, members: members as CohortDetail["members"] };
 }
 
+/**
+ * Whether `cohortId` (null for one being created) may follow `pairedCohortId`'s
+ * calendar (D-116). One level only: a pair of two cohorts, never a chain, so
+ * "whose sessions time this email" always has exactly one answer.
+ */
+async function assertPairable(
+  tx: DbExecutor,
+  studyId: string,
+  cohortId: string | null,
+  pairedCohortId: string,
+): Promise<void> {
+  if (pairedCohortId === cohortId) throw new ConflictError("pairUnavailable");
+  const [target] = await tx
+    .select({ id: cohorts.id, pairedCohortId: cohorts.pairedCohortId })
+    .from(cohorts)
+    .where(and(eq(cohorts.id, pairedCohortId), eq(cohorts.studyId, studyId)))
+    .limit(1);
+  if (!target) throw new NotFoundError("cohort", pairedCohortId);
+  // The target follows someone else: pairing with it would make a chain.
+  if (target.pairedCohortId) throw new ConflictError("pairUnavailable");
+
+  const [taken] = await tx
+    .select({ id: cohorts.id })
+    .from(cohorts)
+    .where(eq(cohorts.pairedCohortId, pairedCohortId))
+    .limit(1);
+  if (taken && taken.id !== cohortId) throw new ConflictError("pairUnavailable");
+
+  // Something already follows this cohort: it cannot follow another in turn.
+  if (cohortId) {
+    const [follower] = await tx
+      .select({ id: cohorts.id })
+      .from(cohorts)
+      .where(eq(cohorts.pairedCohortId, cohortId))
+      .limit(1);
+    if (follower) throw new ConflictError("pairUnavailable");
+  }
+}
+
+export const ARM_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{0,23}$/;
+export const ARM_NAME_MAX_LENGTH = 80;
+
+/**
+ * Add a study arm — "Grupo control", "Grupo del programa" (D-116).
+ *
+ * Configuration, like session templates: the names are this trial's, so they
+ * are rows, never code (CLAUDE.md rule 6). Creating an arm allocates nobody;
+ * allocations are still recorded from the approved mechanism (D-018).
+ */
+export async function createStudyArm(params: {
+  studyId: string;
+  actorId: string;
+  code: string;
+  nameEs: string;
+  requiresPhysicalConsent: boolean;
+}): Promise<string> {
+  const code = params.code.trim().toUpperCase();
+  const nameEs = params.nameEs.trim();
+  if (!ARM_CODE_PATTERN.test(code) || !nameEs || nameEs.length > ARM_NAME_MAX_LENGTH) {
+    throw new ConflictError("duplicateCode");
+  }
+
+  return getDb().transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: studyArms.id })
+      .from(studyArms)
+      .where(and(eq(studyArms.studyId, params.studyId), eq(studyArms.code, code)))
+      .limit(1);
+    if (existing) throw new ConflictError("duplicateCode");
+
+    const [{ n }] = await tx
+      .select({ n: count() })
+      .from(studyArms)
+      .where(eq(studyArms.studyId, params.studyId));
+
+    const [created] = await tx
+      .insert(studyArms)
+      .values({
+        studyId: params.studyId,
+        code,
+        nameEs,
+        position: (Number(n) + 1) * 10,
+        requiresPhysicalConsent: params.requiresPhysicalConsent,
+      })
+      .returning({ id: studyArms.id });
+
+    await recordAuditEvent(tx, {
+      studyId: params.studyId,
+      actor: { type: "STAFF", id: params.actorId },
+      action: "study_arm.created",
+      entityType: "study_arm",
+      entityId: created.id,
+      after: { code, nameEs, requiresPhysicalConsent: params.requiresPhysicalConsent },
+    });
+    return created.id;
+  });
+}
+
 export async function listStudyArms(studyId: string): Promise<StudyArm[]> {
   return getDb()
     .select()
@@ -325,6 +425,8 @@ export async function createCohort(params: {
   armId?: string | null;
   minSize?: number | null;
   maxSize?: number | null;
+  /** The cohort whose calendar this one follows (D-116). */
+  pairedCohortId?: string | null;
 }): Promise<string> {
   const { studyId, actorId } = params;
   const code = params.code.trim().toUpperCase();
@@ -337,6 +439,7 @@ export async function createCohort(params: {
       .where(and(eq(cohorts.studyId, studyId), eq(cohorts.code, code)))
       .limit(1);
     if (existing) throw new ConflictError("duplicateCode");
+    if (params.pairedCohortId) await assertPairable(tx, studyId, null, params.pairedCohortId);
 
     const [created] = await tx
       .insert(cohorts)
@@ -350,6 +453,7 @@ export async function createCohort(params: {
         armId: params.armId || null,
         minSize: params.minSize ?? null,
         maxSize: params.maxSize ?? null,
+        pairedCohortId: params.pairedCohortId || null,
       })
       .returning({ id: cohorts.id });
 
@@ -366,6 +470,7 @@ export async function createCohort(params: {
         armId: params.armId || null,
         minSize: params.minSize ?? null,
         maxSize: params.maxSize ?? null,
+        pairedCohortId: params.pairedCohortId || null,
       },
     });
 
@@ -483,6 +588,8 @@ export async function updateCohort(params: {
   armId?: string | null;
   minSize?: number | null;
   maxSize?: number | null;
+  /** The cohort whose calendar this one follows (D-116). Null unpairs. */
+  pairedCohortId?: string | null;
 }): Promise<void> {
   const { studyId, cohortId, actorId } = params;
 
@@ -512,7 +619,13 @@ export async function updateCohort(params: {
       armId: params.armId !== undefined ? params.armId : current.armId,
       minSize: params.minSize !== undefined ? params.minSize : current.minSize,
       maxSize: params.maxSize !== undefined ? params.maxSize : current.maxSize,
+      pairedCohortId:
+        params.pairedCohortId !== undefined ? params.pairedCohortId || null : current.pairedCohortId,
     } satisfies Partial<Cohort>;
+
+    if (patch.pairedCohortId && patch.pairedCohortId !== current.pairedCohortId) {
+      await assertPairable(tx, studyId, cohortId, patch.pairedCohortId);
+    }
 
     // Nothing to audit or write when the submitted values match what is
     // already stored (e.g. the form was opened and saved without a change).
@@ -524,6 +637,7 @@ export async function updateCohort(params: {
       "armId",
       "minSize",
       "maxSize",
+      "pairedCohortId",
     ];
     const before: Record<string, unknown> = {};
     const after: Record<string, unknown> = {};

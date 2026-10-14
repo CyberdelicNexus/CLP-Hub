@@ -4,7 +4,7 @@ Operations platform for a Spanish-language randomized controlled trial: recruitm
 
 **Status: Phases 0–8 — operations, logistics, messaging and automation.** Staff triage, screening with recorded exclusion reasons, digital and in-person consent, cohorts with configured size bounds, recorded allocations, sessions, attendance, versioned public study pages, per-participant responsibles and initial visits, VR device logistics, WhatsApp message templates, and configurable automation rules that prepare work and raise alerts all exist.
 
-**Nothing in this repository sends anything.** Automation schedules, re-checks and *prepares*; a person copies the message and sends it (D-004, D-039, D-043).
+**WhatsApp is never sent by the Hub.** Automation schedules, re-checks and *prepares*; a person copies the message and sends it (D-004, D-039, D-043). The one exception is email: a rule in Automatic mode may send an individually-addressed email on its own, which is how the control group is reached (D-116).
 
 Initial screening happens in Qualtrics: `/clearlight/participar` collects nothing and hands people off, and identifiable screening data stays there (D-031). Nothing here is approved for real participant data; see `docs/research-data-boundaries.md`.
 
@@ -83,4 +83,4 @@ Emails stay role-based (unchanged); only the display name is a person's name, so
 
 ## Non-negotiables
 
-**Nothing sends.** There is no HTTP client, credential or endpoint in the communications or automation features; `tests/communication.test.ts` and `tests/automation.test.ts` assert the absence. No randomization algorithm — `src/domain/randomization.ts` records allocations made elsewhere and is guarded by a test asserting it contains no source of randomness. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.
+**Only email sends, and only through one module.** WhatsApp is always sent by a person. The automation feature itself holds no HTTP client or credential; an Automatic email goes through `src/services/email-delivery.ts`, and `tests/automation.test.ts` pins that the mailer has no other automated caller (D-116). No randomization algorithm — `src/domain/randomization.ts` records allocations made elsewhere and is guarded by a test asserting it contains no source of randomness. No invented eligibility criteria. No clinical data. Append-only audit. Synthetic data only in this repository. Trial-specific names, arms, schedules and rules come from configuration, never code.

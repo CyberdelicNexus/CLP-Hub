@@ -42,12 +42,18 @@ const envSchema = z.object({
    * replies to the person who asked. Both optional: with no key, notifications
    * are skipped with a log line and a reply is refused (so an answer is never
    * lost as "sent"). MAIL_FROM must be an address on a domain verified at Resend,
-   * e.g. `Clear Light <consultas@your-domain>`. APP_URL is the Hub's public
+   * e.g. `Clear Light <info@your-domain>`. APP_URL is the Hub's public
    * address, used only to link the inbox from a notification.
    */
   RESEND_API_KEY: blankIsUnset(z.string().min(1)),
   MAIL_FROM: blankIsUnset(z.string().min(3)),
   APP_URL: blankIsUnset(z.string().url()),
+  /**
+   * Signing secret of the Resend webhook that posts emails received at the
+   * study's address (D-118), `whsec_...`. Unset means the webhook endpoint
+   * refuses everything (503): closed, not open.
+   */
+  RESEND_WEBHOOK_SECRET: blankIsUnset(z.string().min(10)),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;

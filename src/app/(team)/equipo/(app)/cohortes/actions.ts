@@ -59,6 +59,7 @@ export type CohortState = {
     | "sizeUnder"
     | "sizeOver"
     | "deleteReasonRequired"
+    | "pairUnavailable"
     | "failed"
     | null;
   ok?: boolean;
@@ -137,6 +138,7 @@ const createSchema = z.object({
   armId: z.union([uuid, z.literal("")]).optional(),
   minSize: positiveIntOrNull,
   maxSize: positiveIntOrNull,
+  pairedCohortId: z.union([uuid, z.literal("")]).optional(),
 });
 
 export async function createCohortAction(
@@ -154,6 +156,7 @@ export async function createCohortAction(
     armId: formData.get("armId") ?? undefined,
     minSize: formData.get("minSize") ?? undefined,
     maxSize: formData.get("maxSize") ?? undefined,
+    pairedCohortId: formData.get("pairedCohortId") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -169,6 +172,7 @@ export async function createCohortAction(
       armId: parsed.data.armId || null,
       minSize: parsed.data.minSize,
       maxSize: parsed.data.maxSize,
+      pairedCohortId: parsed.data.pairedCohortId || null,
     });
   } catch (err) {
     return fail(err, "cohort.create");
@@ -191,6 +195,7 @@ const updateSchema = z.object({
   armId: z.union([uuid, z.literal("")]).optional(),
   minSize: positiveIntOrNull,
   maxSize: positiveIntOrNull,
+  pairedCohortId: z.union([uuid, z.literal("")]).optional(),
 });
 
 export async function updateCohortAction(
@@ -209,6 +214,7 @@ export async function updateCohortAction(
     armId: formData.get("armId") ?? undefined,
     minSize: formData.get("minSize") ?? undefined,
     maxSize: formData.get("maxSize") ?? undefined,
+    pairedCohortId: formData.get("pairedCohortId") ?? undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -225,6 +231,9 @@ export async function updateCohortAction(
       armId: parsed.data.armId || null,
       minSize: parsed.data.minSize,
       maxSize: parsed.data.maxSize,
+      // Only a form that offers the field can unpair: absent means "leave it".
+      pairedCohortId:
+        parsed.data.pairedCohortId === undefined ? undefined : parsed.data.pairedCohortId || null,
     });
   } catch (err) {
     return fail(err, "cohort.update");

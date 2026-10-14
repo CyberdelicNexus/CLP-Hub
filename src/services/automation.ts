@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, inArray, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
@@ -16,20 +16,26 @@ import {
   scheduledActions,
   screenings,
   sessionAttendance,
+  sessionTemplates,
+  studyArms,
   studyEvents,
   tasks,
   users,
   type Alert,
   type AutomationRule,
+  type CommunicationTemplate,
   type ScheduledAction,
   type Task,
 } from "@/db/schema";
 import {
   alertDedupeKey,
+  automaticTemplateProblem,
   decide,
   isDeliveryModeAvailable,
   invalidatesPriorSchedule,
   parseConditions,
+  resolveScope,
+  sessionScopeMatches,
   scheduledFor as computeScheduledFor,
   severityFor,
   SKIP_REASON_MAX_LENGTH,
@@ -41,19 +47,21 @@ import {
   type DeliveryMode,
   type EventType,
   type RuleConditions,
+  type ScopeCohort,
   type SubjectKind,
   type TaskPriority,
 } from "@/domain/automation";
 import { assessCohortSize } from "@/domain/cohort";
+import { deliverAutomaticEmail, isMailConfigured } from "./email-delivery";
 
 /**
  * Automation (Phase 8): events in, scheduled work out.
  *
- * THIS SERVICE SENDS NOTHING, and there is no HTTP client, credential or
- * endpoint anywhere in it. The furthest `processDueActions` moves an action is
- * READY — prepared, re-checked against the state as it is at that moment, and
- * waiting for a person (D-004, D-039, D-043). `tests/automation.test.ts` asserts
- * the absence over this file rather than trusting it.
+ * There is no HTTP client, credential or endpoint in this file, and
+ * `tests/automation.test.ts` asserts it. A MANUAL action stops at READY,
+ * waiting for a person (D-004, D-039, D-043). An AUTOMATIC one, which D-116
+ * allows for email only, is handed to `email-delivery.ts`, the single place a
+ * rule reaches an inbox.
  *
  * Three rules the code here keeps, each of which is a decision someone could
  * otherwise undo by accident:
@@ -78,7 +86,13 @@ export class NotFoundError extends Error {
 }
 
 export class RuleError extends Error {
-  readonly problem: "unavailableDeliveryMode" | "invalidOffset" | "duplicateKey" | "shape";
+  readonly problem:
+    | "unavailableDeliveryMode"
+    | "invalidOffset"
+    | "duplicateKey"
+    | "shape"
+    /** AUTOMATIC with a template that is not an individual email with safe variables. */
+    | "automaticTemplate";
   constructor(problem: RuleError["problem"]) {
     super(problem);
     this.name = "RuleError";
@@ -217,10 +231,23 @@ export async function recordStudyEvent(
     .orderBy(asc(automationRules.position), asc(automationRules.key));
 
   let scheduled = 0;
+  // Read once, and only if some rule is scoped: most events match no scoped rule.
+  let scope: ScopeContext | null = null;
   for (const rule of rules) {
     // A rule saved before a constraint existed, or edited by hand, must not stop
-    // the transaction that is recording real work.
-    if (!isDeliveryModeAvailable(rule.deliveryMode)) continue;
+    // the transaction that is recording real work. Whether an AUTOMATIC message
+    // is an email is checked when it comes due, against the template as it is then.
+    if (rule.deliveryMode === "AUTOMATIC" && rule.actionKind !== "MESSAGE") continue;
+
+    // Scoped rules (D-116): to one session template, to cohorts of one arm.
+    let audienceCohortId: string | null = null;
+    if (rule.armId || rule.sessionTemplateId) {
+      scope ??= await loadScopeContext(executor, input.subject);
+      if (!sessionScopeMatches(rule.sessionTemplateId, scope.sessionTemplateId)) continue;
+      const resolved = resolveScope(rule.armId, scope.cohort, scope.partners);
+      if (!resolved.applies) continue;
+      audienceCohortId = resolved.audienceCohortId;
+    }
 
     const inserted = await executor
       .insert(scheduledActions)
@@ -229,6 +256,7 @@ export async function recordStudyEvent(
         ruleId: rule.id,
         eventId: event.id,
         ...cols,
+        audienceCohortId,
         actionKind: rule.actionKind,
         deliveryMode: rule.deliveryMode,
         scheduledFor: computeScheduledFor(anchorAt, rule.offsetMinutes),
@@ -268,6 +296,78 @@ export async function recordStudyEvent(
   });
 
   return { eventId: event.id, scheduled, cancelled };
+}
+
+/** What a scoped rule reads about an event's subject. Configuration only. */
+interface ScopeContext {
+  cohort: ScopeCohort | null;
+  partners: ScopeCohort[];
+  sessionTemplateId: string | null;
+}
+
+/**
+ * The cohort an event is about, the cohorts paired with it, and the session
+ * template, for `resolveScope`. Reads cohort configuration (its arm, its pair),
+ * never a participant's allocation.
+ *
+ * An event about one participant looks only at their own current cohort: a
+ * rule for the control arm must not fire because someone in the programme
+ * cohort did something.
+ */
+async function loadScopeContext(executor: DbExecutor, subject: Subject): Promise<ScopeContext> {
+  let cohortId: string | null = null;
+  let sessionTemplateId: string | null = null;
+  const withPartners = subject.kind !== "PARTICIPANT";
+
+  if (subject.kind === "SESSION") {
+    const [session] = await executor
+      .select({ cohortId: cohortSessions.cohortId, templateId: cohortSessions.templateId })
+      .from(cohortSessions)
+      .where(eq(cohortSessions.id, subject.id))
+      .limit(1);
+    cohortId = session?.cohortId ?? null;
+    sessionTemplateId = session?.templateId ?? null;
+  } else if (subject.kind === "COHORT") {
+    cohortId = subject.id;
+  } else if (subject.kind === "PARTICIPANT") {
+    const [assignment] = await executor
+      .select({ cohortId: participantCohortAssignments.cohortId })
+      .from(participantCohortAssignments)
+      .where(
+        and(
+          eq(participantCohortAssignments.participantId, subject.id),
+          isNull(participantCohortAssignments.removedAt),
+        ),
+      )
+      .limit(1);
+    cohortId = assignment?.cohortId ?? null;
+  }
+
+  if (!cohortId) return { cohort: null, partners: [], sessionTemplateId };
+
+  const [cohort] = await executor
+    .select({ id: cohorts.id, armId: cohorts.armId, pairedCohortId: cohorts.pairedCohortId })
+    .from(cohorts)
+    .where(eq(cohorts.id, cohortId))
+    .limit(1);
+  if (!cohort) return { cohort: null, partners: [], sessionTemplateId };
+
+  const partners = withPartners
+    ? await executor
+        .select({ id: cohorts.id, armId: cohorts.armId })
+        .from(cohorts)
+        .where(
+          and(
+            or(
+              eq(cohorts.pairedCohortId, cohort.id),
+              cohort.pairedCohortId ? eq(cohorts.id, cohort.pairedCohortId) : sql`false`,
+            ),
+            isNull(cohorts.archivedAt),
+          ),
+        )
+    : [];
+
+  return { cohort: { id: cohort.id, armId: cohort.armId }, partners, sessionTemplateId };
 }
 
 /** Cancel every still-open action pointing at this subject. */
@@ -326,6 +426,8 @@ async function cancelOpenActionsFor(
 export async function gatherFacts(
   executor: DbExecutor,
   subject: Subject,
+  /** A scoped action's audience cohort (D-116): the cohort questions are about it. */
+  audienceCohortId: string | null = null,
 ): Promise<ConditionFacts> {
   const facts: ConditionFacts = {
     participantActive: true,
@@ -379,6 +481,8 @@ export async function gatherFacts(
     facts.deviceOut = Boolean(open);
     participantId = open?.participantId ?? null;
   }
+
+  if (audienceCohortId) cohortId = audienceCohortId;
 
   if (cohortId) {
     const [cohort] = await executor
@@ -454,6 +558,10 @@ export interface ProcessSummary {
   completed: number;
   skipped: number;
   failed: number;
+  /** AUTOMATIC emails sent to at least one recipient (D-116). */
+  sent: number;
+  /** AUTOMATIC emails left PENDING because no sender is configured. */
+  deferred: number;
 }
 
 /**
@@ -502,6 +610,8 @@ export async function processDueActions(params: {
     completed: 0,
     skipped: 0,
     failed: 0,
+    sent: 0,
+    deferred: 0,
   };
 
   for (const action of due) {
@@ -509,6 +619,8 @@ export async function processDueActions(params: {
       const outcome = await processOne(action, now);
       if (outcome === "prepared") summary.prepared += 1;
       else if (outcome === "completed") summary.completed += 1;
+      else if (outcome === "sent") summary.sent += 1;
+      else if (outcome === "deferred") summary.deferred += 1;
       else summary.skipped += 1;
     } catch (err) {
       summary.failed += 1;
@@ -519,7 +631,7 @@ export async function processDueActions(params: {
   return summary;
 }
 
-type Outcome = "prepared" | "completed" | "skipped";
+type Outcome = "prepared" | "completed" | "skipped" | "sent" | "deferred";
 
 async function processOne(action: ScheduledAction, now: Date): Promise<Outcome> {
   const db = getDb();
@@ -531,17 +643,32 @@ async function processOne(action: ScheduledAction, now: Date): Promise<Outcome> 
     .limit(1);
   if (!rule) throw new NotFoundError("automation_rule", action.ruleId);
 
+  // A MESSAGE action is about its template as it stands NOW: edited to WhatsApp
+  // since the rule was saved, an AUTOMATIC one is refused rather than sent.
+  const [template] =
+    action.actionKind === "MESSAGE" && rule.communicationTemplateId
+      ? await db
+          .select()
+          .from(communicationTemplates)
+          .where(eq(communicationTemplates.id, rule.communicationTemplateId))
+          .limit(1)
+      : [];
+  if (action.actionKind === "MESSAGE" && !template) {
+    throw new NotFoundError("communication_template", rule.communicationTemplateId ?? "none");
+  }
+
   // Unknown condition keys are dropped rather than fatal: a row written by an
   // older version must not make every run throw. What it must not do is take
   // effect silently, so the drop is reported as a misconfiguration.
   const { conditions, dropped } = parseConditions(rule.conditionsJson);
   const subject = subjectOf(action);
-  const facts = await gatherFacts(db, subject);
+  const facts = await gatherFacts(db, subject, action.audienceCohortId);
 
   const verdict = decide({
     conditions,
     facts,
     deliveryMode: action.deliveryMode as DeliveryMode,
+    channel: template?.channel ?? null,
   });
 
   if (dropped.length > 0) {
@@ -558,34 +685,29 @@ async function processOne(action: ScheduledAction, now: Date): Promise<Outcome> 
     throw new RuleError("unavailableDeliveryMode");
   }
 
-  if (verdict.decision === "skip") {
-    await db.transaction(async (tx) => {
-      await tx
-        .update(scheduledActions)
-        .set({
-          status: "SKIPPED",
-          // The unmet conditions, as a vocabulary rather than prose, so
-          // "how often do we skip because someone withdrew" is countable.
-          skipReason: verdict.unmet.join(",").slice(0, SKIP_REASON_MAX_LENGTH),
-          processedAt: now,
-        })
-        .where(eq(scheduledActions.id, action.id));
+  // The scope is re-checked like a condition: someone moved to another cohort,
+  // or a pair undone, since this was planned no longer receives it (D-116).
+  const unmet: string[] = verdict.decision === "skip" ? [...verdict.unmet] : [];
+  if (rule.armId) {
+    const context = await loadScopeContext(db, subject);
+    const current = resolveScope(rule.armId, context.cohort, context.partners);
+    if (!current.applies || current.audienceCohortId !== action.audienceCohortId) {
+      unmet.push("outOfScope");
+    }
+  }
 
-      await recordAuditEvent(tx, {
-        studyId: action.studyId,
-        actor: { type: "SYSTEM" },
-        action: "scheduled_action.skipped",
-        entityType: "scheduled_action",
-        entityId: action.id,
-        after: { ruleKey: rule.key, unmet: verdict.unmet },
-      });
-    });
+  if (unmet.length > 0) {
+    await skipAction(action, rule.key, unmet, now);
     return "skipped";
   }
 
+  if (action.actionKind === "MESSAGE" && action.deliveryMode === "AUTOMATIC" && template) {
+    return sendAutomatic(action, rule, template, now);
+  }
+
   // From here the action is going ahead. What "going ahead" means depends on
-  // what it produces — and for a message it means putting it in front of a
-  // person, never sending it.
+  // what it produces — and for a MANUAL message it means putting it in front of
+  // a person, never sending it.
   if (action.actionKind === "MESSAGE") {
     await db.transaction(async (tx) => {
       await tx
@@ -620,6 +742,182 @@ async function processOne(action: ScheduledAction, now: Date): Promise<Outcome> 
   });
   await closeAction(action.id, action.studyId, rule.key, now);
   return "completed";
+}
+
+async function skipAction(
+  action: ScheduledAction,
+  ruleKey: string,
+  unmet: readonly string[],
+  now: Date,
+): Promise<void> {
+  await getDb().transaction(async (tx) => {
+    await tx
+      .update(scheduledActions)
+      .set({
+        status: "SKIPPED",
+        // The unmet conditions, as a vocabulary rather than prose, so
+        // "how often do we skip because someone withdrew" is countable.
+        skipReason: unmet.join(",").slice(0, SKIP_REASON_MAX_LENGTH),
+        processedAt: now,
+      })
+      .where(eq(scheduledActions.id, action.id));
+
+    await recordAuditEvent(tx, {
+      studyId: action.studyId,
+      actor: { type: "SYSTEM" },
+      action: "scheduled_action.skipped",
+      entityType: "scheduled_action",
+      entityId: action.id,
+      after: { ruleKey, unmet },
+    });
+  });
+}
+
+/**
+ * Who an automatic email goes to: the participant the action is about, or every
+ * active member of the cohort it is for — the scoped audience cohort first,
+ * else the subject's own cohort. One email per person, never a group email.
+ */
+async function automaticRecipients(action: ScheduledAction): Promise<string[]> {
+  const db = getDb();
+  if (action.subjectKind === "PARTICIPANT" && action.participantId) return [action.participantId];
+
+  let cohortId = action.audienceCohortId ?? action.cohortId;
+  if (!cohortId && action.sessionId) {
+    const [session] = await db
+      .select({ cohortId: cohortSessions.cohortId })
+      .from(cohortSessions)
+      .where(eq(cohortSessions.id, action.sessionId))
+      .limit(1);
+    cohortId = session?.cohortId ?? null;
+  }
+  if (!cohortId) return [];
+
+  const members = await db
+    .select({ id: participants.id, enrollment: participants.enrollmentStatus })
+    .from(participantCohortAssignments)
+    .innerJoin(participants, eq(participants.id, participantCohortAssignments.participantId))
+    .where(
+      and(
+        eq(participantCohortAssignments.cohortId, cohortId),
+        isNull(participantCohortAssignments.removedAt),
+      ),
+    );
+  // The same reading as `participantActive`: someone who withdrew or finished
+  // is not written to, without that being a failure anyone has to look at.
+  return members
+    .filter((m) => m.enrollment !== "WITHDRAWN" && m.enrollment !== "COMPLETED")
+    .map((m) => m.id);
+}
+
+/**
+ * Send an AUTOMATIC email action (D-116).
+ *
+ * - No sender configured: nothing is claimed, the action stays PENDING, and a
+ *   CRITICAL alert says so. Once mail is configured it goes out, late, with its
+ *   original time visible: the same "no grace window" rule as everything else.
+ * - Otherwise the action is claimed (PENDING → READY) so an overlapping run
+ *   cannot take it too, then sent. Every recipient who got it has a
+ *   `communications` row; anyone who did not is named by code in an alert. It
+ *   is never retried: the batch would reach the people who already got it.
+ */
+async function sendAutomatic(
+  action: ScheduledAction,
+  rule: AutomationRule,
+  template: CommunicationTemplate,
+  now: Date,
+): Promise<Outcome> {
+  const db = getDb();
+
+  if (automaticTemplateProblem(template)) throw new RuleError("automaticTemplate");
+
+  if (!isMailConfigured()) {
+    await raiseAlert({
+      studyId: action.studyId,
+      kind: "EMAIL_NOT_CONFIGURED",
+      subject: { kind: "STUDY" },
+      detail: rule.key,
+      ruleId: rule.id,
+    });
+    return "deferred";
+  }
+
+  const claimed = await db
+    .update(scheduledActions)
+    .set({ status: "READY", processedAt: now })
+    .where(and(eq(scheduledActions.id, action.id), eq(scheduledActions.status, "PENDING")))
+    .returning({ id: scheduledActions.id });
+  if (claimed.length === 0) return "deferred";
+
+  const recipients = await automaticRecipients(action);
+  if (recipients.length === 0) {
+    await skipAction(action, rule.key, ["noRecipients"], now);
+    return "skipped";
+  }
+
+  const result = await deliverAutomaticEmail({
+    studyId: action.studyId,
+    actionId: action.id,
+    ruleKey: rule.key,
+    template,
+    participantIds: recipients,
+  });
+  if (result.kind === "templateRefused") throw new RuleError("automaticTemplate");
+  if (result.kind === "notConfigured") {
+    // Configuration vanished between the check and the send. Put it back.
+    await db
+      .update(scheduledActions)
+      .set({ status: "PENDING", processedAt: null })
+      .where(eq(scheduledActions.id, action.id));
+    return "deferred";
+  }
+
+  const sent = result.communicationIds.length;
+  const failed = result.failures.length;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(scheduledActions)
+      .set(
+        sent > 0
+          ? {
+              status: "DONE",
+              completedAt: now,
+              // One communication can be linked; a cohort batch is found by
+              // the audit rows that name this action.
+              communicationId: sent === 1 ? result.communicationIds[0] : null,
+              skipReason: failed > 0 ? `emailNotSent:${failed}` : null,
+            }
+          : { status: "FAILED", skipReason: `emailNotSent:${failed}` },
+      )
+      .where(eq(scheduledActions.id, action.id));
+
+    await recordAuditEvent(tx, {
+      studyId: action.studyId,
+      actor: { type: "SYSTEM" },
+      action: "scheduled_action.sent",
+      entityType: "scheduled_action",
+      entityId: action.id,
+      after: { ruleKey: rule.key, sent, failed },
+    });
+  });
+
+  if (failed > 0) {
+    await raiseAlert({
+      studyId: action.studyId,
+      kind: "EMAIL_NOT_SENT",
+      subject: subjectOf(action),
+      // Codes and a reason vocabulary only, never an address.
+      detail: `${rule.key}: ${result.failures
+        .map((f) => `${f.participantCode} (${f.reason})`)
+        .join(", ")}`,
+      ruleId: rule.id,
+      scheduledActionId: action.id,
+      refreshDetail: true,
+    });
+  }
+
+  return sent > 0 ? "sent" : "skipped";
 }
 
 /** Create the task a TASK rule asks for, and finish the action that produced it. */
@@ -883,6 +1181,12 @@ export async function raiseAlert(params: {
   ruleId?: string | null;
   scheduledActionId?: string | null;
   now?: Date;
+  /**
+   * Replace the detail of an alert that is already open. For a failure that
+   * carries new facts each time (EMAIL_NOT_SENT names who was missed); a sweep
+   * leaves it unset so its alert keeps the wording it was raised with.
+   */
+  refreshDetail?: boolean;
 }): Promise<boolean> {
   const now = params.now ?? new Date();
   const subjectId = params.subject.kind === "STUDY" ? params.studyId : params.subject.id;
@@ -907,7 +1211,13 @@ export async function raiseAlert(params: {
     if (existing) {
       // Still true. One row, two answerable questions: since when, and as of
       // when. No audit row — nothing changed that anyone decided.
-      await tx.update(alerts).set({ lastSeenAt: now }).where(eq(alerts.id, existing.id));
+      await tx
+        .update(alerts)
+        .set({
+          lastSeenAt: now,
+          ...(params.refreshDetail ? { detail: params.detail?.slice(0, 280) ?? null } : {}),
+        })
+        .where(eq(alerts.id, existing.id));
       return false;
     }
 
@@ -1301,7 +1611,7 @@ export async function listPreparedActions(
     .leftJoin(cohortSessions, eq(cohortSessions.id, scheduledActions.sessionId))
     .leftJoin(
       cohorts,
-      sql`${cohorts.id} = coalesce(${scheduledActions.cohortId}, ${cohortSessions.cohortId})`,
+      sql`${cohorts.id} = coalesce(${scheduledActions.audienceCohortId}, ${scheduledActions.cohortId}, ${cohortSessions.cohortId})`,
     )
     .where(
       and(
@@ -1378,21 +1688,43 @@ export async function completeMessageAction(params: {
 
 export interface RuleRow extends AutomationRule {
   templateName: string | null;
+  armName: string | null;
+  sessionTemplateName: string | null;
 }
 
 export async function listRules(studyId: string): Promise<RuleRow[]> {
   const rows = await getDb()
-    .select({ rule: automationRules, templateName: communicationTemplates.nameEs })
+    .select({
+      rule: automationRules,
+      templateName: communicationTemplates.nameEs,
+      armName: studyArms.nameEs,
+      sessionTemplateName: sessionTemplates.nameEs,
+    })
     .from(automationRules)
     .leftJoin(
       communicationTemplates,
       eq(communicationTemplates.id, automationRules.communicationTemplateId),
     )
+    .leftJoin(studyArms, eq(studyArms.id, automationRules.armId))
+    .leftJoin(sessionTemplates, eq(sessionTemplates.id, automationRules.sessionTemplateId))
     .where(eq(automationRules.studyId, studyId))
     .orderBy(asc(automationRules.eventType), asc(automationRules.position), asc(automationRules.key));
 
-  return rows.map((r) => ({ ...r.rule, templateName: r.templateName }));
+  return rows.map((r) => ({
+    ...r.rule,
+    templateName: r.templateName,
+    armName: r.armName,
+    sessionTemplateName: r.sessionTemplateName,
+  }));
 }
+
+/** The events whose subject is a session, so the only ones a session scope can match. */
+const SESSION_EVENTS: readonly EventType[] = [
+  "SESSION_SCHEDULED",
+  "SESSION_RESCHEDULED",
+  "SESSION_CANCELLED",
+  "SESSION_HELD",
+];
 
 export async function createRule(params: {
   studyId: string;
@@ -1408,15 +1740,63 @@ export async function createRule(params: {
   taskPriority?: TaskPriority;
   alertKind?: AlertKind | null;
   conditions?: RuleConditions;
+  /** Scope to cohorts running this arm (D-116). */
+  armId?: string | null;
+  /** Scope to sessions of this template. Session events only. */
+  sessionTemplateId?: string | null;
 }): Promise<string> {
   const key = params.key.trim().toLowerCase();
   const deliveryMode = params.deliveryMode ?? "MANUAL";
+  const armId = params.armId || null;
+  const sessionTemplateId = params.sessionTemplateId || null;
 
-  // Refused here, not at execution time. A rule saved as AUTOMATIC and quietly
-  // downgraded when it fires would tell the team their reminders were going out.
-  if (!isDeliveryModeAvailable(deliveryMode)) throw new RuleError("unavailableDeliveryMode");
+  if (deliveryMode === "AUTOMATIC" && params.actionKind !== "MESSAGE") {
+    throw new RuleError("unavailableDeliveryMode");
+  }
+  if (sessionTemplateId && !SESSION_EVENTS.includes(params.eventType)) throw new RuleError("shape");
 
   return getDb().transaction(async (tx) => {
+    // Refused here, not at execution time. A rule saved as AUTOMATIC and quietly
+    // downgraded when it fires would tell the team their messages were going
+    // out. AUTOMATIC means an individual EMAIL with only always-known values.
+    if (params.actionKind === "MESSAGE" && params.communicationTemplateId) {
+      const [template] = await tx
+        .select()
+        .from(communicationTemplates)
+        .where(
+          and(
+            eq(communicationTemplates.id, params.communicationTemplateId),
+            eq(communicationTemplates.studyId, params.studyId),
+          ),
+        )
+        .limit(1);
+      if (!template) throw new NotFoundError("communication_template", params.communicationTemplateId);
+      if (!isDeliveryModeAvailable(deliveryMode, template.channel)) {
+        throw new RuleError("unavailableDeliveryMode");
+      }
+      if (deliveryMode === "AUTOMATIC" && automaticTemplateProblem(template)) {
+        throw new RuleError("automaticTemplate");
+      }
+    }
+    if (armId) {
+      const [arm] = await tx
+        .select({ id: studyArms.id })
+        .from(studyArms)
+        .where(and(eq(studyArms.id, armId), eq(studyArms.studyId, params.studyId)))
+        .limit(1);
+      if (!arm) throw new NotFoundError("study_arm", armId);
+    }
+    if (sessionTemplateId) {
+      const [tpl] = await tx
+        .select({ id: sessionTemplates.id })
+        .from(sessionTemplates)
+        .where(
+          and(eq(sessionTemplates.id, sessionTemplateId), eq(sessionTemplates.studyId, params.studyId)),
+        )
+        .limit(1);
+      if (!tpl) throw new NotFoundError("session_template", sessionTemplateId);
+    }
+
     const [existing] = await tx
       .select({ id: automationRules.id })
       .from(automationRules)
@@ -1440,6 +1820,8 @@ export async function createRule(params: {
         taskPriority: params.taskPriority ?? "NORMAL",
         alertKind: params.actionKind === "ALERT" ? (params.alertKind ?? null) : null,
         conditionsJson: params.conditions ?? {},
+        armId,
+        sessionTemplateId,
       })
       .returning({ id: automationRules.id });
 
@@ -1458,6 +1840,8 @@ export async function createRule(params: {
         offsetMinutes: params.offsetMinutes,
         deliveryMode,
         conditions: params.conditions ?? {},
+        armId,
+        sessionTemplateId,
       },
     });
 
