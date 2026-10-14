@@ -1450,7 +1450,8 @@
       "contactEmail": "Enter a valid email address."
     },
     "contactEmail": "Team mailbox",
-    "contactEmailHelp": "Gets the notice for every new inquiry, alongside the people who answer inquiries, and is the reply-to address of the emails the Hub sends on its own. Leave it empty to not use one."
+    "contactEmailHelp": "Gets the notice for every new inquiry, alongside the people who answer inquiries, and is the reply-to address of the emails the Hub sends on its own. Leave it empty to not use one.",
+    "notifyStaffOfInquiries": "Also notify the people who answer inquiries of each new one (otherwise only the team mailbox)"
   },
   "program": {
     "title": "Programme",

@@ -15,7 +15,7 @@ export function staffNotification(params: { count: number; inboxUrl: string | nu
   const { count, inboxUrl } = params;
   const lines = [
     count === 1
-      ? "Ha llegado una consulta nueva desde la web de Clear Light."
+      ? "Ha llegado una consulta nueva a Clear Light, desde la web o por email a info@."
       : `Hay ${count} consultas nuevas sin responder en el Hub.`,
     "",
     inboxUrl ? `Léela y respóndela en el Hub: ${inboxUrl}` : "Léela y respóndela en el Hub, en Consultas.",

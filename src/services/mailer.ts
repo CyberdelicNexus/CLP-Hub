@@ -26,6 +26,10 @@ export interface MailInput {
    * processor run that overlaps or retries cannot send the same email twice.
    */
   idempotencyKey?: string;
+  /** The branded HTML part (D-119). `text` is always sent too. */
+  html?: string;
+  /** Inline images referenced from `html` as `cid:<content_id>`, e.g. the logo. */
+  attachments?: readonly { filename: string; content: string; content_id: string }[];
 }
 
 const RESEND_URL = "https://api.resend.com/emails";
@@ -98,6 +102,8 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
         to: input.to,
         subject: input.subject,
         text: input.text,
+        ...(input.html ? { html: input.html } : {}),
+        ...(input.attachments?.length ? { attachments: input.attachments } : {}),
         ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       }),
       signal: AbortSignal.timeout(15_000),

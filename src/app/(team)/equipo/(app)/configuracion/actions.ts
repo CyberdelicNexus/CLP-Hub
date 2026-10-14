@@ -127,6 +127,7 @@ const settingsSchema = z.object({
   recruitmentOpen: z.union([z.literal("on"), z.literal("")]).optional(),
   screeningUrl: z.string().trim().max(SCREENING_URL_MAX_LENGTH).optional(),
   contactEmail: z.string().trim().max(CONTACT_EMAIL_MAX_LENGTH).optional(),
+  notifyStaffOfInquiries: z.union([z.literal("on"), z.literal("")]).optional(),
 });
 
 export async function updateSettingsAction(
@@ -144,6 +145,7 @@ export async function updateSettingsAction(
     recruitmentOpen: formData.get("recruitmentOpen") ?? "",
     screeningUrl: formData.get("screeningUrl") ?? undefined,
     contactEmail: formData.get("contactEmail") ?? undefined,
+    notifyStaffOfInquiries: formData.get("notifyStaffOfInquiries") ?? "",
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -162,6 +164,7 @@ export async function updateSettingsAction(
         // with nowhere to send people is a state the team may be mid-way through.
         screeningUrl: parsed.data.screeningUrl ?? "",
         contactEmail: parsed.data.contactEmail ?? "",
+        notifyStaffOfInquiries: parsed.data.notifyStaffOfInquiries === "on",
       },
     });
   } catch (err) {

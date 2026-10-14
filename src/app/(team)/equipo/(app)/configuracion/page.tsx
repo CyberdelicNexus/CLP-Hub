@@ -133,6 +133,7 @@ export default async function SettingsPage() {
               recruitmentOpen: study.recruitmentOpen,
               screeningUrl: study.screeningUrl,
               contactEmail: study.contactEmail,
+              notifyStaffOfInquiries: study.notifyStaffOfInquiries,
             }}
             statuses={STUDY_STATUSES.map((s) => ({ value: s, label: t(`status.study.${s}`) }))}
             locales={LOCALES.map((l) => ({ value: l, label: t(`locale.${l}`) }))}
@@ -149,6 +150,7 @@ export default async function SettingsPage() {
               screeningUrlHelp: t("settings.screeningUrlHelp"),
               contactEmail: t("settings.contactEmail"),
               contactEmailHelp: t("settings.contactEmailHelp"),
+              notifyStaffOfInquiries: t("settings.notifyStaffOfInquiries"),
               saved: t("settings.saved"),
             }}
           />

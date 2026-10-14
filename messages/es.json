@@ -1450,7 +1450,8 @@
       "contactEmail": "Escribe una dirección de email válida."
     },
     "contactEmail": "Buzón del equipo",
-    "contactEmailHelp": "Recibe el aviso de cada consulta nueva, además de las personas que responden consultas, y es la dirección de respuesta de los emails que el Hub envía solo. Déjalo vacío para no usarlo."
+    "contactEmailHelp": "Recibe el aviso de cada consulta nueva, además de las personas que responden consultas, y es la dirección de respuesta de los emails que el Hub envía solo. Déjalo vacío para no usarlo.",
+    "notifyStaffOfInquiries": "Avisar de cada consulta nueva también a quienes responden consultas (si no, solo al buzón del equipo)"
   },
   "program": {
     "title": "Programa",

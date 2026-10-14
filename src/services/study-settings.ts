@@ -98,6 +98,8 @@ export interface StudySettingsPatch {
   screeningUrl?: string | null;
   /** The team mailbox (D-116). Empty string clears it. */
   contactEmail?: string | null;
+  /** Also notify the staff who answer inquiries, not only the mailbox (D-119). */
+  notifyStaffOfInquiries?: boolean;
 }
 
 /**
@@ -148,6 +150,7 @@ export async function updateStudySettings(params: {
         patch.contactEmail === undefined
           ? current.contactEmail
           : patch.contactEmail?.trim() || null,
+      notifyStaffOfInquiries: patch.notifyStaffOfInquiries ?? current.notifyStaffOfInquiries,
     };
 
     const before: Record<string, unknown> = {};

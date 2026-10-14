@@ -31,6 +31,11 @@ export const studies = pgTable("studies", {
    * email the Hub sends on its own, so a participant's answer reaches a person.
    */
   contactEmail: text("contact_email"),
+  /**
+   * Whether a new inquiry also notifies everyone who answers inquiries, or only
+   * the team mailbox above (D-119). True for every study unless switched off.
+   */
+  notifyStaffOfInquiries: boolean("notify_staff_of_inquiries").notNull().default(true),
   recruitmentStart: date("recruitment_start"),
   recruitmentEnd: date("recruitment_end"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

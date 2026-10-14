@@ -101,7 +101,7 @@ to the person, through Resend (`src/services/mailer.ts`).
 
 | Variable | Value |
 |---|---|
-| `RESEND_API_KEY` | A Resend API key. "Sending access" is enough for the app. |
+| `RESEND_API_KEY` | A Resend API key with **Full access**. A "Sending access" key can send but cannot read received emails, so D-118's inbox would refuse every email to info@ (Resend answers `restricted_api_key`; found 2026-10-14). |
 | `MAIL_FROM` | The sender, `Clear Light <address@your-verified-domain>`. |
 | `APP_URL` | The Hub's public address, only to link the inbox from the notification. |
 
@@ -127,10 +127,11 @@ not the account owner's.
    Resend (propagation is usually minutes, up to 48 hours).
 4. Set `MAIL_FROM` to an address on that domain and redeploy.
 
-The API key created for the app should be "sending access" and, if the domain is
-verified, restricted to that domain. It cannot manage domains, which is why
-domain setup is done in the Resend dashboard (or with a separate full-access key
-kept out of the app's environment).
+Since D-118 the app's key must be **Full access**: reading an email received at
+info@ (`GET /emails/receiving/{id}`) is refused to a sending-only key. Resend has
+no narrower permission that covers both sending and reading received mail, so
+this key can also manage the account's domains: keep it only in Vercel and
+`.env.local`, and rotate it if it is ever exposed.
 
 ### The domain: numadelic.org
 

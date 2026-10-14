@@ -5206,6 +5206,43 @@ Open: whether Category C text arriving by email (which, unlike the form, carries
 no warning) needs an auto-acknowledgement asking people not to send health
 information; and Resend's own retention of received mail, outside the Hub.
 
+## D-119 · 2026-10-14 · The Hub's emails in the site's style, and a quieter notice while testing
+
+The founder asked for emails and notifications that fit the site's brand, using
+Resend's agent skills (`npx skills add resend/resend-skills`, installed in the
+project under `.agents/skills/`), and for test notices to reach only the founder.
+
+- **Design.** One frame for every email (`src/emails/html.ts`): the landing's
+  near-black canvas, a dark card, the lavender gradient line, the logo and
+  "Clear Light" with a small label ("Hub del equipo" / "Estudio de
+  investigación"), light ink, a lavender pill button, a quieter footer. Three
+  emails use it: the staff notice of a new inquiry, the reply to an inquiry
+  (es/en/gl, with the question quoted in an accented box), and the automatic
+  participant email (D-116), which wraps the study's own template text. Each
+  still carries its plain-text twin; the notice still says nothing about what
+  was asked (D-088).
+- **Built as escaped HTML strings, not React Email.** The skill recommends React
+  Email components, and they were tried first, but rendering them needs
+  `react-dom/server`, which Next refuses in the server code that sends these
+  emails ("react-dom/server is not supported in React Server Components"): the
+  inquiry reply would have failed in production. The same email-safe rules are
+  kept by hand (presentation tables, inline styles, no flexbox/grid/media
+  queries, a hidden preview line, `lang`, one heading, AA contrast), and the
+  `react-email` dependency was removed again. Every value a person typed goes
+  through `esc`; only https links are made clickable.
+- **The logo travels inline** (`cid:`, a 112px PNG of `public/brand/logo.png`,
+  ~6 KB, embedded as base64 in `src/emails/logo.ts` so it is in the serverless
+  bundle), so it shows where remote images are blocked and no request reports
+  an open. Each email is ~11 KB, far under Gmail's 102 KB clipping.
+- **Notice recipients.** `studies.notify_staff_of_inquiries` (migration 0028,
+  default true): unticked in Configuración, a new inquiry notifies only the team
+  mailbox, not everyone who answers inquiries. For testing without emailing the
+  rest of the team.
+
+Sent to the founder's address as a check: the notice (one and three inquiries),
+an inquiry reply and an automatic participant email, all with placeholder text
+rather than any study detail.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

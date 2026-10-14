@@ -17,6 +17,7 @@ import { hasPermission } from "@/domain/permissions";
 import { isStaffRole, type StaffRole } from "@/domain/roles";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
+import { inquiryReply, logoAttachment, staffNotice } from "@/emails/render";
 import { fetchReceivedEmail, ownSenderAddress, sendMail } from "./mailer";
 
 /**
@@ -191,7 +192,7 @@ async function notifyStaff(studyId: string): Promise<void> {
   try {
     const db = getDb();
     const [study] = await db
-      .select({ contactEmail: studies.contactEmail })
+      .select({ contactEmail: studies.contactEmail, notifyStaff: studies.notifyStaffOfInquiries })
       .from(studies)
       .where(eq(studies.id, studyId))
       .limit(1);
@@ -206,7 +207,12 @@ async function notifyStaff(studyId: string): Promise<void> {
       if (!isStaffRole(r.role)) continue;
       byEmail.set(r.email, [...(byEmail.get(r.email) ?? []), r.role]);
     }
-    const to = [...byEmail].filter(([, roles]) => hasPermission(roles, "inquiries.manage")).map(([email]) => email);
+    // Staff are included unless the study switched that off (D-119); the team
+    // mailbox is told either way.
+    const to =
+      study?.notifyStaff === false
+        ? []
+        : [...byEmail].filter(([, roles]) => hasPermission(roles, "inquiries.manage")).map(([email]) => email);
     const mailbox = study?.contactEmail?.trim();
     if (mailbox && !to.some((e) => e.toLowerCase() === mailbox.toLowerCase())) to.push(mailbox);
     if (to.length === 0) return;
@@ -217,11 +223,14 @@ async function notifyStaff(studyId: string): Promise<void> {
       .where(and(eq(inquiries.studyId, studyId), eq(inquiries.status, "NEW")));
 
     const { APP_URL } = getEnv();
-    const mail = staffNotification({
-      count: n,
-      inboxUrl: APP_URL ? `${APP_URL.replace(/\/$/, "")}${TEAM_BASE_PATH}/consultas` : null,
+    const inboxUrl = APP_URL ? `${APP_URL.replace(/\/$/, "")}${TEAM_BASE_PATH}/consultas` : null;
+    const mail = staffNotification({ count: n, inboxUrl });
+    const result = await sendMail({
+      to,
+      ...mail,
+      html: staffNotice({ count: n, inboxUrl }),
+      attachments: [logoAttachment()],
     });
-    const result = await sendMail({ to, ...mail });
     if (!result.ok) logger.warn({ event: "inquiry.notify_skipped", reason: result.reason }, "staff not emailed");
   } catch (err) {
     logger.error({ event: "inquiry.notify_failed", err: err instanceof Error ? err.message : String(err) }, "notify failed");
@@ -288,8 +297,15 @@ export async function answerInquiry(params: {
   if (!inquiry || !inquiry.email || !inquiry.message) throw new InquiryNotFoundError();
 
   const [actor] = await db.select({ email: users.email }).from(users).where(eq(users.id, actorId)).limit(1);
-  const mail = replyEmail({ locale: inquiry.locale as InquiryLocale, reply, question: inquiry.message });
-  const sent = await sendMail({ to: [inquiry.email], replyTo: actor?.email, ...mail });
+  const locale = inquiry.locale as InquiryLocale;
+  const mail = replyEmail({ locale, reply, question: inquiry.message });
+  const sent = await sendMail({
+    to: [inquiry.email],
+    replyTo: actor?.email,
+    ...mail,
+    html: inquiryReply({ locale, reply, question: inquiry.message }),
+    attachments: [logoAttachment()],
+  });
   if (!sent.ok) throw new InquiryMailError(sent.reason);
 
   await handle(studyId, inquiryId, actorId, "ANSWERED");

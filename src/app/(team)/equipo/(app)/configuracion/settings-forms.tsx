@@ -53,6 +53,7 @@ export function StudySettingsForm({
     recruitmentOpen: boolean;
     screeningUrl: string | null;
     contactEmail: string | null;
+    notifyStaffOfInquiries: boolean;
   };
   statuses: { value: string; label: string }[];
   locales: { value: string; label: string }[];
@@ -68,6 +69,7 @@ export function StudySettingsForm({
     screeningUrlHelp: string;
     contactEmail: string;
     contactEmailHelp: string;
+    notifyStaffOfInquiries: string;
     saved: string;
   };
 }) {
@@ -171,6 +173,19 @@ export function StudySettingsForm({
           placeholder="equipo@…"
         />
         <p className="text-xs text-muted-foreground">{labels.contactEmailHelp}</p>
+      </div>
+
+      <div className="flex items-start gap-2 sm:col-span-2">
+        <input
+          id="notifyStaffOfInquiries"
+          name="notifyStaffOfInquiries"
+          type="checkbox"
+          defaultChecked={study.notifyStaffOfInquiries}
+          className="mt-0.5 size-4 rounded border-input"
+        />
+        <Label htmlFor="notifyStaffOfInquiries" className="font-normal leading-snug">
+          {labels.notifyStaffOfInquiries}
+        </Label>
       </div>
 
       <div className="sm:col-span-2">

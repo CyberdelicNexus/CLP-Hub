@@ -11,6 +11,7 @@ import {
   type CommunicationStage,
 } from "@/domain/communication";
 import { suggestValues } from "./communications";
+import { logoAttachment, participantMessage } from "@/emails/render";
 import { isMailConfigured, sendMail } from "./mailer";
 
 /**
@@ -114,6 +115,8 @@ export async function deliverAutomaticEmail(params: {
       to: [person.email],
       subject: template.nameEs,
       text: rendered.text,
+      html: participantMessage({ subject: template.nameEs, body: rendered.text }),
+      attachments: [logoAttachment()],
       replyTo: study?.contactEmail ?? undefined,
       idempotencyKey: `action-${actionId}-${participantId}`,
     });
