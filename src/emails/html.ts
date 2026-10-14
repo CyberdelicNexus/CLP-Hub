@@ -22,7 +22,7 @@ import type { InquiryLocale } from "@/domain/inquiry-mail";
 /** The landing page's tokens (`src/components/landing/landing.css`). */
 export const EMAIL = {
   canvas: "#000000",
-  surface: "#0f1322",
+  surface: "#000000",
   surfaceSoft: "#151a2b",
   line: "#262c3a",
   ink: "#f2f5ef",
@@ -118,9 +118,9 @@ export function layout(params: {
 <meta name="supported-color-schemes" content="dark">
 <title>${esc(params.title)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:${EMAIL.canvas};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${EMAIL.canvas};">${esc(params.preview)}${previewPad}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${EMAIL.canvas};">
+<body style="margin:0;padding:0;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(params.preview)}${previewPad}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center" style="padding:32px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:${EMAIL.surface};border:1px solid ${EMAIL.line};border-radius:16px;font-family:${EMAIL.font};">
 <tr><td style="height:3px;line-height:3px;font-size:0;background-color:${EMAIL.accent};background-image:${EMAIL.gradient};border-radius:16px 16px 0 0;">&nbsp;</td></tr>
@@ -133,7 +133,7 @@ export function layout(params: {
 </td></tr></table>
 </td></tr>
 <tr><td style="padding:16px 32px 20px;">${params.content}</td></tr>
-<tr><td style="padding:18px 32px 22px;border-top:1px solid ${EMAIL.line};background-color:${EMAIL.surfaceSoft};border-radius:0 0 16px 16px;">${params.footer}</td></tr>
+<tr><td style="padding:18px 32px 22px;border-top:1px solid ${EMAIL.line};border-radius:0 0 16px 16px;">${params.footer}</td></tr>
 </table>
 </td></tr>
 </table>
