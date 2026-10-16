@@ -5243,6 +5243,44 @@ Sent to the founder's address as a check: the notice (one and three inquiries),
 an inquiry reply and an automatic participant email, all with placeholder text
 rather than any study detail.
 
+## D-120 · 2026-10-16 · A breathing guide at `/meditate`
+
+The founder asked for a page that guides breathing with the home page's light,
+with a facilitator mode to change the rhythm and the look, guidance that can be
+turned on and off, full screen and a timer.
+
+- **Public, stateless, outside the study.** `/meditate` sits beside the home
+  page, not under `/clearlight`, and touches no study data. The rhythms
+  (`src/domain/breathing.ts`: calm 4-1-4-1, box, coherent, 4-7-8, long exhale,
+  or custom) are general relaxation rhythms, not a protocol: if the study ever
+  uses the guide in a session, which rhythm and for how long is the
+  researchers' decision, not this page's.
+- **Settings live in the address.** Every change in the facilitator panel is
+  written into the query string (only what differs from the defaults), so a
+  prepared session is a link: "Copiar enlace" hands it to another screen.
+  Nothing goes to cookies or local storage, so the cookie policy is unchanged.
+- **The light is the home page's shader with uniforms.** `breath-orb.tsx`
+  copies energy-orb.tsx's body-with-an-edge (D-112, D-113) and makes its five
+  colours, glow and drift adjustable; the home page's component is untouched,
+  so tuning the guide cannot change the home page. The "numadelic" palette is
+  the home page's colours exactly.
+- **JavaScript drives the breath, not a CSS animation.** The rhythm is
+  variable and the words, countdown, ring, tones and voice must match it, so
+  one animation loop computes the phase from real elapsed time (a throttled
+  screen keeps the true rhythm and timer) and writes the light's scale to the
+  DOM; React re-renders only when the visible text changes. At the default
+  range the light swings between the home page's sizes (0.66 to 1.12).
+- **The timer ends on an out-breath**, never mid-breath. Leaving the tab pauses
+  the session. While it runs the screen is kept awake (Wake Lock, where
+  supported) and the controls fade after 3.5 s without movement.
+- **Guidance options:** words, a countdown, a progress ring, a breath counter, a
+  3-second count-in, soft Web Audio tones and the browser's voice (off by
+  default; voice quality depends on the device). Keyboard: Space, F, Escape.
+- **Reduced motion:** the light still grows and settles (that is the guide) but
+  at a third of the range, with no drifting cloud, and the words appear without
+  moving.
+- Galician strings still need a native speaker's review, as on the home page.
+
 ## Open questions for researchers
 
 - Should the Consultas inbox keep the conversation (the question and the

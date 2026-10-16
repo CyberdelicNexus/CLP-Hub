@@ -1,0 +1,425 @@
+/* ============================================================================
+   The breathing guide at /meditate (D-120). Builds on landing.css: the .cl
+   tokens, type, buttons, language switch and starfield. The light is the home
+   page's (home.css, "the breath"), sized and scaled here by meditate.tsx
+   rather than by a CSS animation, since the rhythm is the facilitator's.
+   ========================================================================== */
+
+.meditate {
+  --m-a: 74 122 255;
+  --m-b: 150 112 255;
+  --m-size: 1;
+  --m-ambient: 1;
+  --m-glow: 1;
+  --m-orb: calc(clamp(9rem, 26vmin, 18rem) * var(--m-size));
+  --m-fade: 700ms;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #03040b;
+  color: var(--sc-ink);
+}
+/* In full screen the element is the whole screen, whatever the page's own height. */
+.meditate:fullscreen { height: 100vh; width: 100vw; }
+.meditate .star-field { opacity: 0.75; z-index: -1; }
+.meditate[data-calm] { cursor: none; }
+
+/* The two side lights, as on the home page's hero, brightening with the breath. */
+.m-ambient {
+  position: absolute;
+  inset: -10%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 50% at 26% 64%, rgb(var(--m-a) / calc(0.22 * var(--m-ambient))), transparent 70%),
+    radial-gradient(55% 50% at 74% 34%, rgb(var(--m-b) / calc(0.24 * var(--m-ambient))), transparent 70%),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55));
+  transition: background 1.2s var(--cl-ease-presence);
+}
+
+/* Bar, dock and the panel's opener fade out while a session runs untouched. */
+.m-chrome { transition: opacity var(--m-fade) var(--cl-ease-presence), transform var(--m-fade) var(--cl-ease-presence); }
+.meditate[data-calm] .m-chrome { opacity: 0; pointer-events: none; }
+.meditate[data-calm] .m-bar { transform: translateY(-0.5rem); }
+.meditate[data-calm] .m-dock { transform: translateY(0.5rem); }
+
+/* -------------------------------------------------------------------- bar */
+.m-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--cl-nav-h);
+  padding-inline: var(--sc-gutter);
+}
+.m-brand { color: var(--sc-ink); text-decoration: none; }
+.m-brand:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 4px; border-radius: 4px; }
+.m-bar__end { display: flex; align-items: center; gap: 0.6rem; }
+.m-facilitator { min-height: 2.25rem; padding-inline: 0.9rem; font-size: 0.85rem; }
+.m-facilitator:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+@media (max-width: 480px) {
+  .m-facilitator span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .m-facilitator { width: 2.25rem; padding: 0; justify-content: center; }
+}
+
+.m-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--cl-line-strong);
+  background: color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+  color: var(--sc-ink-soft);
+  cursor: pointer;
+  transition: color var(--sc-d-fast) var(--sc-ease-out), border-color var(--sc-d-fast) var(--sc-ease-out), transform var(--sc-d-fast) var(--sc-ease-out);
+}
+.m-icon:hover { color: var(--sc-ink); border-color: var(--sc-accent); }
+.m-icon:active { transform: scale(0.94); }
+.m-icon:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-icon--lg { width: 3.25rem; height: 3.25rem; }
+
+/* ------------------------------------------------------------------ stage */
+.m-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  min-height: 0;
+  padding: 0 var(--sc-gutter);
+}
+
+.m-breath {
+  position: relative;
+  width: var(--m-orb);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  transition: width 600ms var(--cl-ease-presence);
+}
+.m-halo {
+  position: absolute;
+  width: 330%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(var(--m-b) / calc(0.3 * var(--m-glow))) 0%,
+    rgb(var(--m-b) / calc(0.17 * var(--m-glow))) 18%,
+    rgb(var(--m-a) / calc(0.1 * var(--m-glow))) 36%,
+    rgb(var(--m-a) / calc(0.04 * var(--m-glow))) 52%,
+    transparent 68%
+  );
+  transform: scale(0.9);
+  opacity: 0.8;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+.m-orb {
+  position: absolute;
+  width: 190%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform: scale(0.9);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+.m-orb__cloud { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The plain light, where the cloud cannot be drawn. */
+.m-orb__core {
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 246 236) 0%, rgb(226 232 255 / 0.92) 24%, rgb(var(--m-a) / 0.6) 48%, rgb(var(--m-a) / 0) 72%);
+  filter: blur(1.5px);
+}
+.m-orb[data-orb] .m-orb__core { display: none; }
+
+/* A thin ring just outside the light at its fullest, filling with each phase. */
+.m-ring {
+  position: absolute;
+  width: 152%;
+  aspect-ratio: 1;
+  transform: rotate(-90deg);
+  overflow: visible;
+  opacity: 0;
+  transition: opacity 900ms var(--cl-ease-presence);
+  pointer-events: none;
+}
+.m-ring[data-on] { opacity: 1; }
+.m-ring circle { fill: none; }
+.m-ring__track { stroke: rgb(242 245 239 / 0.08); stroke-width: 0.25; }
+.m-ring__fill {
+  stroke: rgb(var(--m-b) / 0.75);
+  stroke-width: 0.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 6px rgb(var(--m-b) / 0.8));
+}
+
+/* ------------------------------------------------------------------ guide */
+.m-guide {
+  display: grid;
+  place-items: center;
+  min-height: 9.5rem;
+  padding-bottom: clamp(0.5rem, 2vh, 1.5rem);
+  text-align: center;
+}
+.m-intro { display: grid; justify-items: center; gap: 0.85rem; max-width: 34rem; animation: m-rise 900ms var(--cl-ease-presence) both; }
+.m-title {
+  font-size: clamp(1.9rem, 4.4vw, 3.2rem);
+  background: linear-gradient(100deg, #a9c4ff 0%, #ffffff 46%, #cbb4ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.08em;
+}
+.m-lead { font-size: clamp(1rem, 1.3vw, 1.15rem); line-height: 1.6; color: var(--sc-ink-soft); }
+
+.m-cue { display: grid; justify-items: center; gap: 0.35rem; }
+.m-word {
+  font-family: var(--sc-font-display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.6vw, 3.25rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--sc-ink);
+  text-shadow: 0 0 2.2rem rgb(var(--m-b) / 0.55);
+}
+.m-word > span { display: inline-block; animation: m-word 900ms var(--cl-ease-presence) both; }
+.m-count {
+  font-family: var(--sc-font-mono);
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  color: var(--cl-accent-soft);
+  min-height: 1.6em;
+}
+.m-count > span { display: inline-block; animation: m-tick 600ms var(--cl-ease-presence) both; }
+.m-cycles { margin-top: 0.35rem; }
+
+@keyframes m-word {
+  from { opacity: 0; transform: translateY(0.4em) scale(0.98); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes m-tick {
+  from { opacity: 0.2; transform: translateY(-0.2em); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes m-rise {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------- dock */
+.m-dock {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  padding: 0 var(--sc-gutter) max(1.5rem, env(safe-area-inset-bottom));
+}
+.m-dock__row { display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+.m-primary { gap: 0.6rem; min-width: 11rem; }
+.m-primary:focus-visible { outline: 2px solid var(--cl-accent-strong); outline-offset: 3px; }
+.m-dock__meta { font-size: 0.85rem; color: var(--cl-muted); gap: 1rem; }
+.m-timer select {
+  appearance: none;
+  min-height: 2.25rem;
+  padding: 0 2rem 0 0.95rem;
+  border-radius: var(--cl-pill);
+  border: 1px solid var(--cl-line-strong);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23b4bfba' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 0.8rem center,
+    color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+  color: var(--sc-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.m-timer select:hover { border-color: var(--sc-accent); }
+.m-timer select:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-timer option { background: #0b0d18; color: var(--sc-ink); }
+.m-readout { font-family: var(--sc-font-mono); font-size: 0.95rem; letter-spacing: 0.06em; color: var(--sc-ink-soft); font-variant-numeric: tabular-nums; }
+.m-keys { font-size: 0.78rem; }
+@media (hover: none), (pointer: coarse) { .m-keys { display: none; } }
+
+/* ------------------------------------------------------------------ panel */
+.m-panel {
+  position: absolute;
+  z-index: 10;
+  /* Below the bar, so full screen and the language stay in reach. */
+  top: var(--cl-nav-h);
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: min(22.5rem, calc(100vw - 1.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.1rem 1.15rem 1.25rem;
+  border-radius: var(--cl-radius);
+  border: 1px solid var(--cl-line);
+  background: color-mix(in oklab, #070914 86%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5), 0 0 4rem rgb(var(--m-b) / 0.08);
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--m-b) / 0.4) transparent;
+  animation: m-panel-in 520ms var(--cl-ease-presence) both;
+}
+.m-panel[hidden] { display: none; }
+@keyframes m-panel-in {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+/* On a phone, a sheet from the bottom that leaves the light in view above it. */
+@media (max-width: 640px) {
+  .m-panel { top: auto; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; width: auto; max-height: 58dvh; }
+  @keyframes m-panel-in {
+    from { opacity: 0; transform: translateY(1.5rem); }
+    to { opacity: 1; transform: none; }
+  }
+  .meditate[data-panel] .m-stage { transform: translateY(-18dvh); }
+  .meditate[data-panel] .m-dock { opacity: 0; pointer-events: none; }
+}
+.m-stage, .m-dock { transition: transform 600ms var(--cl-ease-presence), opacity 400ms var(--cl-ease-presence); }
+/* On a wide screen, the light moves left to stay clear of the panel. */
+@media (min-width: 641px) {
+  .meditate[data-panel] :is(.m-stage, .m-dock) { transform: translateX(max(-11.25rem, -20vw)); }
+}
+
+.m-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.m-panel__title { font-size: 1.05rem; font-weight: 500; letter-spacing: -0.01em; }
+.m-panel__note { margin-top: 0.4rem; font-size: 0.78rem; line-height: 1.5; color: var(--cl-muted); }
+.m-panel__section { display: grid; gap: 0.7rem; padding-top: 1.1rem; margin-top: 1.1rem; border-top: 1px solid var(--cl-line); }
+.m-panel__section .cl-eyebrow { font-size: 0.72rem; }
+
+.m-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.m-chip,
+.m-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: var(--cl-pill);
+  border: 1px solid var(--cl-line);
+  background: transparent;
+  color: var(--sc-ink-soft);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
+}
+.m-chip:hover, .m-swatch:hover { border-color: var(--cl-line-strong); color: var(--sc-ink); }
+.m-chip[aria-checked="true"],
+.m-swatch[aria-checked="true"] {
+  border-color: var(--sc-accent);
+  color: var(--sc-ink);
+  background: color-mix(in oklab, var(--sc-accent) 14%, transparent);
+}
+.m-chip:focus-visible, .m-swatch:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-swatches { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.m-swatch { padding-left: 0.35rem; }
+.m-swatch__dot { width: 1.3rem; height: 1.3rem; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2); }
+
+.m-field {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  color: var(--sc-ink-soft);
+}
+.m-field output { text-align: right; font-family: var(--sc-font-mono); font-size: 0.75rem; color: var(--sc-ink); font-variant-numeric: tabular-nums; }
+.m-field[data-disabled] { opacity: 0.45; }
+.m-field input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 1.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+.m-field input[type="range"]::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: var(--cl-line-strong); }
+.m-field input[type="range"]::-moz-range-track { height: 3px; border-radius: 3px; background: var(--cl-line-strong); }
+.m-field input[type="range"]::-moz-range-progress { height: 3px; border-radius: 3px; background: var(--cl-grad-line); }
+.m-field input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: calc(-0.5rem + 1.5px);
+  border-radius: 50%;
+  border: 0;
+  background: #e9e1ff;
+  box-shadow: 0 0 0 4px rgb(var(--m-b) / 0.25), 0 0 12px rgb(var(--m-b) / 0.6);
+}
+.m-field input[type="range"]::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 0;
+  background: #e9e1ff;
+  box-shadow: 0 0 0 4px rgb(var(--m-b) / 0.25), 0 0 12px rgb(var(--m-b) / 0.6);
+}
+.m-field input[type="range"]:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; border-radius: 4px; }
+
+.m-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 1.9rem;
+  font-size: 0.85rem;
+  color: var(--sc-ink-soft);
+  cursor: pointer;
+}
+.m-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.m-toggle__track {
+  position: relative;
+  flex: none;
+  width: 2.3rem;
+  height: 1.3rem;
+  border-radius: var(--cl-pill);
+  background: var(--cl-line-strong);
+  transition: background 300ms var(--cl-ease-presence);
+}
+.m-toggle__track::after {
+  content: "";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--sc-ink);
+  transition: transform 300ms var(--cl-ease-presence);
+}
+.m-toggle input:checked + .m-toggle__track { background: var(--cl-grad); }
+.m-toggle input:checked + .m-toggle__track::after { transform: translateX(1rem); background: var(--sc-accent-ink); }
+.m-toggle input:focus-visible + .m-toggle__track { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-toggle:hover { color: var(--sc-ink); }
+
+.m-panel__actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--cl-line); }
+.m-panel__actions .cl-ghost { flex: 1; justify-content: center; font-size: 0.82rem; padding-inline: 0.75rem; }
+.m-panel__actions .cl-ghost:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+
+/* --------------------------------------------------------- reduced motion
+   The light still grows and settles (that is the guide), but less, and with
+   no drifting cloud (meditate.tsx); the words appear without moving. */
+@media (prefers-reduced-motion: reduce) {
+  .m-word > span, .m-count > span, .m-intro, .m-panel { animation: none; }
+  .m-stage, .m-dock, .m-chrome { transition: opacity 300ms linear; }
+  .meditate[data-panel] :is(.m-stage, .m-dock) { transform: none; }
+}

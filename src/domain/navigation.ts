@@ -46,6 +46,10 @@ export const PUBLIC_BASE_PATH = "/clearlight";
 /** The language switch's `desde` value that returns to the domain's home page, not a Clear Light page. */
 export const HOME_RETURN = "inicio";
 
+/** The breathing guide (D-120), and the language switch's `desde` value that returns to it. */
+export const MEDITATE_PATH = "/meditate";
+export const MEDITATE_RETURN = "meditar";
+
 export function sectionByPath(path: string): NavSection | undefined {
   return TEAM_NAV.find((s) => s.path === path);
 }

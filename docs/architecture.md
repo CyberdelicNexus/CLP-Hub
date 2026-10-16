@@ -6,7 +6,7 @@ One Next.js application, one Postgres database (Supabase), one scheduled-job mec
 
 ```
 Browser ──► Next.js (Vercel)
-              ├─ (public)   numadelic.org home at /; under /clearlight the recruitment site (ES/EN/GL) + study content pages   [no auth]
+              ├─ (public)   numadelic.org home at /, breathing guide at /meditate (D-120); under /clearlight the recruitment site (ES/EN/GL) + study content pages   [no auth]
               └─ (team)     /equipo dashboard                                 [Supabase Auth]
                     │
                     ▼

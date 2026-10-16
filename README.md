@@ -14,6 +14,7 @@ Initial screening happens in Qualtrics: `/clearlight/participar` collects nothin
 |---|---|---|---|
 | Public recruitment landing page (Clear Light, hands off to Qualtrics, collects nothing) | `/clearlight` | Anyone | D-042 |
 | numadelic.org home page (hero, film, research cards, press) | `/` | Anyone | D-105, D-106, D-108 to D-113 |
+| Breathing guide (the home page's light, facilitator settings in the link, timer, full screen) | `/meditate` | Anyone | D-120 |
 | Qualtrics hand-off explanation | `/clearlight/participar` | Anyone | 1, 4a |
 | Public study content (session prep, integration, VR) | `/clearlight/estudio/...` | Participants, no login | 5 ✓ |
 | Team dashboard | `/equipo` | Authenticated staff | 0+ |
