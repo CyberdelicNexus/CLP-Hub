@@ -1,4 +1,4 @@
-import type { Palette, Phase, PresetKey, RangeKey, ToggleKey } from "@/domain/breathing";
+import type { CustomColors, MusicSource, PhaseSound, TransitionSound, Palette, Phase, PresetKey, RangeKey, ToggleKey } from "@/domain/breathing";
 import type { PublicLocale } from "@/domain/locale";
 
 /**
@@ -28,7 +28,20 @@ export interface MeditateCopy {
     close: string;
     title: string;
     note: string;
-    sections: { breath: string; guidance: string; light: string; background: string };
+    sections: { breath: string; guidance: string; music: string; light: string; background: string };
+    music: {
+      source: string;
+      sources: Record<MusicSource, string>;
+      choose: string;
+      none: string;
+      fileNote: string;
+      unsupported: string;
+      error: string;
+    };
+    /** The sound on each in-breath and out-breath. */
+    phaseSound: { label: string; options: Record<PhaseSound, string> };
+    /** The opening and closing sounds. */
+    transitions: { intro: string; outro: string; sounds: Record<TransitionSound, string> };
     presets: Record<PresetKey | "custom", string>;
     pattern: string;
     seconds: string;
@@ -36,6 +49,8 @@ export interface MeditateCopy {
     ranges: Record<RangeKey, string>;
     palette: string;
     palettes: Record<Palette, string>;
+    /** The three pickers of the custom gradient. */
+    colors: Record<keyof CustomColors, string>;
     copyLink: string;
     copied: string;
     reset: string;
@@ -68,7 +83,25 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       close: "Cerrar ajustes",
       title: "Ajustes del facilitador",
       note: "Los cambios se aplican al momento y se guardan en el enlace, no en este dispositivo.",
-      sections: { breath: "Respiración", guidance: "Guía", light: "Luz", background: "Fondo" },
+      sections: { breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", background: "Fondo" },
+      music: {
+        source: "Origen de la música",
+        sources: { guitar: "Guitarra", relax: "Relax", float: "Flotar", file: "Subir archivo" },
+        choose: "Elegir archivo",
+        none: "Ningún archivo elegido",
+        fileNote: "Suena solo en este navegador: no se sube a ningún sitio ni se guarda en el enlace.",
+        unsupported: "Este navegador no puede reproducir esta pista.",
+        error: "No se ha podido reproducir esta música.",
+      },
+      phaseSound: {
+        label: "Sonido que acompaña",
+        options: { none: "Ninguno", bowl: "Cuenco", ocean: "Olas del mar" },
+      },
+      transitions: {
+        intro: "Sonido de entrada",
+        outro: "Sonido de salida",
+        sounds: { none: "Ninguno", tone: "Tono suave", bell: "Campana", bowl: "Cuenco", ghom: "Ghom" },
+      },
       presets: {
         calm: "Calma · 4-1-4-1",
         box: "Cuadrada · 4-4-4-4",
@@ -85,20 +118,23 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         ring: "Línea de progreso",
         cycles: "Contar respiraciones",
         countIn: "Preparación de 3 segundos",
-        tones: "Tonos suaves",
         voice: "Voz",
+        music: "Música",
         stars: "Estrellas",
       },
       ranges: {
-        volume: "Volumen",
+        volume: "Volumen de voz y sonidos",
+        musicVolume: "Volumen de la música",
         size: "Tamaño",
         depth: "Amplitud",
         drift: "Movimiento de la nube",
         glow: "Resplandor",
         ambient: "Luz de fondo",
+        angle: "Dirección de la luz",
       },
       palette: "Color",
-      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amanecer", lavender: "Lavanda", moon: "Luna" },
+      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amanecer", lavender: "Lavanda", moon: "Luna", custom: "Personalizado" },
+      colors: { light: "Luz", a: "Fondo 1", b: "Fondo 2" },
       copyLink: "Copiar enlace",
       copied: "Enlace copiado",
       reset: "Restablecer",
@@ -129,7 +165,25 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       close: "Close settings",
       title: "Facilitator settings",
       note: "Changes apply at once and are kept in the link, not on this device.",
-      sections: { breath: "Breathing", guidance: "Guidance", light: "Light", background: "Background" },
+      sections: { breath: "Breathing", guidance: "Guidance", music: "Music", light: "Light", background: "Background" },
+      music: {
+        source: "Music source",
+        sources: { guitar: "Guitar", relax: "Relax", float: "Float", file: "Upload a file" },
+        choose: "Choose a file",
+        none: "No file chosen",
+        fileNote: "It plays in this browser only: it is not uploaded anywhere or kept in the link.",
+        unsupported: "This browser cannot play this track.",
+        error: "This music could not be played.",
+      },
+      phaseSound: {
+        label: "Sound with the breath",
+        options: { none: "None", bowl: "Singing bowl", ocean: "Ocean waves" },
+      },
+      transitions: {
+        intro: "Opening sound",
+        outro: "Closing sound",
+        sounds: { none: "None", tone: "Soft tone", bell: "Bell", bowl: "Singing bowl", ghom: "Ghom" },
+      },
       presets: {
         calm: "Calm · 4-1-4-1",
         box: "Box · 4-4-4-4",
@@ -146,20 +200,23 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         ring: "Progress line",
         cycles: "Count breaths",
         countIn: "3-second count-in",
-        tones: "Soft tones",
         voice: "Voice",
+        music: "Music",
         stars: "Stars",
       },
       ranges: {
-        volume: "Volume",
+        volume: "Voice and sound volume",
+        musicVolume: "Music volume",
         size: "Size",
         depth: "Range",
         drift: "Cloud movement",
         glow: "Glow",
         ambient: "Background light",
+        angle: "Light direction",
       },
       palette: "Colour",
-      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Dawn", lavender: "Lavender", moon: "Moon" },
+      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Dawn", lavender: "Lavender", moon: "Moon", custom: "Custom" },
+      colors: { light: "Light", a: "Background 1", b: "Background 2" },
       copyLink: "Copy link",
       copied: "Link copied",
       reset: "Reset",
@@ -190,7 +247,25 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       close: "Pechar axustes",
       title: "Axustes do facilitador",
       note: "Os cambios aplícanse ao momento e gárdanse na ligazón, non neste dispositivo.",
-      sections: { breath: "Respiración", guidance: "Guía", light: "Luz", background: "Fondo" },
+      sections: { breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", background: "Fondo" },
+      music: {
+        source: "Orixe da música",
+        sources: { guitar: "Guitarra", relax: "Relax", float: "Flotar", file: "Subir ficheiro" },
+        choose: "Escoller ficheiro",
+        none: "Ningún ficheiro escollido",
+        fileNote: "Soa só neste navegador: non se sobe a ningures nin se garda na ligazón.",
+        unsupported: "Este navegador non pode reproducir esta pista.",
+        error: "Non se puido reproducir esta música.",
+      },
+      phaseSound: {
+        label: "Son que acompaña",
+        options: { none: "Ningún", bowl: "Cunca", ocean: "Ondas do mar" },
+      },
+      transitions: {
+        intro: "Son de entrada",
+        outro: "Son de saída",
+        sounds: { none: "Ningún", tone: "Ton suave", bell: "Campá", bowl: "Cunca", ghom: "Ghom" },
+      },
       presets: {
         calm: "Calma · 4-1-4-1",
         box: "Cadrada · 4-4-4-4",
@@ -207,20 +282,23 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         ring: "Liña de progreso",
         cycles: "Contar respiracións",
         countIn: "Preparación de 3 segundos",
-        tones: "Tons suaves",
         voice: "Voz",
+        music: "Música",
         stars: "Estrelas",
       },
       ranges: {
-        volume: "Volume",
+        volume: "Volume da voz e dos sons",
+        musicVolume: "Volume da música",
         size: "Tamaño",
         depth: "Amplitude",
         drift: "Movemento da nube",
         glow: "Resplandor",
         ambient: "Luz de fondo",
+        angle: "Dirección da luz",
       },
       palette: "Cor",
-      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amencer", lavender: "Lavanda", moon: "Lúa" },
+      palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amencer", lavender: "Lavanda", moon: "Lúa", custom: "Personalizado" },
+      colors: { light: "Luz", a: "Fondo 1", b: "Fondo 2" },
       copyLink: "Copiar ligazón",
       copied: "Ligazón copiada",
       reset: "Restablecer",

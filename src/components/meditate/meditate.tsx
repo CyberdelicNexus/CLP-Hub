@@ -1,17 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import { Maximize, Minimize, Pause, Play, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { LanguageSwitch } from "@/components/landing/language-switch";
 import { StarField } from "@/components/landing/star-field";
 import { fill, type MeditateCopy } from "@/content/meditate";
-import { breathLevel, PHASES, phaseAt, TIMER_MINUTES, toSearch, type MeditateSettings, type Phase } from "@/domain/breathing";
+import { breathLevel, MUSIC_TRACKS, PHASES, phaseAt, TIMER_MINUTES, TRANSITION_SOUNDS, toSearch, type MeditateSettings, type Phase } from "@/domain/breathing";
 import type { PublicLocale } from "@/domain/locale";
 import { MEDITATE_RETURN } from "@/domain/navigation";
 import { BreathOrb } from "./breath-orb";
 import { FacilitatorPanel } from "./facilitator-panel";
-import { PALETTE_COLORS } from "./palettes";
+import { bowl } from "./bowl";
+import { output } from "./audio-out";
+import { Music } from "./music";
+import { Ocean } from "./ocean";
+import { paletteFor } from "./palettes";
 
 /**
  * The breathing guide (D-120). One animation loop owns the clock: it works
@@ -42,7 +46,27 @@ interface Display {
 }
 const START: Display = { phase: "inhale", remaining: 0, cycle: 0, elapsed: 0 };
 
-const TONES: Record<Phase, number> = { inhale: 528, holdIn: 440, exhale: 396, holdOut: 330 };
+/**
+ * The bowl's note for each phase: a little higher as the breath comes in, lower
+ * as it goes out (C4 and G3). The holds stay silent, so the sound marks only
+ * the two movements and never crowds a short pattern.
+ */
+const BOWL_HIGH = 261.63;
+const BOWL_LOW = 196;
+const TONES: Partial<Record<Phase, number>> = { inhale: BOWL_HIGH, exhale: BOWL_LOW };
+/** An opening sound longer than this is faded out, so it does not run over the session. */
+const INTRO_MAX_MS = 12000;
+
+/**
+ * Recorded voice (D-120), one clip per thing the guide says, cut from an
+ * ElevenLabs recording. A language with no recording here uses the device's
+ * own speech voice instead.
+ */
+type Clip = Phase | "ready" | "done";
+const CLIPS: readonly Clip[] = ["ready", ...PHASES, "done"];
+const VOICE_CLIPS: Partial<Record<PublicLocale, string>> = { es: "/audio/meditate/es" };
+/** The closing words wait for the light's last breath (meditate.css, m-close). */
+const DONE_VOICE_DELAY_MS = 1200;
 const VOICE_LANG: Record<PublicLocale, string> = { es: "es-ES", en: "en-GB", gl: "gl-ES" };
 /** Galician voices are rare on devices; a Spanish one reads the Galician words well enough. */
 const VOICE_FALLBACK: Record<PublicLocale, readonly string[]> = { es: ["es"], en: ["en"], gl: ["gl", "es"] };
@@ -74,6 +98,15 @@ const isFullscreen = () => Boolean(document.fullscreenElement);
 const canFullscreen = () => Boolean(document.fullscreenEnabled);
 
 const patternChanged = (a: MeditateSettings, b: MeditateSettings) => PHASES.some((ph) => a.pattern[ph] !== b.pattern[ph]);
+
+/** Where the two background lights sit (% of the screen) once turned by `angle`; at 0, as on the home page's hero. */
+function lightPositions(angle: number) {
+  const r = (angle * Math.PI) / 180;
+  const at = (x: number, y: number) => [50 + x * Math.cos(r) - y * Math.sin(r), 50 + x * Math.sin(r) + y * Math.cos(r)].map((v) => `${v.toFixed(1)}%`);
+  const [ax, ay] = at(-24, 14);
+  const [bx, by] = at(24, -16);
+  return { "--m-ax": ax, "--m-ay": ay, "--m-bx": bx, "--m-by": by };
+}
 
 const clock = (seconds: number) => {
   const s = Math.max(0, Math.round(seconds));
@@ -108,29 +141,44 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
   /** A wave of light that leaves the orb when a session starts or ends; the key replays it. */
   const [wave, setWave] = useState<{ kind: "start" | "end"; n: number } | null>(null);
   const audio = useRef<AudioContext | null>(null);
+  const clips = useRef<{ base?: string; buffers: Partial<Record<Clip, AudioBuffer>>; loading?: Promise<void> }>({ buffers: {} });
+  const voiceSource = useRef<AudioBufferSourceNode | null>(null);
+  const music = useRef<Music | null>(null);
+  const sfx = useRef<Music | null>(null);
+  const sfxTimer = useRef(0);
+  const ocean = useRef<Ocean | null>(null);
+  /** A track from the facilitator's device: an object URL in this browser only, never uploaded. */
+  const [localTrack, setLocalTrack] = useState<{ url: string; name: string } | null>(null);
+  const [musicError, setMusicError] = useState(false);
 
   /* ------------------------------------------------------------ cues */
   const tone = useCallback((freq: number, delay = 0) => {
-    const ctx = audio.current;
-    if (!ctx) return;
-    const volume = live.current.settings.volume;
-    const t = ctx.currentTime + delay;
-    for (const [mult, share] of [
-      [1, 1],
-      [2, 0.25],
-    ] as const) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq * mult;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.16 * volume * share, t + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 2.3);
-    }
+    if (audio.current) bowl(audio.current, freq, live.current.settings.volume, delay);
   }, []);
+
+  /** The opening or closing sound. A long effect as the opening is faded out before it runs over the session. */
+  const transition = useCallback((which: "intro" | "outro") => {
+    const ctx = audio.current;
+    const sound = live.current.settings[which];
+    const effect = TRANSITION_SOUNDS[sound];
+    if (!ctx || sound === "none") return;
+    if (sound === "tone") {
+      if (which === "intro") tone(BOWL_LOW);
+      else {
+        tone(BOWL_HIGH);
+        tone(BOWL_LOW, 1.6);
+      }
+      return;
+    }
+    if (!effect) return;
+    if (!sfx.current) sfx.current = new Music(ctx, () => {}, false);
+    window.clearTimeout(sfxTimer.current);
+    sfx.current.setSource(effect.src);
+    sfx.current.setVolume(live.current.settings.volume);
+    sfx.current.rewind();
+    sfx.current.start(0.05);
+    if (which === "intro") sfxTimer.current = window.setTimeout(() => sfx.current?.stop(3), INTRO_MAX_MS);
+  }, [tone]);
 
   const speak = useCallback(
     (word: string) => {
@@ -148,13 +196,68 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     [locale],
   );
 
+  /** Fetches and decodes this language's recorded clips once; resolves at once where there are none. */
+  const loadClips = useCallback(() => {
+    const ctx = audio.current;
+    const base = VOICE_CLIPS[locale];
+    if (!ctx || !base) return Promise.resolve();
+    if (clips.current.base === base && clips.current.loading) return clips.current.loading;
+    const buffers: Partial<Record<Clip, AudioBuffer>> = {};
+    const loading = Promise.all(
+      CLIPS.map((clip) =>
+        fetch(`${base}/${clip}.mp3`)
+          .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.statusText))))
+          .then((data) => ctx.decodeAudioData(data))
+          .then((buffer) => {
+            buffers[clip] = buffer;
+          })
+          // A clip that fails is spoken by the device's voice instead.
+          .catch(() => {}),
+      ),
+    ).then(() => {});
+    clips.current = { base, buffers, loading };
+    return loading;
+  }, [locale]);
+
+  /** Stops the voice only: a new word cuts off the last. */
+  const hushVoice = useCallback(() => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    try {
+      voiceSource.current?.stop();
+    } catch {}
+    voiceSource.current = null;
+  }, []);
+
+  /** Stops everything spoken (pause, restart, leaving the page). */
+  const hush = hushVoice;
+
+  /** Says one of the guide's lines: the recording where there is one, else the device's voice. */
+  const say = useCallback(
+    (clip: Clip, text: string) => {
+      const ctx = audio.current;
+      const buffer = clips.current.base === VOICE_CLIPS[locale] ? clips.current.buffers[clip] : undefined;
+      if (!ctx || !buffer) return speak(text);
+      hushVoice();
+      if (ctx.state !== "running") void ctx.resume();
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = buffer;
+      gain.gain.value = live.current.settings.volume;
+      source.connect(gain).connect(output(ctx));
+      source.start();
+      voiceSource.current = source;
+    },
+    [hushVoice, locale, speak],
+  );
+
   const cue = useCallback(
     (phase: Phase) => {
       const s = live.current.settings;
-      if (s.tones) tone(TONES[phase]);
-      if (s.voice) speak(copy.phases[phase]);
+      const note = TONES[phase];
+      if (s.phaseSound === "bowl" && note) tone(note);
+      if (s.voice) say(phase, copy.phases[phase]);
     },
-    [copy, speak, tone],
+    [copy, say, tone],
   );
 
   /* ------------------------------------------------------------ the loop */
@@ -170,7 +273,8 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
       const dt = last ? Math.min((now - last) / 1000, 1) : 0;
       last = now;
       if (document.hidden) return;
-      const { settings: s, status: st, reduced: still } = live.current;
+      const { settings: s, reduced: still } = live.current;
+      let st = live.current.status;
       const c = clockRef.current;
 
       let target = shown;
@@ -193,6 +297,12 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
           next = { phase: "ready", remaining: Math.ceil(c.countIn - c.elapsed), cycle: 0, elapsed: 0 };
           c.phaseKey = "ready";
         } else {
+          // "Prepárate" is over: the session is running, so the cues and the timer's end apply.
+          if (st === "countIn") {
+            st = "running";
+            live.current.status = st;
+            setStatus(st);
+          }
           const at = phaseAt(s.pattern, c.elapsed - c.origin);
           target = breathLevel(at);
           progress = at.progress;
@@ -208,9 +318,14 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
               c.ended = 0;
               setStatus("done");
               setWave((w) => ({ kind: "end", n: (w?.n ?? 0) + 1 }));
-              if (s.tones || s.voice) {
-                tone(528);
-                tone(660, 0.6);
+              // The music goes out with the light, slowly.
+              music.current?.stop(8);
+              ocean.current?.stop(8);
+              transition("outro");
+              if (s.voice) {
+                window.setTimeout(() => {
+                  if (live.current.status === "done") say("done", `${copy.done.title}. ${copy.done.body}`);
+                }, DONE_VOICE_DELAY_MS);
               }
             } else {
               cue(at.phase);
@@ -236,6 +351,8 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
       }
       if (ambientRef.current) ambientRef.current.style.opacity = String(0.7 + 0.3 * shown);
       if (lineRef.current) lineRef.current.style.transform = `scaleX(${progress})`;
+      // The waves follow the light: in with the breath, out with it.
+      ocean.current?.follow(shown, s.volume);
 
       if (next) {
         setDisplay((d) =>
@@ -245,12 +362,54 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [cue, level, tone]);
+  }, [copy, cue, level, say, transition]);
+
+  /* ------------------------------------------------------------ music */
+  const { musicSource } = settings;
+  const musicSrc = useMemo(
+    () => (musicSource === "file" ? (localTrack?.url ?? null) : MUSIC_TRACKS[musicSource].src),
+    [musicSource, localTrack],
+  );
+
+  // Changes in the panel reach the music at once: a new track, its volume, on or off.
+  useEffect(() => {
+    const m = music.current;
+    if (!m) return;
+    m.setVolume(settings.musicVolume);
+  }, [settings.musicVolume]);
+  useEffect(() => {
+    const m = music.current;
+    if (!m) return;
+    const running = live.current.status === "running" || live.current.status === "countIn";
+    if (!settings.music || !musicSrc) return m.stop(1);
+    m.setSource(musicSrc);
+    if (running) m.start(2);
+  }, [settings.music, musicSrc]);
+
+  const chooseTrack = useCallback((file: File | null) => {
+    setMusicError(false);
+    setLocalTrack((old) => {
+      if (old) URL.revokeObjectURL(old.url);
+      return file ? { url: URL.createObjectURL(file), name: file.name } : null;
+    });
+  }, []);
 
   /* ------------------------------------------------------------ controls */
   const begin = useCallback(() => {
     if (!audio.current && typeof AudioContext !== "undefined") audio.current = new AudioContext();
     void audio.current?.resume();
+    if (audio.current && !music.current) music.current = new Music(audio.current, () => setMusicError(true));
+    if (music.current && musicSrc && live.current.settings.music) {
+      music.current.setSource(musicSrc);
+      music.current.setVolume(live.current.settings.musicVolume);
+      music.current.rewind();
+      music.current.start(4);
+    }
+    transition("intro");
+    if (audio.current && live.current.settings.phaseSound === "ocean") {
+      ocean.current ??= new Ocean(audio.current);
+      ocean.current.start(3);
+    }
     // Some browsers only list their voices once asked; ask before the first phase needs one.
     if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
     const c = clockRef.current;
@@ -262,25 +421,54 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     setCalm(false);
     setWave((w) => ({ kind: "start", n: (w?.n ?? 0) + 1 }));
     setStatus(c.countIn ? "countIn" : "running");
-  }, []);
+    if (live.current.settings.voice) {
+      hush();
+      // "Prepárate" once the recording is ready, if the count-in has not already passed.
+      void loadClips().then(() => {
+        if (live.current.status === "countIn" && clockRef.current.elapsed < 1.5) say("ready", copy.phases.ready);
+      });
+    }
+  }, [copy, hush, loadClips, musicSrc, say, transition]);
+
+  // The waves chosen, or dropped, mid-session.
+  useEffect(() => {
+    const running = live.current.status === "running" || live.current.status === "countIn";
+    if (settings.phaseSound !== "ocean") return ocean.current?.stop(1.5);
+    if (!running || !audio.current) return;
+    ocean.current ??= new Ocean(audio.current);
+    ocean.current.start(2);
+  }, [settings.phaseSound]);
+
+  // Voice switched on mid-session: fetch the recording now, so the next phase can use it.
+  useEffect(() => {
+    if (settings.voice && audio.current) void loadClips();
+  }, [settings.voice, loadClips]);
 
   const toggle = useCallback(() => {
     setCalm(false);
     if (status === "idle" || status === "done") return begin();
     if (status === "paused") {
       void audio.current?.resume();
+      if (live.current.settings.music) music.current?.start(2);
+      if (live.current.settings.phaseSound === "ocean") ocean.current?.start(2);
       return setStatus(clockRef.current.elapsed < clockRef.current.countIn ? "countIn" : "running");
     }
-    window.speechSynthesis?.cancel();
+    hush();
+    music.current?.stop(1.5);
+    sfx.current?.stop(1.5);
+    ocean.current?.stop(1.5);
     setStatus("paused");
-  }, [begin, status]);
+  }, [begin, hush, status]);
 
   const restart = useCallback(() => {
-    window.speechSynthesis?.cancel();
+    hush();
+    music.current?.stop(1);
+    sfx.current?.stop(1);
+    ocean.current?.stop(1);
     clockRef.current.idle = 0;
     setDisplay(START);
     setStatus("idle");
-  }, []);
+  }, [hush]);
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -326,12 +514,14 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     if (!active) return;
     const onHide = () => {
       if (!document.hidden) return;
-      window.speechSynthesis?.cancel();
+      hush();
+      music.current?.stop(0.3);
+      ocean.current?.stop(0.3);
       setStatus("paused");
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
-  }, [active]);
+  }, [active, hush]);
 
   // While it runs, the controls fade after a moment without movement.
   useEffect(() => {
@@ -375,18 +565,26 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     return () => window.removeEventListener("keydown", onKey);
   }, [panelOpen, toggle, toggleFullscreen]);
 
-  // Stop speaking and close the sound when the page goes.
+  // Stop speaking, stop the music and close the sound when the page goes.
   useEffect(
     () => () => {
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      music.current?.dispose();
+      ocean.current?.dispose();
+      sfx.current?.dispose();
+      window.clearTimeout(sfxTimer.current);
       void audio.current?.close();
     },
     [],
   );
+  useEffect(() => () => {
+    if (localTrack) URL.revokeObjectURL(localTrack.url);
+  }, [localTrack]);
 
   /* ------------------------------------------------------------ render */
-  const palette = PALETTE_COLORS[settings.palette];
+  const palette = paletteFor(settings);
   const style = {
+    ...lightPositions(settings.angle),
     "--m-a": palette.a,
     "--m-b": palette.b,
     "--m-size": settings.size,
@@ -540,7 +738,13 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
         copy={copy}
         locale={locale}
         settings={settings}
-        onChange={update}
+        onChange={(next) => {
+          if (next.musicSource !== settings.musicSource) setMusicError(false);
+          update(next);
+        }}
+        localTrack={localTrack?.name ?? null}
+        onTrack={chooseTrack}
+        musicError={musicError}
       />
     </div>
   );

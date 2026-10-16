@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { MEDITATE_COPY } from "@/content/meditate";
 import {
   breathLevel,
   cycleLength,
   DEFAULT_SETTINGS,
+  MUSIC_TRACKS,
+  TRANSITION_SOUNDS,
   parseSettings,
   PATTERN_PRESETS,
   phaseAt,
@@ -61,6 +65,57 @@ describe("the breathing guide (D-120)", () => {
     const search = toSearch(custom);
     expect(search).toContain("p=3-2.5-7-0");
     expect(parseSettings(new URLSearchParams(search))).toEqual(custom);
+  });
+
+  it("carries a custom gradient and its direction in the address", () => {
+    const custom: MeditateSettings = {
+      ...DEFAULT_SETTINGS,
+      palette: "custom",
+      colors: { light: "#ff00aa", a: "#00ff88", b: "#123456" },
+      angle: 135,
+    };
+    const search = toSearch(custom);
+    expect(search).toContain("cl=ff00aa");
+    expect(search).not.toContain("%23");
+    expect(parseSettings(new URLSearchParams(search))).toEqual(custom);
+
+    // Anything that is not a six-digit colour is ignored.
+    const bad = parseSettings(new URLSearchParams("pal=custom&cl=red&ca=12345&cb=%23zzzzzz&an=999"));
+    expect(bad.colors).toEqual(DEFAULT_SETTINGS.colors);
+    expect(bad.angle).toBe(360);
+  });
+
+  it("keeps the chosen track in the address, but never a local file", () => {
+    const chosen: MeditateSettings = { ...DEFAULT_SETTINGS, musicSource: "float", musicVolume: 0.3 };
+    expect(toSearch(chosen)).toContain("ms=float");
+    expect(parseSettings(new URLSearchParams(toSearch(chosen)))).toEqual(chosen);
+
+    // The file lives in one browser only: whoever opens the link hears the first track.
+    expect(toSearch({ ...DEFAULT_SETTINGS, musicSource: "file" })).toBe("");
+    for (const bad of ["file", "link", "https://example.test/a.mp3", "toString"]) {
+      expect(parseSettings(new URLSearchParams({ ms: bad })).musicSource, bad).toBe("guitar");
+    }
+  });
+
+  it("ships every track and sound it offers", () => {
+    const files = [
+      ...[...Object.values(MUSIC_TRACKS), ...Object.values(TRANSITION_SOUNDS)].flatMap((t) => (t ? [t.src] : [])),
+      "/audio/meditate/music/sfx/ocean.mp3",
+      ...["ready", "inhale", "holdIn", "exhale", "holdOut", "done"].map((clip) => `/audio/meditate/es/${clip}.mp3`),
+    ];
+    for (const src of files) expect(existsSync(join(process.cwd(), "public", src)), src).toBe(true);
+  });
+
+  it("keeps the opening and closing sounds in the address", () => {
+    const chosen: MeditateSettings = { ...DEFAULT_SETTINGS, intro: "tone", outro: "none", phaseSound: "ocean" };
+    expect(parseSettings(new URLSearchParams(toSearch(chosen)))).toEqual(chosen);
+    expect(parseSettings(new URLSearchParams("in=gong&out=__proto__&ps=loud"))).toMatchObject({
+      intro: DEFAULT_SETTINGS.intro,
+      outro: DEFAULT_SETTINGS.outro,
+      phaseSound: DEFAULT_SETTINGS.phaseSound,
+    });
+    // A link from before the breath sound: "tones on" is the bowl.
+    expect(parseSettings(new URLSearchParams("t=1")).phaseSound).toBe("bowl");
   });
 
   it("names a pattern by its preset, and ignores nonsense in the address", () => {

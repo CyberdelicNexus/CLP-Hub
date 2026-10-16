@@ -5288,12 +5288,80 @@ turned on and off, full screen and a timer.
   language ("Natural", "Neural", "Google"…), and for Galician a Spanish voice
   where the device has no Galician one. Sound can only start from a tap, so
   tones and voice begin with "Empezar".
+- **A custom gradient** (founder's request, same day): a sixth colour,
+  "Personalizado", with three pickers: the light's own colour and the two
+  background lights. The rest of the light is derived from them the way the
+  preset palettes are built (white nucleus, centre and glow washed towards
+  white, a deeper fringe leaning to the second background colour), so any
+  choice still reads as the same light. It starts from the colours on screen.
+  "Dirección de la luz" turns the two background lights round the centre for
+  every palette. Colours travel in the link as six hex digits without the `#`.
+- **Fix:** the session never left "Prepárate" for "running" internally, so
+  with the count-in on (the default) no tone or word was ever played and the
+  timer could not end the session. The loop now moves it on when the count-in
+  ends.
+- **A recorded voice for Spanish** (founder's request: the device voices sound
+  robotic). One ElevenLabs recording of the six lines (Prepárate, Inhala,
+  Mantén, Exhala, Descansa, and the closing two sentences) was cut into
+  `public/audio/meditate/es/{ready,inhale,holdIn,exhale,holdOut,done}.mp3` at
+  MP3 frame boundaries inside the pauses, without re-encoding (~160 KB in
+  all). They are fetched only when the voice is on, decoded once and played
+  through Web Audio at the panel's volume. English and Galician have no
+  recording yet and keep the device's voice; adding one is a folder of the same
+  six files and a line in `VOICE_CLIPS` (meditate.tsx).
+- **Background music** (founder's request). Three of the studio's own tracks
+  (`public/audio/meditate/music/`: Guitarra, MP3, 16 min; Relax and Flotar,
+  Ogg Vorbis), the first on by default, or a file from the facilitator's device
+  (an object URL in that browser only: never uploaded, never in the link, so
+  whoever opens a shared link hears the first track). A link to music
+  elsewhere was built and then removed on the founder's review: participants
+  would not have such links, and it would have shown another site each
+  listener's address. The music fades in over 4 s at "Empezar", out on pause,
+  out over 8 s with the ending, and loops. It does not dip under the voice: a
+  dip for every word made the sound rise and fall all session (founder's
+  review). It plays through Web Audio, so volume and fades work on an iPhone
+  too. A browser that cannot decode Ogg (older Safari) shows those two tracks
+  greyed out rather than failing silently; MP3 copies would fix that. Nothing
+  plays until someone presses "Empezar".
+- **Opening and closing sounds** (founder's request): each chosen in the panel
+  from none, the soft synthesised tone, or three studio recordings named by the
+  founder: Campana (`music/sfx/bell.mp3`, about 11 s), Cuenco (`bowl.mp3`,
+  4 min) and Ghom (`ghom.wav`, 13 s). Opening Campana, closing Ghom by default. An effect plays once; as the opening, one that runs
+  past 12 s is faded out so it does not sit over the breathing. The closing
+  sound replaces the old two-note end chime.
+- **The tone is a synthesised singing bowl**, not a sine beep (founder: "more
+  soothing"). Four partials at ratios inside the ranges measured on real bowls
+  (about 2.7–2.9, 4.8–5.7 and 7.5–9.1 × the fundamental; Archives of Acoustics
+  2016), each a pair of sines a fraction of a hertz apart for the slow beating
+  a bowl has, each with its own decay (high first), a soft 60 ms onset and a
+  low-pass at 2.8 kHz. C4 as the breath comes in, G3 as it goes out; the holds
+  are silent, so a short pattern is never crowded with sound.
+- **The sound with the breath: none, the bowl, or ocean waves.** A breathing
+  sound was tried first, synthesised and then from a recording the founder
+  chose, stretched to each phase; it did not fit (founder's review) and was
+  removed. In its place, ocean waves (`music/sfx/ocean.mp3`, a three-minute
+  Pixabay recording, looped and streamed) play all session and move with the
+  breath: louder and brighter as it comes in, like a wave up the shore,
+  quieter and darker as it goes out (a low-pass from 450 Hz to 7 kHz), held
+  through the holds. They follow the light's own eased level, so sound and
+  light cannot drift apart; they fade in at "Empezar", out on pause, and out
+  with the ending. Links from before the bowl option (`t=1`, "tones on") still
+  open with the bowl.
+- **A limiter in front of the speakers** (`audio-out.ts`): music, voice,
+  breath, bowl and the opening and closing sounds all go through one gentle
+  limiter (threshold −6 dB, ratio 12:1), so when several land together their
+  sum cannot clip.
 - **Reduced motion:** the light still grows and settles (that is the guide) but
   at a third of the range, with no drifting cloud, and the words appear without
   moving.
 - Galician strings still need a native speaker's review, as on the home page.
 
 ## Open questions for researchers
+
+- Are the breathing guide's three music tracks and three sound effects (D-120,
+  `public/audio/meditate/music/`) cleared for public use on the site? The
+  ocean recording is from Pixabay, whose licence allows use on a website
+  without credit; that should be confirmed for the file actually used.
 
 - Should the Consultas inbox keep the conversation (the question and the
   replies) instead of erasing it once handled, so it works like a real chat

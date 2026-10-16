@@ -1,4 +1,4 @@
-import type { Palette } from "@/domain/breathing";
+import type { CustomColors, MeditateSettings, Palette } from "@/domain/breathing";
 import type { OrbColors } from "./breath-orb";
 
 /**
@@ -8,7 +8,10 @@ import type { OrbColors } from "./breath-orb";
  * `a` and `b` are the two side lights of the background and the glow, as
  * "r g b" for CSS: `a` from the lower left, `b` from the upper right.
  */
-export const PALETTE_COLORS: Record<Palette, { orb: OrbColors; a: string; b: string; swatch: string }> = {
+type PaletteColors = { orb: OrbColors; a: string; b: string; swatch: string };
+type Rgb = [number, number, number];
+
+export const PALETTE_COLORS: Record<Exclude<Palette, "custom">, PaletteColors> = {
   numadelic: {
     orb: { nucleus: [1, 1, 1], core: [0.93, 0.96, 1], halo: [0.72, 0.78, 1], body: [0.52, 0.57, 1], fringe: [0.3, 0.27, 0.82] },
     a: "74 122 255",
@@ -40,3 +43,42 @@ export const PALETTE_COLORS: Record<Palette, { orb: OrbColors; a: string; b: str
     swatch: "linear-gradient(135deg, #96a5c8, #bec4dc)",
   },
 };
+
+const fromHex = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as Rgb;
+const toHex = (rgb: readonly number[]) => `#${rgb.map((c) => Math.round(c * 255).toString(16).padStart(2, "0")).join("")}`;
+const mix = (x: readonly number[], y: readonly number[], t: number) => x.map((c, i) => c + (y[i] - c) * t) as Rgb;
+const triplet = (hex: string) => fromHex(hex).map((c) => Math.round(c * 255)).join(" ");
+const WHITE: Rgb = [1, 1, 1];
+
+/**
+ * A palette from the facilitator's three colours, built the way the others
+ * are: a white nucleus, a centre and glow that are the light's colour washed
+ * towards white, its colour as the body, and a fringe that leans towards the
+ * second background colour and is a little deeper.
+ */
+export function customPalette({ light, a, b }: CustomColors): PaletteColors {
+  const body = fromHex(light);
+  return {
+    orb: {
+      nucleus: WHITE,
+      core: mix(WHITE, body, 0.08),
+      halo: mix(WHITE, body, 0.42),
+      body,
+      fringe: mix(body, fromHex(b), 0.6).map((c) => c * 0.8) as Rgb,
+    },
+    a: triplet(a),
+    b: triplet(b),
+    swatch: `conic-gradient(from 200deg, ${a}, ${light}, ${b}, ${a})`,
+  };
+}
+
+export function paletteFor(s: Pick<MeditateSettings, "palette" | "colors">): PaletteColors {
+  return s.palette === "custom" ? customPalette(s.colors) : PALETTE_COLORS[s.palette];
+}
+
+/** A preset's colours as a starting point for a custom gradient. */
+export function colorsOf(palette: Exclude<Palette, "custom">): CustomColors {
+  const p = PALETTE_COLORS[palette];
+  const hex = (t: string) => toHex(t.split(" ").map((c) => Number(c) / 255));
+  return { light: toHex(p.orb.body), a: hex(p.a), b: hex(p.b) };
+}

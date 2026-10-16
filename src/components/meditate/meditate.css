@@ -36,8 +36,8 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(55% 50% at 26% 64%, rgb(var(--m-a) / calc(0.22 * var(--m-ambient))), transparent 70%),
-    radial-gradient(55% 50% at 74% 34%, rgb(var(--m-b) / calc(0.24 * var(--m-ambient))), transparent 70%),
+    radial-gradient(55% 50% at var(--m-ax, 26%) var(--m-ay, 64%), rgb(var(--m-a) / calc(0.22 * var(--m-ambient))), transparent 70%),
+    radial-gradient(55% 50% at var(--m-bx, 74%) var(--m-by, 34%), rgb(var(--m-b) / calc(0.24 * var(--m-ambient))), transparent 70%),
     radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55));
   transition: background 1.2s var(--cl-ease-presence);
 }
@@ -358,7 +358,8 @@
   cursor: pointer;
   transition: border-color var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out), background var(--sc-d-fast) var(--sc-ease-out);
 }
-.m-chip:hover, .m-swatch:hover { border-color: var(--cl-line-strong); color: var(--sc-ink); }
+.m-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+.m-chip:hover:not(:disabled), .m-swatch:hover { border-color: var(--cl-line-strong); color: var(--sc-ink); }
 .m-chip[aria-checked="true"],
 .m-swatch[aria-checked="true"] {
   border-color: var(--sc-accent);
@@ -368,6 +369,35 @@
 .m-chip:focus-visible, .m-swatch:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
 .m-swatches { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .m-swatch { padding-left: 0.35rem; }
+/* The custom gradient: a live strip of the three colours, then one picker each. */
+.m-custom { display: grid; gap: 0.6rem; padding: 0.8rem; border-radius: calc(var(--cl-radius) - 4px); border: 1px solid var(--cl-line); background: rgb(255 255 255 / 0.02); animation: m-rise 500ms var(--cl-ease-presence) both; }
+.m-custom__preview {
+  height: 2.6rem;
+  border-radius: calc(var(--cl-radius) - 8px);
+  background:
+    radial-gradient(circle at 50% 50%, #fff 0, var(--c-light) 14%, transparent 34%),
+    linear-gradient(100deg, var(--c-a), #05060f 50%, var(--c-b));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.m-custom__colors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.m-color { display: grid; justify-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--sc-ink-soft); cursor: pointer; }
+.m-color input[type="color"] {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 1px solid var(--cl-line-strong);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: transform var(--sc-d-fast) var(--sc-ease-out), border-color var(--sc-d-fast) var(--sc-ease-out);
+}
+.m-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 3px; }
+.m-color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.m-color input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
+.m-color input[type="color"]:hover { transform: scale(1.06); border-color: var(--sc-accent); }
+.m-color input[type="color"]:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-color output { font-family: var(--sc-font-mono); font-size: 0.68rem; color: var(--cl-muted); text-transform: uppercase; }
+
 .m-swatch__dot { width: 1.3rem; height: 1.3rem; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2); }
 
 .m-field {
@@ -378,6 +408,21 @@
   font-size: 0.82rem;
   color: var(--sc-ink-soft);
 }
+.m-field--select { grid-template-columns: 7.5rem minmax(0, 1fr); }
+.m-field select {
+  min-height: 2rem;
+  padding: 0 0.6rem;
+  border-radius: calc(var(--cl-radius) - 8px);
+  border: 1px solid var(--cl-line-strong);
+  background: rgb(0 0 0 / 0.35);
+  color: var(--sc-ink);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.m-field select:hover { border-color: var(--sc-accent); }
+.m-field select:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 1px; }
+.m-field option { background: #0b0d18; color: var(--sc-ink); }
 .m-field output { text-align: right; font-family: var(--sc-font-mono); font-size: 0.75rem; color: var(--sc-ink); font-variant-numeric: tabular-nums; }
 .m-field[data-disabled] { opacity: 0.45; }
 .m-field input[type="range"] {
@@ -446,6 +491,15 @@
 .m-toggle input:checked + .m-toggle__track::after { transform: translateX(1rem); background: var(--sc-accent-ink); }
 .m-toggle input:focus-visible + .m-toggle__track { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
 .m-toggle:hover { color: var(--sc-ink); }
+
+/* Music: a file picker that looks like the other buttons. */
+.m-music { display: grid; gap: 0.45rem; }
+.m-music__pick { position: relative; justify-content: center; font-size: 0.82rem; cursor: pointer; }
+.m-music__pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.m-music__pick:focus-within { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+.m-music__name { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--sc-ink-soft); overflow-wrap: anywhere; }
+.m-panel__hint { font-size: 0.74rem; line-height: 1.5; color: var(--cl-muted); }
+.m-panel__hint--error { color: var(--cl-caution); }
 
 .m-panel__actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--cl-line); }
 .m-panel__actions .cl-ghost { flex: 1; justify-content: center; font-size: 0.82rem; padding-inline: 0.75rem; }
