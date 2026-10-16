@@ -90,7 +90,7 @@ export interface MeditateSettings {
   guidance: boolean;
   /** Seconds left in the phase. */
   countdown: boolean;
-  /** A thin ring around the light that fills with the phase. */
+  /** A thin line above the words that fills with each phase. */
   ring: boolean;
   /** The number of breaths taken. */
   cycles: boolean;

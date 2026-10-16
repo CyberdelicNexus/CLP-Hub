@@ -44,6 +44,20 @@ const START: Display = { phase: "inhale", remaining: 0, cycle: 0, elapsed: 0 };
 
 const TONES: Record<Phase, number> = { inhale: 528, holdIn: 440, exhale: 396, holdOut: 330 };
 const VOICE_LANG: Record<PublicLocale, string> = { es: "es-ES", en: "en-GB", gl: "gl-ES" };
+/** Galician voices are rare on devices; a Spanish one reads the Galician words well enough. */
+const VOICE_FALLBACK: Record<PublicLocale, readonly string[]> = { es: ["es"], en: ["en"], gl: ["gl", "es"] };
+/** The device's better voices, where it names them so. */
+const GOOD_VOICE = /natural|neural|google|premium|enhanced|siri/i;
+
+function pickVoice(locale: PublicLocale): SpeechSynthesisVoice | undefined {
+  const voices = window.speechSynthesis.getVoices();
+  for (const prefix of VOICE_FALLBACK[locale]) {
+    const matching = voices.filter((v) => v.lang.toLowerCase().startsWith(prefix));
+    const best = matching.find((v) => GOOD_VOICE.test(v.name)) ?? matching[0];
+    if (best) return best;
+  }
+  return undefined;
+}
 
 const noSubscription = () => () => {};
 const subscribeMotion = (onChange: () => void) => {
@@ -81,7 +95,7 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
   const orbRef = useRef<HTMLSpanElement>(null);
   const haloRef = useRef<HTMLSpanElement>(null);
   const ambientRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<SVGCircleElement>(null);
+  const lineRef = useRef<HTMLSpanElement>(null);
   // A stable box the loop and the light's shader share; not React state, it changes every frame.
   const [level] = useState(() => ({ current: 0.3 }));
 
@@ -90,7 +104,9 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
   useEffect(() => {
     live.current = { settings, status, reduced };
   });
-  const clockRef = useRef({ elapsed: 0, origin: 0, countIn: 0, idle: 0, phaseKey: "" });
+  const clockRef = useRef({ elapsed: 0, origin: 0, countIn: 0, idle: 0, ended: 0, phaseKey: "" });
+  /** A wave of light that leaves the orb when a session starts or ends; the key replays it. */
+  const [wave, setWave] = useState<{ kind: "start" | "end"; n: number } | null>(null);
   const audio = useRef<AudioContext | null>(null);
 
   /* ------------------------------------------------------------ cues */
@@ -121,8 +137,11 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
       if (!("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(word);
-      u.lang = VOICE_LANG[locale];
-      u.rate = 0.85;
+      const voice = pickVoice(locale);
+      u.voice = voice ?? null;
+      u.lang = voice?.lang ?? VOICE_LANG[locale];
+      u.rate = 0.8;
+      u.pitch = 0.95;
       u.volume = live.current.settings.volume;
       window.speechSynthesis.speak(u);
     },
@@ -163,7 +182,9 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
         if (!still) c.idle += dt;
         target = 0.35 + 0.2 * Math.sin((c.idle / 10) * Math.PI * 2);
       } else if (st === "done") {
-        target = 0;
+        // The ending: one slow, full breath of light, then it rests half open.
+        c.ended += dt;
+        target = c.ended < 2.8 ? 1 : 0.45;
       } else {
         if (st !== "paused") c.elapsed += dt;
         if (c.elapsed < c.countIn) {
@@ -184,7 +205,9 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
             const timeUp = s.minutes > 0 && breathing >= s.minutes * 60;
             if (timeUp && (at.phase === "holdOut" || at.phase === "inhale")) {
               live.current.status = "done";
+              c.ended = 0;
               setStatus("done");
+              setWave((w) => ({ kind: "end", n: (w?.n ?? 0) + 1 }));
               if (s.tones || s.voice) {
                 tone(528);
                 tone(660, 0.6);
@@ -196,7 +219,8 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
         }
       }
 
-      if (st !== "paused") shown += (target - shown) * (1 - Math.exp(-dt * 9));
+      // The ending moves at a third of the pace of a breath.
+      if (st !== "paused") shown += (target - shown) * (1 - Math.exp(-dt * (st === "done" ? 1.6 : 9)));
       level.current = shown;
 
       const depth = s.depth * (still ? 0.35 : 1);
@@ -211,7 +235,7 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
         halo.style.opacity = String(0.72 + 0.28 * shown);
       }
       if (ambientRef.current) ambientRef.current.style.opacity = String(0.7 + 0.3 * shown);
-      if (ringRef.current) ringRef.current.style.strokeDashoffset = String(1 - progress);
+      if (lineRef.current) lineRef.current.style.transform = `scaleX(${progress})`;
 
       if (next) {
         setDisplay((d) =>
@@ -227,6 +251,8 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
   const begin = useCallback(() => {
     if (!audio.current && typeof AudioContext !== "undefined") audio.current = new AudioContext();
     void audio.current?.resume();
+    // Some browsers only list their voices once asked; ask before the first phase needs one.
+    if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
     const c = clockRef.current;
     c.countIn = live.current.settings.countIn ? COUNT_IN : 0;
     c.elapsed = 0;
@@ -234,6 +260,7 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
     c.phaseKey = "";
     setDisplay(START);
     setCalm(false);
+    setWave((w) => ({ kind: "start", n: (w?.n ?? 0) + 1 }));
     setStatus(c.countIn ? "countIn" : "running");
   }, []);
 
@@ -424,11 +451,11 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
             <span className="m-orb__core" />
             <BreathOrb colors={palette.orb} glow={settings.glow} drift={reduced ? 0 : settings.drift} still={status === "paused"} level={level} />
           </span>
-          {settings.ring ? (
-            <svg className="m-ring" viewBox="0 0 100 100" data-on={session ? "" : undefined}>
-              <circle className="m-ring__track" cx="50" cy="50" r="48" />
-              <circle ref={ringRef} className="m-ring__fill" cx="50" cy="50" r="48" pathLength={1} />
-            </svg>
+          {wave && !reduced ? (
+            <span key={`${wave.kind}${wave.n}`} className="m-waves" data-kind={wave.kind}>
+              <span className="m-wave" />
+              <span className="m-wave" />
+            </span>
           ) : null}
         </div>
 
@@ -439,13 +466,18 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
               <p className="m-lead">{copy.intro}</p>
             </div>
           ) : status === "done" ? (
-            <div className="m-intro" role="status">
+            <div className="m-intro m-done" role="status">
               <h1 className="cl-title m-title">{copy.done.title}</h1>
               <p className="m-lead">{copy.done.body}</p>
             </div>
           ) : (
             <div className="m-cue">
               <h1 className="cl-sr">{copy.title}</h1>
+              {settings.ring ? (
+                <span className="m-line" aria-hidden>
+                  <span ref={lineRef} className="m-line__fill" />
+                </span>
+              ) : null}
               {settings.guidance ? (
                 <p className="m-word" aria-live="polite">
                   <span key={`${display.cycle}:${display.phase}`}>{word}</span>

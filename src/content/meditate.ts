@@ -82,7 +82,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       toggles: {
         guidance: "Palabras de guía",
         countdown: "Cuenta atrás",
-        ring: "Anillo de progreso",
+        ring: "Línea de progreso",
         cycles: "Contar respiraciones",
         countIn: "Preparación de 3 segundos",
         tones: "Tonos suaves",
@@ -143,7 +143,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       toggles: {
         guidance: "Guidance words",
         countdown: "Countdown",
-        ring: "Progress ring",
+        ring: "Progress line",
         cycles: "Count breaths",
         countIn: "3-second count-in",
         tones: "Soft tones",
@@ -204,7 +204,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       toggles: {
         guidance: "Palabras de guía",
         countdown: "Conta atrás",
-        ring: "Anel de progreso",
+        ring: "Liña de progreso",
         cycles: "Contar respiracións",
         countIn: "Preparación de 3 segundos",
         tones: "Tons suaves",

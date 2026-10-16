@@ -5273,9 +5273,21 @@ turned on and off, full screen and a timer.
 - **The timer ends on an out-breath**, never mid-breath. Leaving the tab pauses
   the session. While it runs the screen is kept awake (Wake Lock, where
   supported) and the controls fade after 3.5 s without movement.
-- **Guidance options:** words, a countdown, a progress ring, a breath counter, a
+- **Guidance options:** words, a countdown, a progress line, a breath counter, a
   3-second count-in, soft Web Audio tones and the browser's voice (off by
-  default; voice quality depends on the device). Keyboard: Space, F, Escape.
+  default). Keyboard: Space, F, Escape.
+- **Progress is a line above the words, not a ring round the light**
+  (2026-10-16, founder's review): the ring drew a hard outline round a light
+  whose point is that it has no hard outline. The line fills outward from its
+  centre with each phase.
+- **Start and end.** A session opens with one wave of light leaving the orb. It
+  closes with two slower waves, one last full breath of light that then rests
+  half open, the stars and side lights dimming, and the closing words arriving
+  after the light. None of this plays under reduced motion.
+- **Voice** uses the device's own speech voices: the best-named one for the
+  language ("Natural", "Neural", "Google"…), and for Galician a Spanish voice
+  where the device has no Galician one. Sound can only start from a tap, so
+  tones and voice begin with "Empezar".
 - **Reduced motion:** the light still grows and settles (that is the guide) but
   at a third of the range, with no drifting cloud, and the words appear without
   moving.
