@@ -101,7 +101,7 @@ describe("the breathing guide (D-120)", () => {
     const files = [
       ...[...Object.values(MUSIC_TRACKS), ...Object.values(TRANSITION_SOUNDS)].flatMap((t) => (t ? [t.src] : [])),
       "/audio/meditate/music/sfx/ocean.mp3",
-      ...["ready", "inhale", "holdIn", "exhale", "holdOut", "done"].map((clip) => `/audio/meditate/es/${clip}.mp3`),
+      ...["es", "en"].flatMap((lang) => ["ready", "inhale", "holdIn", "exhale", "holdOut", "done"].map((clip) => `/audio/meditate/${lang}/${clip}.mp3`)),
     ];
     for (const src of files) expect(existsSync(join(process.cwd(), "public", src)), src).toBe(true);
   });

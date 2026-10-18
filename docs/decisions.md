@@ -5306,9 +5306,11 @@ turned on and off, full screen and a timer.
   `public/audio/meditate/es/{ready,inhale,holdIn,exhale,holdOut,done}.mp3` at
   MP3 frame boundaries inside the pauses, without re-encoding (~160 KB in
   all). They are fetched only when the voice is on, decoded once and played
-  through Web Audio at the panel's volume. English and Galician have no
-  recording yet and keep the device's voice; adding one is a folder of the same
-  six files and a line in `VOICE_CLIPS` (meditate.tsx).
+  through Web Audio at the panel's volume. English followed (2026-10-18): the
+  same six lines in a British ElevenLabs voice, cut the same way into
+  `public/audio/meditate/en/`. Galician has no recording yet and keeps the
+  device's voice; adding one is a folder of the same six files and a line in
+  `VOICE_CLIPS` (meditate.tsx).
 - **Background music** (founder's request). Three of the studio's own tracks
   (`public/audio/meditate/music/`: Guitarra, MP3, 16 min; Relax and Flotar,
   Ogg Vorbis), the first on by default, or a file from the facilitator's device

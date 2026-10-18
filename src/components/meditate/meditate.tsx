@@ -64,7 +64,7 @@ const INTRO_MAX_MS = 12000;
  */
 type Clip = Phase | "ready" | "done";
 const CLIPS: readonly Clip[] = ["ready", ...PHASES, "done"];
-const VOICE_CLIPS: Partial<Record<PublicLocale, string>> = { es: "/audio/meditate/es" };
+const VOICE_CLIPS: Partial<Record<PublicLocale, string>> = { es: "/audio/meditate/es", en: "/audio/meditate/en" };
 /** The closing words wait for the light's last breath (meditate.css, m-close). */
 const DONE_VOICE_DELAY_MS = 1200;
 const VOICE_LANG: Record<PublicLocale, string> = { es: "es-ES", en: "en-GB", gl: "gl-ES" };
