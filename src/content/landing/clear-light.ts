@@ -429,7 +429,7 @@ export const INVITATION = {
     ],
     cookieSettings: "Configurar cookies",
     still: { pause: "Pausar animación", resume: "Reanudar animación" },
-    note: "Material de reclutamiento en preparación. La información definitiva se publicará tras su aprobación.",
+    copyright: "© Intangible Realities Lab 2026",
     /** The policy page exists (D-052); its text still needs legal approval. */
     privacy: missing("PRIVACIDAD", "Aprobación legal de la política de privacidad"),
     /** Not rendered (D-052); still blocks publication. */
@@ -589,7 +589,7 @@ export const TEAM = {
     { role: "Responsable de logística y operaciones", bio: "Con formación en música y conciencia corporal, la variada trayectoria profesional de Sila abarca también la gestión de eventos, la coordinación de proyectos y el coaching de idiomas." },
     { role: "Responsable de investigación · Facilitación", bio: "Catherine obtuvo su licenciatura en Biología y su doctorado en Neurociencia en Chile. Investigó los efectos de la práctica de la meditación mediante medidas electrofisiológicas. Ha desarrollado distintos proyectos posdoctorales en universidades de Chile y España, y recientemente trabaja con la realidad virtual como tecnología de apoyo a la práctica de la meditación." },
     { role: "Diseño de experiencias · Infraestructura de investigación · Facilitación", bio: "Investigador, diseñador de experiencias inmersivas y tecnólogo creativo que explora cómo los medios inmersivos y las tecnologías emergentes pueden favorecer experiencias significativas, bienestar y desarrollo humano. En Clear Light, contribuye al diseño de experiencias, la implementación técnica, la infraestructura de investigación y la realización del estudio." },
-    { role: "Asistente de investigación · Psicóloga · Facilitadora", bio: "Soy psicóloga general sanitaria y doctora (PhD) en psicología clínica y de la salud por la Universitat de València. Especializada en psicooncología con experiencia clínica en centros de referencia como el Instituto Valenciano de Oncología." },
+    { role: "Asistente de investigación · Psicóloga · Facilitadora", bio: "Soy psicóloga general sanitaria y doctora (PhD) en psicología clínica y de la salud por la Universitat de València. Especializada en psicooncología con experiencia clínica en el ámbito." },
   ] as readonly TeamMemberCopy[],
 } as const;
 

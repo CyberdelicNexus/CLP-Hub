@@ -153,7 +153,7 @@ export const LANDING_GL: LandingCopy = {
       { role: "Responsable de loxística e operacións", bio: "Con formación en música e conciencia corporal, a variada traxectoria profesional de Sila abrangue tamén a xestión de eventos, a coordinación de proxectos e o coaching de idiomas." },
       { role: "Responsable de investigación · Facilitación", bio: "Catherine obtivo a súa licenciatura en Bioloxía e o seu doutoramento en Neurociencia en Chile. Investigou os efectos da práctica da meditación mediante medidas electrofisiolóxicas. Desenvolveu distintos proxectos posdoutorais en universidades de Chile e España, e recentemente traballa coa realidade virtual como tecnoloxía de apoio á práctica da meditación." },
       { role: "Deseño de experiencias · Infraestrutura de investigación · Facilitación", bio: "Investigador, deseñador de experiencias inmersivas e tecnólogo creativo que explora como os medios inmersivos e as tecnoloxías emerxentes poden favorecer experiencias significativas, benestar e desenvolvemento humano. En Clear Light, contribúe ao deseño de experiencias, á implementación técnica, á infraestrutura de investigación e á realización do estudo." },
-      { role: "Asistente de investigación · Psicóloga · Facilitadora", bio: "Son psicóloga xeral sanitaria e doutora (PhD) en psicoloxía clínica e da saúde pola Universitat de València. Especializada en psicooncoloxía con experiencia clínica en centros de referencia como o Instituto Valenciano de Oncología." },
+      { role: "Asistente de investigación · Psicóloga · Facilitadora", bio: "Son psicóloga xeral sanitaria e doutora (PhD) en psicoloxía clínica e da saúde pola Universitat de València. Especializada en psicooncoloxía con experiencia clínica no ámbito." },
     ],
   },
   JOIN: {
@@ -325,7 +325,7 @@ export const LANDING_GL: LandingCopy = {
       ],
       cookieSettings: "Configurar cookies",
       still: { pause: "Pausar animación", resume: "Retomar animación" },
-      note: "Material de recrutamento en preparación. A información definitiva publicarase tras a súa aprobación.",
+      copyright: "© Intangible Realities Lab 2026",
       privacy: ES.INVITATION.footer.privacy,
       version: ES.INVITATION.footer.version,
     },

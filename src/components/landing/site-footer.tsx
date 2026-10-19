@@ -5,7 +5,7 @@ import type { LandingCopy } from "@/content/landing/clear-light";
 /**
  * The public site's footer, shared by the landing page and the legal pages
  * (D-052): brand and tagline, the study links, the legal links, cookie
- * settings and the pause control. In-page anchors get `/clearlight` prepended off
+ * settings, the copyright line and the pause control. In-page anchors get `/clearlight` prepended off
  * the landing page. `#contacto` stays a bare hash everywhere: ContactDialog opens on it.
  */
 export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; rootId: string; onLanding: boolean }) {
@@ -40,7 +40,7 @@ export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; roo
           ))}
         </nav>
         <div className="foot__base">
-          <p className="foot__note">{f.note}</p>
+          <p className="foot__note">{f.copyright}</p>
           <StillToggle rootId={rootId} labels={f.still} />
         </div>
       </div>

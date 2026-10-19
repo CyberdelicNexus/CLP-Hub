@@ -5358,6 +5358,31 @@ turned on and off, full screen and a timer.
   moving.
 - Galician strings still need a native speaker's review, as on the home page.
 
+## D-121 · 2026-10-19 · The hero hands off to "El porqué" on the first scroll
+
+Founder's polish request: scrolling from the hero into "El porqué" showed an
+empty screen, because the pinned stage slides up through a full viewport while
+"El porqué" is still at opacity 0 (D-083's fade-in, which stops the text being
+seen rising from below).
+
+- **A one-off takeover of that seam only.** In the hero, the first downward
+  gesture is cancelled and the page glides (1.1 s, eased) to the same landing
+  point the `#porque` anchor uses. The panel fades and rises in with the glide
+  via a CSS animation, which outranks the engine's inline opacity; 600 ms after
+  the glide the attribute is removed and the engine owns opacity again.
+- **Not a general scroll-snap.** No other section changes, upward scrolling is
+  untouched, and it only runs where the pinned variant does (wide viewport,
+  motion allowed, scripting on) and not while the animation is paused. Mobile
+  and reduced motion keep the stacked flow.
+- **Outside the vendored engine**, which must stay byte-identical
+  (`scrollcraft-mount.tsx`): a separate component listening to wheel, touch
+  and scrolling keys.
+
+Also in this round: the footer gains "© Intangible Realities Lab 2026" and
+loses the "material in preparation" draft note (founder's request), and
+Joana Vidal's bio drops the named centre at her request (es as given; en and
+gl follow).
+
 ## Open questions for researchers
 
 - Are the breathing guide's three music tracks and three sound effects (D-120,

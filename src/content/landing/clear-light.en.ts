@@ -154,7 +154,7 @@ export const LANDING_EN: LandingCopy = {
       { role: "Logistics & Operations Lead", bio: "With a background in music and body awareness, Sila’s diverse professional history also encompasses event management, project coordination and language coaching." },
       { role: "Research Lead · Facilitation", bio: "Catherine obtained her biological degree and PhD in Neuroscience in Chile. She investigated the effects of meditation practice using electrophysiological measures. She has developed different postdoctoral projects at universities in Chile and Spain, recently working with virtual reality as a technology to support meditation practice." },
       { role: "Experience Design · Research Infrastructure · Facilitation", bio: "Researcher, immersive experience designer, and creative technologist exploring how immersive media and emerging technologies can support meaningful experiences, wellbeing, and human flourishing. Within Clear Light, he contributes to experience design, technical implementation, research infrastructure, and study delivery." },
-      { role: "Research Assistant · Psychologist · Facilitator", bio: "I am a general health psychologist and hold a PhD in clinical and health psychology from the Universitat de València. I specialise in psycho-oncology, with clinical experience at leading centres such as the Instituto Valenciano de Oncología." },
+      { role: "Research Assistant · Psychologist · Facilitator", bio: "I am a general health psychologist and hold a PhD in clinical and health psychology from the Universitat de València. I specialise in psycho-oncology, with clinical experience in the field." },
     ],
   },
   JOIN: {
@@ -326,7 +326,7 @@ export const LANDING_EN: LandingCopy = {
       ],
       cookieSettings: "Cookie settings",
       still: { pause: "Pause animation", resume: "Resume animation" },
-      note: "Recruitment material in preparation. The final information will be published once it is approved.",
+      copyright: "© Intangible Realities Lab 2026",
       privacy: ES.INVITATION.footer.privacy,
       version: ES.INVITATION.footer.version,
     },

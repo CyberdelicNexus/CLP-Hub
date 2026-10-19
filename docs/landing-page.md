@@ -242,6 +242,15 @@ exactly as it already does for Stages' seven images. The stacked variant
 fading up as a whole block via `data-sc-in` rather than per line; "El porqué"'s
 block fades only, with the engine's 14px lift cancelled (D-083).
 
+**The handoff from the hero (D-121).** `hero-handoff.tsx`: while the pinned
+variant is showing, the first downward gesture in the hero (wheel, trackpad,
+swipe, ArrowDown/PageDown/Space) is taken over and the page glides on its own
+(1.1 s) to the `#porque` landing point, 12vh into the pin. During the glide a
+CSS animation, not the engine, owns "El porqué"'s opacity, so the text rises
+and fades in with the stage instead of arriving on an empty screen. Upward
+scrolling, anchor jumps and every other section are untouched; the pause
+control turns it off.
+
 ### The opening sequence (removed, D-077 — kept as history)
 
 **This subsection describes a mechanism that no longer exists.** The team
@@ -417,7 +426,8 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
 - **Footer** (`site-footer.tsx`, shared with the legal pages): brand and
   tagline; "El estudio" (study information, FAQ, contact); "Legal" (legal notice
   and terms of use, privacy policy, cookie policy, "Configurar cookies"); the
-  draft note and the pause icon button. No team access link: staff reach
+  copyright line ("© Intangible Realities Lab 2026", the same
+  in every language) and the pause icon button. No team access link: staff reach
   `/equipo/login` directly.
 - **Contact dialog** (`contact-dialog.tsx`): every `#contacto` link opens a
   native modal `<dialog>` centred on screen, with a blurred backdrop; a click

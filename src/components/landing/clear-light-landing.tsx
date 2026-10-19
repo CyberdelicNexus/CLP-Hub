@@ -1,5 +1,6 @@
 import { CookieBanner } from "@/components/landing/consent";
 import { ContactDialog } from "@/components/landing/contact-dialog";
+import { HeroHandoff } from "@/components/landing/hero-handoff";
 import { ScrollCraftMount } from "@/components/landing/scrollcraft-mount";
 import { Eligibility } from "@/components/landing/sections/eligibility";
 import { Invitation } from "@/components/landing/sections/invitation";
@@ -63,6 +64,7 @@ export function ClearLightLanding({
       <ContactDialog copy={copy.CONTACT} />
       <CookieBanner copy={copy.CONSENT} />
       <ScrollCraftMount rootId={LANDING_ROOT_ID} />
+      <HeroHandoff rootId={LANDING_ROOT_ID} />
     </div>
   );
 }
