@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+import { CueReveal } from "@/components/landing/cue-reveal";
 import { FilmPlayer } from "@/components/landing/film-player";
 import type { LandingCopy } from "@/content/landing/clear-light";
 
@@ -7,17 +9,51 @@ import type { LandingCopy } from "@/content/landing/clear-light";
  * `data-sc-cue` on the panel that wraps this, and the stacked variant adds
  * its own `data-sc-in` where it renders these.
  */
-export function WhyCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
+export function WhyCopy({ copy, titleId, reveal = false }: { copy: LandingCopy; titleId?: string; reveal?: boolean }) {
   const { WHY } = copy;
   return (
     <>
       <h2 id={titleId} className="cl-title">
-        {WHY.headline}
+        {reveal ? <LetterTitle text={WHY.headline} /> : WHY.headline}
       </h2>
       <p className="cl-lead porque__body">{WHY.body}</p>
     </>
   );
 }
+
+/**
+ * The title as one span per letter, for the entrance in which it forms from
+ * its first letter to its last (D-123): each letter carries its place as
+ * `--i`, and landing.css staggers them by it. Letters are grouped by word so
+ * a line only ever breaks between words. A screen reader hears the plain
+ * title once; the letters are hidden from it.
+ */
+function LetterTitle({ text }: { text: string }) {
+  let i = 0;
+  const words = text.split(" ");
+  return (
+    <>
+      <span className="cl-sr">{text}</span>
+      <span className="reveal-title" aria-hidden>
+        {words.map((word, w) => (
+          <span key={w}>
+            <span className="reveal-title__word">
+              {Array.from(word).map((letter) => (
+                <span key={i} className="reveal-title__letter" style={{ "--i": i++ } as CSSProperties}>
+                  {letter}
+                </span>
+              ))}
+            </span>
+            {w < words.length - 1 ? " " : null}
+          </span>
+        ))}
+      </span>
+    </>
+  );
+}
+
+/** How many letters the title's entrance staggers over, so the text beneath can wait for the last. */
+const letterCount = (text: string) => Array.from(text.replace(/\s+/g, "")).length;
 
 export function WhatCopy({ copy, titleId }: { copy: LandingCopy; titleId?: string }) {
   const { WHAT } = copy;
@@ -100,8 +136,9 @@ export function WhyWhat({ copy, lang }: { copy: LandingCopy; lang: string }) {
       <div className="cl-pinned" data-sc-act="pin" data-sc-span="2">
         <div data-sc-stage className="sc-stage stage stage--porque-que">
           <div className="porque-que__panel porque-que__panel--why" data-sc-cue={cueFor(0)} data-sc-rise="0">
-            <div className="porque__inner">
-              <WhyCopy copy={copy} titleId="porque-title" />
+            <CueReveal />
+            <div className="porque__inner" style={{ "--letters": letterCount(copy.WHY.headline) } as CSSProperties}>
+              <WhyCopy copy={copy} titleId="porque-title" reveal />
             </div>
           </div>
           <div className="porque-que__panel porque-que__panel--what" data-sc-cue={cueFor(1)} data-sc-rise="0">

@@ -390,7 +390,7 @@ export interface Partner {
  * first in line. Sits just above the footer, after the final invitation.
  */
 export const PARTNERS = {
-  heading: "Colaboran en este estudio",
+  heading: "Patrocinadores y colaboradores",
   items: [
     { name: "Tiny Blue Dot Foundation", logo: { src: "/landing/media/partners/tiny-blue-dot-foundation.png", width: 1500, height: 308 } },
     { name: "CiTIUS · Centro Singular de Investigación en Tecnoloxías Intelixentes", logo: { src: "/landing/media/partners/citius.png", width: 3367, height: 1218 } },
@@ -582,7 +582,7 @@ export const TEAM = {
   previous: "Equipo anterior",
     next: "Equipo siguiente",
     members: [
-    { role: "Supervisor", bio: "David Glowacki es un investigador interdisciplinar cuyos intereses abarcan la informática, la nanociencia, la estética, la teoría cultural y la espiritualidad." },
+    { role: "Director", bio: "David Glowacki es un investigador interdisciplinar cuyos intereses abarcan la informática, la nanociencia, la estética, la teoría cultural y la espiritualidad." },
     { role: "Responsable de tecnología", bio: "El Dr. Joe Hardy es cofundador y director científico de aNUma. Es doctor en Psicología Cognitiva por la Universidad de California en Berkeley, donde también obtuvo su MBA." },
     { role: "Responsable de diseño de experiencias", bio: "Lama Karma es facilitador principal y diseñador de experiencias en aNUma. En este papel incorpora prácticas basadas en la evidencia y tradiciones de sabiduría a un diseño de experiencias de vanguardia." },
     { role: "Investigadora sénior - Análisis de datos y publicaciones", bio: "Valérie realizó su doctorado y los primeros años de su carrera investigadora en neuroimagen cognitiva en el Imperial College, el UCL y la Universidad de Oxford." },

@@ -7,6 +7,8 @@ import {
   breathLevel,
   cycleLength,
   DEFAULT_SETTINGS,
+  LOOKS,
+  lookOf,
   MUSIC_TRACKS,
   TRANSITION_SOUNDS,
   parseSettings,
@@ -116,6 +118,22 @@ describe("the breathing guide (D-120)", () => {
     });
     // A link from before the breath sound: "tones on" is the bowl.
     expect(parseSettings(new URLSearchParams("t=1")).phaseSound).toBe("bowl");
+  });
+
+  it("starts round and still, keeps the home page's look one tap away, and carries the shape in the link", () => {
+    // David's review: symmetrical, no organic movement, by default.
+    expect(lookOf(DEFAULT_SETTINGS)).toBe("symmetric");
+    expect([DEFAULT_SETTINGS.organic, DEFAULT_SETTINGS.edge, DEFAULT_SETTINGS.texture]).toEqual([0, 0, 0]);
+
+    const asymmetric: MeditateSettings = { ...DEFAULT_SETTINGS, ...LOOKS.asymmetric };
+    expect(lookOf(asymmetric)).toBe("asymmetric");
+    expect(parseSettings(new URLSearchParams(toSearch(asymmetric)))).toEqual(asymmetric);
+
+    const tuned: MeditateSettings = { ...DEFAULT_SETTINGS, organic: 0.35, texture: 0.6, softness: 1.4, core: 0.8, fringe: 0 };
+    expect(lookOf(tuned)).toBeNull();
+    expect(parseSettings(new URLSearchParams(toSearch(tuned)))).toEqual(tuned);
+    expect(parseSettings(new URLSearchParams("og=9&sf=0")).organic).toBe(1);
+    expect(parseSettings(new URLSearchParams("og=9&sf=0")).softness).toBe(0.2);
   });
 
   it("names a pattern by its preset, and ignores nonsense in the address", () => {

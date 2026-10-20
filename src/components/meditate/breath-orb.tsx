@@ -11,6 +11,16 @@ import { useEffect, useRef } from "react";
  *
  * It draws only the texture; the guide scales its wrapper with the breath.
  * `level` (0 empty, 1 full) brightens the glow a little at the top of the breath.
+ *
+ * The shape is adjustable too (founder's review, 2026-10-20: David found the
+ * noise in the light and the fluctuating edge too busy, and wanted it
+ * symmetrical and still). Each of the home page's organic touches is a dial
+ * that is 0 by default here, so the light is a round, even body that only
+ * breathes; at 1 each is exactly as on the home page:
+ * - `organic`: the slow warp that makes the outline uneven;
+ * - `edge`: the fine irregularity of where the body ends;
+ * - `texture`: the drifting cloud inside the body and its fringe.
+ * `softness`, `core` and `fringe` shape the even light itself (1 as on the home page).
  */
 const VERT = `
 attribute vec2 aPos;
@@ -31,6 +41,12 @@ uniform vec3 uCore;
 uniform vec3 uHalo;
 uniform vec3 uBody;
 uniform vec3 uFringe;
+uniform float uOrganic;
+uniform float uEdge;
+uniform float uTexture;
+uniform float uSoft;
+uniform float uCoreAmt;
+uniform float uFringeAmt;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -60,26 +76,27 @@ void main() {
   float d = length(p);
 
   vec2 warp = vec2(fbm(p * 1.25 + vec2(t * 0.09, -t * 0.06)), fbm(p * 1.25 + vec2(-t * 0.07, t * 0.08) + 31.7)) - 0.47;
-  vec2 q = p + warp * 0.42 * smoothstep(0.04, 0.4, d);
+  vec2 q = p + warp * 0.42 * uOrganic * smoothstep(0.04, 0.4, d);
   float r = length(q);
 
   float cloud = fbm(q * 3.1 + vec2(-t * 0.16, t * 0.12));
   float wisp = fbm(q * 6.3 + vec2(t * 0.21, t * 0.17) + 7.7);
 
-  float edge = 0.41 + 0.045 * (wisp - 0.5);
-  float fill = smoothstep(edge, edge * 0.5, r);
-  float body = fill * (0.68 + 0.46 * smoothstep(0.25, 0.8, cloud));
-  float fringe = smoothstep(edge * 1.28, edge * 0.85, r) * (0.25 + 0.75 * smoothstep(0.3, 0.75, wisp));
+  float edge = 0.41 + 0.045 * uEdge * (wisp - 0.5);
+  float fill = smoothstep(edge, edge * (1.0 - 0.5 * uSoft), r);
+  // With no texture the cloud is replaced by its average, so the body keeps its brightness.
+  float body = fill * (0.68 + 0.46 * mix(0.5, smoothstep(0.25, 0.8, cloud), uTexture));
+  float fringe = smoothstep(edge * 1.28, edge * 0.85, r) * (0.25 + 0.75 * mix(0.55, smoothstep(0.3, 0.75, wisp), uTexture));
   float glow = exp(-r * r * 11.0);
   float core = exp(-r * r * 50.0);
   float nucleus = exp(-d * d * 150.0);
 
   float lift = uGlow * (0.85 + 0.3 * uLevel);
-  vec3 col = uNucleus * nucleus * 1.5
-    + uCore * core * 0.9
+  vec3 col = uNucleus * nucleus * 1.5 * uCoreAmt
+    + uCore * core * 0.9 * uCoreAmt
     + uHalo * glow * 0.55 * lift
     + uBody * body * 0.58
-    + uFringe * fringe * 0.22 * lift;
+    + uFringe * fringe * 0.22 * lift * uFringeAmt;
   col = 1.0 - exp(-col * 1.5);
 
   col *= smoothstep(1.0, 0.55, d);
@@ -96,8 +113,19 @@ export interface OrbColors {
   fringe: Rgb;
 }
 
+/** The dials of the light's shape; see the comment at the top. */
+export interface OrbShape {
+  organic: number;
+  edge: number;
+  texture: number;
+  softness: number;
+  core: number;
+  fringe: number;
+}
+
 export interface BreathOrbProps {
   colors: OrbColors;
+  shape: OrbShape;
   glow: number;
   /** Multiplies the speed of the cloud; 0 holds it still. */
   drift: number;
@@ -145,6 +173,16 @@ export function BreathOrb(props: BreathOrbProps) {
     const uTime = u("uTime");
     const uGlow = u("uGlow");
     const uLevel = u("uLevel");
+    const shapeUniforms = (
+      [
+        ["organic", "uOrganic"],
+        ["edge", "uEdge"],
+        ["texture", "uTexture"],
+        ["softness", "uSoft"],
+        ["core", "uCoreAmt"],
+        ["fringe", "uFringeAmt"],
+      ] as const
+    ).map(([key, name]) => [key, u(name)] as const);
     const colorUniforms = (["nucleus", "core", "halo", "body", "fringe"] as const).map(
       (key) => [key, u(`u${key[0].toUpperCase()}${key.slice(1)}`)] as const,
     );
@@ -157,11 +195,12 @@ export function BreathOrb(props: BreathOrbProps) {
         canvas.height = px;
       }
       gl.viewport(0, 0, canvas.width, canvas.height);
-      const { colors, glow } = live.current;
+      const { colors, glow, shape } = live.current;
       gl.uniform1f(uTime, seconds);
       gl.uniform1f(uGlow, glow);
       gl.uniform1f(uLevel, level.current);
       for (const [key, loc] of colorUniforms) gl.uniform3fv(loc, colors[key]);
+      for (const [key, loc] of shapeUniforms) gl.uniform1f(loc, shape[key]);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

@@ -219,7 +219,6 @@ export const HOME_PAPERS = [
 export const HOME_PRESS_LOGOS = {
   essentia: { src: "/landing/media/press/essentia.png", width: 303, height: 160 },
   tve: { src: "/landing/media/press/tve.png", width: 259, height: 160 },
-  ser: { src: "/landing/media/press/ser.png", width: 480, height: 149 },
   abc: { src: "/landing/media/press/abc.png", width: 480, height: 159 },
   rne: { src: "/landing/media/press/rne.png", width: 316, height: 160 },
   elpais: { src: "/landing/media/press/elpais.png", width: 480, height: 111 },
@@ -255,6 +254,15 @@ export const HOME_PRESS: readonly {
     href: "https://www.youtube.com/watch?v=r6_VOOe8SMg",
   },
   {
+    outlet: "EL PAÍS",
+    logo: "elpais",
+    title: "David Glowacki, físico: “La idea de vivir 500 años me asusta más que la muerte”",
+    date: "2025-02-25",
+    kind: "read",
+    lang: "es",
+    href: "https://elpais.com/salud-y-bienestar/2025-02-25/david-glowacki-fisico-la-idea-de-vivir-500-anos-me-asusta-mas-que-la-muerte.html",
+  },
+  {
     outlet: "TVE Galicia",
     logo: "tve",
     title: "«Imagina que tienes un pedazo de hielo y lo pones en el mar. El hielo sí desaparece, pero todavía está dentro, mezclado con todo lo que hay». Entrevista a David Glowacki",
@@ -262,15 +270,6 @@ export const HOME_PRESS: readonly {
     kind: "watch",
     lang: "es",
     href: "https://apps.citius.gal/xici2/backend/media/news/1608/video_file/2025-06-06_telexornal_galicia_davidglowacki_20250611064935375.mp4",
-  },
-  {
-    outlet: "Cadena SER · A vivir que son dos días",
-    logo: "ser",
-    title: "Juanjo Millás, un sacerdote, un científico y una escéptica periodista prueban una experiencia cercana a la muerte",
-    date: "2025-04-13",
-    kind: "read",
-    lang: "es",
-    href: "https://cadenaser.com/nacional/2025/04/13/juanjo-millas-un-sacerdote-un-cientifico-y-una-esceptica-periodista-prueban-una-experiencia-cercana-a-la-muerte-cadena-ser/",
   },
   {
     outlet: "ABC",
@@ -298,15 +297,6 @@ export const HOME_PRESS: readonly {
     kind: "read",
     lang: "en",
     href: "https://english.elpais.com/science-tech/2025-02-26/david-glowacki-physicist-the-idea-of-living-for-500-years-scares-me-more-than-death.html",
-  },
-  {
-    outlet: "EL PAÍS",
-    logo: "elpais",
-    title: "David Glowacki, físico: “La idea de vivir 500 años me asusta más que la muerte”",
-    date: "2025-02-25",
-    kind: "read",
-    lang: "es",
-    href: "https://elpais.com/salud-y-bienestar/2025-02-25/david-glowacki-fisico-la-idea-de-vivir-500-anos-me-asusta-mas-que-la-muerte.html",
   },
   {
     outlet: "Infobae España",

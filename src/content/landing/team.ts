@@ -13,16 +13,19 @@ export interface TeamMember {
   readonly crop?: { readonly position?: string; readonly zoom?: number; readonly origin?: string };
 }
 
-/** Portraits supplied by the study team. Profile links are optional. */
+/**
+ * Portraits supplied by the study team, normalised by scripts/team-portraits.mjs
+ * so every head sits at the same height and size (D-122). Profile links are optional.
+ */
 export const TEAM_MEMBERS: readonly TeamMember[] = [
-  { name: "David Glowacki, PhD", photo: "/landing/media/portraits/Transparent/david-glowacki.png", href: null },
-  { name: "Joe Hardy", photo: "/landing/media/portraits/Transparent/joe-hardy 1.png", href: null },
-  { name: "Justin \"Lama Karma\" Wall", photo: "/landing/media/portraits/Transparent/justin-wall 1.png", href: null },
-  { name: "Valérie Bonnelle", photo: "/landing/media/portraits/Transparent/Valérie+Bonnelle 1.png", href: null },
-  { name: "Sila Sobrado", photo: "/landing/media/portraits/Transparent/20240711_193214+(1) (1) 1.png", href: null },
-  { name: "Catherine Andreu", photo: "/landing/media/portraits/Transparent/cathherine-andrew.png", href: null },
-  { name: "Jose Montemayor Alba", photo: "/landing/media/portraits/Transparent/JEMA Headshot_Color_2 1.png", href: null },
-  { name: "Joana Vidal", photo: "/landing/media/portraits/Transparent/joana-hero 1.png", href: null },
+  { name: "David Glowacki, PhD", photo: "/landing/media/portraits/cards/david-glowacki.webp", href: null },
+  { name: "Joe Hardy", photo: "/landing/media/portraits/cards/joe-hardy.webp", href: null },
+  { name: "Justin \"Lama Karma\" Wall", photo: "/landing/media/portraits/cards/justin-wall.webp", href: null },
+  { name: "Valérie Bonnelle", photo: "/landing/media/portraits/cards/valerie-bonnelle.webp", href: null },
+  { name: "Sila Sobrado", photo: "/landing/media/portraits/cards/sila-sobrado.webp", href: null },
+  { name: "Catherine Andreu", photo: "/landing/media/portraits/cards/catherine-andreu.webp", href: null },
+  { name: "Jose Montemayor Alba", photo: "/landing/media/portraits/cards/jose-montemayor.webp", href: null },
+  { name: "Joana Vidal", photo: "/landing/media/portraits/cards/joana-vidal.webp", href: null },
 ];
 
 export const TEAM_PENDING: Missing = {

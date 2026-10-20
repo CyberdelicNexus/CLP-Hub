@@ -1,4 +1,4 @@
-import type { CustomColors, MusicSource, PhaseSound, TransitionSound, Palette, Phase, PresetKey, RangeKey, ToggleKey } from "@/domain/breathing";
+import type { CustomColors, Look, MusicSource, PhaseSound, TransitionSound, Palette, Phase, PresetKey, RangeKey, ToggleKey } from "@/domain/breathing";
 import type { PublicLocale } from "@/domain/locale";
 
 /**
@@ -27,8 +27,24 @@ export interface MeditateCopy {
     open: string;
     close: string;
     title: string;
-    note: string;
-    sections: { breath: string; guidance: string; music: string; light: string; background: string };
+    /** The panel's two modes: the everyday choices, or every nuance. */
+    modes: { label: string; simple: string; advanced: string; simpleNote: string; advancedNote: string };
+    sections: { presets: string; breath: string; guidance: string; music: string; light: string; shape: string; background: string };
+    /** The two shapes in the presets row (saved settings follow them there). */
+    looks: Record<Look, string>;
+    /** Settings saved under a name, in this browser. `{n}` is the name or a number. */
+    saved: {
+      title: string;
+      name: string;
+      placeholder: string;
+      save: string;
+      saved: string;
+      apply: string;
+      remove: string;
+      empty: string;
+      note: string;
+      fallbackName: string;
+    };
     music: {
       source: string;
       sources: Record<MusicSource, string>;
@@ -82,8 +98,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       open: "Facilitador",
       close: "Cerrar ajustes",
       title: "Ajustes del facilitador",
-      note: "Los cambios se aplican al momento y se guardan en el enlace, no en este dispositivo.",
-      sections: { breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", background: "Fondo" },
+      sections: { presets: "Preajustes", breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", shape: "Forma de la luz", background: "Fondo" },
       music: {
         source: "Origen de la música",
         sources: { guitar: "Guitarra", relax: "Relax", float: "Flotar", file: "Subir archivo" },
@@ -131,10 +146,36 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         glow: "Resplandor",
         ambient: "Luz de fondo",
         angle: "Dirección de la luz",
+        organic: "Forma orgánica",
+        edge: "Borde irregular",
+        texture: "Textura de nube",
+        softness: "Suavidad del borde",
+        core: "Brillo del centro",
+        fringe: "Halo exterior",
       },
       palette: "Color",
       palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amanecer", lavender: "Lavanda", moon: "Luna", custom: "Personalizado" },
       colors: { light: "Luz", a: "Fondo 1", b: "Fondo 2" },
+      modes: {
+        label: "Modo de los ajustes",
+        simple: "Sencillo",
+        advanced: "Avanzado",
+        simpleNote: "Lo esencial para guiar una sesión. Los cambios se aplican al momento y se guardan en el enlace.",
+        advancedNote: "Todos los matices de la luz y del sonido. Puedes guardar cada combinación con un nombre.",
+      },
+      looks: { symmetric: "Simétrica", asymmetric: "Asimétrica" },
+      saved: {
+        title: "Ajustes guardados",
+        name: "Nombre del ajuste",
+        placeholder: "Por ejemplo: sesión de la mañana",
+        save: "Guardar",
+        saved: "Guardado: {n}",
+        apply: "Aplicar",
+        remove: "Borrar {n}",
+        empty: "Aún no hay ajustes guardados.",
+        note: "Se guardan solo en este navegador. Para usarlos en otro dispositivo, copia el enlace.",
+        fallbackName: "Ajuste {n}",
+      },
       copyLink: "Copiar enlace",
       copied: "Enlace copiado",
       reset: "Restablecer",
@@ -164,8 +205,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       open: "Facilitator",
       close: "Close settings",
       title: "Facilitator settings",
-      note: "Changes apply at once and are kept in the link, not on this device.",
-      sections: { breath: "Breathing", guidance: "Guidance", music: "Music", light: "Light", background: "Background" },
+      sections: { presets: "Presets", breath: "Breathing", guidance: "Guidance", music: "Music", light: "Light", shape: "Shape of the light", background: "Background" },
       music: {
         source: "Music source",
         sources: { guitar: "Guitar", relax: "Relax", float: "Float", file: "Upload a file" },
@@ -213,10 +253,36 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         glow: "Glow",
         ambient: "Background light",
         angle: "Light direction",
+        organic: "Organic shape",
+        edge: "Uneven edge",
+        texture: "Cloud texture",
+        softness: "Edge softness",
+        core: "Centre brightness",
+        fringe: "Outer halo",
       },
       palette: "Colour",
       palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Dawn", lavender: "Lavender", moon: "Moon", custom: "Custom" },
       colors: { light: "Light", a: "Background 1", b: "Background 2" },
+      modes: {
+        label: "Settings mode",
+        simple: "Simple",
+        advanced: "Advanced",
+        simpleNote: "The essentials for guiding a session. Changes apply at once and are kept in the link.",
+        advancedNote: "Every nuance of the light and the sound. You can save each combination under a name.",
+      },
+      looks: { symmetric: "Symmetric", asymmetric: "Asymmetric" },
+      saved: {
+        title: "Saved settings",
+        name: "Name for these settings",
+        placeholder: "For example: morning session",
+        save: "Save",
+        saved: "Saved: {n}",
+        apply: "Apply",
+        remove: "Delete {n}",
+        empty: "No saved settings yet.",
+        note: "Kept in this browser only. To use them on another device, copy the link.",
+        fallbackName: "Settings {n}",
+      },
       copyLink: "Copy link",
       copied: "Link copied",
       reset: "Reset",
@@ -246,8 +312,7 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
       open: "Facilitador",
       close: "Pechar axustes",
       title: "Axustes do facilitador",
-      note: "Os cambios aplícanse ao momento e gárdanse na ligazón, non neste dispositivo.",
-      sections: { breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", background: "Fondo" },
+      sections: { presets: "Preaxustes", breath: "Respiración", guidance: "Guía", music: "Música", light: "Luz", shape: "Forma da luz", background: "Fondo" },
       music: {
         source: "Orixe da música",
         sources: { guitar: "Guitarra", relax: "Relax", float: "Flotar", file: "Subir ficheiro" },
@@ -295,10 +360,36 @@ export const MEDITATE_COPY: Record<PublicLocale, MeditateCopy> = {
         glow: "Resplandor",
         ambient: "Luz de fondo",
         angle: "Dirección da luz",
+        organic: "Forma orgánica",
+        edge: "Bordo irregular",
+        texture: "Textura de nube",
+        softness: "Suavidade do bordo",
+        core: "Brillo do centro",
+        fringe: "Halo exterior",
       },
       palette: "Cor",
       palettes: { numadelic: "Numadelic", aurora: "Aurora", dawn: "Amencer", lavender: "Lavanda", moon: "Lúa", custom: "Personalizado" },
       colors: { light: "Luz", a: "Fondo 1", b: "Fondo 2" },
+      modes: {
+        label: "Modo dos axustes",
+        simple: "Sinxelo",
+        advanced: "Avanzado",
+        simpleNote: "O esencial para guiar unha sesión. Os cambios aplícanse ao momento e gárdanse na ligazón.",
+        advancedNote: "Todos os matices da luz e do son. Podes gardar cada combinación cun nome.",
+      },
+      looks: { symmetric: "Simétrica", asymmetric: "Asimétrica" },
+      saved: {
+        title: "Axustes gardados",
+        name: "Nome do axuste",
+        placeholder: "Por exemplo: sesión da mañá",
+        save: "Gardar",
+        saved: "Gardado: {n}",
+        apply: "Aplicar",
+        remove: "Borrar {n}",
+        empty: "Aínda non hai axustes gardados.",
+        note: "Gárdanse só neste navegador. Para usalos noutro dispositivo, copia a ligazón.",
+        fallbackName: "Axuste {n}",
+      },
       copyLink: "Copiar ligazón",
       copied: "Ligazón copiada",
       reset: "Restablecer",

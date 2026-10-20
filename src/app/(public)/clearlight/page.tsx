@@ -18,9 +18,21 @@ import "@/components/landing/landing.css";
  * the screening URL comes from the study open for recruitment (D-031).
  */
 
+/**
+ * The share image is `opengraph-image.jpg` / `twitter-image.jpg` beside this
+ * file (the founder's banner, fitted to 1200x630), so it also covers the
+ * pages under /clearlight. Its absolute address comes from the root layout's
+ * metadataBase.
+ */
 export async function generateMetadata(): Promise<Metadata> {
   const { META } = LANDING_COPY[await getPublicLocale()];
-  return { title: { absolute: META.title }, description: META.description };
+  const share = { title: META.title, description: META.description };
+  return {
+    title: { absolute: META.title },
+    description: META.description,
+    openGraph: { ...share, type: "website", siteName: "Clear Light", url: "/clearlight" },
+    twitter: { ...share, card: "summary_large_image" },
+  };
 }
 
 export default async function PublicHomePage() {

@@ -175,6 +175,14 @@ export interface MeditateSettings {
   ambient: number;
   /** Degrees the two background lights are turned round the centre. */
   angle: number;
+  /** The light's shape (breath-orb.tsx): 0 is round and even, 1 is the home page's. */
+  organic: number;
+  edge: number;
+  texture: number;
+  /** The even light: 1 is the home page's. */
+  softness: number;
+  core: number;
+  fringe: number;
 }
 
 export const DEFAULT_SETTINGS: MeditateSettings = {
@@ -204,7 +212,30 @@ export const DEFAULT_SETTINGS: MeditateSettings = {
   stars: true,
   ambient: 1,
   angle: 0,
+  // Round and still by default (founder's review, 2026-10-20); the home page's look is `LOOKS.asymmetric`.
+  organic: 0,
+  edge: 0,
+  texture: 0,
+  softness: 1,
+  core: 1,
+  fringe: 1,
 };
+
+export const SHAPE_KEYS = ["organic", "edge", "texture", "softness", "core", "fringe"] as const;
+export type ShapeKey = (typeof SHAPE_KEYS)[number];
+
+/** Two starting points for the light's shape, one tap each in the panel's presets ("Asimétrica" is the home page's light). */
+export const LOOKS = {
+  symmetric: { organic: 0, edge: 0, texture: 0, softness: 1, core: 1, fringe: 1 },
+  asymmetric: { organic: 1, edge: 1, texture: 1, softness: 1, core: 1, fringe: 1 },
+} as const satisfies Record<string, Record<ShapeKey, number>>;
+export type Look = keyof typeof LOOKS;
+export const LOOK_KEYS = Object.keys(LOOKS) as Look[];
+
+/** The look the shape matches exactly, if any. */
+export function lookOf(s: Pick<MeditateSettings, ShapeKey>): Look | null {
+  return LOOK_KEYS.find((k) => SHAPE_KEYS.every((key) => LOOKS[k][key] === s[key])) ?? null;
+}
 
 export const RANGES = {
   volume: { min: 0, max: 1, step: 0.05 },
@@ -215,12 +246,18 @@ export const RANGES = {
   glow: { min: 0, max: 2, step: 0.05 },
   ambient: { min: 0, max: 2, step: 0.05 },
   angle: { min: 0, max: 360, step: 5 },
+  organic: { min: 0, max: 1, step: 0.05 },
+  edge: { min: 0, max: 1, step: 0.05 },
+  texture: { min: 0, max: 1, step: 0.05 },
+  softness: { min: 0.2, max: 1.8, step: 0.05 },
+  core: { min: 0, max: 2, step: 0.05 },
+  fringe: { min: 0, max: 2, step: 0.05 },
 } as const;
 export type RangeKey = keyof typeof RANGES;
 
 const TOGGLES = { guidance: "g", countdown: "n", ring: "r", cycles: "c", countIn: "i", voice: "v", stars: "st", music: "mu" } as const;
 export type ToggleKey = keyof typeof TOGGLES;
-const NUMBERS = { volume: "vol", musicVolume: "mv", size: "sz", depth: "dp", drift: "dr", glow: "gl", ambient: "am", angle: "an" } as const satisfies Record<RangeKey, string>;
+const NUMBERS = { volume: "vol", musicVolume: "mv", size: "sz", depth: "dp", drift: "dr", glow: "gl", ambient: "am", angle: "an", organic: "og", edge: "eg", texture: "tx", softness: "sf", core: "co", fringe: "fr" } as const satisfies Record<RangeKey, string>;
 
 const COLOR_PARAMS = { light: "cl", a: "ca", b: "cb" } as const satisfies Record<keyof CustomColors, string>;
 

@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getEnv } from "@/config/env";
 import "./globals.css";
 
 /**
@@ -22,11 +23,17 @@ const display = Plus_Jakarta_Sans({
 const body = Geist({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
 
-export const metadata: Metadata = {
-  title: { default: "CLP Hub", template: "%s · CLP Hub" },
-  description: "Plataforma operativa del estudio",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // APP_URL makes the share images' addresses absolute (/clearlight's
+  // opengraph-image.jpg); without it Next falls back to the deployment URL.
+  const { APP_URL } = getEnv();
+  return {
+    ...(APP_URL ? { metadataBase: new URL(APP_URL) } : {}),
+    title: { default: "CLP Hub", template: "%s · CLP Hub" },
+    description: "Plataforma operativa del estudio",
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();

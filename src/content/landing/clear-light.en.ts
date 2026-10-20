@@ -147,7 +147,7 @@ export const LANDING_EN: LandingCopy = {
     previous: "Previous team members",
     next: "Next team members",
     members: [
-      { role: "Supervisor", bio: "David Glowacki is a cross-disciplinary researcher, whose interests span computer science, nanoscience, aesthetics, cultural theory, & spirituality." },
+      { role: "Director", bio: "David Glowacki is a cross-disciplinary researcher, whose interests span computer science, nanoscience, aesthetics, cultural theory, & spirituality." },
       { role: "Tech Lead", bio: "Dr. Joe Hardy is a co-founder and the Chief Science Officer at aNUma. Joe has a PhD in Cognitive Psychology from UC Berkeley, where he also received his MBA." },
       { role: "Experience Design Lead", bio: "Lama Karma is the Lead Facilitator and Experience Designer at aNUma. In this role he incorporates evidence-based practices and wisdom traditions into state-of-the-art experiential design." },
       { role: "Senior Researcher - Data analysis and Publications", bio: "Valerie did her PhD and early research career in cognitive neuroimaging at the Imperial College, UCL and Oxford University." },
@@ -289,7 +289,7 @@ export const LANDING_EN: LandingCopy = {
     ] as readonly FaqItem[],
   },
   PARTNERS: {
-    heading: "Collaborating on this study",
+    heading: "Sponsors and collaborators",
     items: [
       { name: ES.PARTNERS.items[0].name, logo: ES.PARTNERS.items[0].logo },
       { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },

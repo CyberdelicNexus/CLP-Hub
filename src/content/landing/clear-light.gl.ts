@@ -146,7 +146,7 @@ export const LANDING_GL: LandingCopy = {
     previous: "Equipo anterior",
     next: "Equipo seguinte",
     members: [
-      { role: "Supervisor", bio: "David Glowacki é un investigador interdisciplinar cuxos intereses abranguen a informática, a nanociencia, a estética, a teoría cultural e a espiritualidade." },
+      { role: "Director", bio: "David Glowacki é un investigador interdisciplinar cuxos intereses abranguen a informática, a nanociencia, a estética, a teoría cultural e a espiritualidade." },
       { role: "Responsable de tecnoloxía", bio: "O Dr. Joe Hardy é cofundador e director científico de aNUma. É doutor en Psicoloxía Cognitiva pola Universidade de California en Berkeley, onde tamén obtivo o seu MBA." },
       { role: "Responsable de deseño de experiencias", bio: "Lama Karma é facilitador principal e deseñador de experiencias en aNUma. Neste papel incorpora prácticas baseadas na evidencia e tradicións de sabedoría a un deseño de experiencias de vangarda." },
       { role: "Investigadora sénior - Análise de datos e publicacións", bio: "Valérie realizou o seu doutoramento e os primeiros anos da súa carreira investigadora en neuroimaxe cognitiva no Imperial College, no UCL e na Universidade de Oxford." },
@@ -288,7 +288,7 @@ export const LANDING_GL: LandingCopy = {
     ],
   },
   PARTNERS: {
-    heading: "Colaboran neste estudo",
+    heading: "Patrocinadores e colaboradores",
     items: [
       { name: ES.PARTNERS.items[0].name, logo: ES.PARTNERS.items[0].logo },
       { name: ES.PARTNERS.items[1].name, logo: ES.PARTNERS.items[1].logo },

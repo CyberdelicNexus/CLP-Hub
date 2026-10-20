@@ -647,7 +647,14 @@ export function Meditate({ copy, locale, initial }: { copy: MeditateCopy; locale
           <span className="m-halo" ref={haloRef} />
           <span className="m-orb" ref={orbRef}>
             <span className="m-orb__core" />
-            <BreathOrb colors={palette.orb} glow={settings.glow} drift={reduced ? 0 : settings.drift} still={status === "paused"} level={level} />
+            <BreathOrb
+              colors={palette.orb}
+              shape={settings}
+              glow={settings.glow}
+              drift={reduced ? 0 : settings.drift}
+              still={status === "paused"}
+              level={level}
+            />
           </span>
           {wave && !reduced ? (
             <span key={`${wave.kind}${wave.n}`} className="m-waves" data-kind={wave.kind}>

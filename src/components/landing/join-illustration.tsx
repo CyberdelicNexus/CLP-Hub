@@ -31,6 +31,12 @@ export function JoinIllustration({ step }: { step: string }) {
         <linearGradient id={`${id}-trace`} x1="97" y1="71" x2="204" y2="155" gradientUnits="userSpaceOnUse">
           <stop stopColor="#d1e8ff" /><stop offset=".5" stopColor="#ae9ae9" /><stop offset="1" stopColor="#766997" />
         </linearGradient>
+        <radialGradient id={`${id}-visor`} cx=".25" cy=".15" r=".95">
+          <stop stopColor="#f1efff" /><stop offset=".25" stopColor="#b8b5e4" /><stop offset=".6" stopColor="#7775ad" /><stop offset="1" stopColor="#363653" />
+        </radialGradient>
+        <linearGradient id={`${id}-strap`} x1="102" y1="38" x2="211" y2="100" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#c7d8ef" /><stop offset=".38" stopColor="#838eb8" /><stop offset="1" stopColor="#333951" />
+        </linearGradient>
         <filter id={`${id}-shadow`} x="-50%" y="-100%" width="200%" height="300%">
           <feGaussianBlur stdDeviation="7" />
         </filter>
@@ -68,13 +74,31 @@ export function JoinIllustration({ step }: { step: string }) {
         </>
       ) : step === "04" ? (
         <>
-          {/* Home delivery and a shared first VR experience. */}
-          <path d="m72 91 78-60 78 60v68H72Z" fill={paint("glass")} fillOpacity=".25" stroke={paint("rim")} strokeWidth="2" />
-          <path d="m59 94 91-70 91 70" stroke={paint("trace")} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-          <rect x="94" y="87" width="112" height="57" rx="20" fill={paint("glass")} stroke={paint("rim")} strokeWidth="2" />
-          <path d="M108 99h84v27h-26l-16-9-16 9h-26Z" fill={paint("edge")} stroke={paint("rim")} />
-          <path d="M97 105H82v26h15m106-26h15v26h-15" stroke={paint("trace")} strokeWidth="4" strokeLinejoin="round" />
-          <path d="M110 92q40-16 80 0" stroke="#f3f1ff" strokeOpacity=".5" strokeLinecap="round" />
+          {/* A cutaway home frames a participant wearing a headset. */}
+          <g transform="translate(25 0)">
+            <path d="m76 82 55-44 58 43v70q0 9-9 9H85q-9 0-9-9Z" fill={paint("edge")} />
+            <path d="m67 77 55-44 58 43v70q0 9-9 9H76q-9 0-9-9Z" fill={paint("blue")} stroke={paint("rim")} strokeWidth="1.2" />
+            <path d="m180 76 9 5v70q0 9-9 9l-9-5q9 0 9-9Z" fill={paint("edge")} />
+            <path d="m54 79 65-53q4-3 8 0l65 53q5 5 0 10l-5 4-65-53-61 50-7-3q-4-3 0-8Z" fill={paint("edge")} />
+            <path d="m49 73 65-53q4-3 8 0l65 53q5 5 0 10l-3 2-66-53-61 50-6-1q-5-2-2-8Z" fill={paint("glass")} stroke={paint("rim")} strokeWidth="1.3" />
+            <path d="m54 73 63-51" stroke="#f5f6ff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
+            <path d="m77 81 45-36 47 37v58q0 5-5 5H82q-5 0-5-5Z" fill="#242b48" fillOpacity=".75" stroke={paint("rim")} strokeOpacity=".35" />
+            {/* Rounded shoulders and a relaxed face, contained within the home. */}
+            <path d="M88 144v-7q0-19 23-23h23q24 5 24 23v7Z" fill={paint("edge")} />
+            <path d="M85 144v-7q0-20 25-24h20q25 4 25 24v7Z" fill={paint("blue")} stroke={paint("rim")} />
+            <path d="M113 108v10q9 8 18 0v-10" fill={paint("pearl")} />
+            <path d="M99 84q0-24 23-24t24 24v8q-2 24-24 26-21-2-23-26Z" fill={paint("pearl")} stroke={paint("rim")} />
+            <path d="M98 83q-5-28 14-30 12-11 27 0 12 9 8 30l-8-10-17-8-13 16Z" fill={paint("edge")} stroke={paint("rim")} />
+            <path d="M103 64q3-9 12-8" stroke="#d7d9f4" strokeOpacity=".45" strokeLinecap="round" />
+            {/* A horizontal visor wraps across the eyes, with short temple attachments. */}
+            <rect x="91" y="80" width="12" height="17" rx="4" fill={paint("edge")} stroke={paint("rim")} />
+            <rect x="142" y="80" width="12" height="17" rx="4" fill={paint("edge")} stroke={paint("rim")} />
+            <path d="M101 76h42q6 0 6 7v12q0 6-6 6h-12q-3 0-4-3l-2-3h-5l-2 3q-1 3-4 3h-13q-6 0-6-6V83q0-7 6-7Z" fill={paint("edge")} />
+            <path d="M99 73h42q6 0 6 7v12q0 6-6 6h-12q-3 0-4-3l-2-3h-5l-2 3q-1 3-4 3H99q-6 0-6-6V80q0-7 6-7Z" fill={paint("glass")} stroke={paint("rim")} strokeWidth="1.2" />
+            <path d="M99 79h41" stroke="#f5f5ff" strokeOpacity=".75" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M115 106q7 6 14 0" stroke="#5f5489" strokeWidth="1.7" strokeLinecap="round" />
+            <path d="M91 137q0-11 12-15" stroke="#e7efff" strokeOpacity=".4" strokeLinecap="round" />
+          </g>
         </>
       ) : (
         <>

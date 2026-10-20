@@ -74,7 +74,7 @@ describe("the numadelic.org home page (D-105)", () => {
     expect(page + read("src/content/home.ts") + read("src/components/landing/home.css")).not.toMatch(/<iframe|ytimg|youtube\.com\/embed/);
   });
 
-  it("lists the press once each, newest first, under the research (D-110)", () => {
+  it("lists the press once each, newest first apart from the pinned EL PAÍS, under the research (D-110, D-122)", () => {
     expect(new Set(HOME_PRESS.map((p) => p.href)).size).toBe(HOME_PRESS.length);
     for (const p of HOME_PRESS) {
       expect(p.href.startsWith("https://"), p.title).toBe(true);
@@ -86,7 +86,9 @@ describe("the numadelic.org home page (D-105)", () => {
     // Every card has its outlet's logo, a file of this site's (D-111).
     for (const p of HOME_PRESS) expect(existsSync(join(process.cwd(), "public", HOME_PRESS_LOGOS[p.logo].src)), p.outlet).toBe(true);
     expect(new Set(HOME_PRESS.map((p) => p.logo)).size).toBe(Object.keys(HOME_PRESS_LOGOS).length);
-    const dates = HOME_PRESS.flatMap((p) => (p.date ? [p.date] : []));
+    // D-122: the Spanish EL PAÍS interview is pinned second, out of date order.
+    expect(HOME_PRESS[1].outlet).toBe("EL PAÍS");
+    const dates = HOME_PRESS.filter((_, i) => i !== 1).flatMap((p) => (p.date ? [p.date] : []));
     expect(dates).toEqual([...dates].sort().reverse());
     for (const locale of PUBLIC_LOCALES) {
       for (const kind of new Set(HOME_PRESS.map((p) => p.kind))) expect(HOME_COPY[locale].press[kind], locale).toBeTruthy();

@@ -5353,6 +5353,36 @@ turned on and off, full screen and a timer.
   breath, bowl and the opening and closing sounds all go through one gentle
   limiter (threshold −6 dB, ratio 12:1), so when several land together their
   sum cannot clip.
+- **The light is round and still by default** (2026-10-20, David's review via
+  the founder: the noise inside the light and the fluctuating edge were too
+  busy; he wanted it symmetrical, without the organic movement). The home
+  page's three organic touches became dials in `breath-orb.tsx`, each 0 by
+  default and exactly the home page's at 1: "Forma orgánica" (the warp that
+  makes the outline uneven), "Borde irregular" (the fine irregularity of the
+  edge) and "Textura de nube" (the drifting cloud inside). With texture at 0
+  the cloud is replaced by its average, so the body keeps its brightness.
+  Three more shape the even light: edge softness, centre brightness and outer
+  halo. "Simétrica" and "Asimétrica" (the home page's light) set all six in
+  one tap.
+  The home page's own light is unchanged: this applies to `/meditate` only.
+- **Two panel modes** (founder's request): "Sencillo" shows the everyday
+  choices (rhythm presets, words, voice, the sound with the breath, volumes,
+  music, colour, size, stars); "Avanzado" adds every nuance (each phase's
+  seconds, countdown, progress line, breath counter, count-in, opening and
+  closing sounds, the custom gradient, range and glow, the light's shape,
+  background light and direction) and saving settings. The mode changes only
+  what is shown, never the settings, and is remembered in this browser. Both
+  modes open with the presets (founder's review): Simétrica, Asimétrica and
+  every saved setup, one tap each, so a facilitator who never opens the
+  advanced tools can still use what a colleague saved on that device.
+- **Saved settings** (advanced mode): the current setup saved under a name,
+  applied or deleted later. Each is stored as the same query string a shared
+  link carries, so an older save keeps working as settings are added (what it
+  does not name falls back to the default). They live in this browser's local
+  storage (`numadelic.meditate.saved`, with the mode in
+  `numadelic.meditate.mode`), up to 30, nothing about any person; to move them
+  to another device, copy the link. Where storage is blocked they last for the
+  visit.
 - **Reduced motion:** the light still grows and settles (that is the guide) but
   at a third of the range, with no drifting cloud, and the words appear without
   moving.
@@ -5383,7 +5413,57 @@ loses the "material in preparation" draft note (founder's request), and
 Joana Vidal's bio drops the named centre at her request (es as given; en and
 gl follow).
 
+## D-122 · 2026-10-20 · Team portraits on one head line; sponsors; press order
+
+From the founder's meeting with David.
+
+- **Team cards.** The portraits were framed differently (half-body, tight
+  headshot, off-centre, a dog), and per-card `object-position` tweaks could not
+  line them up. They are now regenerated onto one 600x900 canvas by
+  `scripts/team-portraits.mjs`: same head height, same head-top line, face
+  centred. Head top, chin and face centre were read by eye from a gridded
+  contact sheet, not detected, so they are approximate and live in the
+  script's table. Tight headshots (Justin, Jose) end above the card's
+  bottom; their cut edge is feathered into the card under the name gradient.
+  Valérie's and Sila's sources are small (500px) and are enlarged about 2x.
+- **Partners band** heading: "Patrocinadores y colaboradores" (en "Sponsors and
+  collaborators", gl "Patrocinadores e colaboradores"), since the funder sits
+  in it (D-114).
+- **Home press:** the Cadena SER item and its logo are removed; the Spanish EL
+  PAÍS interview moves to second place. The English EL PAÍS item keeps its
+  place.
+
+## D-123 · 2026-10-20 · "El porqué" title forms letter by letter once the stage lands; David is "Director"
+
+Founder's request: in section 2, after the section locks into place, the title
+should appear forming from beginning to end, then the text beneath.
+
+- **When.** The scroll engine (vendored, not edited) writes the panel's
+  `opacity` as the page scrolls and announces nothing, so `cue-reveal.tsx`
+  watches that inline style: at 0.6 or more (the pin has begun and the panel
+  has faded in) it sets `data-reveal="go"` on the panel; back at 0 (scrolled
+  up past the start) it sets `"wait"`, so the entrance plays each time the
+  section lands.
+- **How.** The title is rendered one span per letter, grouped by word so a
+  line only breaks between words (`LetterTitle` in `why-what.tsx`). Each
+  letter rises out of a blur 26 ms after the one before (760 ms each); the
+  text beneath rises in once the last letter is mostly formed. A screen reader
+  hears the plain title once; the letters are `aria-hidden`.
+- **Where it does not run.** Only the pinned variant (wide screens, motion
+  allowed, scripting on) has the letters; the stacked variant on phones and
+  under reduced motion is unchanged. Nothing is hidden until the engine has
+  written an opacity, so if it fails to load the text simply shows.
+- **Team:** David Glowacki's role on the Clear Light page is "Director" (was
+  "Supervisor") in all three languages. The staff app's `supervisor` access
+  role is a different thing and is unchanged.
+
 ## Open questions for researchers
+
+- The breathing guide now keeps two things in the visitor's browser storage
+  when a facilitator uses them (D-120): the panel mode and named saved
+  settings. Neither identifies anyone and both serve only what the person
+  asked for, but the cookie policy lists the site's technical storage: should
+  these two be added to it?
 
 - Are the breathing guide's three music tracks and three sound effects (D-120,
   `public/audio/meditate/music/`) cleared for public use on the site? The

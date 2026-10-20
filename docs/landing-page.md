@@ -494,6 +494,21 @@ name keeps serving the old image for hours.
 | `footer-arc.webp` | stock-images `footer/footer.png` (3342x1882), top 1040px: six bodies in an arc around the fire | Section 8 (replaces `arc-top.webp` and `fire.webp` from CL circle 2) |
 | `partners/citius.png`, `partners/xunta-de-galicia.png`, `partners/usc.webp`, `partners/irl.png`, `partners/tiny-blue-dot-foundation.png` | Each partner's own supplied mark, uploaded 2026-09-23 (D-077/D-078) | Research partners / funding credit band, above the footer. Served at each file's actual intrinsic size (read with `sharp`, not guessed) — see `src/content/landing/clear-light.ts` (`PARTNERS`) |
 
+**Share image.** `src/app/(public)/clearlight/opengraph-image.jpg` and
+`twitter-image.jpg` (same file, with `.alt.txt` alt text): the founder's
+"Clear Light · Un estudio sobre presencia, conexión y sentido" banner
+(1638x695, 2026-10-19), fitted to 1200x630 over a blurred copy of itself with
+feathered edges, JPEG 88, ~40 KB. It covers every page under `/clearlight`.
+Its absolute URL comes from `metadataBase` = `APP_URL` in the root layout, so
+`APP_URL` must be the public domain in production. The banner is Spanish only.
+
+**Team portraits (D-122).** `portraits/cards/*.webp`, 600x900, made by
+`scripts/team-portraits.mjs` from the transparent cut-outs in
+`portraits/Transparent/`: every head the same height (top to chin) with its
+top on the same line and the face centred, cut edges feathered, Sila's dog
+removed. The cards anchor them `50% top`, with no per-person position. A new
+photo needs its head top, chin and face centre added to the script's table.
+
 ## Publication gate
 
 `missingContentList()` in the content module lists every unresolved value. In
@@ -626,7 +641,7 @@ logo.
   team feedback, and not replaced with anything.
 - **One row of collaborators, the funder among them (D-114).** The separate
   "Con la financiación de" group is gone: Tiny Blue Dot Foundation is the
-  first of five marks under "Colaboran en este estudio", on one line from
+  first of five marks under "Patrocinadores y colaboradores", on one line from
   1000px up.
 
 ## Verification

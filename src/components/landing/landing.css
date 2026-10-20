@@ -728,6 +728,35 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 }
 .porque-que__panel--what .que__grid { width: 100%; }
 
+/* "El porqué" entrance (D-123). Once the stage has landed (cue-reveal.tsx sets
+   `data-reveal="go"`), the title forms from its first letter to its last, each
+   letter rising out of a blur a beat after the one before, and the text beneath
+   follows once the last letter is in. `data-reveal="wait"` holds them hidden
+   until then; with no attribute at all (engine missing, reduced motion) they
+   are simply there. The stacked variant (phones, reduced motion) never gets
+   the letters. */
+.reveal-title__word { display: inline-block; white-space: nowrap; }
+.reveal-title__letter { display: inline-block; }
+.porque-que__panel--why {
+  --reveal-step: 26ms;
+  --reveal-letter: 760ms;
+}
+.porque-que__panel--why[data-reveal="wait"] :is(.reveal-title__letter, .porque__body) { opacity: 0; }
+.porque-que__panel--why[data-reveal="go"] .reveal-title__letter {
+  animation: cl-letter-in var(--reveal-letter) var(--cl-ease-presence) calc(var(--i) * var(--reveal-step)) both;
+}
+.porque-que__panel--why[data-reveal="go"] .porque__body {
+  animation: cl-body-in 1100ms var(--cl-ease-presence) calc(var(--letters) * var(--reveal-step) + var(--reveal-letter) * 0.6) both;
+}
+@keyframes cl-letter-in {
+  from { opacity: 0; transform: translateY(0.4em); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes cl-body-in {
+  from { opacity: 0; transform: translateY(0.9rem); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
 /* ------------------------------------------------------------- 4 · etapas */
 .etapas { position: relative; }
 .stage--etapas {
@@ -1839,11 +1868,9 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   background: radial-gradient(ellipse at 50% 55%, #6a5db4 0%, #303b72 42%, #11152d 80%);
 }
 .team__portrait { position: absolute; inset: 1.5rem 0 0; transition: opacity 700ms var(--cl-ease-presence), transform 850ms var(--cl-ease-presence); }
-.team__portrait img { object-fit: cover; object-position: 50% 15%; }
-.team__member--0 .team__portrait img { object-position: 52% top; }
-.team__member--4 .team__portrait img { object-position: left top; }
-.team__member--5 .team__portrait img { object-position: 50% top; }
-.team__member--3 .team__portrait img { object-position: 95% top; }
+/* The portraits share one head line (scripts/team-portraits.mjs, D-122), so
+   one anchor serves every card: top-centred, whatever the card's width. */
+.team__portrait img { object-fit: cover; object-position: 50% top; }
 .team__card::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(0deg, #111125 0%, rgb(17 17 37 / 0.92) 14%, transparent 58%); transition: opacity 350ms; }
 .team__identity { position: absolute; z-index: 2; inset: 2rem 1.35rem auto; display: grid; gap: 0.65rem; transform: translateY(calc(var(--team-card-height) - 100% - 3.8rem)); transition: transform 750ms var(--cl-ease-presence); }
 .team__name { display: block; font-size: clamp(1.2rem, 1.7vw, 1.65rem); line-height: 1.15; letter-spacing: -0.045em; font-weight: 500; }
