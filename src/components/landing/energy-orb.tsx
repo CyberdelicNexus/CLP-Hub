@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { bindNoise, NOISE_GLSL } from "./orb-noise";
+
+/** How fast the cloud drifts ("balanced": 1.35 times the first home page's). */
+const DRIFT = 1.35;
 
 /**
  * The home page's light as a particle of energy (D-105): a white-blue centre
- * inside a cloud whose edge is never quite round and never quite still. A
+ * in a round body whose edge and cloud are never quite still (D-126). A
  * small WebGL canvas, since the cloud is noise that drifts every frame.
  *
  * It only draws the texture. The breath (the swelling and settling) is the CSS
@@ -24,76 +28,51 @@ void main() {
   gl_Position = vec4(aPos, 0.0, 1.0);
 }`;
 
-// highp, not mediump (D-112). A laptop computes mediump at full precision
-// anyway, so it looked right there; a phone really does use 16-bit floats, and
-// at that precision the noise below breaks into coarse blocks: the cloud went
-// blocky and the core was pushed off its centre.
+// highp, not mediump (D-112): a phone really does use 16-bit floats for
+// mediump, and the cloud breaks up at that precision. The noise itself is read
+// from an image (orb-noise.ts, D-126), so it joins up on every GPU.
+//
+// The look is the founder's "balanced" preset from /meditate (D-126), with the
+// guide's dials baked in: round (organic 0: the warp that made the outline
+// uneven is gone), a fine uneven edge (edge 1), the cloud at 65% (texture), a
+// slightly softer body (softness 1.15), twice the bright centre (core 2), a
+// stronger fringe (1.35) and a fainter glow (0.7). breath-orb.tsx is the same
+// shader with those dials as uniforms.
 const FRAG = `
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
-
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p = p * 2.03 + vec2(17.1, 9.2);
-    a *= 0.5;
-  }
-  return v;
-}
+${NOISE_GLSL}
 
 void main() {
   vec2 p = vUv;
   float t = uTime;
+  float r = length(p);
 
-  float d = length(p);
+  float cloud = fbm(p * 3.1 + vec2(-t * 0.16, t * 0.12));
+  float wisp = fbm(p * 6.3 + vec2(t * 0.21, t * 0.17) + 7.7);
 
-  // Push each point by a slow, broad field before measuring its distance from
-  // the centre: that is what makes the outline uneven instead of a circle. The
-  // push grows with distance, so the bright centre stays where it is.
-  vec2 warp = vec2(fbm(p * 1.25 + vec2(t * 0.09, -t * 0.06)), fbm(p * 1.25 + vec2(-t * 0.07, t * 0.08) + 31.7)) - 0.47;
-  vec2 q = p + warp * 0.42 * smoothstep(0.04, 0.4, d);
-  float r = length(q);
-
-  float cloud = fbm(q * 3.1 + vec2(-t * 0.16, t * 0.12));
-  float wisp = fbm(q * 6.3 + vec2(t * 0.21, t * 0.17) + 7.7);
-
-  // D-113: a body with an edge. The light used to thin out into cloud for as
-  // far as the canvas went; now it is one compact shape that ends, softly but
-  // in one place (edge), with the cloud kept as texture inside it and as a
-  // thin fringe just outside. The nucleus is measured from the true centre, so
-  // it stays round and sharp whatever the body does.
+  // D-113: a body with an edge. One compact shape that ends, softly but in one
+  // place (edge), with the cloud kept as texture inside it and as a thin
+  // fringe just outside.
   float edge = 0.41 + 0.045 * (wisp - 0.5);
-  float fill = smoothstep(edge, edge * 0.5, r);
-  float body = fill * (0.68 + 0.46 * smoothstep(0.25, 0.8, cloud));
-  float fringe = smoothstep(edge * 1.28, edge * 0.85, r) * (0.25 + 0.75 * smoothstep(0.3, 0.75, wisp));
+  float fill = smoothstep(edge, edge * 0.425, r);
+  float body = fill * (0.68 + 0.46 * mix(0.5, smoothstep(0.25, 0.8, cloud), 0.65));
+  float fringe = smoothstep(edge * 1.28, edge * 0.85, r) * (0.25 + 0.75 * mix(0.55, smoothstep(0.3, 0.75, wisp), 0.65));
   float glow = exp(-r * r * 11.0);
   float core = exp(-r * r * 50.0);
-  float nucleus = exp(-d * d * 150.0);
+  float nucleus = exp(-r * r * 150.0);
 
-  vec3 col = vec3(1.0, 1.0, 1.0) * nucleus * 1.5
-    + vec3(0.93, 0.96, 1.0) * core * 0.9
-    + vec3(0.72, 0.78, 1.0) * glow * 0.55
+  vec3 col = vec3(1.0, 1.0, 1.0) * nucleus * 3.0
+    + vec3(0.93, 0.96, 1.0) * core * 1.8
+    + vec3(0.72, 0.78, 1.0) * glow * 0.385
     + vec3(0.52, 0.57, 1.0) * body * 0.58
-    + vec3(0.3, 0.27, 0.82) * fringe * 0.22;
+    + vec3(0.3, 0.27, 0.82) * fringe * 0.208;
   // A soft shoulder instead of a clipped white disc.
   col = 1.0 - exp(-col * 1.5);
 
   // Nothing may reach the square's edge.
-  col *= smoothstep(1.0, 0.55, d);
+  col *= smoothstep(1.0, 0.55, r);
   float alpha = clamp(max(col.r, max(col.g, col.b)), 0.0, 1.0);
   gl_FragColor = vec4(col, alpha);
 }`;
@@ -121,6 +100,7 @@ export function EnergyOrb({ rootId }: { rootId: string }) {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
     gl.useProgram(program);
+    bindNoise(gl, program);
 
     const quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -167,7 +147,7 @@ export function EnergyOrb({ rootId }: { rootId: string }) {
       const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
       last = now;
       if (document.hidden || root?.hasAttribute("data-still")) return;
-      clock += dt;
+      clock += dt * DRIFT;
       draw(clock);
     };
     raf = requestAnimationFrame(tick);

@@ -7,13 +7,18 @@
    --breath-move, held again. The light and its glow share the one
    --breath-cycle, so they cannot drift apart. The keyframe percentages below
    are these durations as shares of the cycle: change them together.
+
+   The light's size, swing, glow and background are the founder's "balanced"
+   preset from /meditate (D-126): 1.5 times the size, 1.5 times the swing
+   (meditate.tsx: full minus swing x depth), the glow at 0.7 and the side
+   lights at 0.35, turned 210 degrees so the blue comes from the right.
    ========================================================================== */
 
 .home {
   --breath-move: 4s;
   --breath-hold: 1s;
   --breath-cycle: calc((var(--breath-move) + var(--breath-hold)) * 2);
-  --breath-size: clamp(10rem, 27vmin, 17rem);
+  --breath-size: clamp(15rem, 40.5vmin, 25.5rem);
   --home-blue: 74 122 255;
   --home-violet: 150 112 255;
   --home-white: 255 246 236;
@@ -43,11 +48,11 @@
   min-height: 100svh;
   padding: calc(var(--cl-nav-h) + 1rem) var(--sc-gutter) clamp(2.5rem, 6vh, 4.5rem);
   overflow: clip;
-  /* Blue from the lower left and violet from the upper right meet behind the
+  /* Blue from the right and violet from the left, faint, meeting behind the
      light; the ground stays black at the edges so the stars read. */
   background:
-    radial-gradient(60% 55% at 28% 62%, rgb(var(--home-blue) / 0.2), transparent 70%),
-    radial-gradient(60% 55% at 72% 34%, rgb(var(--home-violet) / 0.22), transparent 70%);
+    radial-gradient(55% 50% at 77.8% 49.9%, rgb(var(--home-blue) / 0.077), transparent 70%),
+    radial-gradient(55% 50% at 21.2% 51.9%, rgb(var(--home-violet) / 0.084), transparent 70%);
 }
 /* Fixed to the viewport, above the stars and behind `main`, so the trail
    follows the pointer down the whole page. Screened, and as transparent as
@@ -82,13 +87,13 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgb(var(--home-violet) / 0.3) 0%,
-    rgb(104 98 232 / 0.19) 18%,
-    rgb(var(--home-blue) / 0.1) 36%,
-    rgb(var(--home-blue) / 0.04) 52%,
+    rgb(var(--home-violet) / 0.21) 0%,
+    rgb(104 98 232 / 0.133) 18%,
+    rgb(var(--home-blue) / 0.07) 36%,
+    rgb(var(--home-blue) / 0.028) 52%,
     transparent 68%
   );
-  transform: scale(0.74);
+  transform: scale(0.57);
   opacity: 0.72;
 }
 /* The light itself: this box breathes, and what is inside it is the texture.
@@ -99,7 +104,7 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  transform: scale(0.66);
+  transform: scale(0.43);
   opacity: 0.86;
 }
 /* The drifting cloud, drawn by energy-orb.tsx. */
@@ -134,16 +139,16 @@
 /* In (0 to 40%), hold (to 50%), out (to 90%), hold. The timing function on a
    keyframe eases the stretch that follows it. */
 @keyframes breath-halo {
-  0% { transform: scale(0.74); opacity: 0.72; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  0% { transform: scale(0.57); opacity: 0.72; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
   40% { transform: scale(1.08); opacity: 1; }
   50% { transform: scale(1.08); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  90%, 100% { transform: scale(0.74); opacity: 0.72; }
+  90%, 100% { transform: scale(0.57); opacity: 0.72; }
 }
 @keyframes breath-orb {
-  0% { transform: scale(0.66); opacity: 0.86; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  0% { transform: scale(0.43); opacity: 0.86; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
   40% { transform: scale(1.12); opacity: 1; }
   50% { transform: scale(1.12); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  90%, 100% { transform: scale(0.66); opacity: 0.86; }
+  90%, 100% { transform: scale(0.43); opacity: 0.86; }
 }
 
 /* ------------------------------------------------------------------- copy */

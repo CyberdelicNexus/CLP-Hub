@@ -5515,6 +5515,44 @@ light theme instead fades the rim with a radial mask (opaque to 30%,
 transparent by 70%), leaving a violet halo around the light. Checked in both
 themes on the login page.
 
+## D-126 · 2026-10-21 · The light's noise is read from an image; the home page's light is the "balanced" preset
+
+**Blocks on one phone.** David opened the home page on his Android phone and
+the light broke into large square blocks; the founder's phone, opening the
+same link the same way, showed it correctly. So the cause is the phone's GPU,
+not Slack or the browser. The cloud is value noise: a grid of random values,
+blended across each cell. The random values were made by arithmetic on large
+numbers in the shader (`fract(p * 456.21)`), and the cells only join up if the
+GPU gets exactly the same answer for a grid point from both sides of it. Some
+phone GPUs round that arithmetic differently, even at `highp` (D-112), and
+every cell edge became a visible seam. `src/components/landing/orb-noise.ts`
+now holds a 256×256 image of seeded random values that the shader reads, one
+exact pixel per grid point, so every GPU gets the same value for the same
+point. The fbm is unchanged, so the cloud keeps its scale and drift. Both
+`energy-orb.tsx` (home) and `breath-orb.tsx` (/meditate) use it, since the
+meditate light had the same weakness.
+
+**The home page's light is now the founder's saved "balanced" preset from
+/meditate** (`sz=1.5 dp=1.5 dr=1.35 gl=0.7 am=0.35 an=210 eg=1 tx=0.65 sf=1.15
+co=2 fr=1.35`, palette numadelic, organic 0). The dials are baked into the home
+page's shader and `home.css`, not shared with the guide, so tuning the guide
+still cannot change the home page (D-120):
+- shape: round (no warp), edge irregularity 1, cloud texture 0.65, softness
+  1.15, core ×2, fringe ×1.35, glow ×0.7, drift ×1.35. Without the warp the
+  shader also skips two of its four fbm calls;
+- `--breath-size` ×1.5 (`clamp(15rem, 40.5vmin, 25.5rem)`);
+- the breath swings 1.5 times as deep: the light from 0.43 to 1.12 and the
+  glow from 0.57 to 1.08 (meditate.tsx's full − swing × depth);
+- the halo gradient at 0.7 of its strength, and the hero's two side lights at
+  0.35, turned 210° (the blue now comes from the right, the violet from the
+  left), at the positions and sizes /meditate draws them.
+
+The meditate guide's idle light sits mid-breath and its backdrop has a
+vignette, so the two pages are not pixel-identical; the light itself is.
+
+Checked in desktop Chrome and in a 390px frame. Not checked on David's phone
+or any phone with that GPU: that is the test still to do.
+
 ## Open questions for researchers
 
 - The breathing guide now keeps two things in the visitor's browser storage

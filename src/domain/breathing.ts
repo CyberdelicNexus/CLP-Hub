@@ -212,7 +212,7 @@ export const DEFAULT_SETTINGS: MeditateSettings = {
   stars: true,
   ambient: 1,
   angle: 0,
-  // Round and still by default (founder's review, 2026-10-20); the home page's look is `LOOKS.asymmetric`.
+  // Round and still by default (founder's review, 2026-10-20); `LOOKS.asymmetric` is the home page's look before D-126.
   organic: 0,
   edge: 0,
   texture: 0,
@@ -224,7 +224,7 @@ export const DEFAULT_SETTINGS: MeditateSettings = {
 export const SHAPE_KEYS = ["organic", "edge", "texture", "softness", "core", "fringe"] as const;
 export type ShapeKey = (typeof SHAPE_KEYS)[number];
 
-/** Two starting points for the light's shape, one tap each in the panel's presets ("Asimétrica" is the home page's light). */
+/** Two starting points for the light's shape, one tap each in the panel's presets ("Asimétrica" is the home page's light before D-126; it now uses the "balanced" preset). */
 export const LOOKS = {
   symmetric: { organic: 0, edge: 0, texture: 0, softness: 1, core: 1, fringe: 1 },
   asymmetric: { organic: 1, edge: 1, texture: 1, softness: 1, core: 1, fringe: 1 },

@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { bindNoise, NOISE_GLSL } from "@/components/landing/orb-noise";
 
 /**
  * The home page's light (energy-orb.tsx) with its colours, glow and drift
  * made adjustable for the breathing guide (D-120). The shader is the same
- * body-with-an-edge (D-113) at full precision (D-112); the constants the home
- * page bakes in are uniforms here. The home page's own component is left as
- * it is, so tuning this one cannot change the home page.
+ * body-with-an-edge (D-113) at full precision (D-112), with the noise read
+ * from an image (orb-noise.ts, D-126); the constants the home page bakes in
+ * are uniforms here. The home page's own component is left as it is, so tuning
+ * this one cannot change the home page.
  *
  * It draws only the texture; the guide scales its wrapper with the breath.
  * `level` (0 empty, 1 full) brightens the glow a little at the top of the breath.
@@ -16,7 +18,7 @@ import { useEffect, useRef } from "react";
  * noise in the light and the fluctuating edge too busy, and wanted it
  * symmetrical and still). Each of the home page's organic touches is a dial
  * that is 0 by default here, so the light is a round, even body that only
- * breathes; at 1 each is exactly as on the home page:
+ * breathes; at 1 each is exactly as on the home page before D-126:
  * - `organic`: the slow warp that makes the outline uneven;
  * - `edge`: the fine irregularity of where the body ends;
  * - `texture`: the drifting cloud inside the body and its fringe.
@@ -47,28 +49,7 @@ uniform float uTexture;
 uniform float uSoft;
 uniform float uCoreAmt;
 uniform float uFringeAmt;
-
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p = p * 2.03 + vec2(17.1, 9.2);
-    a *= 0.5;
-  }
-  return v;
-}
+${NOISE_GLSL}
 
 void main() {
   vec2 p = vUv;
@@ -162,6 +143,7 @@ export function BreathOrb(props: BreathOrbProps) {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
     gl.useProgram(program);
+    bindNoise(gl, program);
 
     const quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
