@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { LandingCopy } from "@/content/landing/clear-light";
 import { TEAM_MEMBERS } from "@/content/landing/team";
+import { observeEdgeFade } from "@/components/landing/edge-fade";
 
 const ORDER = [0, 1, 2, 5, 6, 7, 3, 4];
 
@@ -27,7 +28,9 @@ export function Team({ copy }: { copy: LandingCopy }) {
     element.addEventListener("scroll", update, { passive: true });
     const observer = new ResizeObserver(update);
     observer.observe(element);
-    return () => { observer.disconnect(); element.removeEventListener("scroll", update); };
+    // The card the row's edge cuts through fades towards that edge (D-132).
+    const unfade = observeEdgeFade(element);
+    return () => { observer.disconnect(); unfade(); element.removeEventListener("scroll", update); };
   }, []);
 
   function move(direction: number) {

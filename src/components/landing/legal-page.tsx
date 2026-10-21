@@ -1,3 +1,4 @@
+import { ClearLightLogo } from "@/components/landing/clear-light-logo";
 import { CookieBanner } from "@/components/landing/consent";
 import { ContactDialog } from "@/components/landing/contact-dialog";
 import { HOLDING_FONT_CLASS, PUBLIC_FONT_CLASS } from "@/components/landing/fonts";
@@ -97,7 +98,7 @@ export async function LegalPageView({ slug }: { slug: LegalPage["slug"] }) {
         {/* Full document loads, not <Link>: the landing's scroll engine is a
             plain script that mounts on page load (scrollcraft-mount.tsx). */}
         <a href="/clearlight" className="bar__brand">
-          Clear Light
+          <ClearLightLogo priority />
         </a>
         <div className="legal__bar-end">
           <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from={`/${slug}`} />

@@ -1,3 +1,4 @@
+import { ClearLightLogo } from "@/components/landing/clear-light-logo";
 import type { Metadata } from "next";
 import { ApplyFlow } from "@/components/landing/apply-flow";
 import { CookieBanner } from "@/components/landing/consent";
@@ -63,7 +64,7 @@ export default async function ApplyPage() {
       <header className="legal__bar">
         {/* Full document loads, not <Link>, like the legal pages. */}
         <a href="/clearlight" className="bar__brand">
-          Clear Light
+          <ClearLightLogo priority />
         </a>
         <div className="legal__bar-end">
           <LanguageSwitch locale={locale} label={copy.LANGUAGE.label} from="/participar" />

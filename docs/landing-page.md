@@ -25,6 +25,9 @@ motion (phones only; a
 change to D-054 there). The background's colour washes come from opposite
 corners with no dark centre spot.
 
+A tablet held upright (641 to 860px) gets this phone layout too (D-130): the
+phone-only rules reach 860px and the content sits in a centred 34rem column.
+
 The light is positioned in the document rather than fixed to the screen, and
 nothing on the stacked layout sizes itself from the height that changes with
 a phone's address bar, so scrolling does not jitter.

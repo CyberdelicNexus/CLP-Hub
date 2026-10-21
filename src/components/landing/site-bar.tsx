@@ -1,5 +1,6 @@
 "use client";
 
+import { ClearLightLogo } from "@/components/landing/clear-light-logo";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import clsx from "clsx";
 
@@ -39,7 +40,7 @@ export function SiteBar({
       <div ref={sentinel} aria-hidden style={{ position: "absolute", top: 0, left: 0, width: 1, height: 1 }} />
       <header className={clsx("bar", scrolled && "is-scrolled")}>
         <a href="#inicio" className="bar__brand">
-          {brand}
+          <ClearLightLogo priority />
         </a>
         <nav aria-label={brand}>
           <ul className="bar__links">

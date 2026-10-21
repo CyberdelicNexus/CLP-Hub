@@ -1,3 +1,4 @@
+import { ClearLightLogo } from "@/components/landing/clear-light-logo";
 import { CookieSettingsButton } from "@/components/landing/consent";
 import { StillToggle } from "@/components/landing/still-toggle";
 import type { LandingCopy } from "@/content/landing/clear-light";
@@ -16,7 +17,7 @@ export function SiteFooter({ copy, rootId, onLanding }: { copy: LandingCopy; roo
       <div className="foot__inner">
         <div className="foot__brandcol">
           <a href={onLanding ? "#inicio" : "/clearlight"} className="foot__brand">
-            Clear Light
+            <ClearLightLogo />
           </a>
           <p className="foot__tagline">{f.tagline}</p>
         </div>

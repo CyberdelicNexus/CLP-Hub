@@ -5593,6 +5593,94 @@ PhD", and "Dr." with "PhD" for Joe Hardy, Valérie Bonnelle, Catherine Andreu
 and Joana Vidal. Names are shared by all three languages, so the Spanish page
 also reads "Dr." for the women rather than "Dra.".
 
+## D-129 · 2026-10-21 · The Clear Light wordmark replaces the typed name
+
+The founder supplied a wordmark (revised the same day from lavender to silver
+letters): the light in a dark orb over
+the "i". It replaces the typed "Clear Light" in the top bar, the footer, and
+the headers of /participar and the legal pages (`clear-light-logo.tsx`,
+`public/landing/media/clear-light-logo-v2.webp`, trimmed to 880x252).
+
+- **Screened, not cut out.** The orb is a solid near-black disc on a
+  transparent ground. Rather than editing the artwork, `.cl-logo` uses
+  `mix-blend-mode: screen`, so the disc vanishes into the dark page and only
+  the letters and the light show; the letters' drop shadow vanishes with it.
+  On a light background it would not work, but the public site has none.
+- Alt text "Clear Light" in every language. numadelic.org's home keeps its own
+  "Numadelic" name, and the emails keep their orb icon.
+
+## D-130 · 2026-10-21 · An upright tablet gets the phone layout
+
+Founder's request: the tablet breakpoint should look very similar to the phone.
+A tablet held upright (641 to 860px) already had the stacked layout, but the
+phone-only refinements stopped at 480 to 760px, so it got wide lines, two
+side-by-side group columns, two-column steps, stage rows, research cards and
+footer, and a wide team rail.
+
+- **The phone rules now reach 860px**, the stacked layout's own edge: the
+  shared flip card for the two groups, single-column steps, stage list,
+  research cards, footer, legal rows and /participar steps, the team rail and
+  the stacked cookie banner. Rules for very small phones (480px and below)
+  keep their widths.
+- **A phone's measure on a wider screen.** Between 641 and 860px the landing's
+  `main` is a centred 34rem column; the stars, colour washes and top bar still
+  fill the screen. The travelling light reads element positions, so it
+  follows the column.
+- A tablet held sideways (wider than 860px) keeps the desktop layout.
+
+## D-131 · 2026-10-21 · The card cut off at the edge of a sideways row fades out
+
+Founder's request: in the home page's two sideways rows (research and press),
+the card the screen edge cuts through fades towards that edge, so a visitor
+sees another card is coming, at every width. Which card that is depends on the
+width (the fifth on a wide screen, the second on a phone), so `paper-rail.tsx`
+finds it with an IntersectionObserver on the row rather than counting: any
+card less than 98% visible gets `data-peek="end"` (or `"start"` once scrolled
+past on the left), and home.css dissolves it with a gradient mask and 75%
+opacity. Scrolling it fully into view brings it back. Without scripting the
+row is unchanged.
+
+## D-132 · 2026-10-21 · The team row shows part of the next card, faded
+
+What the founder meant by D-131 from the start: the Clear Light team row. On a
+wide screen it showed exactly four cards filling the row, so nothing said more
+were coming. The columns now leave room for part of the next card (4.35 cards
+wide, 3.35 below 1100px; the phone layout already showed part of the second),
+and that card fades towards the edge the same way as the home page's rows,
+with the same observer in `team.tsx`. Once scrolled to the end, the card cut
+off on the left fades the other way. The home page's rows keep D-131.
+
+**Fix (same day, founder's review: "I can see a clear cut").** The gradient
+spanned the whole card, so the visible sliver sat in its nearly opaque start
+and the cut still showed. Both rows now share `edge-fade.ts`, which also
+records the fraction showing (`--peek`), and one rule in landing.css runs the
+fade across only that part: from 55% at the visible start to nothing at the
+cut.
+
+**Second fix (same day: "it pops from low opacity to full").** A per-card fade
+has to switch off once the card is fully in view, and that switch showed. The
+fade now belongs to the row's window instead (`.edge-fade`): a fixed gradient
+at each edge with more cards beyond it, which cards glide through as the row
+scrolls; each edge eases in or out (registered `--edge-start`/`--edge-end`)
+when the row reaches or leaves that end. Nothing on a card changes.
+
+## D-133 · 2026-10-21 · Centred text in balanced lines; the hero's eyebrow in two
+
+Founder's review: centred paragraphs ended on short, lopsided lines ("each
+group." alone under the trial explanation), and the hero's purple eyebrow
+should sit on two balanced lines.
+
+- **Centred blocks use `text-wrap: balance`** ("El porqué", the two groups,
+  the invitation, the partners, /participar's centred notes, the home page's
+  centred hero and film). The site-wide `pretty` only stops a single word alone
+  on a line. Left-aligned text keeps `pretty`; balancing it would narrow every
+  line. Chrome balances blocks of up to six lines and wraps longer ones
+  normally.
+- **The eyebrow balances, and on phones its size follows the width** so the
+  longest version (Galician, then Spanish) fits two lines: 12.8px at 390px
+  wide, 12px from 360px down. At 360px Spanish fits; Galician may take a third
+  line on the narrowest phones rather than go below 12px.
+
 ## Open questions for researchers
 
 - The breathing guide now keeps two things in the visitor's browser storage

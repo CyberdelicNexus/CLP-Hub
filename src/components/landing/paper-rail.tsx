@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { observeEdgeFade } from "@/components/landing/edge-fade";
 
 /**
  * The home page's research as one row that scrolls sideways (D-106). The row
@@ -33,8 +34,11 @@ export function PaperRail({
     const observer = new ResizeObserver(read);
     observer.observe(rail);
     rail.addEventListener("scroll", read, { passive: true });
+    // A card the row's edge cuts through fades towards that edge (D-131).
+    const unfade = observeEdgeFade(rail);
     return () => {
       observer.disconnect();
+      unfade();
       rail.removeEventListener("scroll", read);
     };
   }, []);
