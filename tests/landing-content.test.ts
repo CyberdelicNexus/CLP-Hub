@@ -64,7 +64,7 @@ describe("landing copy rules", () => {
   it("keeps the nav anchored in-page, and never references the Qualtrics URL directly from the hero", () => {
     // D-090 (2026-09-29): a confirmed, deliberate override of the earlier
     // "hero only scrolls to the explanation" rule — the hero now offers a
-    // direct path to /participar (exploreCta, "Aplicar al estudio"), and
+    // direct path to /participar (exploreCta, "Participar en el estudio"), and
     // primaryCta ("Comprobar si puedo participar") anchors to the
     // eligibility/questions section instead of the final invitation. The
     // nav itself is untouched: still in-page only. `/participar` is a

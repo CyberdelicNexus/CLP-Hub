@@ -43,7 +43,7 @@ export function ClearLightLanding({
       <SiteBar
         brand="Clear Light"
         links={copy.NAV}
-        /* 2026-09-29 request: matches the hero's "Aplicar al estudio"
+        /* 2026-09-29 request: matches the hero's "Participar en el estudio"
            button — same label, same direct destination (D-090), so the
            persistent nav CTA does not promise something different from
            what the hero already does. */

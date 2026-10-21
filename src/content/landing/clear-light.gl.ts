@@ -13,8 +13,8 @@ export const LANDING_GL: LandingCopy = {
   RESEARCH: RESEARCH_GL,
   ACTIONS: {
     primaryCta: "Comprobar se podo participar",
-    exploreCta: "Aplicar ao estudo",
-    eligibilityCta: "Requisitos para participar",
+    exploreCta: "Participar no estudo",
+    eligibilityCta: "Requisitos",
     contactCta: "Contactar co equipo",
   },
   NAV: [
@@ -31,22 +31,22 @@ export const LANDING_GL: LandingCopy = {
     reveal: {
       luminousAlt: "Seis presenzas de luz azul violeta, difusas, dispostas en círculo sobre un fondo escuro.",
       physicalAlt:
-        "Seis persoas sentadas en cadeiras formando un círculo nunha sala cálida, cada unha cunhas gafas Meta Quest 3 e dous mandos nas mans.",
+        "Seis persoas sentadas en cadeiras formando un círculo nunha sala cálida, cada unha cunhas gafas Meta Quest 3 e mandos nas mans.",
     },
   },
   WHY: {
     headline: "Cando unha enfermidade grave o cambia todo.",
-    body: "Unha enfermidade grave pode cambiar a relación co corpo, co tempo e con quen amamos. Este estudo explora se unha experiencia compartida pode abrir un espazo de presenza, conexión e sentido ante este proceso natural.",
+    body: "Unha enfermidade grave pode cambiar a relación co corpo, co tempo e con quen queremos. Este estudo explora se unha experiencia compartida pode crear un espazo de presenza, conexión e sentido ante este proceso natural.",
   },
   WHAT: {
     headline: "Unha experiencia guiada para explorar xuntos.",
-    body: "Clear Light é un programa experiencial en pequeno grupo. Combina preparación, encontros por videochamada e sesións inmersivas de realidade virtual para explorar a vida, a identidade, a impermanencia e a conexión.",
+    body: "Clear Light é un programa experiencial para grupos reducidos. Combina preparación, encontros por videochamada e sesións inmersivas de realidade virtual para explorar a vida, a identidade, a impermanencia e a conexión.",
     facts: ["Pequeno grupo", "Acompañamento humano", "Realidade virtual guiada"],
     film: {
       label: "Unha ollada ao proxecto",
       play: "Reproducir o vídeo",
       posterAlt:
-        "Unha persoa sentada coas pernas cruzadas diante dun fondo azul, cunhas gafas de realidade virtual e un mando en cada man; unha luz cálida no peito.",
+        "Unha persoa sentada coas pernas cruzadas diante dun fondo azul, cunhas gafas de realidade virtual e un mando en cada man.",
       captions: ES.WHAT.film.captions,
     },
   },
@@ -187,7 +187,7 @@ export const LANDING_GL: LandingCopy = {
     heading: "A asignación realízase ao azar.",
     body: [
       "Este estudo é un ensaio controlado aleatorizado: para saber se un programa funciona hai que comparar. Formamos dous grupos con persoas nunha situación parecida e é o azar quen decide en cal está cada unha. Ao final do estudo comparamos como está cada grupo.",
-      "Así podemos distinguir que cambios se deben ao programa e cales terían ocorrido de todos os xeitos. Para que a comparación sexa xusta, ninguén elixe o seu grupo.",
+      "Así podemos distinguir que cambios se deben ao programa e cales terían ocorrido de todos os xeitos. Para que a comparación sexa xusta, ninguén escolle o seu grupo.",
     ],
     branches: [
       {
@@ -223,7 +223,6 @@ export const LANDING_GL: LandingCopy = {
         topic: "Que implica participar",
         statements: [
           "O programa ten varias etapas: preparación, encontros por videochamada e sesións de realidade virtual. Explicarémosche a duración e o calendario antes de comezar.",
-          "A participación é voluntaria.",
         ],
         pending: ES.ELIGIBILITY.faq[0].pending,
       },
@@ -427,7 +426,7 @@ export const LANDING_GL: LandingCopy = {
   META: {
     title: "Clear Light · Estudo de investigación",
     description:
-      "Estudo de investigación con asignación ao azar sobre unha experiencia grupal de realidade virtual. Información pública para persoas interesadas.",
+      "Estudo de investigación con asignación aleatoria sobre unha experiencia grupal de realidade virtual. Información pública para persoas interesadas.",
   },
   LANGUAGE: {
     label: "Idioma",

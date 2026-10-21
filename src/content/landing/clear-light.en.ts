@@ -14,8 +14,8 @@ export const LANDING_EN: LandingCopy = {
   RESEARCH: RESEARCH_EN,
   ACTIONS: {
     primaryCta: "Check if I can take part",
-    exploreCta: "Apply to the study",
-    eligibilityCta: "Requirements to take part",
+    exploreCta: "Participate in the study",
+    eligibilityCta: "Requirements",
     contactCta: "Contact the team",
   },
   NAV: [
@@ -25,19 +25,19 @@ export const LANDING_EN: LandingCopy = {
     { href: "#equipo", label: "Team" },
   ],
   HERO: {
-    eyebrow: "Randomized research study in Spain of a group virtual reality experience.",
+    eyebrow: "Randomized research study of group virtual reality experience, taking place in Spain.",
     headline: "Can an immersive experience transform how we relate to mortality?",
     support:
       "This study investigates how an immersive, shared experience affects the mental health and well-being of people living with a serious illness.",
     reveal: {
       luminousAlt: "Six diffuse presences of blue-violet light arranged in a circle against a dark background.",
       physicalAlt:
-        "Six people seated on chairs in a circle in a warm room, each with a Meta Quest 3 headset and two controllers in their hands.",
+        "Six people seated on chairs in a circle in a warm room, each with a Meta Quest 3 headset and controllers in their hands.",
     },
   },
   WHY: {
     headline: "When a serious illness changes everything.",
-    body: "A serious illness can change our relationship with our body, with time, and with the people we love. This study explores whether a shared experience can open a space for presence, connection, and meaning in the face of this natural process.",
+    body: "A serious illness can change our relationship with our body, with time, and with our loved ones. This study explores whether a shared experience can create a space for presence, connection, and meaning in the face of this natural process.",
   },
   WHAT: {
     headline: "A guided experience to explore together.",
@@ -47,7 +47,7 @@ export const LANDING_EN: LandingCopy = {
       label: "A look at the project",
       play: "Play the video",
       posterAlt:
-        "A person sitting cross-legged against a blue background, with a virtual reality headset and a controller in each hand; a warm light in their chest.",
+        "A person sitting cross-legged against a blue background, with a virtual reality headset and a controller in each hand.",
       captions: ES.WHAT.film.captions,
     },
   },
@@ -81,7 +81,7 @@ export const LANDING_EN: LandingCopy = {
       {
         code: "S2",
         name: "Bodies of Light",
-        description: "Exploring how it feels to inhabit a form made of light.",
+        description: "Exploring how it feels to have a body of light.",
         media: {
           src: "/landing/media/etapa-s2-editorial.webp",
           width: 1536,
@@ -92,7 +92,7 @@ export const LANDING_EN: LandingCopy = {
       {
         code: "S3",
         name: "Life",
-        description: "Going through your own story with attention and self-compassion.",
+        description: "Remembering your own story with attention and self-compassion.",
         media: {
           src: "/landing/media/etapa-s3-editorial.webp",
           width: 1536,
@@ -125,7 +125,7 @@ export const LANDING_EN: LandingCopy = {
       {
         code: "S6",
         name: "Group Integration",
-        description: "Making sense of what you have lived through and sharing what remains.",
+        description: "Making sense of your experience and sharing what remains.",
         media: {
           src: "/landing/media/etapa-s6-editorial.webp",
           width: 1536,
@@ -163,7 +163,7 @@ export const LANDING_EN: LandingCopy = {
       {
         numeral: "01",
         label: "Answer the questionnaire",
-        body: "Share your interest through the Qualtrics form. Submitting it does not commit you to take part. In this first questionnaire, you will receive all the information and need to sign the informed consent form. The team must first review your answers to see whether this study is suitable for you.",
+        body: "Share your interest through the Qualtrics form. Submitting it does not commit you to take part. In this first questionnaire, you will receive all the relevant information and sign the informed consent. The team will review your answers to see whether this study is suitable for you.",
       },
       {
         numeral: "02",
@@ -184,21 +184,21 @@ export const LANDING_EN: LandingCopy = {
     supporting: "Showing interest does not commit you to take part.",
   },
   SPLIT: {
-    eyebrow: "The study's two groups",
-    heading: "Assignment is made at random.",
+    eyebrow: "The two groups of the study",
+    heading: "Participants are randomly assigned.",
     body: [
-      "This study is a randomized controlled trial: to find out whether a program works, we need to compare. We form two groups of people in similar situations, and chance decides which group each person joins. At the end of the study, we compare how each group is doing.",
-      "This helps us distinguish changes caused by the program from those that would have happened anyway. To keep the comparison fair, no one chooses their group.",
+      "This study is a randomized controlled trial. It works by separating people with similar diagnoses into two groups. Group 1 receives one treatment, and group 2 receives another treatment. At the end of the study, we evaluate the health of people in each group.",
+      "This helps us distinguish changes caused by the treatment from changes that may have happened anyway. To ensure that the comparison is scientifically valid, participants are assigned to a group at random.",
     ],
     branches: [
       {
         label: "Program group",
-        lines: ["Takes part in the Clear Light program during the study.", "Continues with their usual medical care. Completes the same assessments as the other group."],
+        lines: ["Takes part in the Clear Light program while continuing with their usual medical care.", "Completes the same assessments as the other group."],
         condition: ES.SPLIT.branches[0].condition,
       },
       {
         label: "Comparison group",
-        lines: ["Continues with their usual medical care.", "Completes the same assessments as the other group. At the end of their participation, they will be offered an optional PDF with the results and access to Clear Light Solo virtual reality."],
+        lines: ["Continues with their usual medical care.", "Completes the same assessments as the other group. At the end of their participation, they will be offered a summary of the final study results and access to a Clear Light Solo virtual reality experience."],
         condition: ES.SPLIT.branches[1].condition,
       },
     ],
@@ -208,7 +208,7 @@ export const LANDING_EN: LandingCopy = {
   },
   ELIGIBILITY: {
     heading: "Could this study be for me?",
-    intro: "This study is focused on Spain. Eligibility is confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
+    intro: "This study is focused on Spanish speakers in Spain. Eligibility will be confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
     criteriaHeading: "Participation criteria",
     criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish."],
     criteriaText:
@@ -224,7 +224,6 @@ export const LANDING_EN: LandingCopy = {
         topic: "What taking part involves",
         statements: [
           "The program has several stages: preparation, video call meetings, and virtual reality sessions. We will explain the duration and the schedule to you before you start.",
-          "Participation is voluntary.",
         ],
         pending: ES.ELIGIBILITY.faq[0].pending,
       },
@@ -264,7 +263,7 @@ export const LANDING_EN: LandingCopy = {
         statements: [
           "You can ask questions before you decide.",
           "You can leave the study at any time, without having to give a reason.",
-          "To take part, you will need to sign an informed consent form that provides you with all the information.",
+          "To take part, you will need to sign an informed consent, which provides you with all the information.",
         ],
         pending: ES.ELIGIBILITY.faq[4].pending,
       },
@@ -428,7 +427,7 @@ export const LANDING_EN: LandingCopy = {
   META: {
     title: "Clear Light · Research study",
     description:
-      "Research study with random assignment on a group virtual reality experience. Public information for people who are interested.",
+      "Randomized controlled research study to evaluate a group virtual reality experience. Public information for people who are interested.",
   },
   LANGUAGE: {
     label: "Language",

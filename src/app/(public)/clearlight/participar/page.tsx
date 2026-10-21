@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The page behind the hero's "Aplicar al estudio" and the invitation's
+ * The page behind the hero's "Participar en el estudio" and the invitation's
  * "Comprobar si puedo participar" (D-085, D-090), in the landing's theme:
  * what happens, then two steps (D-086). Its own H1 (`APPLY.title`) is
  * deliberately its own copy, not `ACTIONS.primaryCta` — see D-090: someone

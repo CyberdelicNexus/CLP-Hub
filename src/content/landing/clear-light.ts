@@ -51,13 +51,13 @@ export const ACTIONS = {
    * /participar, not an in-page anchor. Deliberate override of the earlier
    * "hero only scrolls to the explanation" rule; see hero.tsx's comment.
    */
-  exploreCta: "Aplicar al estudio",
+  exploreCta: "Participar en el estudio",
   /**
    * Hero's second button (2026-09-29 request) — anchors to #elegibilidad
    * (criteria, benefits, risks, FAQ), so the label says that rather than
    * reusing `primaryCta`, which now means something else here.
    */
-  eligibilityCta: "Requisitos para participar",
+  eligibilityCta: "Requisitos",
   contactCta: "Contactar con el equipo",
 } as const;
 
@@ -77,24 +77,24 @@ export const HERO = {
     /** Alt text for the layered still. No explicit toggle labels: the control was removed (D-054). */
     luminousAlt: "Seis presencias de luz azul violeta, difusas, dispuestas en círculo sobre un fondo oscuro.",
     physicalAlt:
-      "Seis personas sentadas en sillas formando un círculo en una sala cálida, cada una con unas gafas Meta Quest 3 y dos mandos en las manos.",
+      "Seis personas sentadas en sillas formando un círculo en una sala cálida, cada una con gafas Meta Quest 3 y mandos en las manos.",
   },
 } as const;
 
 export const WHY = {
   headline: "Cuando una enfermedad grave lo cambia todo.",
-  body: "Una enfermedad grave puede cambiar la relación con el cuerpo, con el tiempo y con quienes amamos. Este estudio explora si una experiencia compartida puede abrir un espacio de presencia, conexión y sentido ante este proceso natural.",
+  body: "Una enfermedad grave puede cambiar la relación con el cuerpo, con el tiempo y con quienes queremos. Este estudio explora si una experiencia compartida puede crear un espacio de presencia, conexión y sentido ante este proceso natural.",
 } as const;
 
 export const WHAT = {
   headline: "Una experiencia guiada para explorar juntos.",
-  body: "Clear Light es un programa experiencial en pequeño grupo. Combina preparación, encuentros por videollamada y sesiones inmersivas de realidad virtual para explorar la vida, la identidad, la impermanencia y la conexión.",
+  body: "Clear Light es un programa experiencial para grupos reducidos. Combina preparación, encuentros por videollamada y sesiones inmersivas de realidad virtual para explorar la vida, la identidad, la impermanencia y la conexión.",
   facts: ["Pequeño grupo", "Acompañamiento humano", "Realidad virtual guiada"],
   film: {
     label: "Una mirada al proyecto",
     play: "Reproducir el vídeo",
     // D-060: a single participant, not the hero's circle of seven.
-    posterAlt: "Una persona sentada con las piernas cruzadas frente a un fondo azul, con unas gafas de realidad virtual y un mando en cada mano; una luz cálida en el pecho.",
+    posterAlt: "Una persona sentada con las piernas cruzadas sobre un fondo azul, con gafas de realidad virtual y un mando en cada mano.",
     /** Not rendered on the page; still blocks publication until approved. */
     captions: missing("SUBTITULOS_VIDEO", "Subtítulos o transcripción en español aprobados para el vídeo de la sección 3"),
   },
@@ -251,9 +251,9 @@ export interface Branch {
 
 export const SPLIT = {
   eyebrow: "Los dos grupos del estudio",
-  heading: "La asignación se realiza al azar.",
+  heading: "La asignación se realiza de forma aleatoria.",
   body: [
-    "Este estudio es un ensayo controlado aleatorizado: para saber si un programa funciona hay que comparar. Formamos dos grupos con personas en una situación parecida y es el azar quien decide en cuál está cada una. Al final del estudio comparamos cómo está cada grupo.",
+    "Este estudio es un ensayo controlado aleatorizado. Para saber si un programa funciona, hay que compararlo con otra situación. Por eso, formamos dos grupos de personas en circunstancias parecidas, y es el azar el que decide a qué grupo pertenece cada participante. Al final del estudio, comparamos cómo se encuentra cada grupo.",
     "Así podemos distinguir qué cambios se deben al programa y cuáles habrían ocurrido de todos modos. Para que la comparación sea justa, nadie elige su grupo.",
   ],
   branches: [
@@ -264,7 +264,7 @@ export const SPLIT = {
     },
     {
       label: "Grupo de comparación",
-      lines: ["Sigue con su seguimiento médico habitual.", "Completa las mismas medidas que el otro grupo. Al finalizar su participación, se le ofrecerá de forma opcional un PDF con los resultados y accesso a la Realidad Virtual de Clear Light Solo."],
+      lines: ["Sigue con su seguimiento médico habitual.", "Completa las mismas medidas que el otro grupo. Al finalizar su participación, se le ofrecerá de forma opcional un PDF con los resultados y acceso a la experiencia de realidad virtual «Clear Light Solo»."],
       condition: missing("CONDICION_GRUPO_CONTROL", "Descripción aprobada del grupo control"),
     },
   ] as readonly [Branch, Branch],
@@ -310,7 +310,6 @@ export const ELIGIBILITY = {
       topic: "Qué implica participar",
       statements: [
         "El programa tiene varias etapas: preparación, encuentros por videollamada y sesiones de realidad virtual. Te explicaremos la duración y el calendario antes de empezar.",
-        "La participación es voluntaria.",
       ],
       pending: missing("DEDICACION", "Duración total, número y formato de las sesiones, lugar y dedicación"),
     },
@@ -340,7 +339,7 @@ export const ELIGIBILITY = {
       topic: "Uso de las gafas de realidad virtual",
       statements: [
         "Si eres asignado al grupo del programa, una persona del equipo te entrega las gafas en casa y te explica cómo usarlas.",
-        "Participas de todo el programa desde casa.",
+        "Participas en todo el programa desde casa.",
         "Si tienes dudas durante el estudio, el equipo te ayuda.",
       ],
       pending: missing("EQUIPAMIENTO", "Entrega, configuración y devolución del equipo, y adaptaciones de accesibilidad"),
@@ -559,7 +558,7 @@ export const CONSENT = {
 export const META = {
   title: "Clear Light · Estudio de investigación",
   description:
-    "Estudio de investigación con asignación al azar sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
+    "Estudio de investigación con asignación aleatoria sobre una experiencia grupal de realidad virtual. Información pública para personas interesadas.",
 } as const;
 
 /** The introduction is a draft; the eight people's details are still to come (team.ts, D-107). */

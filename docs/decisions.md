@@ -5556,6 +5556,43 @@ or any phone with that GPU: that is the test still to do.
 The same day the founder adjusted the preset (size 1.25, depth 1.4); the
 values above are the adjusted ones.
 
+## D-128 · 2026-10-21 · The team's copy revision, and credentials on the team cards
+
+The team returned the three-language copy document ("Textos Website - ES EN
+GL") with edits. That document was exported around 5 October, before later
+changes (the fourth joining step, the eight-person team section, the merged
+partners row, the footer note's removal), so it was compared against the
+5 October export cell by cell, not against the code: only the 44 cells the
+team changed were applied, and everything newer in the code was kept.
+
+- **Applied as written:** the link-preview description, the shared hero/top
+  bar button ("Participar en el estudio"), the shorter "Requisitos" button,
+  both hero and film alt texts, "El porqué" (queremos, crear), "para grupos
+  reducidos", the split section's English eyebrow, Spanish first paragraph and
+  English paragraphs, both groups' English lines and the comparison group's
+  Spanish line, English S2/S3/S6, English step 01 and eligibility intro, the
+  dropped "La participación es voluntaria" in the first answer (all three),
+  "Participas en todo", and the English withdrawal answer.
+- **Applied with a correction, to confirm with the team:**
+  - "La asignación se realiza aleatorio" is ungrammatical; written as "de forma
+    aleatoria".
+  - "randomized control trial" / "Randomized control research study": the term
+    is "randomized controlled", and a safeguard test requires it; "Group 1
+    receives one treatment 1" lost its stray "1".
+  - The two buttons are one string, but the document gave Galician "Participa
+    ao estudo" for the bar and kept "Aplicar ao estudo" for the hero; both now
+    read "Participar no estudo", matching the Spanish.
+  - Galician alt texts: "cada cunhas gafas" and "sobre gafas" read as slips;
+    kept "cada unha cunhas" and "cunhas gafas", applying only the removals.
+  - Spanish quotes as «Clear Light Solo», with the closing full stop.
+- **Not applied:** the Spanish stage title changed to English ("Program
+  stages"), taken as a slip; it stays "Etapas del Programa".
+
+Team cards gain credentials at the founder's request: "Dr. David Glowacki, MA,
+PhD", and "Dr." with "PhD" for Joe Hardy, Valérie Bonnelle, Catherine Andreu
+and Joana Vidal. Names are shared by all three languages, so the Spanish page
+also reads "Dr." for the women rather than "Dra.".
+
 ## Open questions for researchers
 
 - The breathing guide now keeps two things in the visitor's browser storage

@@ -18,14 +18,14 @@ export interface TeamMember {
  * so every head sits at the same height and size (D-122). Profile links are optional.
  */
 export const TEAM_MEMBERS: readonly TeamMember[] = [
-  { name: "David Glowacki, PhD", photo: "/landing/media/portraits/cards/david-glowacki.webp", href: null },
-  { name: "Joe Hardy", photo: "/landing/media/portraits/cards/joe-hardy.webp", href: null },
+  { name: "Dr. David Glowacki, MA, PhD", photo: "/landing/media/portraits/cards/david-glowacki.webp", href: null },
+  { name: "Dr. Joe Hardy, PhD", photo: "/landing/media/portraits/cards/joe-hardy.webp", href: null },
   { name: "Justin \"Lama Karma\" Wall", photo: "/landing/media/portraits/cards/justin-wall.webp", href: null },
-  { name: "Valérie Bonnelle", photo: "/landing/media/portraits/cards/valerie-bonnelle.webp", href: null },
+  { name: "Dr. Valérie Bonnelle, PhD", photo: "/landing/media/portraits/cards/valerie-bonnelle.webp", href: null },
   { name: "Sila Sobrado", photo: "/landing/media/portraits/cards/sila-sobrado.webp", href: null },
-  { name: "Catherine Andreu", photo: "/landing/media/portraits/cards/catherine-andreu.webp", href: null },
+  { name: "Dr. Catherine Andreu, PhD", photo: "/landing/media/portraits/cards/catherine-andreu.webp", href: null },
   { name: "Jose Montemayor Alba", photo: "/landing/media/portraits/cards/jose-montemayor.webp", href: null },
-  { name: "Joana Vidal", photo: "/landing/media/portraits/cards/joana-vidal.webp", href: null },
+  { name: "Dr. Joana Vidal, PhD", photo: "/landing/media/portraits/cards/joana-vidal.webp", href: null },
 ];
 
 export const TEAM_PENDING: Missing = {
