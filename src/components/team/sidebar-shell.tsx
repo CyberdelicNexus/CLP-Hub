@@ -95,7 +95,7 @@ export function SidebarShell({
             collapsed ? "flex-col justify-center gap-1.5 px-0 py-3" : "h-14 px-4",
           )}
         >
-          <Image src="/brand/logo.png" alt="" width={28} height={28} className="size-7 shrink-0" priority />
+          <Image src="/brand/hub-logo.png" alt="" width={28} height={28} className="size-7 shrink-0 [mask-image:radial-gradient(circle,#000_30%,transparent_70%)] dark:mix-blend-screen dark:[mask-image:none]" priority />
           {collapsed ? null : (
             <span className="min-w-0 truncate text-sm font-semibold tracking-tight">{appName}</span>
           )}

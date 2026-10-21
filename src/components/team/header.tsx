@@ -73,7 +73,7 @@ export function Header({
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <SheetTitle className="flex h-14 items-center gap-2 px-5 text-sm font-semibold">
-            <Image src="/brand/logo.png" alt="" width={28} height={28} className="size-7 shrink-0" />
+            <Image src="/brand/hub-logo.png" alt="" width={28} height={28} className="size-7 shrink-0 [mask-image:radial-gradient(circle,#000_30%,transparent_70%)] dark:mix-blend-screen dark:[mask-image:none]" />
             {labels.appName}
           </SheetTitle>
           <SidebarNav items={items} onNavigate={() => setOpen(false)} />

@@ -26,7 +26,7 @@ export default async function LoginPage() {
 
       <div className="relative w-full max-w-sm space-y-6 rounded-2xl bg-card p-8 shadow-lift ring-1 ring-foreground/10">
         <div className="space-y-2">
-          <Image src="/brand/logo.png" alt="" width={36} height={36} className="size-9" priority />
+          <Image src="/brand/hub-logo.png" alt="" width={36} height={36} className="size-9 [mask-image:radial-gradient(circle,#000_30%,transparent_70%)] dark:mix-blend-screen dark:[mask-image:none]" priority />
           <p className="pt-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {tCommon("appName")}
           </p>

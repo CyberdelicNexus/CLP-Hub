@@ -5457,6 +5457,64 @@ should appear forming from beginning to end, then the text beneath.
   "Supervisor") in all three languages. The staff app's `supervisor` access
   role is a different thing and is unchanged.
 
+## D-124 · 2026-10-20 · The real study's fourteen session pages and 24 messages are in the Hub
+
+The founder handed over the team's "Materiales de preparación e integración"
+(v3, 2026-10-02) and "Mensajes a participantes" and asked for all of it in the
+Hub. `scripts/seed-session-materials.ts` loaded it once, through the same
+services the Hub uses (`--conditions=react-server`), so every row carries the
+usual audit event, attributed to the staff account passed as `--actor`.
+
+- **Session codes are now `s0`…`s6`.** S0 had already been renamed from the
+  Hub; S1–S6 (`orientacion`, `cuerpos-de-luz`, …) were renamed the same way
+  (`session_template.code_renamed`), so the pages sit at
+  `/clearlight/estudio/sesiones/sN/preparacion|integracion`, the addresses
+  the documents and messages use. Nothing in code keyed on the old codes.
+- **Pages.** Twelve new pages (S1–S6) and a new published version of each S0
+  page. The team's earlier S0 versions (v13, v2) are archived, not lost, and
+  their cover images were carried over. Practices are CONTEMPLATION blocks,
+  "Datos de la sesión" an INFO callout, the YouTube resources play in place
+  (VIDEO), and the other resources are BOOKMARK cards.
+- **What changed from the document.** Pages are the same for every cohort
+  (D-003), so per-cohort links can't be buttons on them. "Entrar en Zoom" and
+  "Unirme al grupo" became "the link reaches you by WhatsApp", and the
+  messages carry the link. The study has no public WhatsApp number, so the
+  "[Botón: WhatsApp]" became a contact box: "answer any of our WhatsApp
+  messages", plus a link to info@numadelic.org. The S2 "guía para entrar
+  en la sesión" button was left out because no such page exists yet. S6's
+  "cuestionario" and "calendar app link tbc" became "we'll send you the link
+  / write to you to arrange the pickup", which matches message 23. The team's
+  hotlinked S0 image (a third-party shop's asset) was not carried over.
+- **Messages.** One template per message, all addressed to people except
+  11–22 (the WhatsApp group: `COHORT_CHANNEL`, no names). 1–6 are EMAIL
+  templates whose name is the "Asunto" line (D-116). Page links are written
+  out in full. Per-cohort values use `{{fecha}}`, `{{hora}}`, `{{responsable}}`
+  and `{{enlace}}`. Free-form gaps use `{{instrucciones}}`: message 3's three
+  questionnaire dates, the visit-time options in 8 and 23, the calendar in 7
+  and the headset pickup in 21. "[teléfono]" in message 1 became
+  info@numadelic.org, because no study phone is on record.
+- **No automation rules.** D-116 lets an automatic email use only
+  `{{nombre}}`, `{{codigo}}` and `{{cohorte}}`, and messages 3–6 need dates
+  and Qualtrics links, so the rule screen will refuse AUTOMATIC for them as
+  they stand. To automate one, write its link and any dates into the template
+  itself, then add the rule. Message 2 (not eligible) and message 1 stay
+  staff-sent in any case (CLAUDE.md rule 3).
+
+## D-125 · 2026-10-20 · The staff Hub gets its own logo: a light orb that blends into the background
+
+The founder supplied a new mark for the Hub: a white-violet light in a dark
+sphere. It is `public/brand/hub-logo.png` (144px, from the 1024px original),
+used only by the staff area: the sidebar, the header and the login page.
+`public/brand/logo.png` stays as it is, because the public study pages and
+the emails (`src/emails/logo.ts`) still use it.
+
+**Blending.** The sphere's rim is near-black. In the dark theme the image uses
+`mix-blend-mode: screen`, so the rim disappears into the background and only
+the glow is left. `screen` would wash it out on a light background, so the
+light theme instead fades the rim with a radial mask (opaque to 30%,
+transparent by 70%), leaving a violet halo around the light. Checked in both
+themes on the login page.
+
 ## Open questions for researchers
 
 - The breathing guide now keeps two things in the visitor's browser storage
@@ -5707,3 +5765,14 @@ should appear forming from beginning to end, then the text beneath.
   people who apply without understanding the two-group design, versus
   people who already knew what they wanted and the extra scroll was only
   friction? Nothing in the app can measure that today (no analytics, D-042).
+- D-124: the visit length differs between the S0 page ("2 horas") and
+  messages 8 and 23 ("como máximo una hora y media"), and the programme
+  configuration has S1 at 90 minutes where the S1 page says 1 hour. Which is
+  right?
+- D-124: the resources table asks the team to choose between the two Montse
+  Esquerda videos (S1 preparación and S1 integración). Both are in for now.
+- D-124: the control group's questionnaire emails (messages 3–6) are ready as
+  templates but not automated. Are the Qualtrics links the same for every
+  wave, so they can be written into the template once? And what triggers each
+  email: D-116's "a week after S0, a week after the end, three months", or
+  the dates in message 3?

@@ -13,6 +13,8 @@ Two separate systems:
 
 Participants do not log in (D-003). Study content is published as blog-style Spanish pages, e.g. `/estudio/sesiones/<session-key>/preparacion` and `/estudio/sesiones/<session-key>/integracion`, `/estudio/preparacion-vr`, `/estudio/ayuda`. Pages contain **no participant-specific data**. Links to them are what emails and WhatsApp messages point to, so the page is the canonical source and messages stay short.
 
+In the real study the session keys are `s0`…`s6`, e.g. `/clearlight/estudio/sesiones/s3/preparacion`. The fourteen pages and the 24 participant message templates were first loaded by `scripts/seed-session-materials.ts` (D-124). Edit them in the Hub from now on: re-running that script would publish its text over Hub edits.
+
 ## Tables
 
 - `contents` — `study_id`, `type` (SESSION_PREPARATION, SESSION_INTEGRATION, VR_GUIDE, TROUBLESHOOTING, FAQ, EMAIL_TEMPLATE, WHATSAPP_TEMPLATE), `key`, and a nullable `session_template_id` foreign key for session material (D-029).
