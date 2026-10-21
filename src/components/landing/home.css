@@ -9,7 +9,7 @@
    are these durations as shares of the cycle: change them together.
 
    The light's size, swing, glow and background are the founder's "balanced"
-   preset from /meditate (D-126): 1.5 times the size, 1.5 times the swing
+   preset from /meditate (D-126): 1.25 times the size, 1.4 times the swing
    (meditate.tsx: full minus swing x depth), the glow at 0.7 and the side
    lights at 0.35, turned 210 degrees so the blue comes from the right.
    ========================================================================== */
@@ -18,7 +18,7 @@
   --breath-move: 4s;
   --breath-hold: 1s;
   --breath-cycle: calc((var(--breath-move) + var(--breath-hold)) * 2);
-  --breath-size: clamp(15rem, 40.5vmin, 25.5rem);
+  --breath-size: clamp(12.5rem, 33.75vmin, 21.25rem);
   --home-blue: 74 122 255;
   --home-violet: 150 112 255;
   --home-white: 255 246 236;
@@ -93,7 +93,7 @@
     rgb(var(--home-blue) / 0.028) 52%,
     transparent 68%
   );
-  transform: scale(0.57);
+  transform: scale(0.604);
   opacity: 0.72;
 }
 /* The light itself: this box breathes, and what is inside it is the texture.
@@ -104,7 +104,7 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  transform: scale(0.43);
+  transform: scale(0.476);
   opacity: 0.86;
 }
 /* The drifting cloud, drawn by energy-orb.tsx. */
@@ -139,16 +139,16 @@
 /* In (0 to 40%), hold (to 50%), out (to 90%), hold. The timing function on a
    keyframe eases the stretch that follows it. */
 @keyframes breath-halo {
-  0% { transform: scale(0.57); opacity: 0.72; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  0% { transform: scale(0.604); opacity: 0.72; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
   40% { transform: scale(1.08); opacity: 1; }
   50% { transform: scale(1.08); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  90%, 100% { transform: scale(0.57); opacity: 0.72; }
+  90%, 100% { transform: scale(0.604); opacity: 0.72; }
 }
 @keyframes breath-orb {
-  0% { transform: scale(0.43); opacity: 0.86; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  0% { transform: scale(0.476); opacity: 0.86; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
   40% { transform: scale(1.12); opacity: 1; }
   50% { transform: scale(1.12); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
-  90%, 100% { transform: scale(0.43); opacity: 0.86; }
+  90%, 100% { transform: scale(0.476); opacity: 0.86; }
 }
 
 /* ------------------------------------------------------------------- copy */

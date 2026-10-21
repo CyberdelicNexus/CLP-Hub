@@ -5533,16 +5533,16 @@ point. The fbm is unchanged, so the cloud keeps its scale and drift. Both
 meditate light had the same weakness.
 
 **The home page's light is now the founder's saved "balanced" preset from
-/meditate** (`sz=1.5 dp=1.5 dr=1.35 gl=0.7 am=0.35 an=210 eg=1 tx=0.65 sf=1.15
+/meditate** (`sz=1.25 dp=1.4 dr=1.35 gl=0.7 am=0.35 an=210 eg=1 tx=0.65 sf=1.15
 co=2 fr=1.35`, palette numadelic, organic 0). The dials are baked into the home
 page's shader and `home.css`, not shared with the guide, so tuning the guide
 still cannot change the home page (D-120):
 - shape: round (no warp), edge irregularity 1, cloud texture 0.65, softness
   1.15, core ×2, fringe ×1.35, glow ×0.7, drift ×1.35. Without the warp the
   shader also skips two of its four fbm calls;
-- `--breath-size` ×1.5 (`clamp(15rem, 40.5vmin, 25.5rem)`);
-- the breath swings 1.5 times as deep: the light from 0.43 to 1.12 and the
-  glow from 0.57 to 1.08 (meditate.tsx's full − swing × depth);
+- `--breath-size` ×1.25 (`clamp(12.5rem, 33.75vmin, 21.25rem)`);
+- the breath swings 1.4 times as deep: the light from 0.476 to 1.12 and the
+  glow from 0.604 to 1.08 (meditate.tsx's full − swing × depth);
 - the halo gradient at 0.7 of its strength, and the hero's two side lights at
   0.35, turned 210° (the blue now comes from the right, the violet from the
   left), at the positions and sizes /meditate draws them.
@@ -5552,6 +5552,9 @@ vignette, so the two pages are not pixel-identical; the light itself is.
 
 Checked in desktop Chrome and in a 390px frame. Not checked on David's phone
 or any phone with that GPU: that is the test still to do.
+
+The same day the founder adjusted the preset (size 1.25, depth 1.4); the
+values above are the adjusted ones.
 
 ## Open questions for researchers
 
