@@ -24,10 +24,10 @@ import { Signal } from "@/components/landing/signal";
  * reduced motion or "Pausar animación" every section keeps its own light.
  */
 /** Arrival: the eligibility grid's top edge at this share of the viewport. */
-const MEET_TOP = 0.28;
+const MEET_TOP = 0.44;
 /** Heart: scroll after the arrival before the descent starts, and its length (shares of the viewport). */
-const HEART_GAP = 0.04;
-const HEART_RANGE = 0.6;
+const HEART_GAP = 0.02;
+const HEART_RANGE = 0.3;
 /** Join progress for each step transition (join.tsx windows). */
 const STEP_MOVES = [
   [0.20, 0.30],

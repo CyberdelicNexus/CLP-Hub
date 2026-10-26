@@ -131,9 +131,16 @@ export function LightJourney({ rootId }: { rootId: string }) {
     let dock = 0;
     let stamp = performance.now();
 
+    // Only ever undo its own marks: on a wide screen light-relay.tsx owns the
+    // eligibility section's, and releasing them here every frame brought the
+    // photograph's own light back as a second orb while the relay's was still
+    // travelling.
+    let claimed = false;
     const release = () => {
-      drawn = "";
       light.style.opacity = "0";
+      if (!claimed) return;
+      claimed = false;
+      drawn = "";
       delete light.dataset.rest;
       delete azar.dataset.journey;
       delete azarStage.dataset.wait;
@@ -221,6 +228,7 @@ export function LightJourney({ rootId }: { rootId: string }) {
         release();
         return false;
       }
+      claimed = true;
       const sy = window.scrollY;
       const vw = window.innerWidth;
       const vh = steadyViewportHeight();
