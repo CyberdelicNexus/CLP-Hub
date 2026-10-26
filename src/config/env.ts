@@ -49,6 +49,13 @@ const envSchema = z.object({
   MAIL_FROM: blankIsUnset(z.string().min(3)),
   APP_URL: blankIsUnset(z.string().url()),
   /**
+   * Testing aid: comma-separated allowlist. When set, outbound email goes only
+   * to these addresses; any other recipient is dropped, and a message left with
+   * no recipient is refused (so a reply is never recorded as sent). Blank means
+   * unset: mail goes where it is addressed.
+   */
+  MAIL_ALLOWED_RECIPIENTS: blankIsUnset(z.string().min(3)),
+  /**
    * Signing secret of the Resend webhook that posts emails received at the
    * study's address (D-118), `whsec_...`. Unset means the webhook endpoint
    * refuses everything (503): closed, not open.

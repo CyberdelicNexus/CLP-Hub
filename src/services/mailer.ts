@@ -85,9 +85,19 @@ export function isMailConfigured(): boolean {
 }
 
 export async function sendMail(input: MailInput): Promise<MailResult> {
-  const { RESEND_API_KEY, MAIL_FROM } = getEnv();
+  const { RESEND_API_KEY, MAIL_FROM, MAIL_ALLOWED_RECIPIENTS } = getEnv();
   if (!RESEND_API_KEY || !MAIL_FROM) return { ok: false, reason: "not_configured" };
   if (input.to.length === 0) return { ok: true };
+  let to = input.to;
+  if (MAIL_ALLOWED_RECIPIENTS) {
+    const allowed = new Set(MAIL_ALLOWED_RECIPIENTS.split(",").map((a) => a.trim().toLowerCase()));
+    to = input.to.filter((a) => allowed.has(a.trim().toLowerCase()));
+    if (to.length === 0) {
+      logger.info({ event: "mail.not_allowed" }, "no recipient on the allowlist; message not sent");
+      return { ok: false, reason: "rejected" };
+    }
+  }
+  const subject = input.subject;
 
   try {
     const res = await fetch(RESEND_URL, {
@@ -99,8 +109,8 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
       },
       body: JSON.stringify({
         from: MAIL_FROM,
-        to: input.to,
-        subject: input.subject,
+        to,
+        subject,
         text: input.text,
         ...(input.html ? { html: input.html } : {}),
         ...(input.attachments?.length ? { attachments: input.attachments } : {}),
