@@ -1,7 +1,7 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 import { STAFF_ROLES } from "@/domain/roles";
 import { STUDY_STATUSES } from "@/domain/study";
-import { LOCALES } from "@/domain/locale";
+import { LOCALES, PUBLIC_LOCALES } from "@/domain/locale";
 import {
   APPLICATION_SOURCES,
   APPLICATION_STATUSES,
@@ -52,6 +52,8 @@ import { NOTE_COLORS } from "@/domain/cohort-note";
 export const staffRoleEnum = pgEnum("staff_role", STAFF_ROLES);
 export const studyStatusEnum = pgEnum("study_status", STUDY_STATUSES);
 export const uiLocaleEnum = pgEnum("ui_locale", LOCALES);
+// Study content is written in the public site's languages (migration 0029, D-135).
+export const contentLocaleEnum = pgEnum("content_locale", PUBLIC_LOCALES);
 export const auditActorTypeEnum = pgEnum("audit_actor_type", ["STAFF", "SYSTEM", "PARTICIPANT"]);
 
 // Recruitment (Phase 1, migration 0002)

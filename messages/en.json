@@ -128,13 +128,6 @@
     }
   },
   "public": {
-    "study": {
-      "backHome": "Home",
-      "part": {
-        "preparacion": "Preparation",
-        "integracion": "Integration"
-      }
-    },
     "a11y": {
       "label": "Text size",
       "textStep": {
@@ -604,6 +597,18 @@
     "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   },
   "content": {
+    "language": {
+      "label": "Version language",
+      "es": "Spanish",
+      "gl": "Galician",
+      "start": "Create the Galician version",
+      "startNote": "The Spanish text is copied for you to translate. It is not published until approved, like any other version.",
+      "missingTitle": "There is no Galician version yet",
+      "missingBody": "Until one is published, anyone who chooses Galician will see this page in Spanish.",
+      "glLive": "Galician: live",
+      "glDraft": "Galician: draft",
+      "glNone": "No Galician"
+    },
     "subtitle": "Study pages that participants read.",
     "boundary": "Study content lives here, not in the code. Published pages are identical for everyone and contain no participant data.",
     "backToList": "Back to content",
@@ -907,6 +912,7 @@
       "content_assignment__pinned": "Content pinned to the session",
       "content_version__archived": "Version archived",
       "content_version__drafted": "New draft",
+      "content_version__translation_started": "Content translation started",
       "content_version__published": "Version published",
       "content_version__saved": "Version saved",
       "content_version__status_changed": "Version status changed",

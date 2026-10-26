@@ -23,7 +23,7 @@ describe("nothing sends a message", () => {
   const domain = readFileSync(join(process.cwd(), "src/domain/communication.ts"), "utf8");
   const service = readFileSync(join(process.cwd(), "src/services/communications.ts"), "utf8");
   const actions = readFileSync(
-    join(process.cwd(), "src/app/(team)/equipo/(app)/comunicaciones/actions.ts"),
+    join(process.cwd(), "src/app/(team)/hub/(app)/comunicaciones/actions.ts"),
     "utf8",
   );
 
@@ -209,7 +209,7 @@ describe("what a send record holds", () => {
   const schema = readFileSync(join(process.cwd(), "src/db/schema/communications.ts"), "utf8");
   const service = readFileSync(join(process.cwd(), "src/services/communications.ts"), "utf8");
   const composer = readFileSync(
-    join(process.cwd(), "src/app/(team)/equipo/(app)/comunicaciones/message-composer.tsx"),
+    join(process.cwd(), "src/app/(team)/hub/(app)/comunicaciones/message-composer.tsx"),
     "utf8",
   );
 

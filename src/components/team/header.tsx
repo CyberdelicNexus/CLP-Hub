@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { Bell, LogOut, Menu } from "lucide-react";
-import { setActiveStudy, setLocale, signOut } from "@/app/(team)/equipo/actions";
+import { setActiveStudy, setLocale, signOut } from "@/app/(team)/hub/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {

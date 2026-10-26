@@ -48,8 +48,8 @@ describe("inquiry validation (D-088)", () => {
 
 describe("the two emails an inquiry causes (D-088)", () => {
   it("tells staff one arrived WITHOUT saying what was asked or by whom", () => {
-    const one = staffNotification({ count: 1, inboxUrl: "https://hub.example/equipo/consultas" });
-    expect(one.text).toContain("https://hub.example/equipo/consultas");
+    const one = staffNotification({ count: 1, inboxUrl: "https://hub.example/hub/consultas" });
+    expect(one.text).toContain("https://hub.example/hub/consultas");
     expect(one.text).not.toContain(ok.message);
     expect(one.text).not.toContain(ok.email);
     expect(staffNotification({ count: 4, inboxUrl: null }).text).toMatch(/4 consultas nuevas/);

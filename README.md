@@ -17,13 +17,13 @@ Initial screening happens in Qualtrics: `/clearlight/participar` collects nothin
 | Breathing guide (the home page's light, facilitator settings in the link, timer, full screen) | `/meditate` | Anyone | D-120 |
 | Qualtrics hand-off explanation | `/clearlight/participar` | Anyone | 1, 4a |
 | Public study content (session prep, integration, VR) | `/clearlight/estudio/...` | Participants, no login | 5 ✓ |
-| Team dashboard | `/equipo` | Authenticated staff | 0+ |
-| VR logistics | `/equipo/logistica-vr` | `logistics.read` | 6 ✓ |
-| Message templates and the prepared queue | `/equipo/comunicaciones` | `communications.read` | 7, 8 ✓ |
-| Tasks | `/equipo/tareas` | `tasks.read` | 8 ✓ |
-| Alerts | `/equipo/alertas` | `alerts.read` | 8 ✓ |
-| Team and roles | `/equipo/equipo` | `team.read` | 8 ✓ |
-| Study settings and automation rules | `/equipo/configuracion` | `study.settings.manage` | 8 ✓ |
+| Team dashboard | `/hub` | Authenticated staff | 0+ |
+| VR logistics | `/hub/logistica-vr` | `logistics.read` | 6 ✓ |
+| Message templates and the prepared queue | `/hub/comunicaciones` | `communications.read` | 7, 8 ✓ |
+| Tasks | `/hub/tareas` | `tasks.read` | 8 ✓ |
+| Alerts | `/hub/alertas` | `alerts.read` | 8 ✓ |
+| Team and roles | `/hub/equipo` | `team.read` | 8 ✓ |
+| Study settings and automation rules | `/hub/configuracion` | `study.settings.manage` | 8 ✓ |
 | Scheduled-action processor (cron, secret-protected) | `POST /api/internal/process-scheduled-actions` | `CRON_SECRET` | 8 ✓ |
 
 Participants never authenticate. Staff authenticate with Supabase Auth and hold study-scoped roles; this application grants and revokes roles but cannot create an account (D-044).
@@ -39,10 +39,10 @@ npm install
 cp .env.example .env.local      # fill in the Supabase dev project values
 npm run db:migrate              # applies supabase/migrations/*.sql
 npm run db:seed                 # DEMO study + synthetic staff (needs ALLOW_DEMO_DATA=true)
-npm run dev                     # http://localhost:3000/equipo/login
+npm run dev                     # http://localhost:3000/hub/login
 ```
 
-The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/clearlight/participar` and `/equipo/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
+The seed also opens recruitment on the DEMO study, configures eight operational application questions and creates three synthetic applications, so `/clearlight/participar` and `/hub/solicitudes` are usable immediately. It ships four synthetic automation rules — demonstrations of the rule shape, not this trial's schedule.
 
 Demo logins after seeding, password = `SEED_STAFF_PASSWORD`:
 

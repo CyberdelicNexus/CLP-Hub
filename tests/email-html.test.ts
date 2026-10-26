@@ -44,9 +44,9 @@ describe("the Hub's branded emails (D-119)", () => {
 
   /** D-088: the notice says that something arrived, never what or from whom. */
   it("keeps the question out of the staff notice", () => {
-    const html = staffNoticeHtml({ count: 2, inboxUrl: "https://numadelic.org/equipo/consultas" });
+    const html = staffNoticeHtml({ count: 2, inboxUrl: "https://numadelic.org/hub/consultas" });
     expect(html).toContain("Hay 2 consultas sin responder");
-    expect(html).toContain('href="https://numadelic.org/equipo/consultas"');
+    expect(html).toContain('href="https://numadelic.org/hub/consultas"');
   });
 
   it("speaks the inquiry's language and quotes the question", () => {

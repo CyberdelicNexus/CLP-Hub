@@ -157,7 +157,7 @@ describe("permissions: who may reconfigure the programme vs. who may run a cohor
   });
 
   it("gates cohort edit, archive and delete on cohorts.manage, same as create", () => {
-    const actions = read("src/app/(team)/equipo/(app)/cohortes/actions.ts");
+    const actions = read("src/app/(team)/hub/(app)/cohortes/actions.ts");
     for (const fn of ["updateCohortAction", "archiveCohortAction", "unarchiveCohortAction", "deleteCohortAction"]) {
       const body = actions.slice(actions.indexOf(`export async function ${fn}`));
       expect(body.slice(0, body.indexOf("\n}")), fn).toMatch(/assertPermission\(ctx, "cohorts\.manage"\)/);
@@ -165,7 +165,7 @@ describe("permissions: who may reconfigure the programme vs. who may run a cohor
   });
 
   it("gates programme configuration actions on study.settings.manage", () => {
-    const actions = read("src/app/(team)/equipo/(app)/configuracion/actions.ts");
+    const actions = read("src/app/(team)/hub/(app)/configuracion/actions.ts");
     for (const fn of [
       "createProgramStageAction",
       "updateProgramStageAction",

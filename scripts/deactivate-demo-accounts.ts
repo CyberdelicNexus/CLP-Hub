@@ -5,7 +5,7 @@
  * Their role grants were already revoked in DEMO by scripts/provision-staff.ts
  * ("OLD_DEMO_ROLES"), and they never held one in CLP. But `users.active` was
  * never flipped, and `listStaffWithoutRole` (services/staff.ts) — the "Persona"
- * picker on /equipo/equipo for granting someone a role — lists every active
+ * picker on /hub/equipo for granting someone a role — lists every active
  * user account regardless of role status. That is why these five kept
  * appearing there for the real CLP study: an account with no live role is
  * still a candidate to grant one to.

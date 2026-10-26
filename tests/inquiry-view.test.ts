@@ -33,8 +33,8 @@ describe("inquiry chat list helpers (D-088)", () => {
 });
 
 describe("the chat-style inbox keeps the privacy design (D-088)", () => {
-  const inbox = read("src/app/(team)/equipo/(app)/consultas/inbox.tsx");
-  const page = read("src/app/(team)/equipo/(app)/consultas/page.tsx");
+  const inbox = read("src/app/(team)/hub/(app)/consultas/inbox.tsx");
+  const page = read("src/app/(team)/hub/(app)/consultas/page.tsx");
 
   it("selects a conversation through a validated id in the URL, looked up in this study only", () => {
     expect(page).toMatch(/UUID\.test\(params\.consulta\)/);
@@ -51,11 +51,11 @@ describe("the chat-style inbox keeps the privacy design (D-088)", () => {
   it("passes only plain strings to the client components, and the composer sends on Ctrl or Cmd + Enter, never plain Enter", () => {
     expect(inbox).toMatch(/const formLabels: InquiryLabels/);
     expect(inbox).not.toMatch(/labels=\{labels\}/);
-    const forms = read("src/app/(team)/equipo/(app)/consultas/inquiry-forms.tsx");
+    const forms = read("src/app/(team)/hub/(app)/consultas/inquiry-forms.tsx");
     expect(forms).toMatch(/e\.key === "Enter" && \(e\.ctrlKey \|\| e\.metaKey\)/);
   });
 
   it("asks before closing, since closing erases the text", () => {
-    expect(read("src/app/(team)/equipo/(app)/consultas/inquiry-forms.tsx")).toMatch(/window\.confirm\(labels\.closeConfirm\)/);
+    expect(read("src/app/(team)/hub/(app)/consultas/inquiry-forms.tsx")).toMatch(/window\.confirm\(labels\.closeConfirm\)/);
   });
 });

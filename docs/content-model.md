@@ -15,6 +15,10 @@ Participants do not log in (D-003). Study content is published as blog-style Spa
 
 In the real study the session keys are `s0`…`s6`, e.g. `/clearlight/estudio/sesiones/s3/preparacion`. The fourteen pages and the 24 participant message templates were first loaded by `scripts/seed-session-materials.ts` (D-124). Edit them in the Hub from now on: re-running that script would publish its text over Hub edits.
 
+### Languages (D-135)
+
+Each page can also be written in Galician (`gl`; `content_versions.locale` is the `content_locale` enum, es / en / gl, migration 0029). Spanish stays the source: a Galician version is started from the content's page in the Hub (`?lang=gl`), copied from the Spanish text, and then edited, reviewed and published like any version, with its own version numbers and its own live version. The URL is the same in both languages. A reader chooses with the Español / Galego links on the page, which use the public site's language cookie (D-063). Where a page has no live Galician version, the Spanish one is shown with a note saying so. Cohorts are pinned to the Spanish version only; a translation is not pinned.
+
 ## Tables
 
 - `contents` — `study_id`, `type` (SESSION_PREPARATION, SESSION_INTEGRATION, VR_GUIDE, TROUBLESHOOTING, FAQ, EMAIL_TEMPLATE, WHATSAPP_TEMPLATE), `key`, and a nullable `session_template_id` foreign key for session material (D-029).

@@ -18,6 +18,7 @@ import {
   ConflictError,
   createContent,
   createDraftFrom,
+  createTranslationDraft,
   InvalidTransitionError,
   NotFoundError,
   publishVersion,
@@ -420,6 +421,41 @@ export async function createDraftAction(
     });
   } catch (err) {
     return fail(err, "content.draft");
+  }
+
+  revalidate(parsed.data.contentId);
+  return { error: null, ok: true };
+}
+
+const translationSchema = z.object({
+  contentId: uuid,
+  locale: z.enum(["gl", "en"]),
+});
+
+/** Start a translation of a page, copied from its Spanish text (D-135). */
+export async function startTranslationAction(
+  _prev: ContentActionState,
+  formData: FormData,
+): Promise<ContentActionState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = translationSchema.safeParse({
+    contentId: formData.get("contentId"),
+    locale: formData.get("locale"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "content.manage");
+    await createTranslationDraft({
+      studyId: ctx.study.id,
+      contentId: parsed.data.contentId,
+      actorId: ctx.session.userId,
+      locale: parsed.data.locale,
+    });
+  } catch (err) {
+    return fail(err, "content.translate");
   }
 
   revalidate(parsed.data.contentId);

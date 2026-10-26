@@ -35,7 +35,7 @@ export const TEAM_NAV: readonly NavSection[] = [
   { key: "settings", path: "configuracion", permissions: ["study.settings.manage"] },
 ];
 
-export const TEAM_BASE_PATH = "/equipo";
+export const TEAM_BASE_PATH = "/hub";
 
 /**
  * Where the Clear Light public site lives. The domain's root is a separate

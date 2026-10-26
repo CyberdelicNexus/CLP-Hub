@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { A11yContentWrapper, AccessibilityToolbar } from "@/components/accessibility-toolbar";
 import { PageFade } from "@/components/page-fade";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { STUDY_PAGE_COPY } from "@/content/study-pages";
 import { PUBLIC_BASE_PATH } from "@/domain/navigation";
+import { getPublicLocale } from "@/i18n/public-locale";
 
 /**
  * Frame for the public study pages.
@@ -32,7 +33,7 @@ import { PUBLIC_BASE_PATH } from "@/domain/navigation";
  * reading column instead of reading as navigation chrome.
  */
 export default async function StudyContentLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("public.study");
+  const copy = STUDY_PAGE_COPY[await getPublicLocale()];
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -48,7 +49,7 @@ export default async function StudyContentLayout({ children }: { children: React
             className="inline-flex items-center gap-1.5 rounded-lg px-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            {t("backHome")}
+            {copy.backHome}
           </Link>
           <div className="flex items-center gap-1">
             <AccessibilityToolbar />

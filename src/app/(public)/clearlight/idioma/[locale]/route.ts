@@ -12,6 +12,8 @@ import { PREFERENCE_COOKIE_OPTIONS, PUBLIC_LOCALE_COOKIE } from "@/i18n/cookies"
  * It stores nothing else. The return path is checked against the public pages,
  * so the link cannot be used to redirect anywhere else.
  */
+/** Study content pages (/estudio/{key} and /estudio/sesiones/{code}/{part}): plain slugs only (D-135). */
+const STUDY_PAGE_PATH = /^\/estudio(\/[a-z][a-z0-9_-]{0,48}){1,3}$/;
 const RETURN_PATHS = ["/", "/aviso-legal", "/privacidad", "/cookies", "/participar"] as const;
 
 export async function GET(request: NextRequest, ctx: RouteContext<"/clearlight/idioma/[locale]">) {
@@ -20,7 +22,10 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/clearlight/i
 
   // `desde` names a page of the Clear Light site; "/" is its landing page.
   const from = request.nextUrl.searchParams.get("desde");
-  const page = (RETURN_PATHS as readonly (string | null)[]).includes(from) ? from! : "/";
+  const page =
+    (RETURN_PATHS as readonly (string | null)[]).includes(from) || (from !== null && STUDY_PAGE_PATH.test(from))
+      ? from!
+      : "/";
   const path =
     from === HOME_RETURN ? "/" : from === MEDITATE_RETURN ? MEDITATE_PATH : page === "/" ? PUBLIC_BASE_PATH : `${PUBLIC_BASE_PATH}${page}`;
 

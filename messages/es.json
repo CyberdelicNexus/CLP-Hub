@@ -128,13 +128,6 @@
     }
   },
   "public": {
-    "study": {
-      "backHome": "Inicio",
-      "part": {
-        "preparacion": "Preparación",
-        "integracion": "Integración"
-      }
-    },
     "a11y": {
       "label": "Tamaño del texto",
       "textStep": {
@@ -604,6 +597,18 @@
     "weekdays": ["L", "M", "X", "J", "V", "S", "D"]
   },
   "content": {
+    "language": {
+      "label": "Idioma de la versión",
+      "es": "Español",
+      "gl": "Galego",
+      "start": "Crear la versión en gallego",
+      "startNote": "Se copia el texto en español para que lo traduzcas. No se publica hasta que se apruebe, como cualquier otra versión.",
+      "missingTitle": "Todavía no hay versión en gallego",
+      "missingBody": "Mientras no esté publicada, quien elija gallego verá esta página en español.",
+      "glLive": "Gallego: en vivo",
+      "glDraft": "Gallego: borrador",
+      "glNone": "Sin gallego"
+    },
     "subtitle": "Páginas del estudio que leen las personas participantes.",
     "boundary": "El contenido del estudio vive aquí, no en el código. Las páginas publicadas son idénticas para todo el mundo y no contienen ningún dato de participantes.",
     "backToList": "Volver a contenido",
@@ -907,6 +912,7 @@
       "content_assignment__pinned": "Contenido fijado a la sesión",
       "content_version__archived": "Versión archivada",
       "content_version__drafted": "Nuevo borrador",
+      "content_version__translation_started": "Traducción de contenido iniciada",
       "content_version__published": "Versión publicada",
       "content_version__saved": "Versión guardada",
       "content_version__status_changed": "Cambio de estado de la versión",

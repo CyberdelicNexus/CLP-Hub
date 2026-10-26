@@ -38,7 +38,7 @@ Since Phase 1 it also opens recruitment on the DEMO study, configures eight appl
 npm run dev
 ```
 
-Login: `http://localhost:3000/equipo/login`. Switch language in the header; the choice is stored on the staff profile and audited.
+Login: `http://localhost:3000/hub/login`. Switch language in the header; the choice is stored on the staff profile and audited.
 
 ## The scheduled-action processor
 

@@ -517,7 +517,7 @@ describe("the processor endpoint", () => {
 
 describe("the prepared queue is addressable", () => {
   const service = read("src/services/automation.ts");
-  const page = read("src/app/(team)/equipo/(app)/comunicaciones/page.tsx");
+  const page = read("src/app/(team)/hub/(app)/comunicaciones/page.tsx");
 
   /**
    * A session reminder's SUBJECT is the session — that is what the rule anchors
@@ -544,7 +544,7 @@ describe("the prepared queue is addressable", () => {
    * rather than disappear as if the message had gone out.
    */
   it("closes a queue item only on a real send", () => {
-    const actions = read("src/app/(team)/equipo/(app)/comunicaciones/actions.ts");
+    const actions = read("src/app/(team)/hub/(app)/comunicaciones/actions.ts");
     expect(actions).toMatch(/parsed\.data\.actionId && parsed\.data\.status === "SENT"/);
   });
 });

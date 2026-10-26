@@ -231,7 +231,7 @@ async function main() {
       }
     }
 
-    console.log("\nDone. Sign in at /equipo/login with any address above and SEED_STAFF_PASSWORD.");
+    console.log("\nDone. Sign in at /hub/login with any address above and SEED_STAFF_PASSWORD.");
   } finally {
     await sqlClient.end();
   }

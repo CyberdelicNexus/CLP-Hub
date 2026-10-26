@@ -5556,6 +5556,24 @@ or any phone with that GPU: that is the test still to do.
 The same day the founder adjusted the preset (size 1.25, depth 1.4); the
 values above are the adjusted ones.
 
+## D-127 · 2026-10-21 · The site's favicon is the Hub's light orb; numadelic.org shares the founder's photo
+
+**Favicon.** The founder asked for the Hub's logo (D-125) as the favicon.
+`src/app/favicon.ico` (16, 32 and 48 px), `src/app/icon.png` (144 px) and
+`src/app/apple-icon.png` (180 px, on the page's near-black so iOS shows no
+white corners) are all made from `public/brand/hub-logo.png`. They sit at the
+app root, so every page carries them: numadelic.org, /clearlight, /meditate
+and the staff Hub. The source is only 144 px, so the 180 px Apple icon is
+slightly upscaled; a larger export of the original would sharpen it.
+
+**Share image.** `src/app/(public)/opengraph-image.jpg` and `twitter-image.jpg`
+are the founder's photo (a person meditating in a VR headset inside violet
+light, turquoise clouds either side), cropped to 1200×630 round the centre,
+with Spanish alt text beside them. The home page's metadata now also sets
+Open Graph and Twitter titles and descriptions from `HOME_COPY.meta`, and a
+large-image card. Placed in `(public)`, the image also covers the public pages
+without their own (/meditate, /participar); /clearlight keeps its banner.
+
 ## D-128 · 2026-10-21 · The team's copy revision, and credentials on the team cards
 
 The team returned the three-language copy document ("Textos Website - ES EN
@@ -5680,6 +5698,34 @@ should sit on two balanced lines.
   longest version (Galician, then Spanish) fits two lines: 12.8px at 390px
   wide, 12px from 360px down. At 360px Spanish fits; Galician may take a third
   line on the narrowest phones rather than go below 12px.
+
+## D-134 · 2026-10-26 · The staff app moves from `/equipo` to `/hub`
+
+The route group folder is now `src/app/(team)/hub` and `TEAM_BASE_PATH` is `/hub`; the
+navigation section for the team page keeps its path, so it is `/hub/equipo`. Earlier
+entries keep the old `/equipo/...` paths as they were written. Nothing redirects from
+the old address: the staff app is not public and no link to it has gone out except the
+inquiry notice email, which builds its link from the base path.
+
+## D-135 · 2026-10-26 · Session preparation and integration pages in Galician
+
+- **Same pages, two languages.** `content_versions.locale` now uses a new
+  `content_locale` enum (es, en, gl; migration 0029), the public site's
+  languages (D-063). The staff app stays es/en. A page keeps one URL; the reader
+  picks Español or Galego on it, through the existing language route and cookie,
+  and the route now also returns to `/estudio/...` pages.
+- **Spanish is the source (D-009).** A Galician version starts as a copy of the
+  Spanish text ("Crear la versión en gallego" on the content's page, audited as
+  `content_version.translation_started`), then goes through the same
+  draft, review and publish steps. Nothing translates automatically and no
+  Galician text was written for this change.
+- **Fallback.** With no live Galician version, the Spanish page is shown with a
+  note in Galician. Cohort pinning stays Spanish-only so a published translation
+  does not double the pins.
+- **To review.** The few fixed words on the page frame (`src/content/study-pages.ts`)
+  are a translation to be checked by a native speaker, like the home page's. The
+  text-size control's labels still follow the staff language cookie and are not
+  yet in Galician.
 
 ## Open questions for researchers
 

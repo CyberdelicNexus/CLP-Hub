@@ -450,7 +450,7 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
     expect(ok.cookies.getAll()).toHaveLength(1);
 
     // Anything but a public page goes home: the link is not an open redirect.
-    for (const from of ["https://evil.example", "//evil.example", "/equipo"]) {
+    for (const from of ["https://evil.example", "//evil.example", "/hub"]) {
       const res = await call("en", `?desde=${encodeURIComponent(from)}`);
       expect(res.headers.get("location")).toBe("https://example.org/clearlight");
     }

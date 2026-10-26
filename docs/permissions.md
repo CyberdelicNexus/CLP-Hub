@@ -58,24 +58,24 @@ Roles are **study-scoped** (`user_roles`). A user may hold several roles in one 
 
 Every permission in the matrix is now exercised by a real surface. Notable ones:
 
-- `study.settings.manage` — `/equipo/configuracion`: the study's title, status,
+- `study.settings.manage` — `/hub/configuracion`: the study's title, status,
   timezone, recruitment switch and screening URL, the automation rules, and
   (D-089) the programme itself — session templates and programme stages: their
   names, order, modality and timing, every cohort's shared configuration. Only
   ADMIN. A facilitator who can use a template should not be able to change when
   it fires (D-044), and the same line now holds for who may redefine what every
   cohort's sessions are.
-- `team.read` / `team.manage` — `/equipo/equipo`. Reading the team is not the
+- `team.read` / `team.manage` — `/hub/equipo`. Reading the team is not the
   same as changing it, so more roles hold `read`. Neither can create an account:
   logins live in Supabase Auth.
-- `tasks.read` / `tasks.manage` — `/equipo/tareas`. `manage` covers creating,
+- `tasks.read` / `tasks.manage` — `/hub/tareas`. `manage` covers creating,
   closing and assigning, and is held by every role that does operational work: a
   facilitator who finishes the thing the task describes should be able to close
   it.
-- `alerts.read` — `/equipo/alertas`, including acknowledging and resolving.
+- `alerts.read` — `/hub/alertas`, including acknowledging and resolving.
   There is no separate manage key: a role that could see the queue but not clear
   it would leave the queue permanently full (D-043).
-- `inquiries.manage` — `/equipo/consultas`: read and answer public questions (D-088). It also decides who is emailed when one arrives. RESEARCHER holds it as a deliberate exception to "never sees contact data": it covers only an open inquiry's name and email, erased once answered.
+- `inquiries.manage` — `/hub/consultas`: read and answer public questions (D-088). It also decides who is emailed when one arrives. RESEARCHER holds it as a deliberate exception to "never sees contact data": it covers only an open inquiry's name and email, erased once answered.
 - `communications.approve` — still unused. Whether it should gate the
   APPROVAL_REQUIRED delivery mode is an open question.
 
@@ -84,7 +84,7 @@ not research output.
 
 ## Dashboard navigation visibility
 
-`src/domain/navigation.ts` maps each section to the permissions that reveal it. The server filters the menu; the page re-checks on render. Every entry now has a page of its own — the `[section]` placeholder route is gone, so an unknown path under `/equipo` is a 404 rather than a "Próximamente" card (D-044).
+`src/domain/navigation.ts` maps each section to the permissions that reveal it. The server filters the menu; the page re-checks on render. Every entry now has a page of its own — the `[section]` placeholder route is gone, so an unknown path under `/hub` is a 404 rather than a "Próximamente" card (D-044).
 
 ## Open items
 

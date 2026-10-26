@@ -73,7 +73,7 @@ before the variables are set, and then serve 500s — set them first.
 5. Apply migrations against the database the deployment points at
    (`npm run db:migrate` from a local shell with that `DATABASE_URL`). Vercel
    runs no migrations; nothing in the build touches the schema.
-6. Staff need accounts before `/equipo` is usable: this application grants and
+6. Staff need accounts before `/hub` is usable: this application grants and
    revokes roles but cannot create an account (D-044). On a throwaway review
    database, `npm run db:seed` creates the synthetic study and staff.
 
@@ -174,7 +174,7 @@ State on 2026-09-25 (public DNS lookups; the account is held by David):
 
   Then set `APP_URL=https://numadelic.org` in Vercel and add that address to
   Supabase Auth's Site URL and redirect URLs, or staff login will send people
-  back to the old address. Staff sign in at `numadelic.org/equipo/login`.
+  back to the old address. Staff sign in at `numadelic.org/hub/login`.
 - Email is sent from the **root** `numadelic.org` registered in Resend (EU
   Ireland), as `info@numadelic.org` (2026-10-14: a general address rather than
   a study-specific one, so a later study, in English or otherwise, can send from

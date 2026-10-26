@@ -43,7 +43,7 @@ describe("study settings", () => {
    */
   it("does not offer the study code for editing", () => {
     const service = read("src/services/study-settings.ts");
-    const form = read("src/app/(team)/equipo/(app)/configuracion/settings-forms.tsx");
+    const form = read("src/app/(team)/hub/(app)/configuracion/settings-forms.tsx");
     expect(service).not.toMatch(/code: patch\.code|patch\.code/);
     expect(form).not.toMatch(/name="code"/);
   });
@@ -66,7 +66,7 @@ describe("study settings", () => {
 
 describe("team membership", () => {
   const service = read("src/services/staff.ts");
-  const actions = read("src/app/(team)/equipo/(app)/equipo/actions.ts");
+  const actions = read("src/app/(team)/hub/(app)/equipo/actions.ts");
 
   /**
    * An application that could mint a login would be an account-creation surface
@@ -102,7 +102,7 @@ describe("team membership", () => {
    * drift from the matrix within a release (CLAUDE.md rule 8).
    */
   it("derives displayed capabilities from the permission matrix", () => {
-    const page = read("src/app/(team)/equipo/(app)/equipo/page.tsx");
+    const page = read("src/app/(team)/hub/(app)/equipo/page.tsx");
     expect(page).toMatch(/permissionsForRoles\(member\.roles\)/);
     // Sanity: the derivation it relies on works.
     const granted = permissionsForRoles(["FACILITATOR"]);
@@ -114,13 +114,13 @@ describe("team membership", () => {
 
 describe("every dashboard section is real", () => {
   /**
-   * The `[section]` stub route answered any unknown path under /equipo with a
+   * The `[section]` stub route answered any unknown path under /hub with a
    * "Próximamente" card. Now that every nav entry has a route of its own, a
    * stub would turn a typo into a false promise — so it is gone, and a wrong
    * path is a 404.
    */
   it("has no coming-soon placeholder left", () => {
-    const layout = read("src/app/(team)/equipo/(app)/layout.tsx");
+    const layout = read("src/app/(team)/hub/(app)/layout.tsx");
     expect(layout).not.toMatch(/ComingSoon/);
     for (const messages of ["messages/es.json", "messages/en.json"]) {
       expect(read(messages), messages).not.toMatch(/comingSoon/);
@@ -130,8 +130,8 @@ describe("every dashboard section is real", () => {
   it("gives every nav entry a page", () => {
     for (const section of TEAM_NAV) {
       const path = section.path
-        ? `src/app/(team)/equipo/(app)/${section.path}/page.tsx`
-        : "src/app/(team)/equipo/(app)/page.tsx";
+        ? `src/app/(team)/hub/(app)/${section.path}/page.tsx`
+        : "src/app/(team)/hub/(app)/page.tsx";
       expect(() => read(path), section.key).not.toThrow();
     }
   });

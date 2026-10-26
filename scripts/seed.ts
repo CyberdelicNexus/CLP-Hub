@@ -1684,7 +1684,7 @@ async function main() {
     }
     console.log(`tasks   ${DEMO_TASKS.length} synthetic operational tasks`);
 
-    console.log("\nSeed complete. Sign in at /equipo/login with any demo email and SEED_STAFF_PASSWORD.");
+    console.log("\nSeed complete. Sign in at /hub/login with any demo email and SEED_STAFF_PASSWORD.");
   } finally {
     await sqlClient.end();
   }

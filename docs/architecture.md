@@ -7,7 +7,7 @@ One Next.js application, one Postgres database (Supabase), one scheduled-job mec
 ```
 Browser ──► Next.js (Vercel)
               ├─ (public)   numadelic.org home at /, breathing guide at /meditate (D-120); under /clearlight the recruitment site (ES/EN/GL) + study content pages   [no auth]
-              └─ (team)     /equipo dashboard                                 [Supabase Auth]
+              └─ (team)     /hub dashboard                                 [Supabase Auth]
                     │
                     ▼
               src/services/*  ── business logic, transactions, audit
@@ -19,7 +19,7 @@ Browser ──► Next.js (Vercel)
 ## Surfaces
 
 - **Public site** (`src/app/(public)`): recruitment pages and, later, blog-style study content (session preparation, integration, VR preparation, troubleshooting). Spanish-first. Contains **no participant data**, because participants never log in.
-- **Team dashboard** (`src/app/(team)/equipo`): staff only. Locale switchable ES/EN per user. Study-scoped.
+- **Team dashboard** (`src/app/(team)/hub`): staff only. Locale switchable ES/EN per user. Study-scoped.
 
 There is no authenticated participant hub (decision D-003).
 
@@ -38,7 +38,7 @@ Business logic must not live in components or route files.
 
 ## Request flow (team area)
 
-1. `src/proxy.ts` refreshes the Supabase session cookie and does an optimistic redirect to `/equipo/login` when unauthenticated.
+1. `src/proxy.ts` refreshes the Supabase session cookie and does an optimistic redirect to `/hub/login` when unauthenticated.
 2. `(app)/layout.tsx` calls `requireStaffSession()` (real check) and `getStudyContext()`.
 3. `getStudyContext()` resolves the active study from the `clp_study` cookie, **validated against the user's active memberships**, and computes the permission set.
 4. Pages and actions call `assertPermission(ctx, "...")` or filter by `ctx.permissions`.

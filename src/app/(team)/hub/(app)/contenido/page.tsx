@@ -175,6 +175,17 @@ export default async function ContentPage({
                             ) : null}
                           </div>
                         )}
+                        <Link
+                          href={`${href}?lang=gl`}
+                          lang="gl"
+                          className="mt-1.5 block text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                          {row.galician.publishedVersion
+                            ? `${t("content.language.glLive")} · v${row.galician.publishedVersion}`
+                            : row.galician.workingStatus
+                              ? t("content.language.glDraft")
+                              : t("content.language.glNone")}
+                        </Link>
                       </td>
                       <td className="px-4 py-3">
                         {publicPath && row.publishedVersion ? (

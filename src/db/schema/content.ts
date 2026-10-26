@@ -1,6 +1,6 @@
 import { index, integer, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { cohortSessions, sessionTemplates } from "./sessions";
-import { contentStatusEnum, contentTypeEnum, uiLocaleEnum } from "./enums";
+import { contentLocaleEnum, contentStatusEnum, contentTypeEnum } from "./enums";
 import { studies } from "./studies";
 import { users } from "./users";
 import type { ContentBody } from "@/domain/content";
@@ -46,7 +46,7 @@ export const contentVersions = pgTable(
     contentId: uuid("content_id")
       .notNull()
       .references(() => contents.id, { onDelete: "cascade" }),
-    locale: uiLocaleEnum("locale").notNull().default("es"),
+    locale: contentLocaleEnum("locale").notNull().default("es"),
     versionNumber: integer("version_number").notNull(),
     title: text("title").notNull(),
     /** An optional banner image for the public page (2026-09-19 request).

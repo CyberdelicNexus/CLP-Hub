@@ -24,7 +24,7 @@ import {
   type ContentStatus,
   type ContentType,
 } from "@/domain/content";
-import type { Locale } from "@/domain/locale";
+import type { PublicLocale } from "@/domain/locale";
 import { PUBLIC_BASE_PATH } from "@/domain/navigation";
 
 /**
@@ -81,9 +81,11 @@ export interface ContentListRow {
    * "make them buttons and a pop-up appears with the options to change"). */
   workingVersionId: string | null;
   publishedVersionId: string | null;
+  /** Galician (D-135): its live version number and any working draft's status. */
+  galician: { publishedVersion: number | null; workingStatus: ContentStatus | null };
 }
 
-export async function listContents(studyId: string, locale: Locale): Promise<ContentListRow[]> {
+export async function listContents(studyId: string, locale: PublicLocale): Promise<ContentListRow[]> {
   const db = getDb();
 
   const rows = await db
@@ -122,7 +124,26 @@ export async function listContents(studyId: string, locale: Locale): Promise<Con
     )
     .orderBy(desc(contentVersions.versionNumber));
 
+  const galicianVersions = await db
+    .select({
+      contentId: contentVersions.contentId,
+      status: contentVersions.status,
+      versionNumber: contentVersions.versionNumber,
+    })
+    .from(contentVersions)
+    .where(
+      and(
+        inArray(
+          contentVersions.contentId,
+          rows.map((r) => r.id),
+        ),
+        eq(contentVersions.locale, "gl"),
+        inArray(contentVersions.status, ["PUBLISHED", "DRAFT", "REVIEW"]),
+      ),
+    );
+
   return rows.map((row) => {
+    const gl = galicianVersions.filter((v) => v.contentId === row.id);
     const mine = versions.filter((v) => v.contentId === row.id);
     const published = mine.find((v) => v.status === "PUBLISHED");
     const working = mine.find((v) => v.status === "DRAFT" || v.status === "REVIEW");
@@ -134,6 +155,13 @@ export async function listContents(studyId: string, locale: Locale): Promise<Con
       workingVersion: working?.versionNumber ?? null,
       workingVersionId: working?.id ?? null,
       publishedVersionId: published?.id ?? null,
+      galician: {
+        publishedVersion: gl.find((v) => v.status === "PUBLISHED")?.versionNumber ?? null,
+        workingStatus:
+          (gl.find((v) => v.status === "DRAFT" || v.status === "REVIEW")?.status as
+            | ContentStatus
+            | undefined) ?? null,
+      },
     };
   });
 }
@@ -143,7 +171,7 @@ export async function listContents(studyId: string, locale: Locale): Promise<Con
  * than only ever authoring a new one. */
 export async function listContentsByType(
   studyId: string,
-  locale: Locale,
+  locale: PublicLocale,
   type: Extract<ContentType, "SESSION_PREPARATION" | "SESSION_INTEGRATION">,
 ): Promise<ContentListRow[]> {
   const rows = await listContents(studyId, locale);
@@ -158,7 +186,7 @@ export interface ContentDetail {
 export async function getContentDetail(
   studyId: string,
   contentId: string,
-  locale: Locale,
+  locale: PublicLocale,
 ): Promise<ContentDetail | null> {
   const db = getDb();
 
@@ -204,7 +232,7 @@ export async function getVersion(
  */
 export async function getPublishedByKey(params: {
   key: string;
-  locale: Locale;
+  locale: PublicLocale;
 }): Promise<{
   title: string;
   body: ContentBody;
@@ -262,11 +290,27 @@ function logDroppedBlocks(params: { key: string; dropped: number }) {
   );
 }
 
+/**
+ * Loads a public page in the reader's language, falling back to Spanish when
+ * that language has no live version yet (D-135). `shown` says which one won,
+ * so the page can tell the reader it is not in the language they chose.
+ */
+export async function inReadersLanguage<T>(
+  locale: PublicLocale,
+  load: (locale: PublicLocale) => Promise<T | null>,
+): Promise<{ page: T; shown: PublicLocale } | null> {
+  const wanted = await load(locale);
+  if (wanted) return { page: wanted, shown: locale };
+  if (locale === "es") return null;
+  const spanish = await load("es");
+  return spanish ? { page: spanish, shown: "es" } : null;
+}
+
 /** The live preparation or integration page for a session, by session code. */
 export async function getPublishedForSession(params: {
   sessionCode: string;
   type: Extract<ContentType, "SESSION_PREPARATION" | "SESSION_INTEGRATION">;
-  locale: Locale;
+  locale: PublicLocale;
 }): Promise<{
   contentId: string;
   title: string;
@@ -315,7 +359,7 @@ export async function getPublishedForSession(params: {
 
 /** Every public page that currently exists, for the study index. */
 export async function listPublishedPages(
-  locale: Locale,
+  locale: PublicLocale,
 ): Promise<{ path: string; title: string }[]> {
   const rows = await getDb()
     .select({
@@ -352,7 +396,7 @@ export async function createContent(params: {
   key: string;
   sessionTemplateId?: string | null;
   title: string;
-  locale: Locale;
+  locale: PublicLocale;
 }): Promise<string> {
   const { studyId, actorId, type, locale } = params;
   const key = params.key.trim().toLowerCase();
@@ -700,6 +744,88 @@ export async function createDraftFrom(params: {
   });
 }
 
+/**
+ * Start the first version of a content item in another language (D-135),
+ * copied from the Spanish text so the translator edits rather than retypes.
+ * Spanish stays the source: the copy is taken from its working version, else
+ * its live one. Refused when the language already has any version, so it can
+ * never overwrite a translation; changing a live translation goes through
+ * `createDraftFrom` like any other page.
+ */
+export async function createTranslationDraft(params: {
+  studyId: string;
+  contentId: string;
+  actorId: string;
+  locale: Exclude<PublicLocale, "es">;
+}): Promise<string> {
+  const { studyId, contentId, actorId, locale } = params;
+
+  return getDb().transaction(async (tx) => {
+    const [content] = await tx
+      .select({ id: contents.id })
+      .from(contents)
+      .where(and(eq(contents.id, contentId), eq(contents.studyId, studyId)))
+      .limit(1);
+    if (!content) throw new NotFoundError("content", contentId);
+
+    const [existing] = await tx
+      .select({ id: contentVersions.id })
+      .from(contentVersions)
+      .where(and(eq(contentVersions.contentId, contentId), eq(contentVersions.locale, locale)))
+      .limit(1);
+    if (existing) throw new ConflictError("notEditable");
+
+    const spanish = await tx
+      .select({
+        id: contentVersions.id,
+        status: contentVersions.status,
+        title: contentVersions.title,
+        body: contentVersions.body,
+        coverImageUrl: contentVersions.coverImageUrl,
+        coverImagePosition: contentVersions.coverImagePosition,
+      })
+      .from(contentVersions)
+      .where(
+        and(
+          eq(contentVersions.contentId, contentId),
+          eq(contentVersions.locale, "es"),
+          inArray(contentVersions.status, ["PUBLISHED", "DRAFT", "REVIEW"]),
+        ),
+      )
+      .orderBy(desc(contentVersions.versionNumber));
+    const source =
+      spanish.find((v) => v.status === "DRAFT" || v.status === "REVIEW") ??
+      spanish.find((v) => v.status === "PUBLISHED");
+    if (!source) throw new NotFoundError("content version", contentId);
+
+    const [created] = await tx
+      .insert(contentVersions)
+      .values({
+        contentId,
+        locale,
+        versionNumber: 1,
+        title: source.title,
+        body: source.body,
+        coverImageUrl: source.coverImageUrl,
+        coverImagePosition: source.coverImagePosition,
+        status: "DRAFT",
+        createdBy: actorId,
+      })
+      .returning({ id: contentVersions.id });
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "content_version.translation_started",
+      entityType: "content_version",
+      entityId: created.id,
+      after: { locale, copiedFrom: source.id },
+    });
+
+    return created.id;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Version pinning
 // ---------------------------------------------------------------------------
@@ -724,6 +850,9 @@ export async function pinSessionContent(
     .where(
       and(
         eq(contents.sessionTemplateId, params.templateId),
+        // The Spanish page is the record of what a cohort received; a
+        // translation shares its URL and is not pinned separately (D-135).
+        eq(contentVersions.locale, "es"),
         eq(contentVersions.status, "PUBLISHED"),
       ),
     );

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
 import { ContentBlocks } from "@/components/content/blocks";
 import { CoverImage } from "@/components/content/cover-image";
 import { CONTENT_KEY_PATTERN } from "@/domain/content";
-import { parseLocale } from "@/domain/locale";
-import { getPublishedByKey } from "@/services/content";
+import { StudyLanguageLinks } from "@/components/content/language-links";
+import { STUDY_PAGE_COPY } from "@/content/study-pages";
+import { getPublicLocale } from "@/i18n/public-locale";
+import { getPublishedByKey, inReadersLanguage } from "@/services/content";
 
 /**
  * A standalone public study page, e.g. /estudio/preparacion-vr or /estudio/ayuda.
@@ -22,9 +23,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { key } = await params;
   if (!CONTENT_KEY_PATTERN.test(key)) return {};
-  const locale = parseLocale(await getLocale());
-  const page = await getPublishedByKey({ key, locale });
-  return page ? { title: page.title } : {};
+  const locale = await getPublicLocale();
+  const found = await inReadersLanguage(locale, (l) => getPublishedByKey({ key, locale: l }));
+  return found ? { title: found.page.title } : {};
 }
 
 export default async function StudyPage({ params }: { params: Promise<{ key: string }> }) {
@@ -32,9 +33,11 @@ export default async function StudyPage({ params }: { params: Promise<{ key: str
   // Reject anything that is not a well-formed key before touching the database.
   if (!CONTENT_KEY_PATTERN.test(key)) notFound();
 
-  const locale = parseLocale(await getLocale());
-  const page = await getPublishedByKey({ key, locale });
-  if (!page) notFound();
+  const locale = await getPublicLocale();
+  const found = await inReadersLanguage(locale, (l) => getPublishedByKey({ key, locale: l }));
+  if (!found) notFound();
+  const { page, shown } = found;
+  const copy = STUDY_PAGE_COPY[locale];
 
   return (
     <article className="flex flex-col">
@@ -47,6 +50,14 @@ export default async function StudyPage({ params }: { params: Promise<{ key: str
           riding the right edge, now folded into the header bar itself
           (2026-09-29), so the column no longer needs asymmetric padding. */}
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pt-20 pb-10 sm:px-6 sm:pb-14">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <StudyLanguageLinks locale={locale} from={`/estudio/${key}`} label={copy.language} />
+          {shown !== locale ? (
+            <p role="status" lang={locale} className="text-sm text-muted-foreground">
+              {copy.fallback}
+            </p>
+          ) : null}
+        </div>
         <header className="flex flex-col gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             {page.title}
@@ -61,7 +72,7 @@ export default async function StudyPage({ params }: { params: Promise<{ key: str
             (src/components/accessibility-toolbar.tsx) instead of overriding it —
             text-lg silently defeated that toggle for all of this page's body
             content (2026-09-29 finding). */}
-        <div className="text-[1.125em]">
+        <div lang={shown} className="text-[1.125em]">
           <ContentBlocks body={page.body} />
         </div>
       </div>

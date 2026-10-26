@@ -128,7 +128,7 @@ Inside the transaction that made the change, via `recordStudyEvent(tx, …)` —
 
 ## WhatsApp manual flow
 
-Unchanged by Phase 8 and D-116: the only way a WhatsApp message reaches anyone. The prepared queue appears on `/equipo/comunicaciones` and on the overview's attention panel; each item opens the composer with its template already chosen. The person copies, pastes into WhatsApp, clicks "Marcar como enviado" → a `communications` row (`channel = WHATSAPP`, `status = SENT`, `sent_by`) plus audit, and the scheduled action is closed against that communication.
+Unchanged by Phase 8 and D-116: the only way a WhatsApp message reaches anyone. The prepared queue appears on `/hub/comunicaciones` and on the overview's attention panel; each item opens the composer with its template already chosen. The person copies, pastes into WhatsApp, clicks "Marcar como enviado" → a `communications` row (`channel = WHATSAPP`, `status = SENT`, `sent_by`) plus audit, and the scheduled action is closed against that communication.
 
 Marking a prepared message **skipped** does not close the queue item: a skip says the person decided not to send it, and the action should stay visible rather than disappear as if it had gone out.
 

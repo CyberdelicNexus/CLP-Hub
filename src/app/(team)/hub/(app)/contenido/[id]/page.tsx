@@ -17,6 +17,7 @@ import {
   PublishForm,
   RelinkSessionForm,
   RenameKeyForm,
+  StartTranslationForm,
   VersionEditor,
   VersionStatusForm,
 } from "../content-forms";
@@ -35,7 +36,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * because publishing never mutates a published row. To change what is live you
  * start a new draft from it.
  */
-export default async function ContentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ContentDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ lang?: string }>;
+}) {
   const ctx = await getStudyContext();
   if (!ctx) return null;
 
@@ -45,7 +52,9 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
   }
 
   const { id } = await params;
-  const detail = await getContentDetail(ctx.study.id, id, "es");
+  // Spanish is authoritative (D-009); Galician is its translation (D-135).
+  const lang: "es" | "gl" = (await searchParams).lang === "gl" ? "gl" : "es";
+  const detail = await getContentDetail(ctx.study.id, id, lang);
   if (!detail) notFound();
 
   const canManage = ctx.permissions.has("content.manage");
@@ -149,6 +158,42 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
         </div>
         <StatusBadge tone="info">{t(`content.type.${content.type}`)}</StatusBadge>
       </header>
+
+      <nav aria-label={t("content.language.label")} className="flex gap-1 rounded-xl bg-muted p-1 text-sm w-fit">
+        {(["es", "gl"] as const).map((l) => (
+          <Link
+            key={l}
+            href={`${TEAM_BASE_PATH}/contenido/${content.id}${l === "es" ? "" : `?lang=${l}`}`}
+            lang={l}
+            aria-current={l === lang ? "page" : undefined}
+            className={
+              l === lang
+                ? "rounded-lg bg-background px-3 py-1.5 font-medium shadow-sm"
+                : "rounded-lg px-3 py-1.5 text-muted-foreground hover:text-foreground"
+            }
+          >
+            {t(`content.language.${l}`)}
+          </Link>
+        ))}
+      </nav>
+
+      {versions.length === 0 && lang !== "es" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("content.language.missingTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t("content.language.missingBody")}</p>
+            {canManage ? (
+              <StartTranslationForm
+                contentId={content.id}
+                locale="gl"
+                labels={{ ...base, submit: t("content.language.start"), note: t("content.language.startNote") }}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {isSessionContent ? (
         <Card>

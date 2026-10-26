@@ -431,13 +431,13 @@ Eyebrows (`.cl-eyebrow`) and the section 3 facts use Poppins at 0.85 to
   and terms of use, privacy policy, cookie policy, "Configurar cookies"); the
   copyright line ("© Intangible Realities Lab 2026", the same
   in every language) and the pause icon button. No team access link: staff reach
-  `/equipo/login` directly.
+  `/hub/login` directly.
 - **Contact dialog** (`contact-dialog.tsx`): every `#contacto` link opens a
   native modal `<dialog>` centred on screen, with a blurred backdrop; a click
   outside the panel or Escape closes it. Name, email, message, a note not to
   include health information, and a privacy link. Since D-088 it submits to the
   Hub's inquiry inbox through `contacto/actions.ts` (validation errors inline,
-  a honeypot, a confirmation), where staff answer by email at `/equipo/consultas`;
+  a honeypot, a confirmation), where staff answer by email at `/hub/consultas`;
   the text is erased once answered. Without JavaScript,
   `#contacto` reaches section 7's "Contacto y registro" answer, which owns that
   id; the dialog is `#contacto-formulario`.
@@ -550,7 +550,7 @@ the legal pages draw their own keys.
 | `PROTECCION_DATOS` | Approval, by the DPO or ethics committee, of the section 7 confidentiality and data protection answer |
 | `PRIVACIDAD` | Legal approval of the privacy policy page (`/privacidad`) |
 | `VERSION_MATERIAL` | Version and date of the recruitment material (not rendered as a marker since D-052) |
-| ~~`CONTACTO_FORMULARIO`~~ | Resolved by D-088: contact form messages go to the Hub inbox (`/equipo/consultas`); no longer a publication marker |
+| ~~`CONTACTO_FORMULARIO`~~ | Resolved by D-088: contact form messages go to the Hub inbox (`/hub/consultas`); no longer a publication marker |
 | `EQUIPO_MIEMBROS` | Name, role, short biography, photograph and link for each of the eight team members (D-107). Filled in `src/content/landing/team.ts` and each language's `TEAM.members` |
 | `TITULAR_WEB` | Site owner for the legal notice (LSSI-CE art. 10): name, NIF, address, email, registry details |
 | `RESPONSABLE_TRATAMIENTO` | Data controller: entity, NIF, address, contact |

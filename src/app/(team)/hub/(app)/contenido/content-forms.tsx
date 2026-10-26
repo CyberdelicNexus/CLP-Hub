@@ -14,6 +14,7 @@ import {
   relinkSessionAction,
   renameContentKeyAction,
   saveVersionAction,
+  startTranslationAction,
   setStatusAction,
   type ContentActionState,
 } from "./actions";
@@ -394,6 +395,32 @@ export function NewDraftForm({
       <input type="hidden" name="versionId" value={versionId} />
       <div>
         <Button type="submit" variant="outline" size="sm" className="rounded-lg" disabled={pending}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{labels.note}</p>
+      <ErrorLine state={state} errors={labels.errors} />
+    </form>
+  );
+}
+
+/** Starts the Galician version of a page, copied from the Spanish text (D-135). */
+export function StartTranslationForm({
+  contentId,
+  locale,
+  labels,
+}: {
+  contentId: string;
+  locale: "gl";
+  labels: Labels & { note: string };
+}) {
+  const [state, action, pending] = useActionState(startTranslationAction, initial);
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="contentId" value={contentId} />
+      <input type="hidden" name="locale" value={locale} />
+      <div>
+        <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
           {pending ? labels.submitting : labels.submit}
         </Button>
       </div>

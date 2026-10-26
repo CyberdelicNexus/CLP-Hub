@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { signOut } from "@/app/(team)/equipo/actions";
+import { signOut } from "@/app/(team)/hub/actions";
 import { Button } from "@/components/ui/button";
 
 export function LogoutButton() {
