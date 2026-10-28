@@ -5727,6 +5727,12 @@ inquiry notice email, which builds its link from the base path.
   text-size control's labels still follow the staff language cookie and are not
   yet in Galician.
 
+- **Galician text loaded (2026-10-28).** The fourteen S0-S6 pages were translated by Claude
+  and published in Galician with `scripts/seed-galician-pages.ts`, recorded under
+  jose@metanoic.vision. The table is `scripts/session-materials/galician.json`. Session
+  names, book and resource titles and addresses were left in Spanish. **Not reviewed by
+  a native speaker yet.**
+
 ## Open questions for researchers
 
 - The breathing guide now keeps two things in the visitor's browser storage
