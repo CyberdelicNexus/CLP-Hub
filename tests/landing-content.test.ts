@@ -407,7 +407,7 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
   it.each(TRANSLATIONS)("%s still says interest is not consent, benefit is not guaranteed, and the groups are random", (locale) => {
     const c = LANDING_COPY[locale];
     const expected = {
-      en: { consent: /not the same as giving consent/i, benefit: /not guaranteed/i, trial: /randomized controlled trial/i },
+      en: { consent: /interested\? learn more/i, benefit: /not guaranteed/i, trial: /randomized controlled trial/i },
       gl: { consent: /non equivale a dar consentimento/i, benefit: /non se garanten/i, trial: /ensaio controlado aleatorizado/i },
     }[locale as "en" | "gl"];
     expect(c.INVITATION.support).toMatch(expected.consent);

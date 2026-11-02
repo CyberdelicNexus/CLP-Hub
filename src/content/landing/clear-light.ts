@@ -259,12 +259,12 @@ export const SPLIT = {
   branches: [
     {
       label: "Grupo del programa",
-      lines: ["Participa en el programa Clear Light durante el estudio.", "Sigue con su seguimiento médico habitual. Completa las mismas medidas que el otro grupo."],
+      lines: ["Participa en el programa Clear Light durante el estudio.", "Continúa con su seguimiento médico habitual. Con las mismas medidas que el otro grupo."],
       condition: missing("CONDICION_GRUPO_PROGRAMA", "Descripción aprobada del grupo del programa"),
     },
     {
       label: "Grupo de comparación",
-      lines: ["Sigue con su seguimiento médico habitual.", "Completa las mismas medidas que el otro grupo. Al finalizar su participación, se le ofrecerá de forma opcional un PDF con los resultados y acceso a la experiencia de realidad virtual «Clear Light Solo»."],
+      lines: ["Continúa con su seguimiento médico habitual.", "Con las mismas medidas que el otro grupo. Al finalizar su participación, se le ofrecerá de forma opcional un PDF con los resultados y acceso a la experiencia de realidad virtual «Clear Light Solo»."],
       condition: missing("CONDICION_GRUPO_CONTROL", "Descripción aprobada del grupo control"),
     },
   ] as readonly [Branch, Branch],

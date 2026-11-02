@@ -25,10 +25,10 @@ export const LANDING_EN: LandingCopy = {
     { href: "#equipo", label: "Team" },
   ],
   HERO: {
-    eyebrow: "Randomized research study of group virtual reality experience, taking place in Spain.",
-    headline: "Can an immersive experience transform how we relate to mortality?",
+    eyebrow: "Spanish-language research study being carried out in Spain.",
+    headline: "Can immersive experiences transform how we relate to mortality?",
     support:
-      "This study investigates how an immersive, shared experience affects the mental health and well-being of people living with a serious illness.",
+      "This research study investigates how shared experiences within Virtual Reality affect the mental health and well-being of people living with a serious illness.",
     reveal: {
       luminousAlt: "Six diffuse presences of blue-violet light arranged in a circle against a dark background.",
       physicalAlt:
@@ -37,11 +37,11 @@ export const LANDING_EN: LandingCopy = {
   },
   WHY: {
     headline: "When a serious illness changes everything.",
-    body: "A serious illness can change our relationship with our body, with time, and with our loved ones. This study explores whether a shared experience can create a space for presence, connection, and meaning in the face of this natural process.",
+    body: "A serious illness can change how we relate to our body, how we relate to others, and how we relate to time. This study explores whether shared immersive experiences can create a space for presence, connection, and meaning in the face of this natural process.",
   },
   WHAT: {
     headline: "A guided experience to explore together.",
-    body: "Clear Light is an experiential small-group program. It combines preparation, video call meetings, and immersive virtual reality sessions to explore life, identity, impermanence, and connection.",
+    body: "Clear Light is an experiential small-group program which combines video calls and immersive virtual reality sessions to explore life, identity, impermanence, meaning, and connection.",
     facts: ["Small group", "Human support", "Guided virtual reality"],
     film: {
       label: "A look at the project",
@@ -139,7 +139,7 @@ export const LANDING_EN: LandingCopy = {
     eyebrow: "The Clear Light team",
     heading: "Meet the team.",
     body: [
-      "We bring together research, experience design and technology to create Clear Light and support you through every stage of the study.",
+      "Our team of qualified experts is here to help and support you through every stage of the study.",
     ],
     profile: "View profile",
     newTab: "opens in a new tab",
@@ -184,10 +184,10 @@ export const LANDING_EN: LandingCopy = {
     supporting: "Showing interest does not commit you to take part.",
   },
   SPLIT: {
-    eyebrow: "The two groups of the study",
+    eyebrow: "How the study works",
     heading: "Participants are randomly assigned.",
     body: [
-      "This study is a randomized controlled trial. It works by separating people with similar diagnoses into two groups. Group 1 receives one treatment, and group 2 receives another treatment. At the end of the study, we evaluate the health of people in each group.",
+      "As a randomized controlled trial, this study is carried out by separating people with similar diagnoses into two groups, and comparing how the health of the people in each group evolves with time.",
       "This helps us distinguish changes caused by the treatment from changes that may have happened anyway. To ensure that the comparison is scientifically valid, participants are assigned to a group at random.",
     ],
     branches: [
@@ -208,7 +208,7 @@ export const LANDING_EN: LandingCopy = {
   },
   ELIGIBILITY: {
     heading: "Could this study be for me?",
-    intro: "This study is focused on Spanish speakers in Spain. Eligibility will be confirmed with the team. Here you can review the approved criteria and the most frequently asked questions.",
+    intro: "Learn more about the scientific foundations of this study",
     criteriaHeading: "Participation criteria",
     criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish."],
     criteriaText:
@@ -299,7 +299,7 @@ export const LANDING_EN: LandingCopy = {
   },
   INVITATION: {
     heading: "Decide with all the information.",
-    support: "Showing interest is not the same as giving consent.",
+    support: "Interested? Learn more.",
     qualtricsUrl: ES.INVITATION.qualtricsUrl,
     closed: "The interest questionnaire is not available at the moment.",
     footer: {

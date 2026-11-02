@@ -33,7 +33,7 @@ export const RESEARCH_ES = {
 
 export const RESEARCH_EN = {
   heading: "The research behind the study",
-  intro: "Four perspectives to explore connection, wellbeing and virtual reality a little further.",
+  intro: "Learn more about some of the scientific research that forms the foundation for this study.",
   read: "Explore the paper",
   newTab: "opens in a new tab",
   titles: ["Clear Light and wellbeing","The body as light","An experience of connection","Beyond the self"],
