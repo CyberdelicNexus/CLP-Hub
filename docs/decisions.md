@@ -5733,7 +5733,58 @@ inquiry notice email, which builds its link from the base path.
   names, book and resource titles and addresses were left in Spanish. **Not reviewed by
   a native speaker yet.**
 
+## D-136 · 2026-11-03 · Joana's review of the session pages
+
+Joana Vidal reviewed the fourteen S0-S6 pages in the team's Google Doc ("Clear Light ·
+Materiales de preparación e integración") and left wording proposals as comments. Her
+wording is used as written, apart from keeping the existing bold and lists.
+
+- **What changed.** 38 sentences across all fourteen pages: S0 (questions step,
+  three points of support, return to the body, hand gesture, "mensaje privado" for the
+  WhatsApp group link, "cristales" not "lentes" and clearer charging, the Orientación
+  note), S1 ("cómo serán las sesiones" instead of "mapa del recorrido", "simplemente
+  escuchar" instead of "pasar", "con tu acompañante cerca", the three-words question),
+  S2 ("si prefieres no moverte...", "está bien"), S3 (intro, "del día a día" removed,
+  "mirar con cariño", "necesita ser reconocida", care note, integration intro, return
+  to the present, the note to a past self), S4 (intro, the amplitude question, "si algo
+  se ha removido en ti"), S5 ("el grupo" instead of "el círculo", "soltar" instead of
+  "dejar descansar", two-hands practice, integration intro and gesture), S6 (intro,
+  three moments, "no es una obligación ni un examen", closing text, the seven-day
+  practice, "Es muy importante para nosotros que lo respondas").
+- **S3 care note gets the contact box.** Joana wrote "[botón de contacto] y mail" into
+  it, so "Una nota de cuidado" is now a contact box (the same one each page ends with:
+  WhatsApp reply line, info@numadelic.org and the email button) instead of a plain
+  callout.
+- **Applied for consistency, not asked for.** Her "mapa del recorrido" comment was on
+  S1 preparación; the same phrase in S1 integración became "hemos repasado juntos cómo
+  serán las sesiones". Her "el círculo" comment was on S5 preparación; the S5
+  integración heading now says "al grupo" too.
+- **Not applied.** Three October comments asking to remove the S0 and S1 practices
+  were resolved by Joana herself, and on 2026-11-03 she reworded two of those same
+  practices instead, so they stay. Her comment on the S2 heading ("de realidad virtual"
+  instead of "en grupo") was resolved by her minutes after writing it with no change, so
+  the heading is unchanged. The comments on the recruitment flow (WhatsApp from the
+  landing page, the control group by WhatsApp) and on the doc's broken links are not
+  page text and are left to the team.
+- **How it reaches the live pages.** The pages have been edited in the Hub since D-124
+  (for example S5's heading and S1's RTVE bookmark title), so re-running
+  `seed-session-materials.ts` would overwrite those edits. Instead
+  `scripts/revise-session-pages.ts` swaps only the listed sentences
+  (`scripts/session-materials/revision-2026-11-03.ts`) on the live Spanish and Galician
+  versions, through the same services as the Hub, and stops before writing anything if
+  a sentence is not found. `pages.ts` carries the new text and the two Hub edits found.
+- **Galician.** The 39 new strings were translated by Claude into
+  `galician.json`, like D-135's. **Not reviewed by a native speaker yet.** The
+  translator was moved to `scripts/session-materials/galician.ts`, shared by both
+  scripts.
+
 ## Open questions for researchers
+
+- D-136: Joana suggested opening WhatsApp contact from the landing page and moving the
+  control group's emails (welcome, Qualtrics, follow-ups) to WhatsApp. José replied that
+  direct WhatsApp messages could be added alongside the email automations. Which
+  messages should go by WhatsApp, and should the landing page get a WhatsApp link (the
+  study has no public number on record yet)?
 
 - The breathing guide now keeps two things in the visitor's browser storage
   when a facilitator uses them (D-120): the panel mode and named saved

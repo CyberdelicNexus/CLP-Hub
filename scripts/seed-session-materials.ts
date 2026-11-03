@@ -24,7 +24,8 @@
  * Re-running is safe: a page whose published text already matches is left
  * alone, and a template is only updated if its name or body differ. But it
  * WILL publish this file's text over edits made in the Hub since — after the
- * first run, edit in the Hub, not here.
+ * first run, edit in the Hub, not here. Later wording changes from the team
+ * go through a targeted script such as scripts/revise-session-pages.ts (D-136).
  */
 import { config as loadEnv } from "dotenv";
 

@@ -20,13 +20,11 @@
  * re-running never overwrites later edits.
  */
 import { config as loadEnv } from "dotenv";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { galicianTranslator, loadGalicianTable } from "./session-materials/galician";
 
 loadEnv({ path: ".env.local" });
 loadEnv();
 
-const TEXT_KEYS = new Set(["title", "md", "caption", "alt", "description", "label", "contactLabel"]);
 const PAGE_KEY = /^s[0-6]-(preparacion|integracion)$/;
 
 function arg(name: string): string | undefined {
@@ -39,35 +37,7 @@ async function main() {
   const actorEmail = arg("actor");
   if (!actorEmail) throw new Error("Pass --actor=<email of the staff member this is recorded as>.");
 
-  const table: Record<string, string> = JSON.parse(
-    readFileSync(join(process.cwd(), "scripts/session-materials/galician.json"), "utf8"),
-  );
-  const missing = new Set<string>();
-
-  /** Swaps one string, keeping its leading and trailing spaces. */
-  const tr = (s: string): string => {
-    const core = s.trim();
-    if (!core) return s;
-    const gl = table[core];
-    if (gl === undefined) {
-      missing.add(core);
-      return s;
-    }
-    return s.slice(0, s.indexOf(core)) + gl + s.slice(s.indexOf(core) + core.length);
-  };
-  const walk = (n: unknown, key?: string): unknown => {
-    if (Array.isArray(n)) return n.map((v) => (typeof v === "string" && key === "items" ? tr(v) : walk(v, key)));
-    if (n && typeof n === "object") {
-      const o = n as Record<string, unknown>;
-      return Object.fromEntries(
-        Object.entries(o).map(([k, v]) => [
-          k,
-          typeof v === "string" && ((k === "text" && o.type === "text") || TEXT_KEYS.has(k)) ? tr(v) : walk(v, k),
-        ]),
-      );
-    }
-    return n;
-  };
+  const { tr, walk, missing } = galicianTranslator(loadGalicianTable());
 
   const { and, eq } = await import("drizzle-orm");
   const { getDb } = await import("@/db/client");

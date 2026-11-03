@@ -11,6 +11,9 @@
  * Pages carry nothing cohort-specific (D-003): no dates, no Zoom links, no
  * WhatsApp group links. Those travel in the WhatsApp messages
  * (./messages.ts), which point back here.
+ *
+ * Includes Joana Vidal's 2026-11-03 wording review (D-136), which reaches the
+ * live pages through scripts/revise-session-pages.ts, not by re-seeding.
  */
 import type { ContentBlock } from "@/domain/content";
 import {
@@ -133,7 +136,7 @@ export const SESSION_PAGES: SessionPage[] = [
         ],
         [
           "Tus dudas",
-          "Tendremos todo el tiempo que haga falta para tus preguntas, técnicas o sobre cómo será el programa.",
+          "Dispondremos de todo el tiempo necesario para resolver tus dudas, tanto técnicas como sobre el funcionamiento del programa.",
         ],
       ]),
       text("Puedes pedir una pausa, preguntar o parar cuando quieras."),
@@ -148,7 +151,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ),
       section("Si te apetece: tres puntos de apoyo (2 minutos)", undefined, 3),
       contemplation(
-        "Nota el contacto de los pies con el suelo, del cuerpo con el asiento y de una mano con la otra. Echa un vistazo a tu alrededor. ¿Hay algo que puedas ajustar para estar un poco más a gusto? No hace falta cambiar la respiración.",
+        "Toma conciencia del contacto de los pies con el suelo, del cuerpo apoyado en el asiento y de una mano sobre la otra. Echa un vistazo a tu alrededor. ¿Hay algo que quieras ajustar para sentirte un poco más a gusto? No hace falta modificar la respiración; simplemente deja que fluya.",
       ),
       section(
         "Para pensar (solo para ti)",
@@ -180,7 +183,7 @@ export const SESSION_PAGES: SessionPage[] = [
         3,
       ),
       contemplation(
-        "Si te apetece, busca tres objetos en la habitación y nota el peso del cuerpo sobre el asiento. Puedes repetir solo la parte que te venga bien.",
+        "Si te apetece, prueba esto: localiza tres objetos a tu alrededor y fíjate en el peso de tu cuerpo apoyado en el asiento. Puedes repetirlo siempre que quieras, o hacer solo la parte que te resulte útil.",
       ),
       section(
         "Para tu diario (5 minutos, opcional)",
@@ -193,7 +196,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ),
       section(
         "Un gesto para el día a día",
-        "Repite una vez, sin gafas, el gesto que probamos: las manos se abren al espirar, como si abrieras dos puertas desde el pecho, y vuelven al inspirar. O, simplemente, apoya un momento las manos en el pecho.",
+        "Ya sin las gafas, repite una vez el gesto que probamos antes: abre las manos desde el pecho al espirar, como quien abre dos puertas, y devuélvelas al pecho al inspirar. O, si te resulta más cómodo, apoya las manos en el pecho un momento.",
         3,
       ),
       divider(),
@@ -201,7 +204,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ...steps([
         [
           "Únete al grupo de WhatsApp",
-          "Lo usaremos para organizar las sesiones, resolver dudas rápidas y enviar recordatorios. Te mandamos el enlace para unirte por WhatsApp.",
+          "Lo usaremos para organizar las sesiones, resolver dudas rápidas y enviar recordatorios. Te enviaremos por mensaje privado el enlace para unirte al grupo.",
         ],
         [
           "Confirma la cita",
@@ -213,13 +216,13 @@ export const SESSION_PAGES: SessionPage[] = [
         ],
         [
           "Cuida las gafas",
-          "Guárdalas en su caja, en un sitio seco y lejos del sol directo, porque la luz del sol puede dañar las lentes. Cárgalas con el cargador que te dejamos la noche antes de cada sesión, y si algo no funciona, escríbenos por WhatsApp.",
+          "Guarda las gafas en su caja, en un lugar seco y alejado del sol directo, ya que la luz solar puede dañar los cristales. La noche antes de cada sesión, cárgalas con el cargador que te hemos dejado. Si algo no funciona, escríbenos por WhatsApp.",
         ],
       ]),
       callout(
         "INFO",
         "Importante",
-        "En Orientación **todavía no entraremos en la realidad virtual**. Será una conversación para conocernos, ver el mapa del recorrido y responder las preguntas que te hayan surgido. Unos días antes te enviaremos su página de preparación.",
+        "En la sesión de Orientación **todavía no usaremos la realidad virtual**. Será una conversación para conocernos, explicarte cómo será el recorrido y responder a las preguntas que te hayan surgido. Unos días antes te enviaremos la página de preparación de esa sesión.",
       ),
       section("Si quieres seguir explorando (opcional)", undefined, 3),
       video(
@@ -239,7 +242,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Hola, ¡ya casi empezamos!",
-        "La Sesión 1, Orientación, es nuestro primer encuentro como grupo. Será por Zoom, todavía sin gafas. Nos presentaremos, hablaremos de lo que nos trae aquí y de nuestra relación con la muerte, y repasaremos juntos el mapa del recorrido y las dudas que tengas. No tienes que sentirte de ninguna manera concreta para participar: puedes hablar poco, hablar mucho o pasar.",
+        "La Sesión 1, Orientación, es nuestro primer encuentro como grupo. Será por Zoom, todavía sin gafas. Nos presentaremos, hablaremos de lo que nos trae aquí y de nuestra relación con la muerte, y repasaremos juntos cómo serán las sesiones y las dudas que tengas. No tienes que sentirte de ninguna manera concreta para participar: puedes hablar poco, hablar mucho o simplemente escuchar.",
       ),
       callout(
         "INFO",
@@ -247,7 +250,7 @@ export const SESSION_PAGES: SessionPage[] = [
         "- **Duración:** 1 hora.\n- **Dónde:** por Zoom. El enlace te llega por el grupo de WhatsApp el día antes.",
       ),
       checklist("Para tenerlo listo", [
-        "Un sitio tranquilo y con algo de privacidad, si puede ser junto a quien te acompañe.",
+        "Un sitio tranquilo y con algo de privacidad, si puede ser con tu acompañante cerca.",
         "El ordenador o la tableta cargados y el enlace de Zoom a mano.",
         "Auriculares, si te ayudan a escuchar mejor.",
         "Conectarte unos minutos antes, por si hay que ajustar el sonido o la cámara.",
@@ -259,7 +262,7 @@ export const SESSION_PAGES: SessionPage[] = [
       section(
         "Para pensar (solo para ti)",
         [
-          "- Si tuviera que describir cómo llego hoy en tres palabras, ¿cuáles serían?",
+          "- Si tuviera que describir en tres palabras cómo llego hoy a la sesión, ¿cuáles serían?",
           "- ¿Qué necesito para escuchar y compartir a mi ritmo?",
           "- *Si te apetece ir un poco más allá:* ¿qué pregunta sobre la muerte o lo desconocido me acompaña hoy?",
         ].join("\n"),
@@ -281,7 +284,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Gracias por estar hoy.",
-        "En nuestro primer encuentro nos hemos presentado, hemos empezado a hablar de nuestra relación con la muerte y hemos visto juntos el mapa del recorrido. Gracias por tu presencia, tu escucha y lo que hayas querido compartir. Una conversación así puede seguir dándote vueltas horas después de apagar la pantalla. Antes de darle sentido, fíjate en cómo estás y qué necesitas ahora.",
+        "En nuestro primer encuentro nos hemos presentado, hemos empezado a hablar de nuestra relación con la muerte y hemos repasado juntos cómo serán las sesiones. Gracias por tu presencia, tu escucha y lo que hayas querido compartir. Es normal que una conversación así te siga rondando la cabeza horas después de terminar la sesión. Antes de darle sentido, fíjate en cómo estás y qué necesitas ahora.",
       ),
       section("Volver al presente (2 minutos)", undefined, 3),
       contemplation(
@@ -314,7 +317,7 @@ export const SESSION_PAGES: SessionPage[] = [
       section("Para profundizar (opcional)", undefined, 3),
       bookmark(
         "https://www.rtve.es/play/videos/para-todos-la-2/entrevista-montse-esquerda/6541718/",
-        "Entrevista a Montse Esquerda en «Para todos La 2» (RTVE, 10 min)",
+        "Entrevista a Montse Esquerda (RTVE, 10 min)",
         "Una mirada tranquila y reflexiva sobre el final de la vida.",
       ),
       contact(
@@ -348,7 +351,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ]),
       section("Práctica: movimiento y atención (3 minutos)", undefined, 3),
       contemplation(
-        "Mueve una mano despacio. Fíjate en lo que pasa en el hombro, el pecho o la tripa. Luego déjala descansar. ¿Qué cambia cuando prestas atención al movimiento? Quedarse quieto también cuenta.",
+        "Mueve una mano despacio. Fíjate en lo que pasa en el hombro, el pecho o la tripa. Luego déjala descansar. ¿Qué cambia cuando prestas atención al movimiento? Si prefieres no moverte, también está bien; puedes simplemente observar.",
       ),
       section(
         "Para pensar (solo para ti)",
@@ -372,7 +375,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Gracias por este primer encuentro en la luz.",
-        "Hoy nos hemos visto por primera vez como formas de luz, hemos compartido una intención, hemos respirado juntos y hemos practicado dar, recibir y escuchar por parejas. Puede que la experiencia haya sido cálida, rara, neutra o un poco de todo. Cualquier forma de vivirla vale.",
+        "Hoy nos hemos visto por primera vez como formas de luz, hemos compartido una intención, hemos respirado juntos y hemos practicado dar, recibir y escuchar por parejas. Puede que la experiencia haya sido cálida, rara, neutra o un poco de todo. Cualquier forma de vivirla está bien.",
       ),
       section("Volver al cuerpo", undefined, 3),
       contemplation(
@@ -420,7 +423,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Hola, se acerca la sesión Vida.",
-        "En esta sesión de realidad virtual recorreremos distintas etapas de la vida: momentos significativos, luminosos y difíciles, y la forma en que podemos mirarlos hoy con más cariño. Tú eliges qué recuerdos acercar y cuáles prefieres dejar descansar. Al final volveremos juntos al grupo.\n\n**No necesitas saber cómo fue tu nacimiento ni recordar tu infancia con detalle.**",
+        "En esta sesión de realidad virtual recorreremos distintas etapas de la vida: momentos significativos, tanto luminosos como difíciles, y veremos cómo podemos mirarlos hoy con más cariño. Tú decides qué recuerdos quieres traer a la memoria y cuáles prefieres dejar a un lado. Al terminar, volveremos a reunirnos en grupo.\n\n**No necesitas saber cómo fue tu nacimiento ni recordar tu infancia con detalle.**",
       ),
       callout(
         "INFO",
@@ -429,20 +432,19 @@ export const SESSION_PAGES: SessionPage[] = [
       ),
       section("Práctica: un recuerdo manejable (4 minutos)", undefined, 3),
       contemplation(
-        "Elige un recuerdo del día a día que puedas mirar con cierta comodidad. No hace falta remover heridas ni buscar explicaciones. Nota dónde está tu cuerpo ahora, qué sensación aparece y qué le diría la persona que eres hoy a la de aquel momento. Para terminar, echa un vistazo a la habitación.",
+        "Elige un recuerdo que puedas mirar con cierta comodidad. No hace falta remover heridas ni buscar explicaciones. Nota dónde está tu cuerpo ahora, qué sensación aparece y qué le diría la persona que eres hoy a la de aquel momento. Para terminar, echa un vistazo a la habitación.",
       ),
       section(
         "Para pensar (solo para ti)",
         [
-          "- ¿Qué recuerdo quiero acercar con cariño?",
-          "- ¿Qué parte de mi historia agradece que la reconozca sin tener que explicarla?",
+          "- ¿Qué recuerdo quiero mirar con cariño?",
+          "- ¿Qué parte de mi historia necesita ser reconocida, sin tener que explicarla?",
         ].join("\n"),
         3,
       ),
-      callout(
-        "SUPPORT",
+      contact(
         "Una nota de cuidado",
-        "Puede que aparezca emoción, y está bien. Durante la sesión puedes tener los ojos abiertos, saltarte cualquier pregunta, elegir un recuerdo neutro o pedir apoyo a la persona que facilita. Si un recuerdo se vuelve demasiado intenso, para, mira a tu alrededor y habla con el equipo.",
+        "Es posible que surjan emociones, y está bien que así sea. Durante la sesión puedes mantener los ojos abiertos, saltarte cualquier pregunta, elegir un recuerdo neutro o pedir apoyo a la persona facilitadora. Si un recuerdo se vuelve demasiado intenso, detente, mira a tu alrededor y habla con el equipo.",
       ),
       section("Lectura sugerida (opcional)", undefined, 3),
       bookmark(
@@ -461,10 +463,12 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Gracias por estar en Vida.",
-        "Hoy hemos recorrido distintas etapas de la vida, hemos mirado algunos recuerdos y hemos probado a ofrecer cuidado a versiones nuestras del pasado. Es una sesión que puede dejar emoción, cansancio o una sensación de calma. Todo vale. Antes de escribir sobre la vida, vuelve a este momento.",
+        "Hoy hemos recorrido distintas etapas de la vida, hemos mirado algunos recuerdos y hemos probado a ofrecer cuidado a versiones nuestras del pasado. Después de esta sesión puedes sentirte emocionado o emocionada, cansado o cansada, o con una sensación de calma. Cualquier reacción es válida. Antes de ponerte a escribir sobre tu vida, tómate un momento para volver al presente.",
       ),
       section("Volver al presente (3 minutos)", undefined, 3),
-      contemplation("Di dónde estás, qué día es y un objeto que ves. Nota qué está sujetando tu cuerpo."),
+      contemplation(
+        "Di en voz alta dónde estás, qué día es y nombra un objeto que veas. Después, fíjate en qué superficie sostiene tu cuerpo: la silla, el sofá o el suelo.",
+      ),
       section("Para tu diario, en tres pasos", undefined, 3),
       ...steps([
         ["Qué apareció", ""],
@@ -477,7 +481,7 @@ export const SESSION_PAGES: SessionPage[] = [
       text("Puedes dejar de escribir en cualquier momento."),
       section(
         "Un gesto para el día a día",
-        "Escribe una nota breve a una versión de ti del pasado: «Te veo. Hoy puedo ofrecerte...». Si se te hace demasiado, escríbesela a la persona que eres hoy.",
+        "Escribe una nota breve a la persona que fuiste en algún momento del pasado. Puedes empezar así: «Te veo. Hoy puedo ofrecerte...». Si te resulta demasiado intenso, puedes escribírsela a la persona que eres hoy.",
         3,
       ),
       section(
@@ -512,7 +516,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Hola, se acerca la sesión Más allá del cuerpo.",
-        "Esta sesión de realidad virtual entra en terreno de incertidumbre. Exploraremos el cuerpo, la identidad y lo desconocido, y qué pasa cuando soltamos un momento nuestros puntos de referencia. Después hablaremos en grupo. Habrá imágenes relacionadas con la muerte, por eso te lo contamos antes: puedes ir a tu propio ritmo.\n\n**No tienes que estar de acuerdo con ninguna interpretación espiritual de la experiencia para participar.**",
+        "En esta sesión de realidad virtual nos adentraremos en la incertidumbre. Exploraremos el cuerpo, la identidad y lo desconocido, y veremos qué ocurre cuando soltamos por un momento nuestros puntos de referencia. Aparecerán imágenes relacionadas con la muerte; te lo contamos de antemano para que lo sepas. Puedes ir a tu propio ritmo. Al terminar, hablaremos en grupo.\n\n**No tienes que estar de acuerdo con ninguna interpretación espiritual de la experiencia para participar.**",
       ),
       callout(
         "INFO",
@@ -565,7 +569,7 @@ export const SESSION_PAGES: SessionPage[] = [
       section(
         "Para tu diario",
         [
-          "- ¿Qué sentí amplio o nuevo?",
+          "- ¿Noté alguna sensación de amplitud o algo que no había sentido antes?",
           "- ¿Qué me resultó difícil?",
           "- ¿Qué me ayudó a volver?",
           "- ¿Hay algo que prefiero dejar sin resolver por ahora?",
@@ -585,7 +589,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ),
       contact(
         "Estamos aquí",
-        "Si te ha quedado algo removido y necesitas hablar, escríbenos.",
+        "Si algo se ha removido en ti y necesitas hablar, escríbenos.",
       ),
       signoff("Un abrazo, el equipo de Clear Light"),
     ],
@@ -598,8 +602,8 @@ export const SESSION_PAGES: SessionPage[] = [
     title: "Lo que pesa y lo que sostiene",
     body: [
       section(
-        "Hola, se acerca Ofrenda, nuestra última sesión en realidad virtual.",
-        "En esta sesión, el círculo será un espacio para dos movimientos: dejar descansar algo que pesa y recibir un apoyo o una cualidad que necesites. Al final, quizá quieras reconocer algo que te gustaría ofrecer al mundo o a alguien cercano.\n\n**Puedes hablar, decir una sola palabra o quedarte en silencio. No tienes que contarle tu historia a nadie.**",
+        'Hola, se acerca "Ofrenda",  nuestra última sesión en realidad virtual.',
+        "En esta sesión, el grupo será un espacio para dos cosas: soltar algo que te pesa y recibir el apoyo o la cualidad que necesitas. Al final, quizá quieras pensar en algo que te gustaría ofrecer al mundo o a alguien cercano.\n\n**Puedes hablar, decir una sola palabra o quedarte en silencio. No tienes que contarle tu historia a nadie.**",
       ),
       callout("INFO", "Datos de la sesión", "- **Duración:** 1 hora."),
       checklist("Antes de entrar", [
@@ -609,7 +613,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ]),
       section("Práctica: dos manos (4 minutos)", undefined, 3),
       contemplation(
-        "En una mano, imagina algo que te gustaría dejar descansar un rato. En la otra, una cualidad que te gustaría recibir. Mira las dos manos y pregúntate: ¿qué necesitaría para tratar esto con cariño? También vale no encontrar respuesta.",
+        "En una mano, imagina algo que te gustaría soltar o dejar a un lado por un rato. En la otra, una cualidad que te gustaría recibir. Mira las dos manos y pregúntate: ¿qué necesitaría para tratar lo que siento con cariño? Si no encuentras respuesta, también está bien.",
       ),
       section(
         "Para pensar (solo para ti)",
@@ -630,23 +634,23 @@ export const SESSION_PAGES: SessionPage[] = [
     title: "Cuidar lo que elegiste recibir",
     body: [
       section(
-        "Gracias por todo lo que has traído hoy al círculo.",
-        "En Ofrenda hemos dejado descansar algo que pesa, hemos recibido una cualidad o un apoyo y hemos pensado en qué nos gustaría ofrecer. Lo que pesa puede volver. La práctica no busca que desaparezca, sino ayudarte a llevarlo con menos dureza.",
+        "Gracias por todo lo que has traído hoy al grupo.",
+        "En la sesión de Ofrenda hemos soltado por un momento algo que nos pesa, hemos recibido una cualidad o un apoyo y hemos pensado en lo que nos gustaría ofrecer. Es posible que lo que pesa vuelva. La práctica no pretende que desaparezca, sino ayudarte a llevarlo con más suavidad.",
       ),
       section("Volver al cuerpo", undefined, 3),
       contemplation("Nota las manos y el asiento. Si te apetece, pasa unos minutos sin pantallas."),
       section(
         "Para tu diario",
         [
-          "- ¿Qué elegí dejar descansar?",
+          "- ¿Qué elegí soltar por un momento?",
           "- ¿Qué cualidad quise recibir?",
-          "- Si aquello vuelve, ¿cómo puedo responderme con menos dureza?",
+          "- Si lo que me pesa vuelve, ¿cómo puedo tratarme con más suavidad?",
         ].join("\n"),
         3,
       ),
       section(
         "Un gesto para el día a día",
-        "Elige algo pequeño, de menos de cinco minutos, para cuidar esta semana la cualidad que elegiste: pedir compañía, mandar un mensaje, salir a que te dé el aire, regalarte una pausa o dar las gracias.",
+        "Piensa en un gesto sencillo, de menos de cinco minutos, que te ayude a cultivar esta semana la cualidad que recibiste. Por ejemplo: pedir compañía, enviar un mensaje a alguien, salir a tomar el aire, regalarte una pausa o dar las gracias.",
         3,
       ),
       section(
@@ -681,7 +685,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Hola, llegamos al final del recorrido.",
-        "Integración Grupal es nuestro último encuentro, por Zoom y sin gafas. Volveremos a recorrer juntos las imágenes de este camino, desde la visita en casa hasta Ofrenda, y escucharemos lo que se queda en cada uno. También hablaremos de cómo seguir cuidando lo vivido cuando termine el programa. Puedes traer una frase, una pregunta o, simplemente, tu presencia.",
+        "Integración Grupal es nuestro último encuentro, por Zoom y sin gafas. Repasaremos juntos el camino que hemos recorrido, desde la visita en casa hasta la sesión de Ofrenda, y compartiremos lo que cada uno se lleva. También hablaremos de cómo seguir cuidando lo vivido cuando termine el programa. Puedes traer una frase, una pregunta o, simplemente, venir tal como estés.",
       ),
       callout(
         "INFO",
@@ -695,7 +699,7 @@ export const SESSION_PAGES: SessionPage[] = [
       ]),
       section("Práctica: tres momentos, una intención (5 minutos)", undefined, 3),
       contemplation(
-        "Elige tres momentos del recorrido: uno que te sostuvo, uno que todavía te hace preguntas y uno que quieres llevarte a tu día a día.",
+        "Elige tres momentos del recorrido: uno que te haya servido de apoyo, otro que todavía te despierte preguntas y otro que te gustaría llevarte a tu día a día.",
       ),
       section(
         "Para pensar (solo para ti)",
@@ -709,7 +713,7 @@ export const SESSION_PAGES: SessionPage[] = [
       callout(
         "SUPPORT",
         "A tu manera",
-        "**Compartir no es rendir cuentas. Puedes hablar un poco o pasar.**",
+        "**Compartir no es una obligación ni un examen. Puedes hablar un poco o simplemente escuchar.**",
       ),
       contact("¿Problemas con Zoom o alguna duda?", "Escríbenos y te ayudamos."),
       signoff("Nos vemos en el último encuentro, el equipo de Clear Light"),
@@ -722,7 +726,7 @@ export const SESSION_PAGES: SessionPage[] = [
     body: [
       section(
         "Gracias por recorrer este camino con nosotros.",
-        "Hoy hemos cerrado el programa juntos: hemos vuelto a las imágenes de cada sesión, nos hemos escuchado y hemos pensado en cómo llevar lo vivido a la vida que sigue. El programa termina, pero tu ritmo continúa. Integrar no es cerrar un capítulo de golpe, sino seguir llevando lo vivido a tu día a día.",
+        "Hoy hemos cerrado el programa juntos: hemos repasado las imágenes de cada sesión, nos hemos escuchado y hemos pensado en cómo llevar esta experiencia a nuestra vida. El programa termina, pero tu proceso continúa. Integrar no significa cerrar un capítulo de golpe, sino seguir incorporando poco a poco lo vivido a tu día a día.",
       ),
       section("Cierre (3 minutos)", undefined, 3),
       contemplation(
@@ -739,14 +743,14 @@ export const SESSION_PAGES: SessionPage[] = [
       ),
       section(
         "Una práctica para los próximos siete días",
-        "Elige una sola práctica sencilla, de dos a cinco minutos, para mantener durante la próxima semana: cuándo la harás, cómo te vas a acordar y a quién puedes acudir si necesitas apoyo. Puede ser el gesto de las manos que aprendiste en la visita, los tres puntos de apoyo o escuchar dos minutos sin preparar respuesta. Es una propuesta flexible, no un compromiso.",
+        "Elige una práctica sencilla, de dos a cinco minutos, para hacer durante la próxima semana. Puede ser el gesto de las manos que aprendiste en la visita, los tres puntos de apoyo o escuchar a alguien durante dos minutos sin pensar en qué vas a responder. Después, decide cuándo la harás, cómo te acordarás de hacerla y a quién puedes acudir si necesitas apoyo. Es una propuesta flexible, no una obligación.",
         3,
       ),
       section("Lo que viene ahora"),
       ...steps([
         [
           "Contesta el último cuestionario",
-          "Te enviaremos el enlace por WhatsApp. Nos ayuda mucho que lo respondas.",
+          "Te enviaremos el enlace por WhatsApp. Es muy importante para nosotros que lo respondas.",
         ],
         [
           "Quedamos para recoger las gafas",
