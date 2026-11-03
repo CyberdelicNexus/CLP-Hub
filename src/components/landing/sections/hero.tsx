@@ -15,7 +15,7 @@ export function HeroCopy({ copy, titleId }: { copy: LandingCopy; titleId?: strin
   const { ACTIONS, HERO } = copy;
   return (
     <div className="hero__copy" data-sc-in>
-      <p className="cl-eyebrow hero__eyebrow">{HERO.eyebrow}</p>
+      {HERO.eyebrow ? <p className="cl-eyebrow hero__eyebrow">{HERO.eyebrow}</p> : null}
       <h1 id={titleId} className="cl-title hero__title">
         {HERO.headline}
       </h1>

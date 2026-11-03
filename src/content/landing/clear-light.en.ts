@@ -25,7 +25,8 @@ export const LANDING_EN: LandingCopy = {
     { href: "#equipo", label: "Team" },
   ],
   HERO: {
-    eyebrow: "Spanish-language research study being carried out in Spain.",
+    // Removed at David's request (D-139): the criteria section already says it.
+    eyebrow: "",
     headline: "Can immersive experiences transform how we relate to mortality?",
     support:
       "This research study investigates how shared experiences within Virtual Reality affect the mental health and well-being of people living with a serious illness.",
@@ -210,7 +211,7 @@ export const LANDING_EN: LandingCopy = {
     heading: "Could this study be for me?",
     intro: "Learn more about the scientific foundations of this study",
     criteriaHeading: "Participation criteria",
-    criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish."],
+    criteriaItems: ["Have a serious or advanced illness.", "Speak Spanish.", "Live in Spain."],
     criteriaText:
       "In the call with the team, we will review together whether the study suits you, according to all the criteria approved for the study.",
     criteria: ES.ELIGIBILITY.criteria,

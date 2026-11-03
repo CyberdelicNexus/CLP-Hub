@@ -209,7 +209,7 @@ export const LANDING_GL: LandingCopy = {
     heading: "Este estudo pode ser para min?",
     intro: "Este estudo céntrase en España. A elixibilidade confírmase co equipo. Aquí podes revisar os criterios aprobados e as preguntas máis frecuentes.",
     criteriaHeading: "Criterios de participación",
-    criteriaItems: ["Ter unha enfermidade grave ou avanzada.", "Falar castelán."],
+    criteriaItems: ["Ter unha enfermidade grave ou avanzada.", "Falar castelán.", "Vivir en España."],
     criteriaText:
       "Na chamada co equipo revisaremos xuntos se o estudo encaixa contigo, segundo todos os criterios aprobados para o estudo.",
     criteria: ES.ELIGIBILITY.criteria,

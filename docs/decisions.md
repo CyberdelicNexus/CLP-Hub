@@ -5824,6 +5824,22 @@ The founder answered the open points left by D-136 and D-137.
 - **S2 heading** takes Joana's change after all: "Hola, llega el momento de ponerse las
   gafas de realidad virtual." (same script, both languages).
 
+## D-139 · 2026-11-03 · David's landing copy requests: English hero line removed, "Live in Spain" criterion
+
+David Glowacki commented on the team's "Textos Website - ES EN GL" document.
+
+- **English hero line removed.** "Spanish-language research study being carried out in
+  Spain." is gone: David found it awkward, and the participation criteria already say
+  it. `HERO.eyebrow` is an empty string in English and the hero renders no eyebrow
+  when it is empty (the title then has no top margin). The Spanish and Galician lines
+  stay: they are different sentences that also tell the reader the groups are assigned
+  at random ("con asignación al azar"), which his reason does not cover. The
+  translation shape test allows this one empty string.
+- **Third participation criterion**: "Vivir en España." (es, gl) / "Live in Spain."
+  (en), after "Hablar castellano.". This is the listed text only; nothing in the app
+  checks eligibility (CLAUDE.md rule 3), and the "CRITERIOS" marker still gates the list
+  until the full approved set is in.
+
 ## Open questions for researchers
 
 - D-136: Joana suggested moving the control group's emails (welcome, Qualtrics,

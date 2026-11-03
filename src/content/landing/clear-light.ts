@@ -295,7 +295,7 @@ export const ELIGIBILITY = {
    * full protocol list (no exclusions yet), so the text below remits the rest
    * to the call and `criteria` keeps blocking publication.
    */
-  criteriaItems: ["Tener una enfermedad grave o avanzada.", "Hablar castellano."],
+  criteriaItems: ["Tener una enfermedad grave o avanzada.", "Hablar castellano.", "Vivir en España."],
   criteriaText:
     "En la llamada con el equipo revisaremos juntos si el estudio encaja contigo, según todos los criterios aprobados para el estudio.",
   criteria: missing("CRITERIOS", "Criterios de inclusión y exclusión aprobados"),
