@@ -5778,13 +5778,36 @@ wording is used as written, apart from keeping the existing bold and lists.
   translator was moved to `scripts/session-materials/galician.ts`, shared by both
   scripts.
 
+## D-137 · 2026-11-03 · The study's WhatsApp number on the session pages; Valérie's new photo
+
+- **WhatsApp.** The study now has a WhatsApp number, +34 694 269 223. Every session
+  page's contact box (D-124) had "answer any of our WhatsApp messages" and an email
+  button because there was no number. Now the line reads "Escríbenos por WhatsApp al
+  +34 694 269 223 o por correo a info@numadelic.org." and the button, "Escribir por
+  WhatsApp", opens a chat (`https://wa.me/34694269223`). The email stays in the text.
+  This covers the doc's "[Botón: WhatsApp]" and S3's "[botón de contacto] y mail".
+  It goes live with D-136's run of `scripts/revise-session-pages.ts`, which swaps
+  these two strings and the button link on all fourteen pages, Spanish and Galician,
+  and keeps each page's cover image (the new version is drafted from the live one).
+- **Not changed.** The message templates (message 1 still says "escríbenos a
+  info@numadelic.org o responde a este mensaje"): re-running the seed would overwrite
+  template edits made in the Hub, so add the number there from the Hub if wanted.
+  The landing page's "CONTACTO" marker stays gated: it also waits on an alternative
+  contact route and the registry link.
+- **Valérie's photo.** Her team card uses the photo the founder sent on 2026-11-03.
+  The background was removed with rembg (`isnet-general-use`) into
+  `portraits/Transparent/valerie-bonnelle-2026-11.png`, and her row in
+  `scripts/team-portraits.mjs` was re-measured (head top read at the solid hairline,
+  not the backlit strands, so her face matches the others' size). Only her card was
+  replaced; the other cards were not regenerated.
+
 ## Open questions for researchers
 
 - D-136: Joana suggested opening WhatsApp contact from the landing page and moving the
   control group's emails (welcome, Qualtrics, follow-ups) to WhatsApp. José replied that
   direct WhatsApp messages could be added alongside the email automations. Which
   messages should go by WhatsApp, and should the landing page get a WhatsApp link (the
-  study has no public number on record yet)?
+  number, +34 694 269 223, exists since D-137)?
 
 - The breathing guide now keeps two things in the visitor's browser storage
   when a facilitator uses them (D-120): the panel mode and named saved

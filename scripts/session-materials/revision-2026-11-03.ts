@@ -7,6 +7,9 @@
  * Spanish pages, and their Galician versions (./galician.json) on the live
  * Galician pages, leaving every other word, including edits made in the Hub,
  * as it is. ./pages.ts already carries the new text.
+ *
+ * It also carries the study's new WhatsApp number (D-137) into every page's
+ * contact box: CONTACT_PAIRS and FIELD_SWAPS apply to all fourteen pages.
  */
 
 export const REVISION_PAIRS: Record<string, [before: string, after: string][]> = {
@@ -199,4 +202,18 @@ export const REVISION_PAIRS: Record<string, [before: string, after: string][]> =
  */
 export const BLOCK_SWAPS: { key: string; type: string; title: string }[] = [
   { key: "s3-preparacion", type: "CALLOUT", title: "Una nota de cuidado" },
+];
+
+/** Every page: the contact box's line and button (D-137). */
+export const CONTACT_PAIRS: [before: string, after: string][] = [
+  [
+    "Puedes responder a cualquiera de nuestros mensajes de WhatsApp o escribirnos a info@numadelic.org.",
+    "Escríbenos por WhatsApp al +34 694 269 223 o por correo a info@numadelic.org.",
+  ],
+  ["Escribir a info@numadelic.org", "Escribir por WhatsApp"],
+];
+
+/** Every page: the contact button opens WhatsApp instead of an email (D-137). */
+export const FIELD_SWAPS: { field: string; before: string; after: string }[] = [
+  { field: "contactUrl", before: "mailto:info@numadelic.org", after: "https://wa.me/34694269223" },
 ];

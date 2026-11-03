@@ -2,9 +2,11 @@
  * One-time: apply Joana Vidal's 2026-11-03 review of the session pages (D-136)
  * to the LIVE pages, in Spanish and in Galician.
  *
+ * It also puts the study's WhatsApp number in every page's contact box (D-137).
+ *
  * Unlike scripts/seed-session-materials.ts, this does not publish ./pages.ts
- * over the live text. It swaps only the strings listed in
- * ./session-materials/revision-2026-11-03.ts (and the one block swap there),
+ * over the live text. It swaps only the strings, the block and the contact
+ * button link listed in ./session-materials/revision-2026-11-03.ts,
  * so edits made in the Hub since the pages were loaded stay as they are. The
  * Galician strings come from ./session-materials/galician.json.
  *
@@ -42,7 +44,7 @@ async function main() {
   const { bodySchema } = await import("@/domain/content");
   const content = await import("@/services/content");
   const { SESSION_PAGES } = await import("./session-materials/pages");
-  const { REVISION_PAIRS, BLOCK_SWAPS } = await import("./session-materials/revision-2026-11-03");
+  const { REVISION_PAIRS, BLOCK_SWAPS, CONTACT_PAIRS, FIELD_SWAPS } = await import("./session-materials/revision-2026-11-03");
   const { revisePage } = await import("./session-materials/revise");
 
   const gl = galicianTranslator(loadGalicianTable());
@@ -54,7 +56,7 @@ async function main() {
   if (!actor) throw new Error(`No staff user with email ${actorEmail}.`);
   const base = { studyId: study.id, actorId: actor.id };
 
-  const keys = [...new Set([...Object.keys(REVISION_PAIRS), ...BLOCK_SWAPS.map((b) => b.key)])];
+  const keys = SESSION_PAGES.map((p) => `${p.sessionCode}-${p.part}`);
   const plans: { label: string; versionId: string; title: string; body: unknown; cover: string | null; pos: number }[] = [];
   const problems: string[] = [];
 
@@ -62,7 +64,7 @@ async function main() {
   for (const key of keys) {
     const page = SESSION_PAGES.find((p) => `${p.sessionCode}-${p.part}` === key);
     if (!page) throw new Error(`${key}: not in pages.ts`);
-    const esPairs = REVISION_PAIRS[key] ?? [];
+    const esPairs = [...(REVISION_PAIRS[key] ?? []), ...CONTACT_PAIRS];
     const esBlocks = BLOCK_SWAPS.filter((b) => b.key === key).map((b) => {
       const replacement = page.body.find(
         (x) => "title" in x && x.title === b.title && x.type !== b.type,
@@ -110,7 +112,7 @@ async function main() {
       });
 
       const liveBody = bodySchema.parse(live.body);
-      const outcome = revisePage(liveBody, pairs, blocks);
+      const outcome = revisePage(liveBody, pairs, blocks, FIELD_SWAPS);
       for (const miss of outcome.notFound) problems.push(`${label}: not on the live page: ${miss}`);
       if (outcome.applied === 0) {
         console.log(`page    ${label}: already revised`);

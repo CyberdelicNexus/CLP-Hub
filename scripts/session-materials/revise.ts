@@ -56,15 +56,45 @@ function replaceStrings(n: unknown, map: Map<string, string>, hits: Set<string>,
   return n;
 }
 
+export interface FieldSwap {
+  /** A non-text property, such as a contact box's `contactUrl`. */
+  field: string;
+  before: string;
+  after: string;
+}
+
+function fieldValues(n: unknown, field: string, out: string[] = []): string[] {
+  if (Array.isArray(n)) for (const v of n) fieldValues(v, field, out);
+  else if (n && typeof n === "object") {
+    for (const [k, v] of Object.entries(n)) {
+      if (k === field && typeof v === "string") out.push(v);
+      else fieldValues(v, field, out);
+    }
+  }
+  return out;
+}
+
+function replaceField(n: unknown, swap: FieldSwap): unknown {
+  if (Array.isArray(n)) return n.map((v) => replaceField(v, swap));
+  if (n && typeof n === "object") {
+    return Object.fromEntries(
+      Object.entries(n).map(([k, v]) => [k, k === swap.field && v === swap.before ? swap.after : replaceField(v, swap)]),
+    );
+  }
+  return n;
+}
+
 /**
- * Applies `pairs` (whole-string swaps) and `blocks` (replace the top-level
- * block matching `match` with `replacement`) to a page body. A block swap
+ * Applies `pairs` (whole-string swaps), `blocks` (replace the top-level
+ * block matching `match` with `replacement`) and `fields` (every property
+ * `field` equal to `before`) to a page body. A block swap
  * whose replacement is already present counts as done.
  */
 export function revisePage(
   body: unknown[],
   pairs: [before: string, after: string][],
   blocks: { match: (b: Record<string, unknown>) => boolean; replacement: unknown; label: string }[] = [],
+  fields: FieldSwap[] = [],
 ): RevisionOutcome {
   let next = body;
   let applied = 0;
@@ -93,6 +123,15 @@ export function revisePage(
   const hits = new Set<string>();
   next = replaceStrings(next, map, hits) as unknown[];
   applied += hits.size;
+
+  for (const swap of fields) {
+    const values = fieldValues(next, swap.field);
+    if (values.includes(swap.before)) {
+      next = replaceField(next, swap) as unknown[];
+      applied++;
+    } else if (values.includes(swap.after)) alreadyDone++;
+    else notFound.push(`[${swap.field}] ${swap.before}`);
+  }
 
   return { body: next, applied, alreadyDone, notFound };
 }

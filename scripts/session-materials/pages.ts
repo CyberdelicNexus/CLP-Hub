@@ -78,20 +78,23 @@ function divider(): ContentBlock {
   return { type: "DIVIDER", style: "solid", thickness: "thin", color: "default" };
 }
 
+/** The study's WhatsApp line (D-137), as people read it and as a wa.me link. */
+export const STUDY_WHATSAPP = "+34 694 269 223";
+export const STUDY_WHATSAPP_URL = "https://wa.me/34694269223";
+
 /**
- * The closing "write to us" box. The doc asks for a WhatsApp button, but the
- * study has no public WhatsApp number yet, so the box tells people to answer
- * any of the team's WhatsApp messages and links the email address.
+ * The closing "write to us" box: the doc's "[Botón: WhatsApp]" opens a chat
+ * with the study's number, and the text gives the number and the email too.
  */
 function contact(title: string, md: string): ContentBlock {
   return {
     type: "SUPPORT_BOX",
     title,
     content: markdownAstToRichTextDoc(
-      `${md}\n\nPuedes responder a cualquiera de nuestros mensajes de WhatsApp o escribirnos a ${STUDY_EMAIL}.`,
+      `${md}\n\nEscríbenos por WhatsApp al ${STUDY_WHATSAPP} o por correo a ${STUDY_EMAIL}.`,
     ),
-    contactLabel: `Escribir a ${STUDY_EMAIL}`,
-    contactUrl: `mailto:${STUDY_EMAIL}`,
+    contactLabel: "Escribir por WhatsApp",
+    contactUrl: STUDY_WHATSAPP_URL,
   };
 }
 

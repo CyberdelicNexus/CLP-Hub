@@ -16,7 +16,7 @@ const P=[
  ["david-glowacki","david-glowacki.png",.076,.395,.58],
  ["joe-hardy","joe-hardy 1.png",.036,.345,.47],
  ["justin-wall","justin-wall 1.png",.066,.57,.50],
- ["valerie-bonnelle","Valérie+Bonnelle 1.png",.139,.51,.64],
+ ["valerie-bonnelle","valerie-bonnelle-2026-11.png",.155,.563,.50],
  ["sila-sobrado","20240711_193214+(1) (1) 1.png",.027,.46,.175],
  ["catherine-andreu","cathherine-andrew.png",.038,.39,.475],
  ["jose-montemayor","JEMA Headshot_Color_2 1.png",.018,.61,.50],
