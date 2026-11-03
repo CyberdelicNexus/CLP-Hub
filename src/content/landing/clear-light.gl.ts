@@ -24,7 +24,8 @@ export const LANDING_GL: LandingCopy = {
     { href: "#equipo", label: "Equipo" },
   ],
   HERO: {
-    eyebrow: "Estudo de investigación en España con asignación ao azar sobre unha experiencia grupal de realidade virtual.",
+    // Removed at David's request (D-139), like the Spanish.
+    eyebrow: "",
     headline: "Pode unha experiencia inmersiva transformar como nos relacionamos coa mortalidade?",
     support:
       "Este estudo investiga como unha experiencia inmersiva e compartida inflúe na saúde mental e no benestar de persoas que viven cunha enfermidade grave.",

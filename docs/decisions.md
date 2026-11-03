@@ -5830,11 +5830,13 @@ David Glowacki commented on the team's "Textos Website - ES EN GL" document.
 
 - **English hero line removed.** "Spanish-language research study being carried out in
   Spain." is gone: David found it awkward, and the participation criteria already say
-  it. `HERO.eyebrow` is an empty string in English and the hero renders no eyebrow
-  when it is empty (the title then has no top margin). The Spanish and Galician lines
-  stay: they are different sentences that also tell the reader the groups are assigned
-  at random ("con asignación al azar"), which his reason does not cover. The
-  translation shape test allows this one empty string.
+  it. `HERO.eyebrow` is an empty string and the hero renders no eyebrow when it is
+  empty (the title then has no top margin). The founder then asked for the Spanish line
+  ("Estudio de investigación en España con asignación al azar...") to go too, and the
+  Galician one went with it. Random assignment is still explained in "Los dos grupos
+  del estudio" and the FAQ; the hero's support line still says "Este estudio
+  investiga...". The translation shape test now allows a translation to be empty
+  where the Spanish is.
 - **Third participation criterion**: "Vivir en España." (es, gl) / "Live in Spain."
   (en), after "Hablar castellano.". This is the listed text only; nothing in the app
   checks eligibility (CLAUDE.md rule 3), and the "CRITERIOS" marker still gates the list

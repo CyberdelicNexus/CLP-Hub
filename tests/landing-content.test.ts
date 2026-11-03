@@ -57,7 +57,7 @@ describe("landing copy rules", () => {
   });
 
   it("identifies the page as a research study in the hero", () => {
-    expect(HERO.eyebrow.toLowerCase()).toContain("estudio");
+    expect(HERO.support.toLowerCase()).toContain("estudio");
     expect(HERO.headline.trim().startsWith("¿")).toBe(true);
   });
 
@@ -363,8 +363,6 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
   const TRANSLATIONS = PUBLIC_LOCALES.filter((l) => l !== "es");
   /** Fields that identify, link or size something: identical in every language. */
   const FIXED = new Set(["href", "src", "width", "height", "code", "numeral", "id", "slug", "kind"]);
-  /** Strings a translation may leave empty on purpose: the English hero line (D-139). */
-  const MAY_BE_EMPTY = new Set(["landing.HERO.eyebrow"]);
 
   /** Walks a translation against the Spanish source and lists every structural difference. */
   function differences(es: unknown, tr: unknown, path: string, out: string[]): string[] {
@@ -372,7 +370,7 @@ describe("the public site in Spanish, English and Galician (D-063)", () => {
       // The same marker object, so the gate cannot differ by language.
       if (tr !== es) out.push(`${path}: not the Spanish marker`);
     } else if (typeof es === "string") {
-      if (typeof tr !== "string" || (tr.trim() === "" && !MAY_BE_EMPTY.has(path))) out.push(`${path}: missing text`);
+      if (typeof tr !== "string" || (tr.trim() === "" && es.trim() !== "")) out.push(`${path}: missing text`);
     } else if (Array.isArray(es)) {
       if (!Array.isArray(tr) || tr.length !== es.length) out.push(`${path}: length differs`);
       else es.forEach((v, i) => differences(v, tr[i], `${path}[${i}]`, out));
@@ -602,9 +600,7 @@ describe("David's 2026-11-03 copy requests (D-139)", () => {
     expect(LANDING_COPY.en.ELIGIBILITY.criteriaItems).toContain("Live in Spain.");
   });
 
-  it("drops the English hero line but keeps the Spanish and Galician ones", () => {
-    expect(LANDING_COPY.en.HERO.eyebrow).toBe("");
-    expect(LANDING_COPY.es.HERO.eyebrow).toMatch(/asignación al azar/);
-    expect(LANDING_COPY.gl.HERO.eyebrow).toMatch(/asignación ao azar/);
+  it("drops the hero line in every language", () => {
+    for (const l of ["es", "en", "gl"] as const) expect(LANDING_COPY[l].HERO.eyebrow).toBe("");
   });
 });

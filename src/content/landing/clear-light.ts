@@ -69,7 +69,8 @@ export const NAV = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "Estudio de investigación en España con asignación al azar sobre una experiencia grupal de realidad virtual.",
+  // Removed at David's request (D-139): the criteria section already says it.
+  eyebrow: "",
   headline: "¿Puede una experiencia inmersiva transformar cómo nos relacionamos con la mortalidad?",
   support:
     "Este estudio investiga cómo una experiencia inmersiva y compartida influye en la salud mental y el bienestar de personas que viven con una enfermedad grave.",
