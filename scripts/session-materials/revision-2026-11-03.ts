@@ -75,6 +75,10 @@ export const REVISION_PAIRS: Record<string, [before: string, after: string][]> =
   ],
   "s2-preparacion": [
     [
+      "Hola, llega el momento de ponerse las gafas en grupo.",
+      "Hola, llega el momento de ponerse las gafas de realidad virtual.",
+    ],
+    [
       "Mueve una mano despacio. Fíjate en lo que pasa en el hombro, el pecho o la tripa. Luego déjala descansar. ¿Qué cambia cuando prestas atención al movimiento? Quedarse quieto también cuenta.",
       "Mueve una mano despacio. Fíjate en lo que pasa en el hombro, el pecho o la tripa. Luego déjala descansar. ¿Qué cambia cuando prestas atención al movimiento? Si prefieres no moverte, también está bien; puedes simplemente observar.",
     ],
@@ -217,3 +221,23 @@ export const CONTACT_PAIRS: [before: string, after: string][] = [
 export const FIELD_SWAPS: { field: string; before: string; after: string }[] = [
   { field: "contactUrl", before: "mailto:info@numadelic.org", after: "https://wa.me/34694269223" },
 ];
+
+/**
+ * Message templates (D-138): whole-sentence swaps inside `bodyEs`, keyed by
+ * template key. m01 gains the WhatsApp number; m08 and m23 give the visit
+ * length as the S0 page does (about two hours).
+ */
+export const TEMPLATE_PAIRS: Record<string, [before: string, after: string][]> = {
+  "m01-evaluacion-positiva": [
+    [
+      "Si tienes cualquier duda, escríbenos a info@numadelic.org o responde a este mensaje.",
+      "Si tienes cualquier duda, escríbenos por WhatsApp al +34 694 269 223 o a info@numadelic.org, o responde a este mensaje.",
+    ],
+  ],
+  "m08-s0-una-semana-antes": [
+    ["La visita durará como máximo una hora y media.", "La visita durará unas dos horas."],
+  ],
+  "m23-visita-post": [
+    ["La visita durará como máximo una hora y media.", "La visita durará unas dos horas."],
+  ],
+};

@@ -22,7 +22,9 @@ import {
   type RichTextDoc,
 } from "@/domain/rich-text";
 
-export const STUDY_EMAIL = "info@numadelic.org";
+import { STUDY_EMAIL, STUDY_WHATSAPP, STUDY_WHATSAPP_URL } from "@/content/contact";
+
+export { STUDY_EMAIL, STUDY_WHATSAPP, STUDY_WHATSAPP_URL };
 
 type DocNode = RichTextDoc["content"][number];
 
@@ -77,10 +79,6 @@ function video(url: string, caption: string): ContentBlock {
 function divider(): ContentBlock {
   return { type: "DIVIDER", style: "solid", thickness: "thin", color: "default" };
 }
-
-/** The study's WhatsApp line (D-137), as people read it and as a wa.me link. */
-export const STUDY_WHATSAPP = "+34 694 269 223";
-export const STUDY_WHATSAPP_URL = "https://wa.me/34694269223";
 
 /**
  * The closing "write to us" box: the doc's "[Botón: WhatsApp]" opens a chat
@@ -338,7 +336,7 @@ export const SESSION_PAGES: SessionPage[] = [
     title: "Tu primera sesión en grupo en realidad virtual",
     body: [
       section(
-        "Hola, llega el momento de ponerse las gafas en grupo.",
+        "Hola, llega el momento de ponerse las gafas de realidad virtual.",
         "Cuerpos de Luz es nuestra primera sesión juntos en realidad virtual. Conocerás tu forma de luz y las del resto del grupo, compartiremos una intención y exploraremos qué se siente al respirar, dar y recibir en este espacio compartido. También habrá momentos de escucha por parejas. Puedes pedir una pausa siempre que lo necesites.",
       ),
       callout(

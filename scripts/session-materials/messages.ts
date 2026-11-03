@@ -26,7 +26,7 @@ import type {
   CommunicationChannel,
   CommunicationStage,
 } from "@/domain/communication";
-import { STUDY_EMAIL } from "./pages";
+import { STUDY_EMAIL, STUDY_WHATSAPP } from "./pages";
 
 const PAGES = "https://numadelic.org/clearlight/estudio/sesiones";
 const page = (session: string, part: "preparacion" | "integracion") => `${PAGES}/${session}/${part}`;
@@ -66,7 +66,7 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
       "Hola, {{nombre}}:",
       "Gracias por tu interés en Clear Light. Hemos revisado tu solicitud y nos alegra decirte que cumples todos los criterios requeridos para participar en el estudio.",
       "En los próximos días nos pondremos en contacto contigo para darte más información y detalles sobre tu participación.",
-      `Si tienes cualquier duda, escríbenos a ${STUDY_EMAIL} o responde a este mensaje.`,
+      `Si tienes cualquier duda, escríbenos por WhatsApp al ${STUDY_WHATSAPP} o a ${STUDY_EMAIL}, o responde a este mensaje.`,
       "Un saludo,\nEl equipo de Clear Light",
     ),
   },
@@ -175,7 +175,7 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     sessionCode: "s0",
     nameEs: "08 · S0: una semana antes (quedar para la visita)",
     bodyEs: lines(
-      "¡Hola, {{nombre}}! Queremos quedar contigo para llevarte las gafas de realidad virtual y hacer juntos la primera sesión en tu casa. La visita durará como máximo una hora y media.",
+      "¡Hola, {{nombre}}! Queremos quedar contigo para llevarte las gafas de realidad virtual y hacer juntos la primera sesión en tu casa. La visita durará unas dos horas.",
       "¿Te viene bien alguno de estos días? {{instrucciones}}",
       "Si puede estar contigo la persona que te acompañe, mejor.\nEl equipo de Clear Light",
     ),
@@ -375,7 +375,7 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     sessionCode: "s6",
     nameEs: "23 · Visita POST: una semana después de S6",
     bodyEs: lines(
-      "¡Hola, {{nombre}}! Para terminar el programa, queremos pasar por tu casa para hacer el último cuestionario, tomar unas medidas fisiológicas y recoger las gafas. La visita durará como máximo una hora y media.",
+      "¡Hola, {{nombre}}! Para terminar el programa, queremos pasar por tu casa para hacer el último cuestionario, tomar unas medidas fisiológicas y recoger las gafas. La visita durará unas dos horas.",
       "¿Te viene bien alguno de estos días? {{instrucciones}}",
       "Gracias por todo lo que has compartido en este camino.\nEl equipo de Clear Light",
     ),

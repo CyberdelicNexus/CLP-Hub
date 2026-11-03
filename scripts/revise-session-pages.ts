@@ -2,7 +2,8 @@
  * One-time: apply Joana Vidal's 2026-11-03 review of the session pages (D-136)
  * to the LIVE pages, in Spanish and in Galician.
  *
- * It also puts the study's WhatsApp number in every page's contact box (D-137).
+ * It also puts the study's WhatsApp number in every page's contact box (D-137),
+ * and swaps three sentences in message templates m01, m08 and m23 (D-138).
  *
  * Unlike scripts/seed-session-materials.ts, this does not publish ./pages.ts
  * over the live text. It swaps only the strings, the block and the contact
@@ -43,8 +44,9 @@ async function main() {
   const s = await import("@/db/schema");
   const { bodySchema } = await import("@/domain/content");
   const content = await import("@/services/content");
+  const comms = await import("@/services/communications");
   const { SESSION_PAGES } = await import("./session-materials/pages");
-  const { REVISION_PAIRS, BLOCK_SWAPS, CONTACT_PAIRS, FIELD_SWAPS } = await import("./session-materials/revision-2026-11-03");
+  const { REVISION_PAIRS, BLOCK_SWAPS, CONTACT_PAIRS, FIELD_SWAPS, TEMPLATE_PAIRS } = await import("./session-materials/revision-2026-11-03");
   const { revisePage } = await import("./session-materials/revise");
 
   const gl = galicianTranslator(loadGalicianTable());
@@ -137,6 +139,42 @@ async function main() {
     }
   }
 
+  // Message templates: sentence swaps inside bodyEs (D-138).
+  const templatePlans: { key: string; id: string; nameEs: string; bodyEs: string; bodyEn: string | null; sessionTemplateId: string | null; active: boolean }[] = [];
+  for (const [key, pairs] of Object.entries(TEMPLATE_PAIRS)) {
+    const [t] = await db
+      .select()
+      .from(s.communicationTemplates)
+      .where(and(eq(s.communicationTemplates.studyId, study.id), eq(s.communicationTemplates.key, key)))
+      .limit(1);
+    if (!t) {
+      problems.push(`template ${key}: not found`);
+      continue;
+    }
+    let body = t.bodyEs;
+    let changed = 0;
+    for (const [before, after] of pairs) {
+      if (body.includes(before)) {
+        body = body.split(before).join(after);
+        changed++;
+      } else if (!body.includes(after)) problems.push(`template ${key}: not in the live text: ${before}`);
+    }
+    if (!changed) {
+      console.log(`message ${key}: already revised`);
+      continue;
+    }
+    console.log(`message ${key}: ${changed} change(s)`);
+    templatePlans.push({
+      key,
+      id: t.id,
+      nameEs: t.nameEs,
+      bodyEs: body,
+      bodyEn: t.bodyEn,
+      sessionTemplateId: t.sessionTemplateId,
+      active: t.active,
+    });
+  }
+
   if (gl.missing.size) {
     problems.push(`No Galician in galician.json for:\n- ${[...gl.missing].join("\n- ")}`);
   }
@@ -144,7 +182,9 @@ async function main() {
     throw new Error(`Nothing written. Fix these first:\n${problems.join("\n")}`);
   }
   if (dryRun) {
-    console.log(`\nDry run: ${plans.length} page version(s) would be published; nothing written.`);
+    console.log(
+      `\nDry run: ${plans.length} page version(s) and ${templatePlans.length} message template(s) would be updated; nothing written.`,
+    );
     return;
   }
 
@@ -161,6 +201,19 @@ async function main() {
     });
     await content.publishVersion({ ...base, versionId: draftId });
     console.log(`publish ${p.label}`);
+  }
+  // 3 · Message templates; every other field is passed through unchanged.
+  for (const t of templatePlans) {
+    await comms.updateTemplate({
+      ...base,
+      templateId: t.id,
+      nameEs: t.nameEs,
+      bodyEs: t.bodyEs,
+      bodyEn: t.bodyEn,
+      sessionTemplateId: t.sessionTemplateId,
+      active: t.active,
+    });
+    console.log(`update  message ${t.key}`);
   }
   console.log("\nDone.");
 }

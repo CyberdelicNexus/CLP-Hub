@@ -5789,10 +5789,8 @@ wording is used as written, apart from keeping the existing bold and lists.
   It goes live with D-136's run of `scripts/revise-session-pages.ts`, which swaps
   these two strings and the button link on all fourteen pages, Spanish and Galician,
   and keeps each page's cover image (the new version is drafted from the live one).
-- **Not changed.** The message templates (message 1 still says "escríbenos a
-  info@numadelic.org o responde a este mensaje"): re-running the seed would overwrite
-  template edits made in the Hub, so add the number there from the Hub if wanted.
-  The landing page's "CONTACTO" marker stays gated: it also waits on an alternative
+- **Not changed here.** The message templates (message 1 got the number in D-138). The
+  landing page's "CONTACTO" marker stays gated: it also waits on an alternative
   contact route and the registry link.
 - **Valérie's photo.** Her team card uses the photo the founder sent on 2026-11-03.
   The background was removed with rembg (`isnet-general-use`) into
@@ -5801,13 +5799,37 @@ wording is used as written, apart from keeping the existing bold and lists.
   not the backlit strands, so her face matches the others' size). Only her card was
   replaced; the other cards were not regenerated.
 
+## D-138 · 2026-11-03 · Founder decisions: floating WhatsApp button, message fixes, S2 heading
+
+The founder answered the open points left by D-136 and D-137.
+
+- **Floating WhatsApp button on every Clear Light page** (Joana's proposal: older
+  participants read WhatsApp, not email). `src/components/whatsapp-button.tsx`, placed
+  by a new `src/app/(public)/clearlight/layout.tsx`, so it is on the landing page,
+  `/participar`, the legal pages and the study pages, and not on the founder's home
+  page or the breathing guide. A plain `wa.me` link with a prefilled first line ("Hola,
+  tengo una pregunta sobre el estudio Clear Light."), opened in WhatsApp: no script and
+  nothing sent until the person presses send, so no cookie-policy change. Icon only on
+  phones, icon and "¿Dudas? Escríbenos" from `sm` up, bottom right, above the safe area.
+  A darker green than WhatsApp's (#0E7A6E) so the white label passes 4.5:1. While the
+  cookie banner is open it sits above the button. Copy in es/gl/en in
+  `src/content/contact.ts`, which is now also where the study's email and number live.
+- **Message templates.** Message 1 (eligibility email) now gives the WhatsApp number as
+  well as the email. **The S0 visit is about two hours**: messages 8 and 23 said "como
+  máximo una hora y media" and now say "La visita durará unas dos horas.", matching the
+  S0 page (this settles D-124's open question for the visit; message 23 is the closing
+  visit and follows the same answer). These go live with the same run of
+  `scripts/revise-session-pages.ts`, which swaps just those sentences in the live
+  templates and passes every other field (English body, session, active) through.
+- **S2 heading** takes Joana's change after all: "Hola, llega el momento de ponerse las
+  gafas de realidad virtual." (same script, both languages).
+
 ## Open questions for researchers
 
-- D-136: Joana suggested opening WhatsApp contact from the landing page and moving the
-  control group's emails (welcome, Qualtrics, follow-ups) to WhatsApp. José replied that
-  direct WhatsApp messages could be added alongside the email automations. Which
-  messages should go by WhatsApp, and should the landing page get a WhatsApp link (the
-  number, +34 694 269 223, exists since D-137)?
+- D-136: Joana suggested moving the control group's emails (welcome, Qualtrics,
+  follow-ups) to WhatsApp. José replied that direct WhatsApp messages could be added
+  alongside the email automations. Which of those messages should also go by WhatsApp?
+  (The landing page's WhatsApp link was settled in D-138.)
 
 - The breathing guide now keeps two things in the visitor's browser storage
   when a facilitator uses them (D-120): the panel mode and named saved
@@ -6057,10 +6079,9 @@ wording is used as written, apart from keeping the existing bold and lists.
   people who apply without understanding the two-group design, versus
   people who already knew what they wanted and the extra scroll was only
   friction? Nothing in the app can measure that today (no analytics, D-042).
-- D-124: the visit length differs between the S0 page ("2 horas") and
-  messages 8 and 23 ("como máximo una hora y media"), and the programme
-  configuration has S1 at 90 minutes where the S1 page says 1 hour. Which is
-  right?
+- D-124: the programme configuration has S1 at 90 minutes where the S1 page
+  says 1 hour. Which is right? (The visit length was settled in D-138: about
+  two hours.)
 - D-124: the resources table asks the team to choose between the two Montse
   Esquerda videos (S1 preparación and S1 integración). Both are in for now.
 - D-124: the control group's questionnaire emails (messages 3–6) are ready as

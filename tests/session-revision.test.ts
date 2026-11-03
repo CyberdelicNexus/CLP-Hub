@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { bodySchema } from "@/domain/content";
 import { SESSION_PAGES } from "../scripts/session-materials/pages";
-import { BLOCK_SWAPS, CONTACT_PAIRS, FIELD_SWAPS, REVISION_PAIRS } from "../scripts/session-materials/revision-2026-11-03";
+import { MESSAGE_TEMPLATES } from "../scripts/session-materials/messages";
+import { BLOCK_SWAPS, CONTACT_PAIRS, FIELD_SWAPS, REVISION_PAIRS, TEMPLATE_PAIRS } from "../scripts/session-materials/revision-2026-11-03";
 import { bodyStrings, revisePage } from "../scripts/session-materials/revise";
 import { galicianTranslator, loadGalicianTable } from "../scripts/session-materials/galician";
 
@@ -32,6 +33,17 @@ describe("2026-11-03 session page revision (D-136)", () => {
       const urls = p.body.flatMap((b) => (b.type === "SUPPORT_BOX" ? [b.contactUrl] : []));
       expect(urls.length).toBeGreaterThan(0);
       for (const url of urls) expect(url).toBe(FIELD_SWAPS[0].after);
+    }
+  });
+
+  it("messages.ts carries every template swap (D-138)", () => {
+    for (const [key, pairs] of Object.entries(TEMPLATE_PAIRS)) {
+      const t = MESSAGE_TEMPLATES.find((m) => m.key === key);
+      expect(t, key).toBeDefined();
+      for (const [before, after] of pairs) {
+        expect(t!.bodyEs).toContain(after);
+        expect(t!.bodyEs).not.toContain(before);
+      }
     }
   });
 
