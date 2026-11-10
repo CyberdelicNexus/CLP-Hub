@@ -90,7 +90,8 @@
         "applications": "Applications",
         "screeningPending": "Screenings pending",
         "eligible": "Eligible",
-        "enrolled": "Enrolled"
+        "enrolled": "Enrolled",
+        "completed": "Finished programme"
       },
       "noData": "No data",
       "myTasksTitle": "Your open tasks",
@@ -205,6 +206,23 @@
       "invalid": "The reference must be an identifier, not free text.",
       "duplicate": "A participant with that reference already exists in this study.",
       "failed": "Could not record it. Please try again."
+    },
+    "viewGallery": "Gallery",
+    "intakeButton": "Record a Qualtrics response",
+    "kpiLabel": "Applications and screening in numbers",
+    "card": {
+      "statusLabel": "Application status",
+      "noTransitions": "Final status",
+      "screeningWhen": "Screening date",
+      "schedule": "Schedule",
+      "screeningOn": "Screening: {date}",
+      "screeningResult": "Result: {result}",
+      "recordResult": "Record result",
+      "recordResultTitle": "Screening result · {code}",
+      "recordResultBoundary": "Record what the screening decided. The decision is not made here.",
+      "noResultTitle": "No result",
+      "openParticipant": "Open participant {code}",
+      "readOnlyScreening": "Read only: you cannot manage the screening."
     }
   },
   "participants": {
@@ -212,6 +230,9 @@
     "filterLabel": "Filter by eligibility",
     "all": "All",
     "backToList": "Back to participants",
+    "openCard": "Open {code}",
+    "showProperties": "Show properties",
+    "hideProperties": "Hide properties",
     "detailTitle": "Participant",
     "contactHidden": "You do not have permission to view contact details.",
     "contactName": {
@@ -240,12 +261,7 @@
     "externalRefHelp": "Identifier of the record in the approved system. An identifier only: do not type clinical information here.",
     "consent": "Consent",
     "consentHidden": "You do not have permission to view consent.",
-    "consentBoundary": "The consent status and document version are recorded here. The signed document is kept in the institution's approved system.",
-    "noConsents": "No consent recorded.",
-    "startConsent": "Start consent",
-    "startNewConsent": "Start a new version",
-    "consentVersion": "Document version",
-    "consentVersionHelp": "For example, “PIS v2.1”. A label, not the document.",
+    "consentBoundary": "Only the consent's status is recorded here. The signed document is kept in the centre's approved system.",
     "enrollmentTitle": "Participation",
     "eligibility": {
       "PENDING": "Not determined",
@@ -281,7 +297,8 @@
       "CONSENTED": "Consented",
       "DECLINED": "Declined",
       "WITHDRAWN": "Withdrawn",
-      "SUPERSEDED": "Superseded"
+      "SUPERSEDED": "Superseded",
+      "VOIDED": "Voided (ticked by mistake)"
     },
     "consentAction": {
       "CONSENTED": "Record consent",
@@ -316,19 +333,28 @@
     "reasonNote": "Operational note (optional)",
     "reasonNoteHelp": "One line of operational context, 280 characters maximum. Do not include clinical or health information.",
     "reasonNoneConfigured": "No reasons are configured for this outcome. Configure them before recording it.",
-    "consentTypeLabel": "Consent type",
+    "missingReason": "No reason recorded",
+    "addReason": "Add reason",
     "consentType": {
       "DIGITAL": "Digital (screening platform)",
       "PHYSICAL": "In person (signed at the initial visit)"
     },
-    "consentScopes": "Additional authorizations",
-    "consentScopesHelp": "Tick only what the person expressly authorized when signing. Nothing is ticked by default.",
     "consentMissing": "Consent still to be recorded: {types}.",
     "filterEnrollment": "Filter by enrollment status",
     "filterCohort": "Cohort",
     "filterArm": "Arm",
     "filterResponsible": "Responsible",
-    "filterAny": "All"
+    "filterAny": "All",
+    "digitalConsentRecorded": "Accepted in Qualtrics before applying.",
+    "digitalConsentPending": "Accepted in Qualtrics. The Hub records it by itself when the application passes to screening.",
+    "consentHistory": "History and withdrawal",
+    "physicalConsent": {
+      "check": "Physical consent signed",
+      "scopes": "Also authorizes:",
+      "undo": "Undo",
+      "notThisArm": "Their group does not sign a physical consent.",
+      "unallocated": "Signed in person if their group requires it. No group allocated yet."
+    }
   },
   "screening": {
     "subtitle": "Scheduled screenings still to happen.",
@@ -337,9 +363,61 @@
     "emptyTitle": "No screenings pending",
     "emptyDescription": "There is no screening scheduled at the moment.",
     "queueTitle": "Pending screenings",
-    "waitingForAllocation": "Eligible with no allocation"
+    "waitingForAllocation": "Eligible with no allocation",
+    "managedInApplications": "Screenings can also be scheduled and recorded from the cards in Applications.",
+    "goToApplications": "Go to Applications"
   },
   "cohorts": {
+    "plan": {
+      "title": "Communication plan",
+      "help": "This group has no sessions: it receives messages. Give each one a date and time. Emails that can go out on their own are sent at that time, one per person; the rest stay as reminders with the text ready to copy.",
+      "followedDates": "Dates of {code}",
+      "noFollowedDates": "The followed cohort has no sessions scheduled yet.",
+      "empty": "No messages in the plan yet.",
+      "template": "Message",
+      "when": "Date and time",
+      "add": "Add to plan",
+      "remove": "Remove from plan",
+      "copy": "Copy text",
+      "saved": "Plan saved.",
+      "automatic": "Sends itself",
+      "manual": "Copy and send by hand",
+      "manualReason": {
+        "channel": "It is a WhatsApp message: copy it and send it by hand.",
+        "audience": "It is a group message: copy it into the channel.",
+        "variables": "It has gaps to fill (date, link…). Write the link into the template so it can send itself; until then, copy it and send it by hand."
+      },
+      "status": {
+        "PLANNED": "Planned",
+        "SENT": "Sent",
+        "PARTIAL": "Partly sent",
+        "FAILED": "Not sent",
+        "CANCELLED": "Cancelled"
+      },
+      "error": {
+        "invalid": "Choose a message and a valid date.",
+        "locked": "That message has already been sent and cannot be changed."
+      }
+    },
+    "visits": {
+      "count": "{done} of {total} scheduled",
+      "when": "Visit date",
+      "saved": "Visit saved.",
+      "help": "Individual session: each participant has their own date.",
+      "helpDelivery": "Individual visit where the headset is delivered. Record the hand-over in VR logistics.",
+      "helpPickup": "Individual visit where the headset is picked up. Record the return in VR logistics.",
+      "noMembers": "The cohort has no participants yet.",
+      "error": {
+        "invalid": "The date is not valid.",
+        "notIndividual": "This is a group session: it is scheduled once for the whole cohort.",
+        "notMember": "That person is no longer in the cohort.",
+        "notBooked": "This visit has no date yet.",
+        "notConfigured": "This session does not collect a questionnaire.",
+        "hasRecord": "This visit's questionnaire is ticked. Untick it before removing the date."
+      },
+      "questionnaire": "Questionnaire collected in person",
+      "questionnaireNeedsDate": "Book the visit's date first."
+    },
     "subtitle": "Groups of participants who go through the programme together.",
     "scopedNotice": "You see only the cohorts you facilitate.",
     "backToList": "Back to cohorts",
@@ -434,7 +512,7 @@
       "deleteReasonRequired": "Write a reason before deleting the cohort.",
       "failed": "The change could not be saved. Please try again.",
       "armMismatch": "This person's allocated arm is not the arm this cohort runs.",
-      "armNotRecorded": "This cohort runs one arm and no allocation has been recorded for this person yet.",
+      "armNotRecorded": "This cohort runs one arm and no allocation has been recorded for this person yet. Record it first on their page (Participants → Placement).",
       "sameCohort": "They are already in that cohort.",
       "sizeUnder": "The cohort is below its configured minimum.",
       "sizeOver": "The cohort is above its configured maximum.",
@@ -594,7 +672,15 @@
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
     "more": "+{count} more",
-    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    "weekdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ]
   },
   "content": {
     "language": {
@@ -775,7 +861,7 @@
   "flow": {
     "title": "Study flow",
     "note": "Aggregate counts for the flow diagram. No percentages and no individual records: the figures are read alongside the study's approved system.",
-    "unreasoned": "{count, plural, one {# exclusion has no recorded reason} other {# exclusions have no recorded reason}}. Complete them so they appear in the diagram.",
+    "unreasoned": "{count, plural, one {# exclusion has no recorded reason} other {# exclusions have no recorded reason}}. Open each one and use “Add reason” in its screening history so it appears in the diagram:",
     "stages": "Stages",
     "notAssessed": "Screenings with no outcome",
     "exclusions": "Exclusion reasons",
@@ -816,22 +902,20 @@
     "title": "Initial visit and responsibles",
     "responsibles": "Responsibles",
     "role": {
-      "INITIAL_SESSION": "Responsible for the initial session",
-      "VR_EQUIPMENT": "Responsible for the headset"
+      "INITIAL_SESSION": "Initial session",
+      "VR_EQUIPMENT": "Headset"
     },
     "unassigned": "Unassigned",
     "assign": "Assign",
-    "replace": "Change responsible",
-    "revoke": "Leave unassigned",
+    "replace": "Change",
+    "revoke": "Remove",
     "person": "Person",
     "noCandidates": "No staff are available in this study.",
     "noVisibilityNote": "Being responsible for a person does not widen what you can see in the application: it is a work assignment.",
     "visit": "Initial visit",
     "noVisits": "No visit has been recorded yet.",
-    "scheduleVisit": "Schedule visit",
     "recordVisit": "Record outcome",
     "saveNotes": "Save notes",
-    "when": "Date and time",
     "location": "Location",
     "outcome": "Outcome",
     "notes": "Operational notes",
@@ -850,13 +934,13 @@
     "error": {
       "visitAlreadyOpen": "There is already a visit scheduled for this person.",
       "notesTooLong": "The notes exceed the maximum length."
-    }
+    },
+    "bookOnCard": "The date is booked on the person's card, inside their cohort."
   },
   "nextStep": {
     "outstandingTitle": "Still to record",
     "RECORD_SCREENING_RESULT": "Record the screening outcome",
     "SCHEDULE_SCREENING": "Schedule screening",
-    "RECORD_DIGITAL_CONSENT": "Record the digital consent",
     "RECORD_ALLOCATION": "Record the arm allocation",
     "ASSIGN_COHORT": "Assign to a cohort",
     "RECORD_PHYSICAL_CONSENT": "Record the in-person consent",
@@ -916,7 +1000,17 @@
       "content_version__published": "Version published",
       "content_version__saved": "Version saved",
       "content_version__status_changed": "Version status changed",
+      "device__updated": "Device edited",
+      "device__deleted": "Device deleted from inventory",
+      "device__deactivated": "Device retired from inventory",
+      "visit__scheduled": "Individual visit scheduled",
+      "visit__rescheduled": "Individual visit rescheduled",
+      "visit__cleared": "Individual visit date cleared",
+      "cohort_plan__added": "Message added to the cohort plan",
+      "cohort_plan__rescheduled": "Planned message rescheduled",
+      "cohort_plan__removed": "Message removed from the cohort plan",
       "device__created": "Device registered",
+      "device__location_changed": "Device location changed",
       "device__status_changed": "Device status changed",
       "device_assignment__closed": "Device logistics closed",
       "device_assignment__created": "Device assigned",
@@ -949,6 +1043,7 @@
       "scheduled_action__skipped": "Scheduled action skipped",
       "screening__closed": "Screening closed without a result",
       "screening__completed": "Screening completed",
+      "screening__reason_completed": "Missing exclusion reason added",
       "screening__scheduled": "Screening scheduled",
       "session__register_refreshed": "Register refreshed",
       "session__scheduled": "Session scheduled",
@@ -969,10 +1064,52 @@
       "user_role__revoked": "Role revoked",
       "communication__sent_automatically": "Email sent automatically",
       "scheduled_action__sent": "Scheduled action sent by email",
-      "study_arm__created": "Study group created"
+      "study_arm__created": "Study group created",
+      "consent__digital_recorded": "Digital consent recorded from Qualtrics",
+      "consent__physical_recorded": "Physical consent marked as signed",
+      "consent__voided": "Consent voided as a recording error",
+      "visit__questionnaire_recorded": "Questionnaire marked as collected",
+      "visit__questionnaire_cleared": "Questionnaire unticked",
+      "initial_visit__rescheduled": "Initial visit moved to another date"
     }
   },
   "logistics": {
+    "tabAllocation": "Allocation",
+    "tabIncidents": "Incidents",
+    "tabInventory": "Inventory",
+    "tabMap": "Map",
+    "viewCards": "Cards",
+    "allCohorts": "All",
+    "allParticipants": "Back to everyone",
+    "dates": "Dates",
+    "datesHelp": "These are the same visits as in the cohort: changing the date here changes it there. Booking one does not move the headset.",
+    "location": "Location",
+    "locationHelp": "Where the headset is: office, street, area or city. Erased when it comes back.",
+    "locationMapHint": "You can also click the map to place or move the pin. Press Save to keep it.",
+    "locationSearch": "Search",
+    "locationSearchHelp": "Search sends this text to OpenStreetMap: do not type names.",
+    "locationSearchNone": "That place was not found. Try the street and city, or click the map.",
+    "locationSearchFailed": "The search is not available right now. Try again, or click the map.",
+    "locationSearchShort": "Type at least three letters.",
+    "locationSearchPick": "Which of these places is it?",
+    "locationClearPin": "Remove the pin",
+    "mapHelp": "Only headsets with a pin placed by hand appear. The map and the search use OpenStreetMap, which receives the area you are viewing and the text you search for.",
+    "noPinTitle": "No pin on the map",
+    "allocationTitle": "Headsets by participant",
+    "allocationHelp": "Planned dates come from the individual visits (S0 for delivery, POST for pickup), set on the cohort.",
+    "noAllocations": "No participants in cohorts with sessions.",
+    "cohort": "Cohort",
+    "delivery": "Delivery",
+    "pickup": "Pickup",
+    "planned": "planned",
+    "done": "done",
+    "noHeadset": "No headset allocated",
+    "otherAssignments": "Outside an active cohort",
+    "edit": "Edit",
+    "editTitle": "Edit device",
+    "remove": "Remove from inventory",
+    "removeConfirm": "Remove?",
+    "codeHelp": "Letters, numbers and hyphens; spaces become hyphens (e.g. QUEST-01).",
     "subtitle": "Headset tracking: what is out, what it needs, and what has gone wrong.",
     "summary": "Logistics summary",
     "available": "Available",
@@ -993,14 +1130,12 @@
     "expectedReturn": "Return expected",
     "expectedReturnHelp": "Flagged only once the date has actually passed.",
     "returned": "Returned",
-    "setupStatus": "Setup status",
     "newDeviceStatus": "New device status",
     "assign": "Assign device",
     "noAvailableDevices": "No devices are available to assign.",
     "recordHandOver": "Record hand-over",
     "recordReceipt": "Record receipt",
     "recordReturn": "Record return",
-    "reportReadiness": "Record setup",
     "close": "Close logistics",
     "move": "Change status",
     "addDevice": "Add device",
@@ -1027,12 +1162,6 @@
       "CLEANING": "Cleaning",
       "MAINTENANCE": "Maintenance"
     },
-    "readiness": {
-      "UNKNOWN": "Setup unconfirmed",
-      "READY": "Set up",
-      "NOT_READY": "Not set up",
-      "NEEDS_SUPPORT": "Needs help"
-    },
     "incidentKind": {
       "NOT_DELIVERED": "Not delivered",
       "DAMAGED": "Damaged",
@@ -1047,7 +1176,6 @@
       "PREPARE_DEVICE": "Prepare the device",
       "HAND_OVER_OR_SHIP": "Hand over or ship",
       "CONFIRM_RECEIPT": "Confirm receipt",
-      "CONFIRM_SETUP": "Confirm setup",
       "REQUEST_RETURN": "Request return",
       "CONFIRM_RETURN": "Confirm return",
       "RESOLVE_INCIDENT": "Resolve incident",
@@ -1055,6 +1183,8 @@
       "NONE": "Nothing outstanding"
     },
     "error": {
+      "notHandoff": "That visit is not a delivery or a pickup.",
+      "invalidCode": "The code may only contain letters, numbers and hyphens (e.g. QUEST-01).",
       "invalid": "The data is not valid, or that status change is not allowed.",
       "notFound": "Record not found.",
       "duplicateCode": "A device with that code already exists.",
@@ -1178,7 +1308,6 @@
       "PREPARE_DEVICE": "Prepare the device",
       "HAND_OVER_OR_SHIP": "Hand over or ship",
       "CONFIRM_RECEIPT": "Confirm receipt",
-      "CONFIRM_SETUP": "Confirm setup",
       "REQUEST_RETURN": "Request return",
       "CONFIRM_RETURN": "Confirm return",
       "RESOLVE_INCIDENT": "Resolve incident",
@@ -1200,6 +1329,9 @@
     "trelloNotConnected": "Trello is not connected.",
     "trelloNotConnectedHelp": "Add TRELLO_BOARD_URL (a board's URL with public link sharing turned on) to the environment variables to see it here. It's a view only — nothing in Trello is updated from this application.",
     "trelloOpen": "View the board on Trello",
+    "trelloEmptyList": "No cards",
+    "trelloReadOnly": "Read only. Changes are made in Trello.",
+    "trelloDone": "Done",
     "open": "Open",
     "overdue": "Overdue",
     "done": "Done",
@@ -1261,6 +1393,7 @@
     "answeredNote": "Answered by {name} on {when}. The inquiry text and the reply have been erased.",
     "closedNote": "Closed without a reply by {name} on {when}. The inquiry text has been erased.",
     "handledBy": "By",
+    "teamLabel": "Team",
     "listAria": "Inquiry list",
     "replyLabel": "Your reply",
     "placeholder": "Write your reply",
@@ -1460,6 +1593,12 @@
     "notifyStaffOfInquiries": "Also notify the people who answer inquiries of each new one (otherwise only the team mailbox)"
   },
   "program": {
+    "scheduling": {
+      "GROUP": "Group",
+      "INDIVIDUAL_NONE": "Individual",
+      "INDIVIDUAL_DELIVERY": "Individual · headset delivery",
+      "INDIVIDUAL_PICKUP": "Individual · headset pickup"
+    },
     "title": "Programme",
     "showEditing": "Show programme and session editing",
     "boundary": "Stages and sessions are this study's configuration: every cohort goes through the same programme. Scheduling a session for a specific cohort happens on that cohort's own page, not here.",
@@ -1474,6 +1613,8 @@
     "deactivate": "Deactivate",
     "inactive": "Inactive",
     "field": {
+      "scheduling": "How it is scheduled",
+      "schedulingHelp": "Group: one date for the whole cohort. Individual: each participant has their own visit, which can be when the headset is delivered or picked up.",
       "code": "Code",
       "codeWarning": "Changing the code breaks any link already shared with the old address (e.g. /clearlight/estudio/sesiones/s0/preparacion for the code s0): there is no automatic redirect.",
       "stageCodeHelp": "Internal lowercase identifier, e.g. \"s0\". Can be renamed later from the list if needed.",
@@ -1486,10 +1627,16 @@
       "duration": "Duration (minutes)",
       "dayOffset": "Day relative to start",
       "dayOffsetHelp": "Days after the cohort's planned start date. Optional.",
-      "position": "Order"
+      "position": "Order",
+      "visitChecks": "What the visit collects"
     },
     "errors": {
       "duplicateCode": "A stage or session with that code already exists in this study."
+    },
+    "visitCheck": {
+      "PHYSICAL_CONSENT": "Physical consent signed",
+      "QUESTIONNAIRE": "Questionnaire in person",
+      "INITIAL_VISIT": "It is the initial visit (responsible, place, notes and outcome)"
     }
   },
   "arms": {

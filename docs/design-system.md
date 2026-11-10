@@ -131,6 +131,47 @@ audited or synced.
 - A global `prefers-reduced-motion` block collapses all animation and disables
   smooth scrolling.
 
+### Edge glow and hover (2026-11-09 polish pass)
+
+- `.edge-glow` (globals.css) is the one glow: a 1.5px ring whose light follows
+  the pointer, plus a soft halo in `--glow-color`. Pointer tracking comes from
+  `CohortWorkspace`, the Kanban, or `<GlowTracker>`
+  (`src/components/team/glow-tracker.tsx`) for server components.
+- Application cards glow too, in both the gallery and the Kanban, coloured by
+  their status badge's colour (`applicationGlowColor`). Neutral statuses keep
+  the brand glow.
+- Kanban `tintColumns` washes each column's background in its status colour
+  (10 %, 6 % for neutral, mixed against `--card`; stronger while a card is
+  dragged over it). The participants board uses it.
+- Consultas chat: the person's message is a left bubble in sky blue
+  (`.chat-them`), the team's side a right bubble in the brand purple
+  (`.chat-team`), each with its edge glow on at rest. The reply box carries a
+  faint purple wash (`.chat-team-composer`).
+- `.scroll-autohide` hides a scroll box's bar until the pointer is over it or
+  it scrolls (`.is-scrolling`). The space stays reserved, so nothing shifts. Used
+  on the open cohort list.
+- `<details data-popover>` behaves as a dropdown: `<PopoverDetails>` in the
+  team shell closes it when an option is chosen, on an outside click, on Escape
+  and on navigation. Collapsible sections stay plain `<details>`. Used by the
+  Participants filters.
+- `.glow-tight` on a scroll box keeps the halo inside 1rem of side room. The
+  open cohort list uses it so the glow fades out instead of being cut against
+  the sidebar.
+- `.glow-idle` keeps the ring and a halo on at rest, with a larger light
+  (`--glow-size: 42rem`) so it reaches along a wide panel (Requiere atención).
+  Cards in a warning column glow in `--status-warning-fg`. A gradient rule under
+  the title was tried and rejected the same day.
+- `.session-toggle` is the cohort programme rows' hover: a brand wash, a
+  hairline ring, and the stage glyph scaling and tilting. Reduced motion keeps
+  the colour and drops the movement.
+- The overview's counts are compact chips on one line under the study title,
+  all the same width. Titles wrap to two lines, with the space reserved so the
+  numbers align, and a screen too narrow for them scrolls the row sideways
+  rather than wrapping it. They include "Programa completado" (enrollment
+  COMPLETED) and one chip per active study arm, counting recorded allocations
+  and labelled with the arm's configured name, so the code never picks out the
+  control group (rule 6). The arm chips need `randomization.read`.
+
 ## Theming
 
 `next-themes` with `attribute="class"`, `defaultTheme="system"`. `<html>` carries

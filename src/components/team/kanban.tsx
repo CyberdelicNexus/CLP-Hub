@@ -48,7 +48,11 @@ export function Kanban<T>({
   getId,
   getColumnId,
   renderCard,
+  renderDragPreview,
+  getGlowColor,
+  tintColumns = false,
   isValidTarget,
+  confirmMove,
   onMove,
   moveErrorFallback,
   readOnly = false,
@@ -67,8 +71,24 @@ export function Kanban<T>({
   getId: (item: T) => string;
   getColumnId: (item: T) => string;
   renderCard: (item: T) => React.ReactNode;
+  /** The card under the pointer, for a card whose controls can't exist twice. */
+  renderDragPreview?: (item: T) => React.ReactNode;
+  /**
+   * Passing this gives the cards the cohort cards' edge glow (`.edge-glow`).
+   * Returns the card's colour, or null for the default one.
+   */
+  getGlowColor?: (item: T) => string | null;
+  /** Wash each column's background lightly in its `tone` colour. */
+  tintColumns?: boolean;
   /** Drag-time hint only — see the component doc comment. Omit to allow any column. */
   isValidTarget?: (item: T, toColumnId: string) => boolean;
+  /**
+   * Runs on a drop, before the card moves, for a board that has to ask something
+   * first. Resolving false cancels the drop. It sits outside the transition
+   * because a dialog opened inside one would not render until the transition
+   * ended, which is waiting for that dialog.
+   */
+  confirmMove?: (item: T, toColumnId: string) => Promise<boolean>;
   onMove: (itemId: string, toColumnId: string) => Promise<{ ok: boolean; error?: string }>;
   moveErrorFallback: string;
   /** Viewer lacks the manage permission: render the board without drag handles. */
@@ -99,17 +119,26 @@ export function Kanban<T>({
   }, [items, columns, optimisticColumns, getId, getColumnId]);
 
   const activeItem = activeId ? items.find((i) => getId(i) === activeId) : null;
+  const glowFor = (item: T) => (getGlowColor ? edgeGlow(getGlowColor(item)) : undefined);
 
   if (readOnly) {
     return (
       <div className="grid auto-cols-[18rem] grid-flow-col gap-4 overflow-x-auto pb-2">
         {columns.map((column) => (
-          <StaticColumn key={column.id} column={column}>
-            {(byColumn.get(column.id) ?? []).map((item) => (
-              <div key={getId(item)} className="rounded-xl bg-card p-3 shadow-soft">
-                {renderCard(item)}
-              </div>
-            ))}
+          <StaticColumn key={column.id} column={column} tint={tintColumns}>
+            {(byColumn.get(column.id) ?? []).map((item) => {
+              const glow = glowFor(item);
+              return (
+                <div
+                  key={getId(item)}
+                  style={glow?.style}
+                  onPointerMove={glow?.onPointerMove}
+                  className={cn("rounded-xl bg-card p-3 shadow-soft", glow?.className)}
+                >
+                  {renderCard(item)}
+                </div>
+              );
+            })}
           </StaticColumn>
         ))}
       </div>
@@ -120,7 +149,7 @@ export function Kanban<T>({
     setActiveId(String(event.active.id));
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
     const itemId = String(event.active.id);
     const toColumnId = event.over?.id ? String(event.over.id) : null;
@@ -128,6 +157,7 @@ export function Kanban<T>({
     if (!item || !toColumnId) return;
     if (getColumnId(item) === toColumnId) return;
     if (isValidTarget && !isValidTarget(item, toColumnId)) return;
+    if (confirmMove && !(await confirmMove(item, toColumnId))) return;
 
     startTransition(async () => {
       moveOptimistic({ id: itemId, columnId: toColumnId });
@@ -154,18 +184,60 @@ export function Kanban<T>({
             column={column}
             disabled={Boolean(activeItem && isValidTarget && !isValidTarget(activeItem, column.id))}
             isDragging={activeId !== null}
+            tint={tintColumns}
           >
             {(byColumn.get(column.id) ?? []).map((item) => (
-              <KanbanCard key={getId(item)} id={getId(item)}>
+              <KanbanCard key={getId(item)} id={getId(item)} glow={glowFor(item)}>
                 {renderCard(item)}
               </KanbanCard>
             ))}
           </KanbanColumnBody>
         ))}
       </div>
-      <DragOverlay>{activeItem ? <div className="rotate-1 opacity-90">{renderCard(activeItem)}</div> : null}</DragOverlay>
+      <DragOverlay>
+        {activeItem ? (
+          <div className="rotate-1 rounded-xl bg-card p-3 opacity-90 shadow-soft">
+            {(renderDragPreview ?? renderCard)(activeItem)}
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
+}
+
+/** The props that turn a card into a `.edge-glow` one, whose light follows the pointer. */
+function edgeGlow(color: string | null) {
+  return {
+    className: "edge-glow",
+    style: color ? ({ "--glow-color": color } as React.CSSProperties) : undefined,
+    onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--glow-x", `${e.clientX - r.left}px`);
+      e.currentTarget.style.setProperty("--glow-y", `${e.clientY - r.top}px`);
+    },
+  };
+}
+
+/** A column's status colour as a CSS colour, for `tintColumns`. Neutral has
+ * no status token of its own, so it borrows the muted ink. */
+const TONE_INK: Record<NonNullable<KanbanColumnDef["tone"]>, string> = {
+  neutral: "var(--muted-foreground)",
+  success: "var(--status-success-fg)",
+  warning: "var(--status-warning-fg)",
+  critical: "var(--status-critical-fg)",
+  info: "var(--status-info-fg)",
+};
+
+/**
+ * The column's background lightly washed in its status colour (2026-11-09,
+ * participants board), mixed against --card so it holds in both themes; a
+ * little stronger while a card is dragged over it. Undefined keeps the plain
+ * muted column.
+ */
+function columnTint(column: KanbanColumnDef, tint: boolean, over = false): React.CSSProperties | undefined {
+  if (!tint || !column.tone) return undefined;
+  const pct = column.tone === "neutral" ? (over ? 12 : 6) : over ? 20 : 10;
+  return { backgroundColor: `color-mix(in oklch, ${TONE_INK[column.tone]} ${pct}%, var(--card))` };
 }
 
 const TONE_DOT: Record<NonNullable<KanbanColumnDef["tone"]>, string> = {
@@ -179,9 +251,17 @@ const TONE_DOT: Record<NonNullable<KanbanColumnDef["tone"]>, string> = {
 /** Non-interactive column shell for `readOnly`, with no `useDroppable` — it
  * never renders without a surrounding `DndContext`, which the read-only path
  * skips entirely rather than mounting an inert one. */
-function StaticColumn({ column, children }: { column: KanbanColumnDef; children: React.ReactNode }) {
+function StaticColumn({
+  column,
+  tint,
+  children,
+}: {
+  column: KanbanColumnDef;
+  tint: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex min-h-24 flex-col gap-2 rounded-2xl bg-muted/40 p-3">
+    <div className="flex min-h-24 flex-col gap-2 rounded-2xl bg-muted/40 p-3" style={columnTint(column, tint)}>
       <h3 className="flex items-center gap-2 px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {column.tone ? (
           <span className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[column.tone])} aria-hidden />
@@ -197,11 +277,13 @@ function KanbanColumnBody({
   column,
   disabled,
   isDragging,
+  tint,
   children,
 }: {
   column: KanbanColumnDef;
   disabled: boolean;
   isDragging: boolean;
+  tint: boolean;
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id, disabled });
@@ -210,6 +292,7 @@ function KanbanColumnBody({
   return (
     <div
       ref={setNodeRef}
+      style={columnTint(column, tint, isOver && !disabled)}
       className={cn(
         "flex min-h-24 flex-col gap-2 rounded-2xl bg-muted/40 p-3 transition-colors duration-150",
         isOver && !disabled && "bg-muted/70 ring-2 ring-ring/50",
@@ -228,7 +311,15 @@ function KanbanColumnBody({
   );
 }
 
-function KanbanCard({ id, children }: { id: string; children: React.ReactNode }) {
+function KanbanCard({
+  id,
+  glow,
+  children,
+}: {
+  id: string;
+  glow?: ReturnType<typeof edgeGlow>;
+  children: React.ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
@@ -237,12 +328,14 @@ function KanbanCard({ id, children }: { id: string; children: React.ReactNode })
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...glow?.style }}
       {...listeners}
       {...attributes}
+      onPointerMove={glow?.onPointerMove}
       className={cn(
         "cursor-grab touch-none rounded-xl bg-card p-3 shadow-soft transition-shadow duration-150 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none active:cursor-grabbing",
         isDragging && "opacity-30",
+        glow?.className,
       )}
     >
       {children}

@@ -44,6 +44,17 @@ timestamp, and 'PENDING' is rejected as a result.
 
 Today that boundary is a documented convention, not a database constraint. The form warns applicants not to include health information and caps free text at 1000 characters, but nothing prevents a future admin UI from configuring a prohibited question. Enforcing it in the database is an open question.
 
+### How the headset map holds the line
+
+A headset out with a participant is at their home, so `devices.location_*`
+(D-143) is treated as Category A contact data, not as equipment. It needs
+`participants.contact.read`, is erased when the headset comes back, and is never
+copied into an audit snapshot. Map tiles come from OpenStreetMap, which sees the
+area viewed. A location search (D-145) sends it the typed text, which can be a
+home address, from the server and only when someone presses Buscar, with no
+participant, code or study attached; whether that is acceptable is an open
+question for the institution.
+
 ### How Phase 4a holds the line
 
 The initial screening lives in Qualtrics, and so does its identifiable half. CLP
@@ -148,7 +159,7 @@ and no reply column: this application never holds a WhatsApp conversation.
 ## Privacy and governance items (open)
 
 1. **Hosting approval.** Vercel + Supabase regions are not yet approved for real participants. Until they are, only synthetic data may exist in any environment.
-2. **Public form abuse protection.** The application form has only a honeypot and a fill-time floor (D-015). A captcha or WAF plus IP rate limiting is required before it accepts real traffic. IP addresses are deliberately not stored, as that would add a data category with no approved purpose.
+2. **Public form abuse protection.** The application form has only a honeypot and a fill-time floor (D-015). Rate limiting is to be done by Vercel WAF rules (D-147, rules in `docs/load-testing.md`); until someone sets them up in the Vercel project, there is none. A captcha is deferred to the privacy review. IP addresses are deliberately not stored here, as that would add a data category with no approved purpose.
 3. **Right to erasure vs. append-only audit.** Proposed approach: pseudonymize contact data on request while keeping operational history keyed by participant code. Needs researcher / DPO sign-off.
 4. **Audit snapshots may contain PII.** `before_json`/`after_json` can include contact fields. Access requires `audit.read`; retention policy to be defined. Phase 1 deliberately keeps them out: recruitment audit rows identify the person by `participants.code` and record answer *counts*, never names, emails or answer text. Later phases should follow the same rule.
 5. **Public content pages** must never embed participant data or unguessable-but-personal state; they are the same for everyone. Implemented in Phase 5: `/estudio/…` pages take no session, read only PUBLISHED content, and render identically for every reader. The URL names a study session, never a cohort or a person — which version a cohort was pinned to is internal (D-028).

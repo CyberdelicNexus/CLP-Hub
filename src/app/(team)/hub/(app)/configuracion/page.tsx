@@ -16,7 +16,7 @@ import {
   parseConditions,
 } from "@/domain/automation";
 import { LOCALES } from "@/domain/locale";
-import { SESSION_MODALITIES } from "@/domain/session";
+import { SESSION_MODALITIES, VISIT_CHECKS } from "@/domain/session";
 import { STUDY_STATUSES } from "@/domain/study";
 import { listRules } from "@/services/automation";
 import { listStudyArms } from "@/services/cohorts";
@@ -263,6 +263,11 @@ export default async function SettingsPage() {
                                 <span className="font-medium">{tpl.nameEs}</span>
                                 <StatusBadge tone="neutral">{t(`sessions.modality.${tpl.modality}`)}</StatusBadge>
                                 {stage ? <StatusBadge tone="neutral">{stage.nameEs}</StatusBadge> : null}
+                                {tpl.attendance === "INDIVIDUAL" ? (
+                                  <StatusBadge tone="info">
+                                    {t(`program.scheduling.INDIVIDUAL_${tpl.deviceHandoff}`)}
+                                  </StatusBadge>
+                                ) : null}
                                 {!tpl.active ? (
                                   <StatusBadge tone="neutral">{t("program.inactive")}</StatusBadge>
                                 ) : null}
@@ -291,6 +296,16 @@ export default async function SettingsPage() {
                                   dayOffsetHelp: t("program.field.dayOffsetHelp"),
                                   position: t("program.field.position"),
                                   saved: t("settings.saved"),
+                                  scheduling: t("program.field.scheduling"),
+                                  schedulingHelp: t("program.field.schedulingHelp"),
+                                  visitChecks: t("program.field.visitChecks"),
+                                  visitCheckOptions: VISIT_CHECKS.map((value) => ({
+                                    value,
+                                    label: t(`program.visitCheck.${value}`),
+                                  })),
+                                  schedulingOptions: ["GROUP", "INDIVIDUAL:NONE", "INDIVIDUAL:DELIVERY", "INDIVIDUAL:PICKUP"].map(
+                                    (value) => ({ value, label: t(`program.scheduling.${value.replace(":", "_")}`) }),
+                                  ),
                                 }}
                               />
                               <div className="mt-3 border-t border-border pt-3">

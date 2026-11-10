@@ -11,6 +11,7 @@ import {
 } from "@/domain/automation";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
+import { parseStudyLocal } from "@/lib/study-time";
 import { assignTask, closeTask, createTask, NotFoundError } from "@/services/automation";
 
 /**
@@ -84,9 +85,8 @@ export async function createTaskAction(_prev: TaskState, formData: FormData): Pr
       titleEs: parsed.data.titleEs,
       detail: parsed.data.detail,
       priority: parsed.data.priority,
-      // End of the day in the study's own timezone would need a library; the
-      // date alone is what the team types and what the list sorts on.
-      dueAt: parsed.data.dueAt ? new Date(`${parsed.data.dueAt}T23:59:00`) : null,
+      // End of that day in the study's own timezone (D-136), not the server's.
+      dueAt: parsed.data.dueAt ? parseStudyLocal(`${parsed.data.dueAt}T23:59`, ctx.study.timezone) : null,
       assignedTo: parsed.data.assignedTo || null,
       participantId: parsed.data.participantId || null,
       cohortId: parsed.data.cohortId || null,

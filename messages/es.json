@@ -90,7 +90,8 @@
         "applications": "Solicitudes",
         "screeningPending": "Evaluaciones pendientes",
         "eligible": "Elegibles",
-        "enrolled": "Inscritos"
+        "enrolled": "Inscritos",
+        "completed": "Programa completado"
       },
       "noData": "Sin datos",
       "myTasksTitle": "Tus tareas abiertas",
@@ -205,6 +206,23 @@
       "invalid": "La referencia debe ser un identificador, no texto libre.",
       "duplicate": "Ya existe un participante con esa referencia en este estudio.",
       "failed": "No se pudo registrar. Inténtalo de nuevo."
+    },
+    "viewGallery": "Galería",
+    "intakeButton": "Registrar respuesta de Qualtrics",
+    "kpiLabel": "Solicitudes y evaluación en cifras",
+    "card": {
+      "statusLabel": "Estado de la solicitud",
+      "noTransitions": "Estado final",
+      "screeningWhen": "Fecha de la evaluación",
+      "schedule": "Agendar",
+      "screeningOn": "Evaluación: {date}",
+      "screeningResult": "Resultado: {result}",
+      "recordResult": "Registrar resultado",
+      "recordResultTitle": "Resultado de la evaluación · {code}",
+      "recordResultBoundary": "Registra lo que se decidió en la evaluación. La decisión no se toma aquí.",
+      "noResultTitle": "Sin resultado",
+      "openParticipant": "Abrir participante {code}",
+      "readOnlyScreening": "Solo lectura: no puedes gestionar la evaluación."
     }
   },
   "participants": {
@@ -212,6 +230,9 @@
     "filterLabel": "Filtrar por elegibilidad",
     "all": "Todas",
     "backToList": "Volver a participantes",
+    "openCard": "Abrir a {code}",
+    "showProperties": "Mostrar propiedades",
+    "hideProperties": "Ocultar propiedades",
     "detailTitle": "Participante",
     "contactHidden": "No tienes permiso para ver los datos de contacto.",
     "contactName": {
@@ -240,12 +261,7 @@
     "externalRefHelp": "Identificador del registro en el sistema autorizado. Solo un identificador: no escribas aquí información clínica.",
     "consent": "Consentimiento",
     "consentHidden": "No tienes permiso para ver el consentimiento.",
-    "consentBoundary": "Aquí se registra el estado del consentimiento y la versión del documento. El documento firmado se conserva en el sistema autorizado del centro.",
-    "noConsents": "No hay consentimientos registrados.",
-    "startConsent": "Iniciar consentimiento",
-    "startNewConsent": "Iniciar nueva versión",
-    "consentVersion": "Versión del documento",
-    "consentVersionHelp": "Por ejemplo, «HIP v2.1». Una etiqueta, no el documento.",
+    "consentBoundary": "Aquí solo se registra el estado del consentimiento. El documento firmado se conserva en el sistema autorizado del centro.",
     "enrollmentTitle": "Participación",
     "eligibility": {
       "PENDING": "Sin determinar",
@@ -281,7 +297,8 @@
       "CONSENTED": "Consentido",
       "DECLINED": "Rechazado",
       "WITHDRAWN": "Retirado",
-      "SUPERSEDED": "Sustituido"
+      "SUPERSEDED": "Sustituido",
+      "VOIDED": "Anulado (marcado por error)"
     },
     "consentAction": {
       "CONSENTED": "Registrar consentimiento",
@@ -316,19 +333,28 @@
     "reasonNote": "Nota operativa (opcional)",
     "reasonNoteHelp": "Una línea de contexto operativo, máximo 280 caracteres. No incluyas información clínica ni de salud.",
     "reasonNoneConfigured": "No hay motivos configurados para este resultado. Configúralos antes de registrarlo.",
-    "consentTypeLabel": "Tipo de consentimiento",
+    "missingReason": "Sin motivo registrado",
+    "addReason": "Añadir motivo",
     "consentType": {
       "DIGITAL": "Digital (plataforma de screening)",
       "PHYSICAL": "Presencial (firmado en la visita inicial)"
     },
-    "consentScopes": "Autorizaciones adicionales",
-    "consentScopesHelp": "Marca solo lo que la persona ha autorizado expresamente al firmar. Nada viene marcado por defecto.",
     "consentMissing": "Falta registrar el consentimiento: {types}.",
     "filterEnrollment": "Filtrar por estado de inclusión",
     "filterCohort": "Cohorte",
     "filterArm": "Grupo",
     "filterResponsible": "Responsable",
-    "filterAny": "Todos"
+    "filterAny": "Todos",
+    "digitalConsentRecorded": "Aceptado en Qualtrics antes de solicitar.",
+    "digitalConsentPending": "Se acepta en Qualtrics. El Hub lo registra solo cuando la solicitud pasa a evaluación.",
+    "consentHistory": "Historial y retirada",
+    "physicalConsent": {
+      "check": "Consentimiento físico firmado",
+      "scopes": "Autoriza además:",
+      "undo": "Deshacer",
+      "notThisArm": "Su grupo no firma consentimiento físico.",
+      "unallocated": "Se firma en persona si su grupo lo requiere. Aún no tiene grupo asignado."
+    }
   },
   "screening": {
     "subtitle": "Evaluaciones programadas pendientes de realizar.",
@@ -337,9 +363,61 @@
     "emptyTitle": "Sin evaluaciones pendientes",
     "emptyDescription": "No hay ninguna evaluación programada en este momento.",
     "queueTitle": "Evaluaciones pendientes",
-    "waitingForAllocation": "Elegibles sin asignación"
+    "waitingForAllocation": "Elegibles sin asignación",
+    "managedInApplications": "Las evaluaciones también se agendan y registran desde las tarjetas de Solicitudes.",
+    "goToApplications": "Ir a Solicitudes"
   },
   "cohorts": {
+    "plan": {
+      "title": "Plan de comunicación",
+      "help": "Este grupo no tiene sesiones: recibe mensajes. Pon fecha y hora a cada uno. Los correos que pueden salir solos se envían a esa hora, uno por persona; el resto queda como recordatorio con el texto listo para copiar.",
+      "followedDates": "Fechas de {code}",
+      "noFollowedDates": "La cohorte que sigue todavía no tiene sesiones programadas.",
+      "empty": "Todavía no hay mensajes en el plan.",
+      "template": "Mensaje",
+      "when": "Fecha y hora",
+      "add": "Añadir al plan",
+      "remove": "Quitar del plan",
+      "copy": "Copiar texto",
+      "saved": "Plan guardado.",
+      "automatic": "Se envía solo",
+      "manual": "Copiar y enviar a mano",
+      "manualReason": {
+        "channel": "Es un mensaje de WhatsApp: se copia y se envía a mano.",
+        "audience": "Es un mensaje de grupo: se copia y se pega en el canal.",
+        "variables": "Tiene huecos por rellenar (fecha, enlace…). Escribe el enlace en la plantilla para que pueda salir solo; mientras tanto, se copia y se envía a mano."
+      },
+      "status": {
+        "PLANNED": "Previsto",
+        "SENT": "Enviado",
+        "PARTIAL": "Enviado en parte",
+        "FAILED": "No enviado",
+        "CANCELLED": "Cancelado"
+      },
+      "error": {
+        "invalid": "Elige un mensaje y una fecha válida.",
+        "locked": "Ese mensaje ya se ha enviado y no se puede cambiar."
+      }
+    },
+    "visits": {
+      "count": "{done} de {total} con fecha",
+      "when": "Fecha de la visita",
+      "saved": "Visita guardada.",
+      "help": "Sesión individual: cada participante tiene su propia fecha.",
+      "helpDelivery": "Visita individual en la que se entregan las gafas. La entrega se registra en Logística VR.",
+      "helpPickup": "Visita individual en la que se recogen las gafas. La devolución se registra en Logística VR.",
+      "noMembers": "La cohorte todavía no tiene participantes.",
+      "error": {
+        "invalid": "La fecha no es válida.",
+        "notIndividual": "Esta sesión es de grupo: se programa una sola vez para toda la cohorte.",
+        "notMember": "Esa persona ya no está en la cohorte.",
+        "notBooked": "Esta visita aún no tiene fecha.",
+        "notConfigured": "Esta sesión no recoge cuestionario.",
+        "hasRecord": "Esta visita ya tiene el cuestionario marcado. Desmárcalo antes de quitar la fecha."
+      },
+      "questionnaire": "Cuestionario recogido en persona",
+      "questionnaireNeedsDate": "Reserva primero la fecha de la visita."
+    },
     "subtitle": "Grupos de participantes que realizan el programa juntos.",
     "scopedNotice": "Ves únicamente las cohortes que facilitas.",
     "backToList": "Volver a cohortes",
@@ -434,7 +512,7 @@
       "deleteReasonRequired": "Escribe un motivo para poder eliminar la cohorte.",
       "failed": "No se pudo guardar el cambio. Inténtalo de nuevo.",
       "armMismatch": "El grupo asignado a esta persona no coincide con el grupo de la cohorte.",
-      "armNotRecorded": "Esta cohorte es de un grupo concreto y aún no hay asignación registrada para esta persona.",
+      "armNotRecorded": "Esta cohorte es de un grupo concreto y aún no hay asignación registrada para esta persona. Regístrala primero en su ficha (Participantes → Asignación).",
       "sameCohort": "Ya pertenece a esa cohorte.",
       "sizeUnder": "La cohorte está por debajo del mínimo configurado.",
       "sizeOver": "La cohorte está por encima del máximo configurado.",
@@ -594,7 +672,15 @@
     "prevMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "more": "+{count} más",
-    "weekdays": ["L", "M", "X", "J", "V", "S", "D"]
+    "weekdays": [
+      "L",
+      "M",
+      "X",
+      "J",
+      "V",
+      "S",
+      "D"
+    ]
   },
   "content": {
     "language": {
@@ -775,7 +861,7 @@
   "flow": {
     "title": "Flujo del estudio",
     "note": "Recuento agregado para el diagrama de flujo. No incluye porcentajes ni datos de personas concretas: las cifras se interpretan junto al sistema aprobado del estudio.",
-    "unreasoned": "{count, plural, one {Hay # exclusión sin motivo registrado} other {Hay # exclusiones sin motivo registrado}}. Complétalas para que aparezcan en el diagrama.",
+    "unreasoned": "{count, plural, one {Hay # exclusión sin motivo registrado} other {Hay # exclusiones sin motivo registrado}}. Abre cada una y usa «Añadir motivo» en su historial de evaluación para que aparezca en el diagrama:",
     "stages": "Etapas",
     "notAssessed": "Evaluaciones sin resultado",
     "exclusions": "Motivos de exclusión",
@@ -816,22 +902,20 @@
     "title": "Visita inicial y responsables",
     "responsibles": "Responsables",
     "role": {
-      "INITIAL_SESSION": "Responsable de la sesión inicial",
-      "VR_EQUIPMENT": "Responsable de las gafas"
+      "INITIAL_SESSION": "Sesión inicial",
+      "VR_EQUIPMENT": "Gafas"
     },
     "unassigned": "Sin asignar",
     "assign": "Asignar",
-    "replace": "Cambiar responsable",
-    "revoke": "Dejar sin responsable",
+    "replace": "Cambiar",
+    "revoke": "Quitar",
     "person": "Persona",
     "noCandidates": "No hay personal disponible en este estudio.",
     "noVisibilityNote": "Ser responsable de una persona no amplía lo que se puede ver en la aplicación: es una asignación de trabajo.",
     "visit": "Visita inicial",
     "noVisits": "Todavía no hay ninguna visita registrada.",
-    "scheduleVisit": "Programar visita",
     "recordVisit": "Registrar resultado",
     "saveNotes": "Guardar notas",
-    "when": "Fecha y hora",
     "location": "Lugar",
     "outcome": "Resultado",
     "notes": "Notas operativas",
@@ -850,13 +934,13 @@
     "error": {
       "visitAlreadyOpen": "Ya hay una visita programada para esta persona.",
       "notesTooLong": "Las notas superan el máximo permitido."
-    }
+    },
+    "bookOnCard": "La fecha se reserva en la tarjeta de la persona, dentro de su cohorte."
   },
   "nextStep": {
     "outstandingTitle": "Pendiente de registrar",
     "RECORD_SCREENING_RESULT": "Registrar resultado de la evaluación",
     "SCHEDULE_SCREENING": "Programar evaluación",
-    "RECORD_DIGITAL_CONSENT": "Registrar consentimiento digital",
     "RECORD_ALLOCATION": "Registrar asignación de grupo",
     "ASSIGN_COHORT": "Asignar a una cohorte",
     "RECORD_PHYSICAL_CONSENT": "Registrar consentimiento presencial",
@@ -916,8 +1000,18 @@
       "content_version__published": "Versión publicada",
       "content_version__saved": "Versión guardada",
       "content_version__status_changed": "Cambio de estado de la versión",
+      "device__updated": "Equipo editado",
+      "device__deleted": "Equipo eliminado del inventario",
+      "device__deactivated": "Equipo retirado del inventario",
+      "visit__scheduled": "Visita individual programada",
+      "visit__rescheduled": "Visita individual cambiada de fecha",
+      "visit__cleared": "Fecha de visita individual quitada",
+      "cohort_plan__added": "Mensaje añadido al plan de la cohorte",
+      "cohort_plan__rescheduled": "Mensaje del plan cambiado de fecha",
+      "cohort_plan__removed": "Mensaje quitado del plan de la cohorte",
       "device__created": "Equipo registrado",
       "device__status_changed": "Cambio de estado del equipo",
+      "device__location_changed": "Cambio de ubicación del equipo",
       "device_assignment__closed": "Logística del equipo cerrada",
       "device_assignment__created": "Equipo asignado",
       "device_assignment__milestone_recorded": "Hito del equipo registrado",
@@ -949,6 +1043,7 @@
       "scheduled_action__skipped": "Acción programada omitida",
       "screening__closed": "Evaluación cerrada sin resultado",
       "screening__completed": "Evaluación completada",
+      "screening__reason_completed": "Motivo de exclusión añadido",
       "screening__scheduled": "Evaluación programada",
       "session__register_refreshed": "Lista de asistencia actualizada",
       "session__scheduled": "Sesión programada",
@@ -969,10 +1064,52 @@
       "user_role__revoked": "Rol retirado",
       "communication__sent_automatically": "Email enviado automáticamente",
       "scheduled_action__sent": "Acción programada enviada por email",
-      "study_arm__created": "Grupo del estudio creado"
+      "study_arm__created": "Grupo del estudio creado",
+      "consent__digital_recorded": "Consentimiento digital registrado desde Qualtrics",
+      "consent__physical_recorded": "Consentimiento físico marcado como firmado",
+      "consent__voided": "Consentimiento anulado por error de registro",
+      "visit__questionnaire_recorded": "Cuestionario marcado como recogido",
+      "visit__questionnaire_cleared": "Cuestionario desmarcado",
+      "initial_visit__rescheduled": "Visita inicial cambiada de fecha"
     }
   },
   "logistics": {
+    "tabAllocation": "Asignación",
+    "tabIncidents": "Incidencias",
+    "tabInventory": "Inventario",
+    "tabMap": "Mapa",
+    "viewCards": "Tarjetas",
+    "allCohorts": "Todas",
+    "allParticipants": "Volver a todas las personas",
+    "dates": "Fechas",
+    "datesHelp": "Son las mismas visitas que en la cohorte: cambiar la fecha aquí la cambia allí. Reservarla no mueve las gafas.",
+    "location": "Ubicación",
+    "locationHelp": "Dónde están las gafas: oficina, calle, zona o ciudad. Se borra al devolverlas.",
+    "locationMapHint": "También puedes hacer clic en el mapa para colocar o mover el punto. Pulsa Guardar para fijarlo.",
+    "locationSearch": "Buscar",
+    "locationSearchHelp": "Buscar envía este texto a OpenStreetMap: no escribas nombres.",
+    "locationSearchNone": "No se ha encontrado ese lugar. Prueba con la calle y la ciudad, o haz clic en el mapa.",
+    "locationSearchFailed": "No se ha podido buscar ahora mismo. Inténtalo de nuevo o haz clic en el mapa.",
+    "locationSearchShort": "Escribe al menos tres letras.",
+    "locationSearchPick": "¿Cuál de estos lugares es?",
+    "locationClearPin": "Quitar el punto",
+    "mapHelp": "Solo aparecen las gafas con un punto colocado a mano. El mapa y la búsqueda usan OpenStreetMap, que recibe la zona que estás viendo y el texto que buscas.",
+    "noPinTitle": "Sin punto en el mapa",
+    "allocationTitle": "Gafas por participante",
+    "allocationHelp": "Las fechas previstas salen de las visitas individuales (S0 para la entrega, POST para la recogida), que se fijan en la cohorte.",
+    "noAllocations": "No hay participantes en cohortes con sesiones.",
+    "cohort": "Cohorte",
+    "delivery": "Entrega",
+    "pickup": "Recogida",
+    "planned": "prevista",
+    "done": "hecha",
+    "noHeadset": "Sin gafas asignadas",
+    "otherAssignments": "Fuera de una cohorte activa",
+    "edit": "Editar",
+    "editTitle": "Editar equipo",
+    "remove": "Quitar del inventario",
+    "removeConfirm": "¿Quitar?",
+    "codeHelp": "Letras, números y guiones; los espacios se convierten en guiones (p. ej. QUEST-01).",
     "subtitle": "Seguimiento de las gafas: qué está fuera, qué hace falta y qué ha fallado.",
     "summary": "Resumen de logística",
     "available": "Disponibles",
@@ -993,14 +1130,12 @@
     "expectedReturn": "Devolución prevista",
     "expectedReturnHelp": "Solo se avisa cuando la fecha ya ha pasado.",
     "returned": "Devuelto",
-    "setupStatus": "Estado de configuración",
     "newDeviceStatus": "Nuevo estado del equipo",
     "assign": "Asignar equipo",
     "noAvailableDevices": "No hay equipos disponibles para asignar.",
     "recordHandOver": "Registrar entrega",
     "recordReceipt": "Registrar recepción",
     "recordReturn": "Registrar devolución",
-    "reportReadiness": "Registrar configuración",
     "close": "Cerrar logística",
     "move": "Cambiar estado",
     "addDevice": "Añadir equipo",
@@ -1027,12 +1162,6 @@
       "CLEANING": "Limpieza",
       "MAINTENANCE": "Mantenimiento"
     },
-    "readiness": {
-      "UNKNOWN": "Configuración sin confirmar",
-      "READY": "Configurado",
-      "NOT_READY": "Sin configurar",
-      "NEEDS_SUPPORT": "Necesita ayuda"
-    },
     "incidentKind": {
       "NOT_DELIVERED": "No entregado",
       "DAMAGED": "Dañado",
@@ -1047,7 +1176,6 @@
       "PREPARE_DEVICE": "Preparar el equipo",
       "HAND_OVER_OR_SHIP": "Entregar o enviar",
       "CONFIRM_RECEIPT": "Confirmar recepción",
-      "CONFIRM_SETUP": "Confirmar configuración",
       "REQUEST_RETURN": "Solicitar devolución",
       "CONFIRM_RETURN": "Confirmar devolución",
       "RESOLVE_INCIDENT": "Resolver incidencia",
@@ -1055,6 +1183,8 @@
       "NONE": "Sin pendientes"
     },
     "error": {
+      "notHandoff": "Esa visita no es de entrega ni de recogida.",
+      "invalidCode": "El código solo puede tener letras, números y guiones (p. ej. QUEST-01).",
       "invalid": "Los datos no son válidos o el cambio de estado no está permitido.",
       "notFound": "No se ha encontrado el registro.",
       "duplicateCode": "Ya existe un equipo con ese código.",
@@ -1178,7 +1308,6 @@
       "PREPARE_DEVICE": "Preparar el equipo",
       "HAND_OVER_OR_SHIP": "Entregar o enviar",
       "CONFIRM_RECEIPT": "Confirmar recepción",
-      "CONFIRM_SETUP": "Confirmar configuración",
       "REQUEST_RETURN": "Solicitar devolución",
       "CONFIRM_RETURN": "Confirmar devolución",
       "RESOLVE_INCIDENT": "Resolver incidencia",
@@ -1200,6 +1329,9 @@
     "trelloNotConnected": "Trello no está conectado.",
     "trelloNotConnectedHelp": "Añade TRELLO_BOARD_URL (la URL de un tablero con enlace público activado) a las variables de entorno para verlo aquí. Es solo una vista — no se actualiza nada en Trello desde esta aplicación.",
     "trelloOpen": "Ver el tablero en Trello",
+    "trelloEmptyList": "Sin tarjetas",
+    "trelloReadOnly": "Solo lectura. Los cambios se hacen en Trello.",
+    "trelloDone": "Hecho",
     "open": "Abiertas",
     "overdue": "Vencidas",
     "done": "Hechas",
@@ -1261,6 +1393,7 @@
     "answeredNote": "Respondida por {name} el {when}. El texto de la consulta y de la respuesta se ha borrado.",
     "closedNote": "Cerrada sin respuesta por {name} el {when}. El texto de la consulta se ha borrado.",
     "handledBy": "Por",
+    "teamLabel": "Equipo",
     "listAria": "Lista de consultas",
     "replyLabel": "Tu respuesta",
     "placeholder": "Escribe tu respuesta",
@@ -1460,6 +1593,12 @@
     "notifyStaffOfInquiries": "Avisar de cada consulta nueva también a quienes responden consultas (si no, solo al buzón del equipo)"
   },
   "program": {
+    "scheduling": {
+      "GROUP": "De grupo",
+      "INDIVIDUAL_NONE": "Individual",
+      "INDIVIDUAL_DELIVERY": "Individual · entrega de gafas",
+      "INDIVIDUAL_PICKUP": "Individual · recogida de gafas"
+    },
     "title": "Programa",
     "showEditing": "Mostrar edición del programa y las sesiones",
     "boundary": "Etapas y sesiones son la configuración de este estudio: todas las cohortes recorren el mismo programa. Programar una sesión para una cohorte concreta se hace desde su propia página, no aquí.",
@@ -1474,6 +1613,8 @@
     "deactivate": "Desactivar",
     "inactive": "Inactiva",
     "field": {
+      "scheduling": "Cómo se programa",
+      "schedulingHelp": "De grupo: una fecha para toda la cohorte. Individual: cada participante tiene su propia visita, y puede ser la entrega o la recogida de las gafas.",
       "code": "Código",
       "codeWarning": "Cambiar el código rompe cualquier enlace ya compartido con la dirección anterior (p. ej. /clearlight/estudio/sesiones/s0/preparacion para el código s0): no se redirige automáticamente.",
       "stageCodeHelp": "Identificador interno en minúsculas, p. ej. \"s0\". Se puede renombrar después desde la lista, si hace falta.",
@@ -1486,10 +1627,16 @@
       "duration": "Duración (minutos)",
       "dayOffset": "Día relativo al inicio",
       "dayOffsetHelp": "Días después de la fecha de inicio prevista de la cohorte. Opcional.",
-      "position": "Orden"
+      "position": "Orden",
+      "visitChecks": "Qué se recoge en la visita"
     },
     "errors": {
       "duplicateCode": "Ya existe una etapa o sesión con ese código en este estudio."
+    },
+    "visitCheck": {
+      "PHYSICAL_CONSENT": "Consentimiento físico firmado",
+      "QUESTIONNAIRE": "Cuestionario en persona",
+      "INITIAL_VISIT": "Es la visita inicial (responsable, lugar, notas y resultado)"
     }
   },
   "arms": {

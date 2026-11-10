@@ -5,13 +5,7 @@
  * assignment is research data: it is asset tracking that happens to be attached
  * to a participant code (docs/research-data-boundaries.md, Category A/B).
  *
- * Two things this module deliberately does NOT do:
- *
- * - It never infers readiness. `VR_READINESS_STATES` is reported by staff or by
- *   the participant through a simple form (D-003); no telemetry, no "we saw the
- *   headset connect so it must be ready". A readiness this application guessed
- *   would be a statement about a participant's setup that nobody checked.
- * - It never decides who gets a device. Assignment is a staff action.
+ * It never decides who gets a device. Assignment is a staff action.
  */
 
 /**
@@ -53,6 +47,17 @@ export const DEVICE_STATUSES_IN_USE: readonly DeviceStatus[] = [
 export const DEVICE_STATUSES_IN_SERVICE: readonly DeviceStatus[] = [
   "RETURNED",
   "CLEANING",
+  "MAINTENANCE",
+];
+
+/**
+ * The headset board's columns, in the order a headset travels. AVAILABLE and
+ * CLEANING appear only when a card sits there: neither is a place a headset
+ * goes while it is someone's.
+ */
+export const HEADSET_BOARD_STATUSES: readonly DeviceStatus[] = [
+  ...DEVICE_STATUSES_IN_USE,
+  "RETURNED",
   "MAINTENANCE",
 ];
 
@@ -103,7 +108,9 @@ export function canTransitionDevice(from: DeviceStatus, to: DeviceStatus): boole
 // ---------------------------------------------------------------------------
 
 /**
- * Whether the participant's setup is working. REPORTED, never inferred (D-003).
+ * Whether a headset's setup was working, as reported up to D-144. The team's
+ * headsets now arrive configured, so nothing records this any more; the values
+ * stay because `device_assignments` holds them. It was never inferred (D-003).
  *
  * NEEDS_SUPPORT is its own value rather than a flavour of NOT_READY, for the
  * same reason TECHNICAL_FAILURE is not ABSENT (D-024): "it does not work and I
@@ -115,17 +122,6 @@ export type VrReadiness = (typeof VR_READINESS_STATES)[number];
 
 export function isVrReadiness(v: unknown): v is VrReadiness {
   return typeof v === "string" && (VR_READINESS_STATES as readonly string[]).includes(v);
-}
-
-/** Readiness values that mean somebody has to do something. */
-export const READINESS_NEEDING_ACTION: readonly VrReadiness[] = [
-  "NOT_READY",
-  "NEEDS_SUPPORT",
-  "UNKNOWN",
-];
-
-export function readinessNeedsAction(state: VrReadiness): boolean {
-  return READINESS_NEEDING_ACTION.includes(state);
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +163,47 @@ export function isValidIncidentDescription(text: string): boolean {
   return text.length <= INCIDENT_DESCRIPTION_MAX_LENGTH;
 }
 
+/** A headset's location as typed. A place, not a note about a person. */
+export const LOCATION_LABEL_MAX_LENGTH = 160;
+
+/**
+ * A map pin from its two form fields: null when both are empty, "bad" when only
+ * one is there or either is out of range. Half a pin is not a place.
+ */
+export function parseCoordinates(
+  latitude: string,
+  longitude: string,
+): { lat: number; lng: number } | null | "bad" {
+  const [lat, lng] = [latitude.trim(), longitude.trim()];
+  if (!lat && !lng) return null;
+  if (!lat || !lng) return "bad";
+  const parsed = { lat: Number(lat), lng: Number(lng) };
+  if (!Number.isFinite(parsed.lat) || !Number.isFinite(parsed.lng)) return "bad";
+  if (Math.abs(parsed.lat) > 90 || Math.abs(parsed.lng) > 180) return "bad";
+  return parsed;
+}
+
+/** A place a location search found (D-145). */
+export interface Place {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * The places in a geocoder's reply. Anything that is not a usable place is
+ * dropped: this is another service's data, and a bad row must not become a pin.
+ */
+export function parsePlaces(raw: unknown): Place[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((row: { display_name?: unknown; lat?: unknown; lon?: unknown }) => {
+    const pin = parseCoordinates(String(row?.lat ?? ""), String(row?.lon ?? ""));
+    return pin && pin !== "bad" && typeof row.display_name === "string"
+      ? [{ label: row.display_name, ...pin }]
+      : [];
+  });
+}
+
 /** Device asset code, e.g. "VR-014". Configuration per study. */
 export const DEVICE_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,31}$/;
 export const DEVICE_LABEL_MAX_LENGTH = 120;
@@ -185,7 +222,6 @@ export const LOGISTICS_STEPS = [
   "PREPARE_DEVICE",
   "HAND_OVER_OR_SHIP",
   "CONFIRM_RECEIPT",
-  "CONFIRM_SETUP",
   "REQUEST_RETURN",
   "CONFIRM_RETURN",
   "RESOLVE_INCIDENT",
@@ -198,7 +234,6 @@ export interface AssignmentSnapshot {
   deviceStatus: DeviceStatus;
   handedOverAt: Date | null;
   receivedAt: Date | null;
-  readiness: VrReadiness;
   expectedReturnAt: Date | null;
   returnedAt: Date | null;
   closedAt: Date | null;
@@ -217,7 +252,6 @@ export function logisticsStep(a: AssignmentSnapshot, now: Date = new Date()): Lo
     return a.deviceStatus === "PREPARING" ? "HAND_OVER_OR_SHIP" : "PREPARE_DEVICE";
   }
   if (!a.receivedAt) return "CONFIRM_RECEIPT";
-  if (a.readiness !== "READY") return "CONFIRM_SETUP";
 
   // Only once the expected return date has actually passed. Nagging before it
   // does trains people to ignore the flag.
@@ -234,7 +268,6 @@ export function logisticsStep(a: AssignmentSnapshot, now: Date = new Date()): Lo
 export const ATTENTION_STEPS: readonly LogisticsStep[] = [
   "RESOLVE_INCIDENT",
   "CONFIRM_RECEIPT",
-  "CONFIRM_SETUP",
   "REQUEST_RETURN",
   "CONFIRM_RETURN",
 ];

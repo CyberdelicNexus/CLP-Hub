@@ -49,6 +49,24 @@ function pastBrightness(stepsBehind: number): number {
   return Math.max(0.4, 1 - stepsBehind * 0.14);
 }
 
+/**
+ * A stage's coloured shape, by its position in the programme — the timeline's
+ * header and the cohort's session rows (2026-10-28) draw the same one, so a
+ * session reads as the same stop in both places.
+ */
+export function StageGlyph({ index, className }: { index: number; className?: string }) {
+  const Icon = STAGE_SHAPES[index % STAGE_SHAPES.length];
+  return (
+    <span
+      aria-hidden
+      className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-white", className)}
+      style={{ backgroundImage: stageGradient(index) }}
+    >
+      <Icon className="size-[50%]" />
+    </span>
+  );
+}
+
 export interface TimelineStage {
   id: string;
   nameEs: string;
@@ -106,15 +124,9 @@ export function ProgramTimeline({
           style={{ "--stage-count": stages.length } as React.CSSProperties}
         >
           {stages.map((stage, i) => {
-            const Icon = STAGE_SHAPES[i % STAGE_SHAPES.length];
             return (
               <div key={stage.id} className="flex flex-col items-center gap-1.5 text-center">
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
-                  style={{ backgroundImage: stageGradient(i) }}
-                >
-                  <Icon className="size-4" aria-hidden />
-                </span>
+                <StageGlyph index={i} />
                 <span className="text-[0.7rem] leading-tight font-medium text-balance">{stage.nameEs}</span>
                 <span className="text-[0.65rem] text-muted-foreground">{modalityLabels[stage.modality]}</span>
               </div>

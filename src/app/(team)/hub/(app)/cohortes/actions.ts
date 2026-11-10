@@ -8,6 +8,7 @@ import { COHORT_CODE_PATTERN, COHORT_NAME_MAX_LENGTH, COHORT_STATUSES } from "@/
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import { logger } from "@/lib/logger";
+import { parseStudyLocal } from "@/lib/study-time";
 import { NOTE_COLORS } from "@/domain/cohort-note";
 import {
   advanceCohortStatus,
@@ -527,8 +528,9 @@ export async function recordRandomizationAction(
   });
   if (!parsed.success) return { error: validationError(parsed.error.issues) };
 
-  const when = new Date(parsed.data.allocatedAt);
-  if (Number.isNaN(when.getTime())) return { error: "invalid" };
+  // Wall-clock time in the study's timezone, not the server's (D-136).
+  const when = parseStudyLocal(parsed.data.allocatedAt, ctx.study.timezone);
+  if (!when) return { error: "invalid" };
 
   try {
     assertPermission(ctx, "randomization.manage");

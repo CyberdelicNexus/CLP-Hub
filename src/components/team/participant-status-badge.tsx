@@ -41,6 +41,7 @@ const CONSENT_TONES: Record<ConsentStatus, StatusTone> = {
   DECLINED: "neutral",
   WITHDRAWN: "neutral",
   SUPERSEDED: "neutral",
+  VOIDED: "neutral",
 };
 
 export function EligibilityBadge({ status, label }: { status: EligibilityStatus; label: string }) {

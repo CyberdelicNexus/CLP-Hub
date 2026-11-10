@@ -25,6 +25,7 @@ import {
   SESSION_MODALITIES,
   SESSION_TEMPLATE_CODE_PATTERN,
   SESSION_TEMPLATE_NAME_MAX_LENGTH,
+  VISIT_CHECKS,
 } from "@/domain/session";
 import { STAGE_CODE_PATTERN, STAGE_NAME_MAX_LENGTH } from "@/domain/program-stage";
 import { STUDY_STATUSES } from "@/domain/study";
@@ -500,7 +501,15 @@ export async function createSessionTemplateAction(
   return { error: null, ok: true };
 }
 
-const templateUpdateSchema = templateSchema.omit({ code: true }).extend({ templateId: uuid });
+const templateUpdateSchema = templateSchema.omit({ code: true }).extend({
+  templateId: uuid,
+  // "GROUP", or "INDIVIDUAL:<handoff>" (2026-10-28, D-136). A group session
+  // never hands a headset over: that happens at an individual visit.
+  scheduling: z
+    .enum(["GROUP", "INDIVIDUAL:NONE", "INDIVIDUAL:DELIVERY", "INDIVIDUAL:PICKUP"])
+    .optional(),
+  visitChecks: z.array(z.enum(VISIT_CHECKS)).default([]),
+});
 
 export async function updateSessionTemplateAction(
   _prev: SettingsState,
@@ -519,8 +528,14 @@ export async function updateSessionTemplateAction(
     durationMinutes: formData.get("durationMinutes") || undefined,
     dayOffset: formData.get("dayOffset") || undefined,
     position: formData.get("position") ?? 0,
+    scheduling: formData.get("scheduling") || undefined,
+    visitChecks: formData.getAll("visitChecks"),
   });
   if (!parsed.success) return { error: "invalid" };
+  const [attendance, deviceHandoff] = (parsed.data.scheduling ?? "").split(":") as [
+    "GROUP" | "INDIVIDUAL" | "",
+    "NONE" | "DELIVERY" | "PICKUP" | undefined,
+  ];
 
   try {
     assertPermission(ctx, "study.settings.manage");
@@ -536,6 +551,8 @@ export async function updateSessionTemplateAction(
       durationMinutes: parsed.data.durationMinutes ?? null,
       dayOffset: parsed.data.dayOffset ?? null,
       position: parsed.data.position,
+      ...(attendance ? { attendance, deviceHandoff: deviceHandoff ?? "NONE" } : {}),
+      visitChecks: parsed.data.visitChecks,
     });
   } catch (err) {
     return fail(err, "session_template.update");

@@ -5,6 +5,7 @@ import { getDb } from "@/db/client";
 import { studies } from "@/db/schema";
 import { logger } from "@/lib/logger";
 import { processDueActions, runSweeps } from "@/services/automation";
+import { processDuePlannedMessages } from "@/services/cohort-plan";
 
 /**
  * The scheduled-action processor (Phase 8).
@@ -112,8 +113,16 @@ async function run(request: NextRequest) {
         now,
         limit: ACTIONS_PER_RUN,
       });
+      // A cohort's dated plan (D-136): the control group's emails.
+      const planned = await processDuePlannedMessages({ studyId: study.id, now, limit: ACTIONS_PER_RUN });
       const swept = await runSweeps({ studyId: study.id, now });
-      results.push({ study: study.code, ...processed, alertsRaised: swept.raised });
+      results.push({
+        study: study.code,
+        ...processed,
+        plannedSent: planned.sent,
+        plannedFailed: planned.failed,
+        alertsRaised: swept.raised,
+      });
     } catch (err) {
       // One study's bad configuration must not stop the others.
       logger.error(

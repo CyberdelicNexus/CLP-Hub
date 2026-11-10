@@ -9,7 +9,6 @@ import {
   assignResponsibleAction,
   closeInitialVisitAction,
   revokeResponsibleAction,
-  scheduleInitialVisitAction,
   updateVisitNotesAction,
   type CareState,
 } from "./care-actions";
@@ -53,25 +52,21 @@ export function AssignResponsibleForm({
   role: string;
   candidates: { id: string; label: string }[];
   current: { userId: string; displayName: string } | null;
-  labels: CareLabels & { person: string; replace: string; none: string };
+  labels: CareLabels & { person: string; replace: string };
 }) {
   const [state, action, pending] = useActionState(assignResponsibleAction, initial);
-  if (candidates.length === 0) {
-    return <p className="text-sm text-muted-foreground">{labels.none}</p>;
-  }
 
   return (
-    <form action={action} className="space-y-2">
+    <form action={action} className="min-w-44 flex-1 space-y-1">
       <input type="hidden" name="participantId" value={participantId} />
       <input type="hidden" name="role" value={role} />
-      <div className="space-y-1.5">
-        <Label htmlFor={`user-${role}`}>{labels.person}</Label>
+      <div className="flex items-center gap-2">
         <select
-          id={`user-${role}`}
+          aria-label={labels.person}
           name="userId"
           required
           defaultValue={current?.userId ?? ""}
-          className={SELECT_CLASS}
+          className={`${SELECT_CLASS} min-w-0 flex-1`}
         >
           <option value="" disabled />
           {candidates.map((c) => (
@@ -80,11 +75,11 @@ export function AssignResponsibleForm({
             </option>
           ))}
         </select>
+        <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>
+          {pending ? labels.submitting : current ? labels.replace : labels.submit}
+        </Button>
       </div>
       <ErrorLine state={state} errors={labels.errors} />
-      <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>
-        {pending ? labels.submitting : current ? labels.replace : labels.submit}
-      </Button>
     </form>
   );
 }
@@ -106,59 +101,6 @@ export function RevokeResponsibleForm({
       <input type="hidden" name="role" value={role} />
       <ErrorLine state={state} errors={labels.errors} />
       <Button type="submit" size="sm" variant="ghost" className="rounded-lg" disabled={pending}>
-        {pending ? labels.submitting : labels.submit}
-      </Button>
-    </form>
-  );
-}
-
-/**
- * Book the initial visit.
- *
- * The notes field is the most open input in the application, so the help text
- * under it is not decoration: it is the only thing standing between "aparcar
- * detrás" and a clinical narrative that does not belong in this database.
- */
-export function ScheduleVisitForm({
-  participantId,
-  labels,
-}: {
-  participantId: string;
-  labels: CareLabels & {
-    when: string;
-    location: string;
-    notes: string;
-    notesHelp: string;
-  };
-}) {
-  const [state, action, pending] = useActionState(scheduleInitialVisitAction, initial);
-  return (
-    <form action={action} className="space-y-3">
-      <input type="hidden" name="participantId" value={participantId} />
-      <div className="space-y-1.5">
-        <Label htmlFor="visitAt">{labels.when}</Label>
-        <Input id="visitAt" name="scheduledAt" type="datetime-local" required />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="visitLocation">{labels.location}</Label>
-        <Input id="visitLocation" name="location" maxLength={VISIT_LOCATION_MAX_LENGTH} />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="visitNotes">{labels.notes}</Label>
-        <textarea
-          id="visitNotes"
-          name="notes"
-          rows={3}
-          maxLength={VISIT_NOTES_MAX_LENGTH}
-          aria-describedby="visitNotesHelp"
-          className="w-full rounded-lg border border-input bg-card px-2 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-        <p id="visitNotesHelp" className="text-xs text-muted-foreground">
-          {labels.notesHelp}
-        </p>
-      </div>
-      <ErrorLine state={state} errors={labels.errors} />
-      <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
         {pending ? labels.submitting : labels.submit}
       </Button>
     </form>

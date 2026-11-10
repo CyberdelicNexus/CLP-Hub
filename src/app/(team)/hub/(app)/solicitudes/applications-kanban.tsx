@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Kanban, type KanbanColumnDef } from "@/components/team/kanban";
 import { APPLICATION_TONES } from "@/components/team/application-status-badge";
 import {
@@ -8,14 +7,18 @@ import {
   canTransitionApplication,
   type ApplicationStatus,
 } from "@/domain/recruitment";
-import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { moveApplicationStatus } from "./actions";
-import type { ApplicationListRow } from "@/services/recruitment";
+import type { ApplicationCardRow } from "@/services/recruitment";
+import type { ReasonOption } from "../participantes/participant-forms";
+import { ApplicationCard, applicationGlowColor, type ApplicationCardLabels } from "./application-card";
 
 /**
  * Kanban view of the applications list — the same rows the table shows, one
  * column per `ApplicationStatus`, dragged between them via `moveApplicationStatus`
  * (the same service call and audit row the detail page's triage buttons use).
+ * Each card is the gallery's card in compact form (2026-10-28): no status
+ * dropdown, since dragging does that here, but the screening date and result
+ * are still handled on it.
  */
 export function ApplicationsKanban({
   rows,
@@ -24,13 +27,19 @@ export function ApplicationsKanban({
   statusLabels,
   errorLabels,
   timeZone,
+  canManageScreening,
+  reasons,
+  cardLabels,
 }: {
-  rows: ApplicationListRow[];
+  rows: ApplicationCardRow[];
   includeContact: boolean;
   readOnly: boolean;
   statusLabels: Record<ApplicationStatus, string>;
   errorLabels: Record<string, string>;
   timeZone: string;
+  canManageScreening: boolean;
+  reasons: ReasonOption[];
+  cardLabels: ApplicationCardLabels;
 }) {
   const columns: KanbanColumnDef[] = APPLICATION_STATUSES.map((s) => ({
     id: s,
@@ -45,6 +54,8 @@ export function ApplicationsKanban({
       items={rows}
       getId={(row) => row.id}
       getColumnId={(row) => row.status}
+      // Edge glow in the card's status colour (2026-11-09).
+      getGlowColor={(row) => applicationGlowColor(row.status)}
       isValidTarget={(row, toColumnId) =>
         canTransitionApplication(row.status, toColumnId as ApplicationStatus)
       }
@@ -57,20 +68,16 @@ export function ApplicationsKanban({
       moveErrorFallback={errorLabels.failed}
       readOnly={readOnly}
       renderCard={(row) => (
-        <Link
-          href={`${TEAM_BASE_PATH}/solicitudes/${row.id}`}
-          className="block space-y-1 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-        >
-          <p data-numeric className="text-sm font-medium">
-            {row.participantCode}
-          </p>
-          {includeContact ? (
-            <p className="truncate text-xs text-muted-foreground">{row.fullName ?? "—"}</p>
-          ) : null}
-          <p data-numeric className="text-[0.7rem] text-muted-foreground">
-            {new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeZone }).format(row.submittedAt)}
-          </p>
-        </Link>
+        <ApplicationCard
+          row={row}
+          includeContact={includeContact}
+          canManageApplication={!readOnly}
+          canManageScreening={canManageScreening}
+          reasons={reasons}
+          labels={cardLabels}
+          timeZone={timeZone}
+          compact
+        />
       )}
     />
   );

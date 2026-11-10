@@ -13,6 +13,7 @@ import {
   communicationChannelEnum,
   communicationStageEnum,
   communicationStatusEnum,
+  plannedMessageStatusEnum,
 } from "./enums";
 import { cohorts } from "./cohorts";
 import { participants } from "./participants";
@@ -133,3 +134,43 @@ export const communications = pgTable(
 
 export type Communication = typeof communications.$inferSelect;
 export type NewCommunication = typeof communications.$inferInsert;
+
+/**
+ * A cohort's message plan (2026-10-28): which template goes out, and when.
+ * Made for the control group, which has no sessions to hang its messages on —
+ * staff set each date while setting the cohort up.
+ *
+ * An EMAIL template that D-116 allows to send on its own (individually
+ * addressed, only `{{nombre}}`/`{{codigo}}`/`{{cohorte}}`) is sent at
+ * `send_at` by the scheduled processor, one email per member, through
+ * `deliverAutomaticEmail`. Anything else — a WhatsApp reminder, an email that
+ * still needs a link written in — stays a dated reminder with the text ready
+ * to copy; nothing sends it.
+ */
+export const cohortPlannedMessages = pgTable(
+  "cohort_planned_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => communicationTemplates.id),
+    sendAt: timestamp("send_at", { withTimezone: true }).notNull(),
+    status: plannedMessageStatusEnum("status").notNull().default("PLANNED"),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("cohort_planned_messages_unique").on(t.cohortId, t.templateId),
+    index("cohort_planned_messages_due_idx").on(t.studyId, t.status, t.sendAt),
+  ],
+);
+
+export type CohortPlannedMessage = typeof cohortPlannedMessages.$inferSelect;

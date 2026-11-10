@@ -19,6 +19,8 @@ export interface InboxLabels extends InquiryLabels {
   answeredNote: (by: string | null, when: string) => string;
   closedNote: (by: string | null, when: string) => string;
   handledBy: string;
+  /** Who the right-hand bubbles belong to. */
+  teamLabel: string;
   listAria: string;
   /** Badge for an inquiry that arrived by email to the study's address (D-118). */
   viaEmail: string;
@@ -190,19 +192,29 @@ export function InquiryInbox({
                 {dayOnly.format(selected.createdAt)}
               </p>
 
+              {/* The two sides read apart at a glance (2026-11-10): the person
+                  on the left in sky blue, the team on the right in the brand
+                  purple, each with its own edge glow (`.chat-them` /
+                  `.chat-team` in globals.css). */}
               {selected.status === "NEW" ? (
-                <div className="max-w-[85%] rounded-2xl rounded-tl-sm border bg-card px-3.5 py-2.5 shadow-sm sm:max-w-[70%]">
-                  <p className="text-sm whitespace-pre-wrap">{selected.message}</p>
-                  <p className="mt-1 text-right text-[0.7rem] text-muted-foreground" data-numeric>
-                    {clock.format(selected.createdAt)}
-                  </p>
+                <div className="flex flex-col items-start gap-1">
+                  <span className="px-1 text-[0.7rem] font-medium text-[var(--surface-sky-ink)]">{selected.name}</span>
+                  <div className="chat-them edge-glow max-w-[85%] rounded-2xl rounded-tl-sm px-3.5 py-2.5 sm:max-w-[70%]">
+                    <p className="text-sm whitespace-pre-wrap">{selected.message}</p>
+                    <p className="mt-1 text-right text-[0.7rem] text-muted-foreground" data-numeric>
+                      {clock.format(selected.createdAt)}
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <p className="mx-auto max-w-md rounded-xl bg-card px-4 py-2.5 text-center text-xs text-muted-foreground shadow-sm">
-                  {selected.status === "ANSWERED"
-                    ? labels.answeredNote(selected.handledByName, selected.handledAt ? long.format(selected.handledAt) : "")
-                    : labels.closedNote(selected.handledByName, selected.handledAt ? long.format(selected.handledAt) : "")}
-                </p>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="px-1 text-[0.7rem] font-medium text-[var(--chart-1)]">{labels.teamLabel}</span>
+                  <p className="chat-team edge-glow max-w-[85%] rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-xs text-muted-foreground sm:max-w-[70%]">
+                    {selected.status === "ANSWERED"
+                      ? labels.answeredNote(selected.handledByName, selected.handledAt ? long.format(selected.handledAt) : "")
+                      : labels.closedNote(selected.handledByName, selected.handledAt ? long.format(selected.handledAt) : "")}
+                  </p>
+                </div>
               )}
             </div>
 

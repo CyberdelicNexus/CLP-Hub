@@ -12,6 +12,7 @@ import {
   SESSION_NAME_MAX_LENGTH,
 } from "@/domain/session";
 import { logger } from "@/lib/logger";
+import { parseStudyLocal } from "@/lib/study-time";
 import {
   InvalidTransitionError,
   NotFoundError,
@@ -90,8 +91,9 @@ export async function scheduleSessionAction(
   });
   if (!parsed.success) return { error: "invalid" };
 
-  const when = new Date(parsed.data.scheduledStart);
-  if (Number.isNaN(when.getTime())) return { error: "invalid" };
+  // 18:00 typed means 18:00 in the study's timezone, not UTC (D-136).
+  const when = parseStudyLocal(parsed.data.scheduledStart, ctx.study.timezone);
+  if (!when) return { error: "invalid" };
 
   try {
     assertPermission(ctx, "sessions.manage");

@@ -15,6 +15,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
+      // next-themes renders an inline <script> that sets the theme before
+      // paint. It only needs to run from the server HTML; when React renders
+      // it on the client, React 19 warns "Encountered a script tag while
+      // rendering" (2026-10-28 report). On the client it is marked as a data
+      // block, which React does not flag, and the attribute difference is
+      // expected rather than a hydration error.
+      scriptProps={{
+        type: typeof window === "undefined" ? undefined : "application/json",
+        suppressHydrationWarning: true,
+      }}
     >
       {children}
     </NextThemesProvider>

@@ -29,9 +29,19 @@ const ROOT_ID = "numadelic-home";
  * (home-liquid.tsx, tunable at `/?liquid`).
  */
 
+/**
+ * The share image is `opengraph-image.jpg` / `twitter-image.jpg` beside this
+ * file (the founder's photo, fitted to 1200x630, D-127). /clearlight has its own.
+ */
 export async function generateMetadata(): Promise<Metadata> {
   const { meta } = HOME_COPY[await getPublicLocale()];
-  return { title: { absolute: meta.title }, description: meta.description };
+  const share = { title: meta.title, description: meta.description };
+  return {
+    title: { absolute: meta.title },
+    description: meta.description,
+    openGraph: { ...share, type: "website", siteName: "Numadelic", url: "/" },
+    twitter: { ...share, card: "summary_large_image" },
+  };
 }
 
 export default async function HomePage() {

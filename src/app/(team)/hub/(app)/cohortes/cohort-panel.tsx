@@ -28,7 +28,7 @@ import { listSessionTemplates, listSessions } from "@/services/sessions";
 import { getPublishedForSession, listContentsByType } from "@/services/content";
 import { listTemplates } from "@/services/communications";
 import { listTasks } from "@/services/automation";
-import { listParticipants } from "@/services/participant-ops";
+import { listConsentScopes, listParticipants, listPhysicalConsents } from "@/services/participant-ops";
 import {
   AddMemberForm,
   AdvanceCohortForm,
@@ -43,10 +43,19 @@ import { ContentSlot, type AssignableContentOption } from "./content-slot";
 import { CommsSlot, type AssignableTemplateOption } from "./comms-slot";
 import { CreateNoteForm, NoteCard } from "./cohort-notes";
 import { PendingToggle } from "./pending-toggle";
-import { ProgramTimeline } from "../sesiones/program-timeline";
+import { ProgramTimeline, StageGlyph } from "../sesiones/program-timeline";
 import { ScheduleSessionForm } from "../sesiones/session-forms";
 import { CreateTaskForm } from "../tareas/task-forms";
 import { advanceStageAction } from "./actions";
+import { ControlPlan } from "./control-plan";
+import { IndividualVisits } from "./individual-visits";
+import { listCohortVisits } from "@/services/visits";
+import {
+  listInitialVisitsFor,
+  listResponsibleCandidates,
+  responsiblesByParticipant,
+} from "@/services/participant-care";
+import { listAllocations } from "@/services/logistics";
 import { TaskChecklistItem } from "./task-checklist";
 import { cohortTone } from "./tone";
 import { StageIcon } from "./stage-icon";
@@ -123,6 +132,61 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     .filter((c) => c.id !== cohort.id)
     .map((c) => ({ id: c.id, label: `${c.code} · ${c.name}` }));
 
+  // Individual sessions (S0, POST — D-136): a date per member, and, where the
+  // session hands the headset over or back, who has which one.
+  const individualTemplates = templates.filter((tpl) => tpl.attendance === "INDIVIDUAL");
+  const canReadLogistics = ctx.permissions.has("logistics.read");
+  const [visits, allocationRows] = await Promise.all([
+    individualTemplates.length > 0 ? listCohortVisits(ctx.study.id, cohort.id) : Promise.resolve([]),
+    canReadLogistics && individualTemplates.some((tpl) => tpl.deviceHandoff !== "NONE")
+      ? listAllocations(ctx.study.id)
+      : Promise.resolve(null),
+  ]);
+  const allocations = allocationRows
+    ? new Map(allocationRows.filter((a) => a.cohortId === cohort.id).map((a) => [a.participantId, a]))
+    : null;
+
+  // The physical consent on the cards of the visit that collects it (D-139),
+  // only where this cohort's arm signs one. Which arm does is configuration; a
+  // cohort with no arm takes anyone, so it keeps the check.
+  const armSignsPhysical = arm ? arm.requiresPhysicalConsent : true;
+  const showPhysicalConsent =
+    ctx.permissions.has("consent.read") &&
+    armSignsPhysical &&
+    individualTemplates.some((tpl) => tpl.visitChecks.includes("PHYSICAL_CONSENT"));
+  const [physicalConsents, consentScopes] = showPhysicalConsent
+    ? await Promise.all([
+        listPhysicalConsents(ctx.study.id, members.map((m) => m.participantId)),
+        listConsentScopes(ctx.study.id),
+      ])
+    : [new Map(), []];
+  const physicalConsent = showPhysicalConsent
+    ? {
+        consents: physicalConsents,
+        scopes: consentScopes
+          .filter((sc) => sc.active && sc.consentType === "PHYSICAL")
+          .map((sc) => ({ code: sc.code, label: sc.labelEs })),
+        canManage: ctx.permissions.has("consent.manage"),
+      }
+    : null;
+
+  // The initial visit's modal on its session's cards (D-140).
+  const canManageParticipants = ctx.permissions.has("participants.manage");
+  const showInitialVisit =
+    ctx.permissions.has("participants.read") &&
+    individualTemplates.some((tpl) => tpl.visitChecks.includes("INITIAL_VISIT"));
+  const initialVisit = showInitialVisit
+    ? await (async () => {
+        const ids = members.map((m) => m.participantId);
+        const [visitsByMember, responsibles, candidates] = await Promise.all([
+          listInitialVisitsFor(ctx.study.id, ids),
+          responsiblesByParticipant(ids),
+          canManageParticipants ? listResponsibleCandidates(ctx.study.id) : Promise.resolve([]),
+        ]);
+        return { visits: visitsByMember, responsibles, candidates, canManage: canManageParticipants };
+      })()
+    : null;
+
   // Each template's published content — what to share going in (prep) and
   // going out (integration). Not every session needs both: e.g. an opening
   // orientation may have nothing to prepare for, a closing session nothing
@@ -177,6 +241,9 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     alreadyRandomized: t("cohorts.error.alreadyRandomized"),
     alreadyAssigned: t("cohorts.error.alreadyAssigned"),
     cohortClosed: t("cohorts.error.cohortClosed"),
+    armMismatch: t("cohorts.error.armMismatch"),
+    armNotRecorded: t("cohorts.error.armNotRecorded"),
+    sameCohort: t("cohorts.error.sameCohort"),
     badReference: t("participants.error.badReference"),
     deleteReasonRequired: t("cohorts.error.deleteReasonRequired"),
     pairUnavailable: t("cohorts.error.pairUnavailable"),
@@ -190,6 +257,7 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
     failed: t("tasks.errors.failed"),
   };
   const assignedIds = new Set(staff.map((s) => s.userId));
+  const stageIndex = new Map(stages.map((s, i) => [s.id, i]));
   const currentTemplateId = templates.find((tpl) => tpl.stageId === cohort.currentStageId)?.id ?? null;
 
   const currentStageIndex = stages.findIndex((s) => s.id === cohort.currentStageId);
@@ -512,6 +580,17 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
         </details>
       </Card>
 
+      {/* A cohort that follows another (the control group, D-116) has no
+          sessions of its own: its template is a dated message plan instead
+          (2026-10-28, D-136). */}
+      {followsCohort ? (
+        <ControlPlan
+          ctx={ctx}
+          cohortId={cohort.id}
+          followsCohort={{ id: followsCohort.id, code: followsCohort.code, name: followsCohort.name }}
+        />
+      ) : (
+      <>
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
           <CardTitle>{t("sessions.timelineTitle")}</CardTitle>
@@ -587,16 +666,31 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
                   {/* data-open (not group-data-open: this IS the element the
                       state lives on) tints the row while it's expanded — "make
                       it clear which one is open" (2026-09-19). */}
-                  <AccordionTrigger className="data-open:bg-muted/70 rounded-xl px-3 -mx-3 data-open:px-3">
+                  {/* Hover tint and the timeline's stage glyph (2026-10-28):
+                      the row reads as clickable, and as the same stop as on
+                      the timeline above. */}
+                  {/* `.session-toggle` (2026-11-09): brand wash, ring and a
+                      lifting glyph on hover — globals.css. */}
+                  <AccordionTrigger className="session-toggle -mx-3 rounded-xl px-3 hover:bg-muted/50 hover:no-underline data-open:bg-muted/70 data-open:px-3">
                     <span className="flex flex-1 flex-wrap items-center gap-2 text-left">
-                      <span className="font-medium">{tpl.nameEs}</span>
+                      {stageIndex.has(tpl.stageId ?? "") ? (
+                        <StageGlyph index={stageIndex.get(tpl.stageId ?? "") as number} className="stage-glyph size-6" />
+                      ) : null}
+                      <span className="session-title font-medium">{tpl.nameEs}</span>
                       <StatusBadge tone="neutral">{t(`sessions.modality.${tpl.modality}`)}</StatusBadge>
                       {isCurrent ? (
                         <span className="bg-gradient-brand rounded-full px-2 py-0.5 text-[0.7rem] font-semibold text-[oklch(0.2_0.02_265)]">
                           {t("sessions.currentStage")}
                         </span>
                       ) : null}
-                      {scheduled ? (
+                      {tpl.attendance === "INDIVIDUAL" ? (
+                        <span data-numeric className="text-xs text-muted-foreground">
+                          {t("cohorts.visits.count", {
+                            done: visits.filter((v) => v.templateId === tpl.id).length,
+                            total: members.length,
+                          })}
+                        </span>
+                      ) : scheduled ? (
                         <>
                           <StatusBadge tone={sessionTone(scheduled.status)}>
                             {t(`sessions.status.${scheduled.status}`)}
@@ -614,7 +708,22 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
                   </AccordionTrigger>
                   <AccordionPanel>
                     <div className="space-y-4">
-                      {scheduled ? (
+                      {tpl.attendance === "INDIVIDUAL" ? (
+                        <IndividualVisits
+                          cohortId={cohort.id}
+                          templateId={tpl.id}
+                          deviceHandoff={tpl.deviceHandoff}
+                          members={members}
+                          visits={visits}
+                          allocations={allocations}
+                          canManage={canManageSessions}
+                          showNames={includeContact}
+                          timeZone={ctx.study.timezone}
+                          physicalConsent={tpl.visitChecks.includes("PHYSICAL_CONSENT") ? physicalConsent : null}
+                          collectsQuestionnaire={tpl.visitChecks.includes("QUESTIONNAIRE")}
+                          initialVisit={tpl.visitChecks.includes("INITIAL_VISIT") ? initialVisit : null}
+                        />
+                      ) : scheduled ? (
                         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-3 text-sm">
                           <CalendarDays className="size-4 text-muted-foreground" aria-hidden />
                           <span data-numeric>{formatDate(scheduled.scheduledStart, ctx.study.timezone)}</span>
@@ -725,6 +834,8 @@ export async function CohortPanel({ ctx, cohortId }: { ctx: StudyContext; cohort
           </div>
         </details>
       </Card>
+      </>
+      )}
 
       {canReadTasks ? (
         <Card>

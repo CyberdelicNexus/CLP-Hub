@@ -540,9 +540,9 @@ export async function gatherFacts(
       )
       .limit(1);
     facts.deviceOut = Boolean(assignment);
-    // Reported, never inferred (D-003). "Not reported ready" includes UNKNOWN,
-    // which is the honest reading: nobody has said it works.
-    facts.vrNotReady = assignment ? assignment.readiness !== "READY" : false;
+    // Only a problem someone reported. Setup is no longer tracked (D-144), so
+    // UNKNOWN is what every new assignment holds and says nothing is wrong.
+    facts.vrNotReady = assignment?.readiness === "NOT_READY" || assignment?.readiness === "NEEDS_SUPPORT";
   }
 
   return facts;

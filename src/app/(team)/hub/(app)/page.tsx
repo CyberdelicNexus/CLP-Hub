@@ -10,6 +10,9 @@ import { listTasks } from "@/services/automation";
 import { countParticipantOps } from "@/services/participant-ops";
 import { countApplicationsByStatus } from "@/services/recruitment";
 import { listSessions } from "@/services/sessions";
+import { countAllocationsByArm } from "@/services/cohorts";
+import { armGlowColor } from "@/components/team/arm-badge";
+import { StudyFlowSummary } from "@/components/team/study-flow-summary";
 import { AttentionPanel } from "./attention";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,6 +32,7 @@ const STATS = [
   { key: "screeningPending", surface: "bg-surface-peach text-surface-peach-ink" },
   { key: "eligible", surface: "bg-surface-sky text-surface-sky-ink" },
   { key: "enrolled", surface: "bg-surface-mint text-surface-mint-ink" },
+  { key: "completed", surface: "bg-surface-lilac text-surface-lilac-ink" },
 ] as const;
 
 export default async function OverviewPage() {
@@ -46,8 +50,9 @@ export default async function OverviewPage() {
   const canReadParticipants = ctx.permissions.has("participants.read");
   const canReadTasks = ctx.permissions.has("tasks.read");
   const canReadCohorts = ctx.permissions.has("cohorts.read");
+  const canReadAllocations = ctx.permissions.has("randomization.read");
 
-  const [counts, ops, myTasks, sessions] = await Promise.all([
+  const [counts, ops, myTasks, sessions, armCounts] = await Promise.all([
     canReadApplications ? countApplicationsByStatus(ctx.study.id) : null,
     canReadParticipants ? countParticipantOps(ctx.study.id) : null,
     // Tagged to the signed-in user, not the study at large (2026-09-19
@@ -59,6 +64,10 @@ export default async function OverviewPage() {
     // Sessions fold into the cohort workspace (D-068), so "can see sessions"
     // still tracks cohorts.read rather than a permission of its own.
     canReadCohorts ? listSessions(ctx.study.id, { scope: ctx.cohortScope, limit: 200 }) : [],
+    // One count per configured study group (2026-11-09: "how many are in the
+    // control group"). By arm, labelled with the arm's own name, so the code
+    // never decides which group is the control one (rule 6).
+    canReadAllocations ? countAllocationsByArm(ctx.study.id) : [],
   ]);
 
   const now = new Date();
@@ -73,57 +82,80 @@ export default async function OverviewPage() {
     screeningPending: canReadScreening ? (ops?.screeningPending ?? null) : null,
     eligible: ops?.eligible ?? null,
     enrolled: ops?.enrolled ?? null,
+    completed: ops?.completed ?? null,
   };
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      {/* The four counts sit beside the title as compact chips (2026-11-09:
+          four numbers did not need a full-width row of cards, and the space
+          is better spent on the panels below). */}
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
           <p className="text-gradient-brand text-sm font-semibold tracking-tight">
             {t("greeting", { name: firstName })}
           </p>
-          <p className="mt-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="mt-2 flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {ctx.study.code}
+            <StatusBadge tone={studyTone(ctx.study.status)}>{tStatus(ctx.study.status)}</StatusBadge>
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">{ctx.study.title}</h1>
         </div>
-        <StatusBadge tone={studyTone(ctx.study.status)}>{tStatus(ctx.study.status)}</StatusBadge>
-      </header>
 
-      <section aria-label={t("title")} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map(({ key, surface }) => {
-          const value = tileValues[key] ?? null;
-          return (
-            <Card
-              key={key}
-              className="card-accent relative overflow-hidden transition-shadow duration-200 hover:shadow-lift"
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {/* Every count on ONE line of equal-width chips (2026-11-10): titles
+            wrap to two lines (space reserved, so the numbers align), and on a
+            screen too narrow for all of them the row scrolls sideways rather
+            than wrapping. The padding gives the hover shadow room inside the
+            scroll box. */}
+        <dl
+          aria-label={t("title")}
+          className="-mx-1 grid w-full auto-cols-[minmax(6.25rem,1fr)] grid-flow-col gap-2 overflow-x-auto px-1 pt-1 pb-3"
+        >
+          {STATS.map(({ key, surface }) => {
+            const value = tileValues[key] ?? null;
+            return (
+              <div
+                key={key}
+                title={value === null ? t("noData") : undefined}
+                className="card-accent flex min-w-0 flex-col justify-between gap-1 rounded-xl px-3 py-2 transition-shadow duration-200 hover:shadow-lift"
+              >
+                <dt className="line-clamp-2 min-h-[2.5em] text-[0.65rem] leading-[1.25] font-medium tracking-wide text-balance text-muted-foreground uppercase">
                   {t(`stats.${key}`)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-end justify-between gap-3">
-                <p
-                  data-numeric
-                  className={
-                    value === null
-                      ? "text-3xl font-semibold text-muted-foreground"
-                      : "text-3xl font-semibold"
-                  }
-                >
-                  {value ?? "—"}
-                </p>
-                {value === null ? (
-                  <span className={`rounded-md px-2 py-0.5 text-[0.7rem] font-medium ${surface}`}>
-                    {t("noData")}
+                </dt>
+                <dd className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span
+                    data-numeric
+                    className={value === null ? "text-xl font-semibold text-muted-foreground" : "text-xl font-semibold"}
+                  >
+                    {value ?? "—"}
                   </span>
-                ) : null}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
+                  {value === null ? (
+                    <span className={`rounded-md px-1.5 py-0.5 text-[0.6rem] font-medium ${surface}`}>
+                      {t("noData")}
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+            );
+          })}
+          {armCounts.map((arm, i) => (
+            <div
+              key={arm.armId}
+              className="flex min-w-0 flex-col justify-between gap-1 rounded-xl border border-border bg-card px-3 py-2 transition-shadow duration-200 hover:shadow-lift"
+            >
+              <dt className="flex min-h-[2.5em] items-start gap-1.5 text-[0.65rem] leading-[1.25] font-medium tracking-wide text-muted-foreground uppercase">
+                <span className="mt-[0.35em] size-1.5 shrink-0 rounded-full" style={{ background: armGlowColor(i) }} aria-hidden />
+                <span className="line-clamp-2 text-balance">{arm.nameEs}</span>
+              </dt>
+              <dd>
+                <span data-numeric className="text-xl font-semibold">
+                  {arm.n}
+                </span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </header>
 
       {/*
         Personalised to the signed-in user (2026-09-19 request: "information
@@ -211,6 +243,11 @@ export default async function OverviewPage() {
       <div>
         <AttentionPanel ctx={ctx} />
       </div>
+
+      {/* The study flow beyond the recruitment counts (2026-10-28: moved here
+          from Evaluación; its stage counts are Solicitudes' KPI row now).
+          Same gate Evaluación used. */}
+      {canReadScreening ? <StudyFlowSummary studyId={ctx.study.id} withStages={false} /> : null}
 
       <footer className="text-xs text-muted-foreground">
         <p>{ctx.roles.map((r) => tRoles(r)).join(" · ")}</p>

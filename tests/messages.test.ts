@@ -176,7 +176,10 @@ describe("audit action labels", () => {
     const actions = Object.keys(
       (messages.es.audit as { action: Record<string, string> }).action,
     ).map((k) => k.replace("__", "."));
-    const orphans = actions.filter((a) => !emitted.has(a)).sort();
+    // No service writes these since D-139 and D-144, but audit rows are append-only and
+    // the history screen still has to read the ones already there.
+    const retired = new Set(["consent.started", "consent.superseded", "device_assignment.readiness_reported"]);
+    const orphans = actions.filter((a) => !emitted.has(a) && !retired.has(a)).sort();
     expect(orphans, "labels for actions no service writes").toEqual([]);
   });
 });

@@ -5849,6 +5849,387 @@ David Glowacki commented on the team's "Textos Website - ES EN GL" document.
   alongside the email automations. Which of those messages should also go by WhatsApp?
   (The landing page's WhatsApp link was settled in D-138.)
 
+## D-136 · 2026-10-28 · S0 and POST are individual visits tied to the headsets; the control group gets a message plan
+
+The founder's design pass on the Hub. S0 and POST are the only in-person
+meetings, held one participant at a time, and they are when the team delivers
+and collects the headsets. The control group has no sessions and only gets
+emails (and probably a WhatsApp reminder).
+
+- **Individual sessions (migration 0030).** A session template now says how it
+  is scheduled: `GROUP` (one date for the cohort, as before) or `INDIVIDUAL`
+  (a date per participant, `participant_visits`), and whether that visit
+  `DELIVERY`s or `PICKUP`s the headset. It is set in Configuración → the
+  session's "Cómo se programa", so nothing in code knows which session is S0
+  (rule 6). In the cohort, an individual session lists every member with a date
+  field and, when it hands a headset over or back, which headset they have.
+  Setting a date never moves a device: hand-over and return stay staff actions
+  on the assignment.
+- **VR logistics** is three tabs: Asignación, Incidencias, Inventario. Asignación
+  lists every member of a live cohort that runs sessions (cohorts that follow
+  another, i.e. control, are left out), with the cohort, the headset, and the
+  delivery and pickup dates — planned (their DELIVERY/PICKUP visit, else the
+  assignment's expected return) and done (the hand-over/return milestones).
+  A headset is assigned from the person's own row. An open assignment of
+  someone no longer in such a cohort is listed below the table.
+- **Inventory.** A headset can be renamed (code, model, serial; `device.updated`)
+  and removed: deleted if nothing ever referred to it, otherwise deactivated
+  (`devices.active` already existed for this), refused while it is out. The
+  reported error ("the data is not valid, or that status change is not
+  allowed") came from a code with a space (or a character such as `#` or `/`)
+  failing `DEVICE_CODE_PATTERN`; spaces now become hyphens, and a code that
+  still does not fit gets a message saying what a code may contain.
+- **The control group's template.** A cohort that follows another
+  (`paired_cohort_id`, D-116) shows a "Plan de comunicación" instead of the
+  timeline and sessions: the followed cohort's session dates for reference, and
+  a list of messages, each with a date and its text to copy. An EMAIL that the
+  D-116 limits allow is sent at that time by the processor
+  (`cohort_planned_messages`, `processDuePlannedMessages`, through
+  `deliverAutomaticEmail`); anything else is labelled "Copiar y enviar a mano"
+  with the reason. This extends D-116 from "a rule" to "a date a person set";
+  the channel, audience and variable limits, the single delivery path, the
+  SYSTEM audit rows, no retries and the alert on failure are all unchanged.
+  Managing the plan needs `communications.manage`.
+- **POST.** `scripts/seed-post-visit.ts` (run once after the migration, through
+  the services, like D-124) marks S0 as an individual delivery visit, adds a
+  "Post" stage and a `post` session after S6 as an individual pickup visit,
+  moves message 23 there, rewrites message 24 (three months later) to carry the
+  personal results PDF and the AnumaXR download with its unlock code, and adds
+  `m25-post-control`, the control group's email for the same moment. The
+  AnumaXR link and code are not on record, so both messages use
+  `{{instrucciones}}`; the control email stays copy-only until they are written
+  in.
+- **Dates typed in the study's timezone.** The new date fields read and write
+  wall-clock time in the study's timezone (`src/lib/study-time.ts`). Older forms
+  still use `new Date(value)`, i.e. the server's zone (UTC on Vercel) — see the
+  open question.
+
+## D-137 · 2026-10-28 · Solicitudes is where applications and screening are managed
+
+The founder: moving an application between statuses, then scheduling the
+screening on the participant, then recording it on Evaluación was "a lot of
+places for what could be managed in one area".
+
+- Solicitudes opens as a gallery of cards; the view switch reads gallery ·
+  kanban · list, with the status filter under it. Recording a Qualtrics
+  response is a header button and a modal that closes on success.
+- Each card changes the application status through the allowed moves; once it
+  is "Pasa a evaluación" a date field books the screening; once booked, a
+  "Registrar resultado" modal uses the existing screening forms (result and
+  reason, or no-show/cancelled). Same services, same audit rows, same
+  permissions. The result is always typed by staff (rule 3).
+- Opening a card opens the participant: the application only holds name and
+  contact (the answers are in Qualtrics). The application page still exists.
+- A compact row of recruitment counts from Study Flow sits at the top. The rest
+  of Study Flow moved to the Hub overview; Evaluación keeps its queue and points
+  to Solicitudes.
+
+## D-138 · 2026-10-28 · Design pass on the Hub
+
+- **Cohort cards.** The open card's glow sat 1.5px inside its gradient border
+  and the column's scroll box clipped the hover shadow into a hard grey
+  rectangle. The glow now sits on the border, the card is not clipped, and the
+  column has room inside its scroll box.
+- **Session rows** in a cohort show the timeline's stage glyph (`StageGlyph`,
+  same shape and colour by position) and tint on hover.
+- **Creating a cohort** closes the modal (`ClosingDialog` + `useCloseOnSuccess`,
+  reused for the device editor and the Qualtrics intake).
+- **Shared study pages** take the page's own title, without "· CLP Hub", and a
+  description of the study rather than of the platform, in the reader's
+  language (`studyPageMetadata`).
+- **Calendar.** Month-view sessions are larger, brand-tinted chips with the time
+  (`.cal-event`); the agenda's day headings are bolder and in the brand colour
+  (`--cal-day-ink`, per theme).
+
+## D-139 · 2026-10-30 · Digital consent records itself; physical consent is a tick; S0 and POST are cards
+
+The founder: the consent is in the Qualtrics application, so everyone has
+consented digitally before applying, and only the intervention group consents
+again, on paper, at S0. For the team that is one thing to record: the physical
+consent, as a check.
+
+- **Digital consent is written by the Hub, never by the team.** The enrollment
+  pipeline and `ALLOCATION_WITHOUT_CONSENT` both rest on the row, so it stays a
+  row; only the manual step goes. `ensureDigitalConsent` runs inside the
+  transaction of the moment the Hub knows a Qualtrics response exists: recording
+  a Qualtrics intake, an application passing to screening, and an allocation.
+  Interest alone does not count: someone can leave a name on the public page and
+  never open the questionnaire. A withdrawn or declined consent is left alone.
+  `decided_at` is when the Hub recorded it; the acceptance itself is in Qualtrics.
+  `scripts/backfill-digital-consent.ts` catches up people already in the Hub.
+- **Physical consent is one tick** (`setPhysicalConsent`), on the participant and
+  on the visit card. Ticking reveals the study's configured authorizations
+  (D-032), never pre-ticked, recorded with the tick. The form-version field and
+  the start/decide steps are gone; `version_label` holds a fixed label.
+- **A mistaken tick is VOIDED (migration 0031).** The history is the record of
+  what people agreed to, so "undo" cannot be a withdrawal and cannot delete the
+  row. `VOIDED` is a new status, set only by the service, never in force, audited
+  as `consent.voided`. A real withdrawal is still recorded on the participant,
+  under the consent's history.
+- **What a visit collects is configuration.** `session_templates.visit_checks`
+  (`PHYSICAL_CONSENT`, `QUESTIONNAIRE`), set in Configuración, so nothing in code
+  knows S0 or POST (rule 6). The consent check appears only where the cohort's
+  arm has `requires_physical_consent`; a cohort with no arm keeps it.
+- **Individual sessions show a card per member**: date and time, headset, and
+  that checklist. The questionnaire tick is `questionnaire_captured_at` on the
+  visit: that it was filled in, never an answer (rule 4). It needs a booked date,
+  and the date cannot be cleared while it is ticked.
+- **Next step.** `RECORD_DIGITAL_CONSENT` is gone, and `RECORD_PHYSICAL_CONSENT`
+  moved after `ASSIGN_COHORT`, because it is signed at a visit the cohort books.
+- `seed-post-visit.ts` now also makes S0 in person with the consent check, and
+  gives POST the questionnaire check.
+
+## D-140 · 2026-10-30 · The initial visit opens from the S0 card; message 24 drops the questionnaire
+
+Answers the two questions D-139 left open.
+
+- **One appointment, one date.** `initial_visits` stays: it holds the responsible,
+  place, notes and outcome. A session with the `INITIAL_VISIT` visit check
+  (migration 0032, configuration) keeps it in step with the card:
+  `setParticipantVisit` calls `syncInitialVisit` in its transaction. Setting a
+  date opens or moves the visit, clearing it cancels an open one, a completed
+  visit is never reopened, and after a no-show a new date is a new row.
+- **A button and a modal on the card**, reusing the participant page's panel
+  (`CareDetails`). The date is booked only on the card, so the participant page's
+  booking form, `scheduleInitialVisit` and its action are gone, and that panel
+  says where to book. Permissions are unchanged: `participants.read` to see,
+  `participants.manage` to act.
+- **Message 24 no longer asks for a questionnaire.** The founder confirmed it is
+  the same one collected in person at POST. The control group's `m25` keeps its
+  link: that group has no visit.
+- **S0 is in person and S1 is on Zoom**, correcting the seeded programme, on both
+  the session templates and their stages. `seed-post-visit.ts` applies it.
+
+## D-141 · 2026-10-30 · The participants board opens by default and moves any card
+
+The founder: Kanban should be the default view of Participantes, and dragging a
+card between columns should change its status. Supersedes the part of D-067 that
+kept the board to ELIGIBLE/WAITLIST for people with an open screening.
+
+- **`?vista=list` now names the list**, as on Tareas (D-067 onward); the bare URL
+  is the board. Links that filter by eligibility carry `vista=list`.
+- **A drop records a determination made elsewhere, as a screening result does**
+  (`recordEligibilityMove`, through the same write, audit rows and events).
+  Someone with no open screening gets one created and completed in the same
+  transaction, so every result still has a `screenings` row. That row has no
+  appointment date, and it does not move the recruitment status.
+- **INELIGIBLE and REVIEW_REQUIRED ask for the reason in a dialog on drop**
+  (`confirmMove` on the generic board, before the transition, because a dialog
+  opened inside one would never paint). The card stays put until it is given;
+  cancelling leaves everything as it was. WAITLIST's reason stays optional, so
+  that drop asks nothing.
+- PENDING is still never a target: "not looked at yet" stops being true once a
+  result exists (`canTransitionEligibility`).
+- A drop has no external reference field; the screening form keeps it.
+
+## D-142 · 2026-10-30 · The participants board's cards edit in place
+
+The founder asked for some properties on the Kanban cards to be editable on the
+spot. Chosen for what staff change most on someone they are scanning a column
+for: name, phone, email, cohort and the two responsibles. Each goes through the
+action the participant page already uses, so permission and audit are the same.
+
+- **Cohort is offered only while the person has none.** Moving someone already in
+  a cohort asks for a reason (`TransferCohortForm`), which stays on their page.
+  An arm that doesn't match is refused by the server, and the card says why.
+- **Dropdowns save on change**; contact fields keep their pencil and Guardar.
+- **The properties start folded behind a chevron on each card**, showing the
+  name and cohort, so a column stays scannable.
+- Eligibility, enrollment and consent are not on the card: the first is the
+  column, the others are records with their own steps.
+- Viewers without the permission see the same rows as plain text. The drag
+  preview has no controls, because a second copy of a card's forms under the
+  pointer would hold its own state.
+- `listParticipants` now returns email and phone, under the same
+  `participants.contact.read` gate as the name.
+- **The cards take the cohort cards' edge glow**, in the person's group colour.
+  The colour says which group someone is in, so it comes from the arm list gated
+  on `randomization.read`; a viewer without that sees the default colour. Only
+  this board has it: Solicitudes and Tareas are unchanged.
+
+## D-143 · 2026-10-30 · VR logistics: inventory first, people like cohorts, a board and a map
+
+The founder asked for the inventory first; headset assignment laid out like the
+cohorts, with a cohort filter and the menus opening beside the grid; delivery
+dates booked there and connected to S0; the edge glow; a Kanban of headset states
+per person; and a location input with a map tab.
+
+- **Tabs:** Inventario (the default), Asignacion, Incidencias, Mapa. Links that
+  meant the old default now say `?vista=asignacion`.
+- **The grid reuses `CohortWorkspace`**, so opening a person moves the cards left
+  the same way. It is driven by `?participante=`, and `?cohorte=` filters.
+- **A date here is the same `participant_visits` row as the S0/POST card**, so
+  there is nothing to keep in step, and moving it also moves the initial visit
+  (D-140). Booking stays a plan: it moves no headset (D-136).
+- **The LOGISTICS role can book only hand-off visits.** It has no
+  `sessions.manage`, so `setHandoffVisitAction` asks for `logistics.manage` and
+  the service refuses any session with `device_handoff = NONE`.
+- **The board moves the device status, not the milestones.** A drop is
+  `setDeviceStatus`. The hand-over and return stay dated records a person makes in
+  the panel, so a card in Entregado can still be missing its hand-over.
+- **Location is a typed place plus a pin placed by hand on `devices`** (migration
+  0033). Out with a participant it is their home, so:
+  - it is read and written only with `participants.contact.read`; without it
+    there is no location and no Mapa tab, for viewers and in the data sent to them;
+  - the audit row says it changed and whether it has a pin, never the place;
+  - reaching RETURNED, by milestone or by status, erases it;
+  - the pin was a click, with no address search. D-145 changed that.
+- **Leaflet with OpenStreetMap tiles** (new dependency). Tiles are the one thing
+  fetched from outside: OpenStreetMap receives the area viewed and the viewer's
+  IP, never an address or a name. Their public tile server suits this volume.
+- Cards glow in the default colour, not the group's as in Cohortes: this role may
+  not hold `randomization.read`, and the colour would say who is in which group.
+
+## D-144 · 2026-10-30 · Headset setup is no longer tracked
+
+The founder: all headsets are already configured, so the setup state is not needed.
+
+- **Gone from the product:** the "Estado de configuracion" form and badge, and the
+  CONFIRM_SETUP step, which would otherwise ask every delivered headset to confirm
+  something nobody tracks. After receipt, the next step is the return.
+- **The columns stay.** `device_assignments.readiness` holds what was reported, and
+  dropping it would erase that for no gain.
+- **`vrNotReady` now means a reported problem, not a missing report.** New
+  assignments stay UNKNOWN for good, so the old reading would have made the
+  `VR_NOT_READY_BEFORE_SESSION` alert fire for every headset. Only the DEMO study
+  has such a rule, and nothing can now trigger it on a new assignment. Reporting a
+  headset that does not work is an incident.
+
+## D-145 · 2026-10-30 · A headset's location can be searched from what was typed
+
+The founder expected the location field to place the pin. This reverses D-143's
+"no address search", knowingly: the text can be a participant's home address, and
+it goes to a third party.
+
+- **Buscar sends the typed text to OpenStreetMap's Nominatim and nothing else**:
+  no participant, code or study. It runs from the server, so Nominatim sees this
+  application and not the staff member's IP, and the text is not logged here.
+- **On a button, not on typing or on save.** Each send is a choice someone made,
+  and Nominatim's terms forbid search-as-you-type. The form says what the button
+  does and asks for no names.
+- **Several matches are offered to choose from**; one is placed directly. Either
+  way the pin is only kept on Guardar, and a click on the map still moves it.
+- Nominatim is a free public service (one request a second) with no agreement
+  behind it. If the institution objects, or volume grows, this is one file to
+  replace: `src/services/geocoding.ts`.
+
+## D-146 · 2026-11-09 · Every staff form reads dates in the study's timezone
+
+Founder approval, as part of preparing for a stress test. D-136 left this open:
+the older forms parsed `datetime-local` with `new Date(value)`, which reads it in
+the server's zone (UTC on Vercel). A session typed as 18:00 was stored as 18:00
+UTC and shown as 19:00 or 20:00 in Madrid.
+
+- Session scheduling, screening booking, allocation date, a headset's expected
+  return and a task's due date now go through `parseStudyLocal`
+  (`src/lib/study-time.ts`), like the visit and plan forms already did.
+- Date-only fields have a fixed time of day: an expected return is the start of
+  that day, and a due date is 23:59 of it, both in the study's zone.
+- Display was already right: every staff screen formats in `study.timezone`.
+- **Records saved before this change keep their shifted time.** That's fine on
+  synthetic data. Fix any real record by hand rather than with a migration,
+  because nothing records which zone an old value was typed in.
+- `tests/study-time.test.ts` pins the conversion, including both DST
+  changeover days, and fails if a staff action goes back to
+  `new Date(parsed.data…)`.
+
+## D-147 · 2026-11-09 · Load testing with k6; rate limiting in the Vercel firewall
+
+Founder decisions for the stress test:
+
+- **Rate limiting lives in the Vercel WAF, not in the app.** No counter table
+  and no IP address are stored here, which keeps D-015's "IP addresses are not
+  stored". The rules are documented, not committed, in `docs/load-testing.md`,
+  and someone with Vercel access has to set them up. The trade-off: the limits
+  aren't in version control and nothing tests them.
+- **No captcha yet.** Rate limits plus the honeypot cover a stress test. A
+  captcha sends visitor signals to a third party, so it waits for the privacy
+  and cookie review.
+- **`scripts/load/hub-load.js` (k6)** covers public reads with a 3× spike, staff
+  browsing, application and contact submissions, and the cron processor. Every
+  write scenario is opt-in, and writes are refused against the production
+  host. Forms are submitted the way a browser without JavaScript would (the
+  page's hidden React inputs plus the fields, as multipart), so the script
+  doesn't depend on build-specific action IDs.
+
+## D-148 · 2026-11-09 · A scripted, lived-in DEMO study for presentations
+
+Founder request: show the Hub "working in a real life scenario".
+`scripts/seed-demo-scenario.ts` builds one in DEMO. It is synthetic only:
+invented names, `demo.*@example.com` addresses and `+34 600 0xx` numbers.
+
+- **Through the services, not raw inserts.** Every row carries the same
+  invariants and audit events as the UI writes (rule 5). The one direct write is
+  back-dating `applications.submitted_at`, which is not research- or
+  permission-relevant, so the funnel isn't all "today".
+- **Who did what.** Actions are attributed to the deactivated placeholder
+  accounts, whose display names are the team's first names. The audit trail
+  reads naturally without claiming a real person did something they didn't.
+  Tasks are assigned to the real team members who hold a DEMO role, so they
+  show under "Mis tareas".
+- **Arms are recorded outcomes** of an imaginary external allocation
+  (`DEMO-ALEA-…` references), as every allocation in this system is.
+- **Shared database.** Staging also holds the real CLP study, so the script
+  touches nothing outside DEMO and leaves recruitment settings alone. Re-running
+  `npm run db:seed` would re-open recruitment on DEMO, which could redirect the
+  live form.
+- Recording a public question emails the team a notification when mail is
+  configured. On the first run the provider rejected it (403), so nothing was sent.
+
+## D-149 · 2026-11-10 · Trello shows the board's lists and cards, read server-side
+
+Founder request: the Trello embed "only shows a bookmark". Trello's documented
+compact embed is a board preview, never its lists, and trello.com can't be
+framed (`frame-ancestors`). So `getTrelloBoard` (`src/services/trello.ts`) now
+reads the board from Trello's public REST API, and Tareas draws it read-only.
+
+- **No key, and the board's own sharing setting is the switch.** The API
+  answers without credentials for a "public" board and refuses a private one.
+  Making the board private turns the view back into the plain link, the old
+  fallback.
+- **This reverses D-068's "no card data touches this server".** Card names,
+  labels and due dates now pass through it. They are fetched per request with
+  `cache: "no-store"`, never stored or logged, and descriptions, comments,
+  members and attachments are not requested. The board holds general project
+  tasks; it must not hold participant data, because anything on it is public.
+- Still read-only: every card links to Trello, where changes are made. Writing
+  back stays an open question.
+- A slow or failed read (5 s timeout) logs `trello.board_unavailable` and falls
+  back to the link.
+
+## D-150 · 2026-11-10 · A missing exclusion reason can be added afterwards
+
+The flow summary said "1 exclusion has no recorded reason. Complete them…", but
+nothing in the Hub could complete one. Exclusions saved before migration 0007
+could have no reason, and re-recording the result makes a new screening while
+the old one keeps the gap.
+
+- `completeExclusionReason` (`services/participant-ops.ts`) sets the reason,
+  and optionally the one-line note, on a completed INELIGIBLE or
+  REVIEW_REQUIRED screening that has none. It only fills a gap: it refuses a
+  screening that already has a reason and never changes the result. The same
+  `validateReason` rules apply as when recording. It needs `screening.manage`
+  and audits `screening.reason_completed` with the reason's code and category
+  (the note's content is not snapshotted, as in `screening.completed`).
+- The participant page flags such a screening "Sin motivo registrado" with an
+  "Añadir motivo" button. The overview warning now links each affected
+  participant by code.
+- Correcting a reason that already exists is still not offered. That stays
+  with the open question on correcting determinations.
+
+## Open questions for researchers
+
+- D-136: the AnumaXR download link and unlock code for messages 24 and 25 —
+  one shared code, or one per participant? Shared, it can be written into the
+  control email so that it sends itself; per person, it stays copy-only.
+- D-136: are the personal results and AnumaXR access for the control group
+  conditional (message 3 says "more than 85 % of questionnaires")? The Hub
+  does not decide who qualifies; whoever sends m25 does.
+- D-136: should a POST visit or S0 date also appear on the calendar? The
+  calendar still shows group sessions only.
+- D-137: a booked screening cannot be rescheduled from its card, and a second
+  screening cannot be booked there; both still happen on the participant page.
+
 - The breathing guide now keeps two things in the visitor's browser storage
   when a facilitator uses them (D-120): the panel mode and named saved
   settings. Neither identifies anyone and both serve only what the person
@@ -6107,3 +6488,7 @@ David Glowacki commented on the team's "Textos Website - ES EN GL" document.
   wave, so they can be written into the template once? And what triggers each
   email: D-116's "a week after S0, a week after the end, three months", or
   the dates in message 3?
+- D-143, D-145: a headset's pin can mark a participant's home. Map tiles reach
+  OpenStreetMap with the viewer's IP and the area viewed, and a location search
+  sends it the typed text, which can be a home address. Is that acceptable to the
+  institution, and should the participant information mention it?

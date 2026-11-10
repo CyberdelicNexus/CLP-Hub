@@ -17,7 +17,6 @@ import {
   InvalidTransitionError,
   NotFoundError,
   revokeResponsible,
-  scheduleInitialVisit,
   setInitialVisitStatus,
   updateVisitNotes,
 } from "@/services/participant-care";
@@ -69,6 +68,7 @@ function revalidate(participantId: string) {
   revalidatePath(`${TEAM_BASE_PATH}/participantes`);
   revalidatePath(`${TEAM_BASE_PATH}/participantes/${participantId}`);
   revalidatePath(TEAM_BASE_PATH);
+  revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
 }
 
 // --- Responsibles -----------------------------------------------------------
@@ -158,51 +158,6 @@ const location = z
   .max(VISIT_LOCATION_MAX_LENGTH)
   .optional()
   .transform((v) => (v ? v : null));
-
-const scheduleVisitSchema = z.object({
-  participantId: uuid,
-  // datetime-local gives "YYYY-MM-DDTHH:mm" with no zone, interpreted as the
-  // server's zone and stored as UTC — the same convention screening uses.
-  scheduledAt: z.string().min(1),
-  location,
-  notes,
-});
-
-export async function scheduleInitialVisitAction(
-  _prev: CareState,
-  formData: FormData,
-): Promise<CareState> {
-  const ctx = await getStudyContext();
-  if (!ctx) return { error: "forbidden" };
-
-  const parsed = scheduleVisitSchema.safeParse({
-    participantId: formData.get("participantId"),
-    scheduledAt: formData.get("scheduledAt"),
-    location: formData.get("location") ?? undefined,
-    notes: formData.get("notes") ?? undefined,
-  });
-  if (!parsed.success) return { error: "invalid" };
-
-  const when = new Date(parsed.data.scheduledAt);
-  if (Number.isNaN(when.getTime())) return { error: "invalid" };
-
-  try {
-    assertPermission(ctx, "participants.manage");
-    await scheduleInitialVisit({
-      studyId: ctx.study.id,
-      participantId: parsed.data.participantId,
-      actorId: ctx.session.userId,
-      scheduledAt: when,
-      location: parsed.data.location,
-      notes: parsed.data.notes,
-    });
-  } catch (err) {
-    return fail(err, "initial_visit.schedule");
-  }
-
-  revalidate(parsed.data.participantId);
-  return { error: null, ok: true };
-}
 
 const closeVisitSchema = z.object({
   participantId: uuid,

@@ -71,7 +71,7 @@ export function Header({
         >
           <Menu />
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="p-0 data-[side=left]:w-64 data-[side=left]:sm:max-w-64">
           <SheetTitle className="flex h-14 items-center gap-2 px-5 text-sm font-semibold">
             <Image src="/brand/hub-logo.png" alt="" width={28} height={28} className="size-7 shrink-0 [mask-image:radial-gradient(circle,#000_30%,transparent_70%)] dark:mix-blend-screen dark:[mask-image:none]" />
             {labels.appName}

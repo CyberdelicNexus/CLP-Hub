@@ -1,7 +1,8 @@
 import "server-only";
-import { and, asc, count, desc, eq, gt, like, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, like, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
+import { ensureDigitalConsent } from "./participant-ops";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
   applicationAnswers,
@@ -9,6 +10,7 @@ import {
   applications,
   participantContacts,
   participants,
+  screenings,
   studies,
   type Application,
   type ApplicationQuestion,
@@ -17,6 +19,8 @@ import {
 import { extractContact, type AnswerValue, type FormQuestion } from "@/domain/application-form";
 import { isValidExternalRef } from "@/domain/intake";
 import type { Locale } from "@/domain/locale";
+import type { EligibilityStatus } from "@/domain/participant-state";
+import type { ScreeningStatus } from "@/domain/screening";
 import {
   canTransitionApplication,
   formatInterestCode,
@@ -136,6 +140,84 @@ export async function listApplications(
     .limit(limit);
 
   return rows as ApplicationListRow[];
+}
+
+/** One application card on Solicitudes (2026-10-28): the row plus its screening. */
+export interface ApplicationCardRow extends ApplicationListRow {
+  /** Only populated when the caller holds participants.contact.read. */
+  phone: string | null;
+  eligibilityStatus: EligibilityStatus;
+  /** The participant's most recent screening, if any was ever booked. */
+  screening: {
+    id: string;
+    status: ScreeningStatus;
+    scheduledAt: Date | null;
+    result: EligibilityStatus | null;
+  } | null;
+}
+
+/**
+ * Applications with what the card needs to carry the screening step too
+ * (2026-10-28: applications and screening managed in one place). Same contact
+ * discipline as `listApplications`: the contact columns are not selected at
+ * all without `includeContact`. The screening is the participant's latest by
+ * creation; nothing about its content beyond status, date and the recorded
+ * result is read.
+ */
+export async function listApplicationCards(
+  studyId: string,
+  options: { includeContact: boolean; status?: ApplicationStatus; limit?: number },
+): Promise<ApplicationCardRow[]> {
+  const { includeContact, status, limit = 200 } = options;
+  const db = getDb();
+
+  const rows = await db
+    .select({
+      id: applications.id,
+      status: applications.status,
+      source: applications.source,
+      submittedAt: applications.submittedAt,
+      participantId: participants.id,
+      participantCode: participants.code,
+      eligibilityStatus: participants.eligibilityStatus,
+      fullName: includeContact ? participantContacts.fullName : sql<null>`null`,
+      email: includeContact ? participantContacts.email : sql<null>`null`,
+      phone: includeContact ? participantContacts.phone : sql<null>`null`,
+    })
+    .from(applications)
+    .innerJoin(participants, eq(participants.id, applications.participantId))
+    .leftJoin(participantContacts, eq(participantContacts.participantId, participants.id))
+    .where(
+      status
+        ? and(eq(applications.studyId, studyId), eq(applications.status, status))
+        : eq(applications.studyId, studyId),
+    )
+    .orderBy(desc(applications.submittedAt))
+    .limit(limit);
+
+  const ids = [...new Set(rows.map((r) => r.participantId))];
+  const screeningRows = ids.length
+    ? await db
+        .select({
+          id: screenings.id,
+          participantId: screenings.participantId,
+          status: screenings.status,
+          scheduledAt: screenings.scheduledAt,
+          result: screenings.result,
+        })
+        .from(screenings)
+        .where(and(eq(screenings.studyId, studyId), inArray(screenings.participantId, ids)))
+        .orderBy(desc(screenings.createdAt))
+    : [];
+  // Newest first, so the first one seen per participant is the latest.
+  const latest = new Map<string, ApplicationCardRow["screening"]>();
+  for (const s of screeningRows) {
+    if (!latest.has(s.participantId)) {
+      latest.set(s.participantId, { id: s.id, status: s.status, scheduledAt: s.scheduledAt, result: s.result });
+    }
+  }
+
+  return rows.map((r) => ({ ...r, screening: latest.get(r.participantId) ?? null })) as ApplicationCardRow[];
 }
 
 export async function countApplicationsByStatus(
@@ -660,6 +742,15 @@ export async function recordQualtricsIntake(params: {
       metadata: { participantCode, source: "QUALTRICS" },
     });
 
+    // A response in Qualtrics means its consent page was accepted (D-139).
+    await ensureDigitalConsent(tx, {
+      studyId,
+      participantId: participant.id,
+      participantCode,
+      enrollmentStatus: null,
+      actorId,
+    });
+
     return { participantId: participant.id, participantCode, applicationId: application.id };
   });
 }
@@ -700,6 +791,8 @@ export async function setApplicationStatus(params: {
         status: applications.status,
         participantId: applications.participantId,
         recruitmentStatus: participants.recruitmentStatus,
+        participantCode: participants.code,
+        enrollmentStatus: participants.enrollmentStatus,
       })
       .from(applications)
       .innerJoin(participants, eq(participants.id, applications.participantId))
@@ -723,6 +816,19 @@ export async function setApplicationStatus(params: {
       before: { status: current.status },
       after: { status },
     });
+
+    // Passing to screening means the team has the Qualtrics response, and with
+    // it the digital consent that precedes it. Interest alone proves neither:
+    // someone can leave their name here and never open the questionnaire.
+    if (status === "ACCEPTED_FOR_SCREENING") {
+      await ensureDigitalConsent(tx, {
+        studyId,
+        participantId: current.participantId,
+        participantCode: current.participantCode,
+        enrollmentStatus: current.enrollmentStatus,
+        actorId,
+      });
+    }
 
     const nextRecruitment = recruitmentStatusForApplication(status);
     if (nextRecruitment && nextRecruitment !== current.recruitmentStatus) {

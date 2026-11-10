@@ -22,6 +22,22 @@ Environment variables are validated with Zod in `src/config/env.ts`; the app fai
 
 `npm run db:seed` creates the `DEMO` study and five staff accounts (`demo.<role>@example.com`) with `SEED_STAFF_PASSWORD`. It uses the service-role key to create Supabase Auth users and is idempotent. Names and emails are deliberately fake — four of the five display names are the founding team's own first names (see the table in README.md), so the dashboard greeting reads naturally in a demo; emails stay role-based.
 
+### A lived-in DEMO for presentations
+
+`npx tsx --conditions=react-server scripts/seed-demo-scenario.ts` fills DEMO with a realistic study in motion, dated relative to the day it runs (D-148):
+
+- a completed spring pilot (PIL-01)
+- an autumn cohort mid-programme with its paired control group (OTO-01 and OTO-01-C), with sessions held and upcoming and headsets out
+- a winter cohort still filling (INV-01 and INV-01-C)
+- a recruitment funnel, headsets in every state, open tasks, cohort notes and public questions
+
+It goes through the app's services, so the audit trail is the same as if staff had done it. Actions are attributed to the placeholder demo accounts and tasks are assigned to the real team members who hold a DEMO role. It touches no other study, no recruitment setting and no account. It is idempotent.
+
+Two cautions:
+
+- **`--conditions=react-server` is required.** The services import `server-only`.
+- **Recording a public question emails the team a notification** if mail is configured. Locally that email was rejected (403), so nothing was sent. Run the script where mail is off if that matters.
+
 Since Phase 5 the seed also publishes three Spanish study pages — `/estudio/preparacion-vr`, `/estudio/ayuda` and `/estudio/sesiones/demo_intro/preparacion` — so the public content surface is browsable immediately.
 
 Since Phase 3b the seed also creates three synthetic session templates — the programme definition, which is where a real trial's session names would live.

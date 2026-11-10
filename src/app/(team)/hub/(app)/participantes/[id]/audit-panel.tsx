@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronDown } from "lucide-react";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { listParticipantAudit } from "@/services/audit-trail";
 
 /**
@@ -34,38 +35,44 @@ export async function AuditPanel({
   const entries = await listParticipantAudit(studyId, participantId, { limit: 50 });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("audit.title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-xs leading-relaxed text-muted-foreground">{t("audit.note")}</p>
+    <Card className="py-0">
+      <details className="group/history">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 [&::-webkit-details-marker]:hidden">
+          <CardTitle>{t("audit.title")}</CardTitle>
+          <ChevronDown
+            className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-open/history:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <CardContent className="space-y-3 pb-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">{t("audit.note")}</p>
 
-        {entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("audit.empty")}</p>
-        ) : (
-          <ol className="divide-y divide-border">
-            {entries.map((e) => (
-              <li key={e.id} className="space-y-1 py-3">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-sm font-medium">{actionLabel(t, e.action)}</span>
-                  <span data-numeric className="text-xs text-muted-foreground">
-                    {formatDate(e.createdAt, timezone)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {e.actorName ?? t(`audit.actor.${e.actorType}`)}
-                  </span>
-                </div>
-                {e.changedFields.length > 0 ? (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {e.changedFields.join(" · ")}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardContent>
+          {entries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("audit.empty")}</p>
+          ) : (
+            <ol className="divide-y divide-border">
+              {entries.map((e) => (
+                <li key={e.id} className="space-y-1 py-3">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-sm font-medium">{actionLabel(t, e.action)}</span>
+                    <span data-numeric className="text-xs text-muted-foreground">
+                      {formatDate(e.createdAt, timezone)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {e.actorName ?? t(`audit.actor.${e.actorType}`)}
+                    </span>
+                  </div>
+                  {e.changedFields.length > 0 ? (
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {e.changedFields.join(" · ")}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          )}
+        </CardContent>
+      </details>
     </Card>
   );
 }

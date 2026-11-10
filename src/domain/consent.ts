@@ -108,6 +108,7 @@ export const CONSENT_STATUSES = [
   "DECLINED",
   "WITHDRAWN",
   "SUPERSEDED",
+  "VOIDED",
 ] as const;
 export type ConsentStatus = (typeof CONSENT_STATUSES)[number];
 
@@ -120,7 +121,9 @@ export function isConsentStatus(value: unknown): value is ConsentStatus {
  *
  * SUPERSEDED is not reachable by a staff action: it is set by the service when a
  * newer consent row replaces this one, which is why it is absent from every
- * target list here. DECLINED and WITHDRAWN are terminal — changing your mind
+ * target list here. VOIDED likewise: it means the tick was a recording mistake,
+ * not that the person changed their mind, and only `setPhysicalConsent` sets it
+ * (D-139). DECLINED and WITHDRAWN are terminal — changing your mind
  * later is a new consent record, not a rewrite of the old decision.
  */
 export const CONSENT_TRANSITIONS: Record<ConsentStatus, readonly ConsentStatus[]> = {
@@ -129,6 +132,7 @@ export const CONSENT_TRANSITIONS: Record<ConsentStatus, readonly ConsentStatus[]
   DECLINED: [],
   WITHDRAWN: [],
   SUPERSEDED: [],
+  VOIDED: [],
 };
 
 export function canTransitionConsent(from: ConsentStatus, to: ConsentStatus): boolean {
@@ -140,6 +144,7 @@ export const INACTIVE_CONSENT_STATUSES: readonly ConsentStatus[] = [
   "DECLINED",
   "WITHDRAWN",
   "SUPERSEDED",
+  "VOIDED",
 ];
 
 export function isActiveConsent(status: ConsentStatus): boolean {
@@ -155,8 +160,13 @@ export function enrollmentStatusForConsent(status: ConsentStatus): "ENROLLED" | 
   return status === "CONSENTED" ? "ENROLLED" : null;
 }
 
-/** Form version label, e.g. "PIS v2.1". A label, not a document. */
-export const CONSENT_VERSION_MAX_LENGTH = 60;
+/**
+ * What the two recorded consents say in `version_label` (D-139). The team no
+ * longer types a form version: the digital form is the one in Qualtrics, and
+ * the physical one is on paper, in the approved system.
+ */
+export const DIGITAL_CONSENT_LABEL = "Qualtrics";
+export const PHYSICAL_CONSENT_LABEL = "Firmado en persona";
 
 // ---------------------------------------------------------------------------
 // Which consents a participant is still missing
@@ -186,10 +196,8 @@ export function missingConsentTypes(input: {
   const active = new Set(input.activeTypes);
   const missing: ConsentType[] = [];
 
-  // The remote consent precedes data collection entirely, so it is expected for
-  // everyone regardless of arm.
-  if (!active.has("DIGITAL")) missing.push("DIGITAL");
-
+  // The digital consent is never "missing": it precedes the application and
+  // the Hub records it by itself (D-139), so there is nothing to ask the team.
   // Only when the allocation is known AND the study configured that arm to need
   // it. An unallocated participant is not "missing" a physical consent — nobody
   // knows yet whether they will need one.

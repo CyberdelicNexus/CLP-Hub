@@ -168,6 +168,7 @@ export type IntakeActionState = {
   error: "forbidden" | "invalid" | "duplicate" | "failed" | null;
   /** Echoed back so staff can find the person they just created. */
   participantCode?: string;
+  ok?: boolean;
 };
 
 const intakeSchema = z.object({
@@ -224,5 +225,5 @@ export async function recordQualtricsIntakeAction(
   revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
   revalidatePath(`${TEAM_BASE_PATH}/participantes`);
   revalidatePath(TEAM_BASE_PATH);
-  return { error: null, participantCode };
+  return { error: null, participantCode, ok: true };
 }

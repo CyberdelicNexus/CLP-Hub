@@ -1,5 +1,6 @@
 import {
   boolean,
+  doublePrecision,
   index,
   pgTable,
   text,
@@ -34,6 +35,15 @@ export const devices = pgTable(
     /** Deactivated, never deleted: assignment history must stay readable. */
     active: boolean("active").notNull().default(true),
     notes: text("notes"),
+    /**
+     * Where it is, typed by staff, and a pin placed by hand on the map (D-143).
+     * Out with a participant that is their home, so it is read under
+     * `participants.contact.read`, cleared on return, and never audited by value.
+     */
+    locationLabel: text("location_label"),
+    locationLat: doublePrecision("location_lat"),
+    locationLng: doublePrecision("location_lng"),
+    locationUpdatedAt: timestamp("location_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

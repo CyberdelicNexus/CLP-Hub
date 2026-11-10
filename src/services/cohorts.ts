@@ -2,17 +2,20 @@ import "server-only";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
+import { ensureDigitalConsent } from "./participant-ops";
 import type { CohortScope } from "@/auth/cohort-scope";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
   alerts,
   cohortNotes,
+  cohortPlannedMessages,
   cohortSessions,
   cohortStaff,
   cohorts,
   communications,
   consents,
   participantCohortAssignments,
+  participantVisits,
   participantContacts,
   participants,
   randomizations,
@@ -352,6 +355,31 @@ export async function listStudyArms(studyId: string): Promise<StudyArm[]> {
     .from(studyArms)
     .where(and(eq(studyArms.studyId, studyId), eq(studyArms.active, true)))
     .orderBy(asc(studyArms.position), asc(studyArms.code));
+}
+
+/**
+ * How many participants have a recorded allocation to each active arm — the
+ * overview's per-group counts (2026-11-09). One row per arm, zero included,
+ * labelled by the arm's configured name, so the code never needs to know which
+ * arm is "control" (rule 6). Counts recorded outcomes only; nothing allocates.
+ */
+export async function countAllocationsByArm(
+  studyId: string,
+): Promise<{ armId: string; code: string; nameEs: string; nameEn: string | null; n: number }[]> {
+  const rows = await getDb()
+    .select({
+      armId: studyArms.id,
+      code: studyArms.code,
+      nameEs: studyArms.nameEs,
+      nameEn: studyArms.nameEn,
+      n: count(randomizations.id),
+    })
+    .from(studyArms)
+    .leftJoin(randomizations, eq(randomizations.armId, studyArms.id))
+    .where(and(eq(studyArms.studyId, studyId), eq(studyArms.active, true)))
+    .groupBy(studyArms.id)
+    .orderBy(asc(studyArms.position), asc(studyArms.code));
+  return rows.map((r) => ({ ...r, n: Number(r.n) }));
 }
 
 /** Cohorts a participant may be assigned to: open for assignment, in scope. */
@@ -803,6 +831,8 @@ export async function deleteCohort(params: {
     await tx.delete(participantCohortAssignments).where(eq(participantCohortAssignments.cohortId, cohortId));
     await tx.delete(cohortStaff).where(eq(cohortStaff.cohortId, cohortId));
     await tx.delete(cohortNotes).where(eq(cohortNotes.cohortId, cohortId));
+    await tx.delete(participantVisits).where(eq(participantVisits.cohortId, cohortId));
+    await tx.delete(cohortPlannedMessages).where(eq(cohortPlannedMessages.cohortId, cohortId));
     await tx.delete(tasks).where(eq(tasks.cohortId, cohortId));
     await tx.delete(communications).where(eq(communications.cohortId, cohortId));
     await tx.delete(alerts).where(eq(alerts.cohortId, cohortId));
@@ -927,7 +957,18 @@ export async function recordRandomization(params: {
       },
     });
 
-    if (canTransitionEnrollment(participant.enrollmentStatus, "RANDOMIZED")) {
+    // Nobody reaches allocation without applying through Qualtrics, whichever
+    // door they came in by. After the audit row above, whose snapshot keeps
+    // what was on record before this (D-139).
+    const enrollmentStatus = await ensureDigitalConsent(tx, {
+      studyId,
+      participantId,
+      participantCode: participant.code,
+      enrollmentStatus: participant.enrollmentStatus,
+      actorId,
+    });
+
+    if (canTransitionEnrollment(enrollmentStatus, "RANDOMIZED")) {
       await tx
         .update(participants)
         .set({ enrollmentStatus: "RANDOMIZED" })
@@ -939,7 +980,7 @@ export async function recordRandomization(params: {
         action: "participant.enrollment_changed",
         entityType: "participant",
         entityId: participantId,
-        before: { enrollmentStatus: participant.enrollmentStatus },
+        before: { enrollmentStatus },
         after: { enrollmentStatus: "RANDOMIZED" },
         metadata: { via: "randomization", randomizationId: created.id },
       });

@@ -4,7 +4,7 @@ import { ContentBlocks } from "@/components/content/blocks";
 import { CoverImage } from "@/components/content/cover-image";
 import { CONTENT_KEY_PATTERN } from "@/domain/content";
 import { StudyLanguageLinks } from "@/components/content/language-links";
-import { STUDY_PAGE_COPY } from "@/content/study-pages";
+import { STUDY_PAGE_COPY, studyPageMetadata } from "@/content/study-pages";
 import { getPublicLocale } from "@/i18n/public-locale";
 import { getPublishedByKey, inReadersLanguage } from "@/services/content";
 
@@ -25,7 +25,7 @@ export async function generateMetadata({
   if (!CONTENT_KEY_PATTERN.test(key)) return {};
   const locale = await getPublicLocale();
   const found = await inReadersLanguage(locale, (l) => getPublishedByKey({ key, locale: l }));
-  return found ? { title: found.page.title } : {};
+  return found ? studyPageMetadata(found.page.title, STUDY_PAGE_COPY[locale].shareDescription) : {};
 }
 
 export default async function StudyPage({ params }: { params: Promise<{ key: string }> }) {

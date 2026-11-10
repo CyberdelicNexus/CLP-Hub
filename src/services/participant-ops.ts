@@ -20,8 +20,9 @@ import {
 import type { ParticipantSnapshot } from "@/domain/next-step";
 import { isVisitStatus } from "@/domain/responsibility";
 import {
-  canCarryScopes,
   canTransitionConsent,
+  DIGITAL_CONSENT_LABEL,
+  PHYSICAL_CONSENT_LABEL,
   isConsentType,
   enrollmentStatusForConsent,
   scopesFor,
@@ -110,6 +111,8 @@ export interface ParticipantListRow {
   createdAt: Date;
   /** Only populated when the caller holds participants.contact.read. */
   fullName: string | null;
+  email: string | null;
+  phone: string | null;
   /** Cohort and arm, for filtering and for the operational columns. */
   cohortId: string | null;
   cohortCode: string | null;
@@ -180,6 +183,8 @@ export async function listParticipants(
       enrollmentStatus: participants.enrollmentStatus,
       createdAt: participants.createdAt,
       fullName: includeContact ? participantContacts.fullName : sql<null>`null`,
+      email: includeContact ? participantContacts.email : sql<null>`null`,
+      phone: includeContact ? participantContacts.phone : sql<null>`null`,
       cohortId: cohorts.id,
       cohortCode: cohorts.code,
       armId: studyArms.id,
@@ -233,6 +238,8 @@ export async function listParticipants(
     enrollmentStatus: r.enrollmentStatus,
     createdAt: r.createdAt,
     fullName: r.fullName,
+    email: r.email,
+    phone: r.phone,
     cohortId: r.cohortId,
     cohortCode: r.cohortCode,
     armId: r.armId,
@@ -364,12 +371,14 @@ export interface ParticipantOpsCounts {
   reviewRequired: number;
   /** Eligible people with no allocation recorded — the funnel's usual bottleneck. */
   waitingForAllocation: number;
+  /** Enrollment recorded as COMPLETED by staff: finished the programme. */
+  completed: number;
 }
 
 /** Counts for the overview tiles. Each is a plain fact, not a derived judgement. */
 export async function countParticipantOps(studyId: string): Promise<ParticipantOpsCounts> {
   const db = getDb();
-  const [pending, eligible, enrolled, review, unallocated] = await Promise.all([
+  const [pending, eligible, enrolled, review, unallocated, completed] = await Promise.all([
     db
       .select({ n: count() })
       .from(screenings)
@@ -409,6 +418,10 @@ export async function countParticipantOps(studyId: string): Promise<ParticipantO
           )`,
         ),
       ),
+    db
+      .select({ n: count() })
+      .from(participants)
+      .where(and(eq(participants.studyId, studyId), eq(participants.enrollmentStatus, "COMPLETED"))),
   ]);
 
   return {
@@ -417,6 +430,7 @@ export async function countParticipantOps(studyId: string): Promise<ParticipantO
     enrolled: Number(enrolled[0]?.n ?? 0),
     reviewRequired: Number(review[0]?.n ?? 0),
     waitingForAllocation: Number(unallocated[0]?.n ?? 0),
+    completed: Number(completed[0]?.n ?? 0),
   };
 }
 
@@ -623,7 +637,11 @@ export async function scheduleScreening(params: {
  * plus both audit rows happen in one transaction. PENDING is not accepted as a
  * result: "not determined" is expressed by leaving the screening incomplete.
  */
-export async function completeScreening(params: {
+export async function completeScreening(params: CompleteScreeningParams): Promise<void> {
+  await getDb().transaction((tx) => completeScreeningIn(tx, params));
+}
+
+interface CompleteScreeningParams {
   studyId: string;
   screeningId: string;
   actorId: string;
@@ -634,118 +652,173 @@ export async function completeScreening(params: {
   reasonId?: string | null;
   /** One line of operational context, at most 280 characters (D-030). */
   reasonNote?: string | null;
-}): Promise<void> {
+}
+
+async function completeScreeningIn(tx: DbExecutor, params: CompleteScreeningParams): Promise<void> {
   const { studyId, screeningId, actorId, result, externalRecordId, completedAt } = params;
   const reasonId = params.reasonId?.trim() || null;
   const reasonNote = params.reasonNote?.trim() || null;
 
+  const [current] = await tx
+    .select({
+      id: screenings.id,
+      status: screenings.status,
+      participantId: screenings.participantId,
+      participantCode: participants.code,
+      eligibilityStatus: participants.eligibilityStatus,
+    })
+    .from(screenings)
+    .innerJoin(participants, eq(participants.id, screenings.participantId))
+    .where(and(eq(screenings.id, screeningId), eq(screenings.studyId, studyId)))
+    .limit(1);
+
+  if (!current) throw new NotFoundError("screening", screeningId);
+  if (!canTransitionScreening(current.status, "COMPLETED")) {
+    throw new InvalidTransitionError("screening", current.status, "COMPLETED");
+  }
+  if (!canTransitionEligibility(current.eligibilityStatus, result)) {
+    throw new InvalidTransitionError("eligibility", current.eligibilityStatus, result);
+  }
+
+  // Resolve the reason inside the transaction so a reason deactivated a
+  // moment ago cannot be attached, and so a reason belonging to another study
+  // is a not-found rather than a silent cross-study write.
+  const reason = reasonId ? await loadReason(tx, studyId, reasonId) : null;
+  if (reasonId && !reason) throw new NotFoundError("eligibility reason", reasonId);
+
+  const problem = validateReason({ status: result, reason, note: reasonNote });
+  if (problem) throw new ReasonError(problem);
+
+  const when = completedAt ?? new Date();
+
+  await tx
+    .update(screenings)
+    .set({
+      status: "COMPLETED",
+      completedAt: when,
+      result,
+      externalRecordId: externalRecordId?.trim() || null,
+      reasonId: reason?.id ?? null,
+      reasonNote: reason ? reasonNote : null,
+      recordedBy: actorId,
+    })
+    .where(eq(screenings.id, screeningId));
+
+  await recordAuditEvent(tx, {
+    studyId,
+    actor: { type: "STAFF", id: actorId },
+    action: "screening.completed",
+    entityType: "screening",
+    entityId: screeningId,
+    before: { status: current.status },
+    // The external reference is recorded; no screening content ever is.
+    after: {
+      status: "COMPLETED",
+      result,
+      completedAt: when.toISOString(),
+      externalRecordId: externalRecordId?.trim() || null,
+      // The reason's code and CONSORT category, which are configuration, are
+      // safe to snapshot. The note's CONTENT deliberately is not: it is the
+      // one free-text field near a determination (D-030), and copying it into
+      // an append-only log would make it impossible to erase. Whether a note
+      // exists is recorded, so its presence is still auditable.
+      reasonCode: reason?.code ?? null,
+      reasonCategory: reason?.category ?? null,
+      hasReasonNote: Boolean(reason && reasonNote),
+    },
+  });
+
+  await tx
+    .update(participants)
+    .set({ eligibilityStatus: result })
+    .where(eq(participants.id, current.participantId));
+
+  await recordAuditEvent(tx, {
+    studyId,
+    actor: { type: "STAFF", id: actorId },
+    action: "participant.eligibility_changed",
+    entityType: "participant",
+    entityId: current.participantId,
+    before: { eligibilityStatus: current.eligibilityStatus },
+    after: { eligibilityStatus: result, participantCode: current.participantCode },
+    metadata: {
+      via: "screening",
+      screeningId,
+      reasonCode: reason?.code ?? null,
+      reasonCategory: reason?.category ?? null,
+    },
+  });
+
+  // Two events, because they are two different things a rule may want. The
+  // RESULT is deliberately absent from both: a rule can act on the fact that
+  // a determination was made without this log ever carrying what it was
+  // (CLAUDE.md rule 3).
+  await recordStudyEvent(tx, {
+    studyId,
+    eventType: "SCREENING_COMPLETED",
+    subject: { kind: "PARTICIPANT", id: current.participantId },
+    metadata: { participantCode: current.participantCode },
+  });
+  await recordStudyEvent(tx, {
+    studyId,
+    eventType: "ELIGIBILITY_DETERMINED",
+    subject: { kind: "PARTICIPANT", id: current.participantId },
+    metadata: { participantCode: current.participantCode },
+  });
+}
+
+/**
+ * Move a participant to an eligibility column on the board (D-141). The
+ * determination is still made elsewhere; this records it, through the same
+ * write as a screening result. Someone with no screening open gets one made
+ * here for the purpose, in the same transaction, so a refused reason leaves
+ * nothing behind.
+ */
+export async function recordEligibilityMove(params: {
+  studyId: string;
+  participantId: string;
+  actorId: string;
+  result: Exclude<EligibilityStatus, "PENDING">;
+  reasonId?: string | null;
+  reasonNote?: string | null;
+}): Promise<void> {
+  const { studyId, participantId, actorId, result, reasonId, reasonNote } = params;
+
   await getDb().transaction(async (tx) => {
-    const [current] = await tx
-      .select({
-        id: screenings.id,
-        status: screenings.status,
-        participantId: screenings.participantId,
-        participantCode: participants.code,
-        eligibilityStatus: participants.eligibilityStatus,
-      })
+    const [participant] = await tx
+      .select({ code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    const [open] = await tx
+      .select({ id: screenings.id })
       .from(screenings)
-      .innerJoin(participants, eq(participants.id, screenings.participantId))
-      .where(and(eq(screenings.id, screeningId), eq(screenings.studyId, studyId)))
+      .where(and(eq(screenings.participantId, participantId), eq(screenings.status, "SCHEDULED")))
+      .orderBy(desc(screenings.createdAt))
       .limit(1);
 
-    if (!current) throw new NotFoundError("screening", screeningId);
-    if (!canTransitionScreening(current.status, "COMPLETED")) {
-      throw new InvalidTransitionError("screening", current.status, "COMPLETED");
+    let screeningId = open?.id;
+    if (!screeningId) {
+      const [created] = await tx
+        .insert(screenings)
+        .values({ studyId, participantId, status: "SCHEDULED", recordedBy: actorId })
+        .returning({ id: screenings.id });
+      screeningId = created.id;
+
+      await recordAuditEvent(tx, {
+        studyId,
+        actor: { type: "STAFF", id: actorId },
+        action: "screening.scheduled",
+        entityType: "screening",
+        entityId: screeningId,
+        after: { participantCode: participant.code, status: "SCHEDULED", scheduledAt: null },
+        metadata: { via: "participants_board" },
+      });
     }
-    if (!canTransitionEligibility(current.eligibilityStatus, result)) {
-      throw new InvalidTransitionError("eligibility", current.eligibilityStatus, result);
-    }
 
-    // Resolve the reason inside the transaction so a reason deactivated a
-    // moment ago cannot be attached, and so a reason belonging to another study
-    // is a not-found rather than a silent cross-study write.
-    const reason = reasonId ? await loadReason(tx, studyId, reasonId) : null;
-    if (reasonId && !reason) throw new NotFoundError("eligibility reason", reasonId);
-
-    const problem = validateReason({ status: result, reason, note: reasonNote });
-    if (problem) throw new ReasonError(problem);
-
-    const when = completedAt ?? new Date();
-
-    await tx
-      .update(screenings)
-      .set({
-        status: "COMPLETED",
-        completedAt: when,
-        result,
-        externalRecordId: externalRecordId?.trim() || null,
-        reasonId: reason?.id ?? null,
-        reasonNote: reason ? reasonNote : null,
-        recordedBy: actorId,
-      })
-      .where(eq(screenings.id, screeningId));
-
-    await recordAuditEvent(tx, {
-      studyId,
-      actor: { type: "STAFF", id: actorId },
-      action: "screening.completed",
-      entityType: "screening",
-      entityId: screeningId,
-      before: { status: current.status },
-      // The external reference is recorded; no screening content ever is.
-      after: {
-        status: "COMPLETED",
-        result,
-        completedAt: when.toISOString(),
-        externalRecordId: externalRecordId?.trim() || null,
-        // The reason's code and CONSORT category, which are configuration, are
-        // safe to snapshot. The note's CONTENT deliberately is not: it is the
-        // one free-text field near a determination (D-030), and copying it into
-        // an append-only log would make it impossible to erase. Whether a note
-        // exists is recorded, so its presence is still auditable.
-        reasonCode: reason?.code ?? null,
-        reasonCategory: reason?.category ?? null,
-        hasReasonNote: Boolean(reason && reasonNote),
-      },
-    });
-
-    await tx
-      .update(participants)
-      .set({ eligibilityStatus: result })
-      .where(eq(participants.id, current.participantId));
-
-    await recordAuditEvent(tx, {
-      studyId,
-      actor: { type: "STAFF", id: actorId },
-      action: "participant.eligibility_changed",
-      entityType: "participant",
-      entityId: current.participantId,
-      before: { eligibilityStatus: current.eligibilityStatus },
-      after: { eligibilityStatus: result, participantCode: current.participantCode },
-      metadata: {
-        via: "screening",
-        screeningId,
-        reasonCode: reason?.code ?? null,
-        reasonCategory: reason?.category ?? null,
-      },
-    });
-
-    // Two events, because they are two different things a rule may want. The
-    // RESULT is deliberately absent from both: a rule can act on the fact that
-    // a determination was made without this log ever carrying what it was
-    // (CLAUDE.md rule 3).
-    await recordStudyEvent(tx, {
-      studyId,
-      eventType: "SCREENING_COMPLETED",
-      subject: { kind: "PARTICIPANT", id: current.participantId },
-      metadata: { participantCode: current.participantCode },
-    });
-    await recordStudyEvent(tx, {
-      studyId,
-      eventType: "ELIGIBILITY_DETERMINED",
-      subject: { kind: "PARTICIPANT", id: current.participantId },
-      metadata: { participantCode: current.participantCode },
-    });
+    await completeScreeningIn(tx, { studyId, screeningId, actorId, result, reasonId, reasonNote });
   });
 }
 
@@ -784,39 +857,229 @@ export async function closeScreening(params: {
   });
 }
 
+/**
+ * Attach the missing reason to a completed exclusion (2026-11-10, D-150).
+ *
+ * Exclusions recorded before migration 0007 could be saved without a reason;
+ * the flow summary counts them apart ("1 exclusion has no recorded reason")
+ * because it groups exclusions by reason. Re-recording the result can't fix
+ * that: it makes a new screening and leaves the old one as it was. This fills
+ * the gap on the screening itself.
+ *
+ * It only fills a gap: it refuses a screening that already has a reason, and
+ * one that isn't a completed INELIGIBLE or REVIEW_REQUIRED result. The result
+ * itself is unchanged; the same reason rules apply as when it was recorded.
+ */
+export async function completeExclusionReason(params: {
+  studyId: string;
+  screeningId: string;
+  actorId: string;
+  reasonId: string;
+  reasonNote?: string | null;
+}): Promise<void> {
+  const { studyId, screeningId, actorId } = params;
+  const reasonNote = params.reasonNote?.trim() || null;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        id: screenings.id,
+        status: screenings.status,
+        result: screenings.result,
+        reasonId: screenings.reasonId,
+        participantCode: participants.code,
+      })
+      .from(screenings)
+      .innerJoin(participants, eq(participants.id, screenings.participantId))
+      .where(and(eq(screenings.id, screeningId), eq(screenings.studyId, studyId)))
+      .limit(1);
+
+    if (!current) throw new NotFoundError("screening", screeningId);
+    if (
+      current.status !== "COMPLETED" ||
+      current.reasonId !== null ||
+      (current.result !== "INELIGIBLE" && current.result !== "REVIEW_REQUIRED")
+    ) {
+      throw new InvalidTransitionError("screening reason", current.reasonId ? "SET" : "NOT_APPLICABLE", "SET");
+    }
+
+    const reason = await loadReason(tx, studyId, params.reasonId);
+    if (!reason) throw new NotFoundError("eligibility reason", params.reasonId);
+    const problem = validateReason({ status: current.result, reason, note: reasonNote });
+    if (problem) throw new ReasonError(problem);
+
+    await tx
+      .update(screenings)
+      .set({ reasonId: reason.id, reasonNote })
+      .where(eq(screenings.id, screeningId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "screening.reason_completed",
+      entityType: "screening",
+      entityId: screeningId,
+      before: { reasonCode: null },
+      // As in screening.completed: the reason's code and category are
+      // configuration and safe to snapshot; the note's content never is.
+      after: {
+        participantCode: current.participantCode,
+        result: current.result,
+        reasonCode: reason.code,
+        reasonCategory: reason.category,
+        hasReasonNote: Boolean(reasonNote),
+      },
+    });
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Consent writes
 // ---------------------------------------------------------------------------
 
 /**
- * Open a consent process against a named form version.
+ * Write down the digital consent, which the person accepted in Qualtrics before
+ * applying (D-139). Nobody on the team records it: this runs inside the
+ * transaction of the moment the Hub knows a Qualtrics response exists, and
+ * `decided_at` is when it was recorded here, not when it was accepted there.
  *
- * Any consent currently in force is marked SUPERSEDED and points at the new row,
- * so the previous decision is preserved rather than overwritten. The partial
- * unique index guarantees only one PENDING/CONSENTED row survives.
+ * It enrols the participant, as any consent does, and returns the enrollment
+ * status that results. A row with an outcome is left alone: above all a
+ * WITHDRAWN one, which this must never quietly turn back into a consent.
  */
-export async function startConsent(params: {
+export async function ensureDigitalConsent(
+  tx: DbExecutor,
+  params: {
+    studyId: string;
+    participantId: string;
+    participantCode: string;
+    enrollmentStatus: EnrollmentStatus | null;
+    actorId: string;
+  },
+): Promise<EnrollmentStatus | null> {
+  const { studyId, participantId, participantCode, enrollmentStatus, actorId } = params;
+
+  const rows = await tx
+    .select({ id: consents.id, status: consents.status })
+    .from(consents)
+    .where(and(eq(consents.participantId, participantId), eq(consents.consentType, "DIGITAL")));
+  const pending = rows.find((r) => r.status === "PENDING");
+  if (rows.length > 0 && !pending) return enrollmentStatus;
+
+  const decidedAt = new Date();
+  let consentId = pending?.id;
+  if (consentId) {
+    await tx
+      .update(consents)
+      .set({ status: "CONSENTED", decidedAt, recordedBy: actorId })
+      .where(eq(consents.id, consentId));
+  } else {
+    const [created] = await tx
+      .insert(consents)
+      .values({
+        studyId,
+        participantId,
+        consentType: "DIGITAL",
+        status: "CONSENTED",
+        versionLabel: DIGITAL_CONSENT_LABEL,
+        decidedAt,
+        recordedBy: actorId,
+      })
+      .returning({ id: consents.id });
+    consentId = created.id;
+  }
+
+  await recordAuditEvent(tx, {
+    studyId,
+    actor: { type: "STAFF", id: actorId },
+    action: "consent.digital_recorded",
+    entityType: "consent",
+    entityId: consentId,
+    before: { status: pending ? "PENDING" : null },
+    after: { status: "CONSENTED", consentType: "DIGITAL", participantCode },
+  });
+  await recordStudyEvent(tx, {
+    studyId,
+    eventType: "CONSENT_RECORDED",
+    subject: { kind: "PARTICIPANT", id: participantId },
+    metadata: { participantCode },
+  });
+
+  // Null has no transition to ENROLLED because it used to pass through a
+  // consent process the team opened by hand. There is no such step any more.
+  if (enrollmentStatus !== null && !canTransitionEnrollment(enrollmentStatus, "ENROLLED")) {
+    return enrollmentStatus;
+  }
+  await tx.update(participants).set({ enrollmentStatus: "ENROLLED" }).where(eq(participants.id, participantId));
+  await recordAuditEvent(tx, {
+    studyId,
+    actor: { type: "STAFF", id: actorId },
+    action: "participant.enrollment_changed",
+    entityType: "participant",
+    entityId: participantId,
+    before: { enrollmentStatus },
+    after: { enrollmentStatus: "ENROLLED", participantCode },
+    metadata: { via: "consent", consentId },
+  });
+  return "ENROLLED";
+}
+
+/**
+ * The physical consent as one tick (D-139). The signed paper lives in the
+ * approved system; this says it exists, and which configured authorizations it
+ * grants. Those are recorded with the tick and not edited afterwards.
+ *
+ * `signed: false` is for a tick made by mistake, and voids the row. It does not
+ * record a withdrawal: the person did nothing. A real withdrawal stays its own
+ * explicit act, `recordConsentDecision`.
+ */
+export async function setPhysicalConsent(params: {
   studyId: string;
   participantId: string;
   actorId: string;
-  versionLabel: string;
-  /** Defaults to DIGITAL, the consent everyone gives before any data exists. */
-  consentType?: ConsentType;
-  /** Configured scope codes; only a PHYSICAL consent may carry any. */
+  signed: boolean;
   grantedScopes?: readonly string[];
-}): Promise<string> {
-  const { studyId, participantId, actorId } = params;
-  const versionLabel = params.versionLabel.trim();
-  const consentType: ConsentType = params.consentType ?? "DIGITAL";
+}): Promise<void> {
+  const { studyId, participantId, actorId, signed } = params;
   const grantedScopes = [...new Set(params.grantedScopes ?? [])];
 
-  return getDb().transaction(async (tx) => {
+  await getDb().transaction(async (tx) => {
     const [participant] = await tx
-      .select({ id: participants.id, code: participants.code, enrollmentStatus: participants.enrollmentStatus })
+      .select({ code: participants.code })
       .from(participants)
       .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
       .limit(1);
     if (!participant) throw new NotFoundError("participant", participantId);
+
+    const open = await tx
+      .select({ id: consents.id, status: consents.status })
+      .from(consents)
+      .where(
+        and(
+          eq(consents.participantId, participantId),
+          eq(consents.consentType, "PHYSICAL"),
+          inArray(consents.status, ["PENDING", "CONSENTED"]),
+        ),
+      );
+    const consented = open.find((c) => c.status === "CONSENTED");
+    const pending = open.find((c) => c.status === "PENDING");
+
+    if (!signed) {
+      if (!consented) return;
+      await tx.update(consents).set({ status: "VOIDED", recordedBy: actorId }).where(eq(consents.id, consented.id));
+      await recordAuditEvent(tx, {
+        studyId,
+        actor: { type: "STAFF", id: actorId },
+        action: "consent.voided",
+        entityType: "consent",
+        entityId: consented.id,
+        before: { status: "CONSENTED" },
+        after: { status: "VOIDED", participantCode: participant.code },
+      });
+      return;
+    }
+
+    if (consented) return;
 
     // Scope membership is verified here rather than by a constraint: a CHECK
     // may not contain a subquery, so the database can only guarantee the SHAPE
@@ -824,100 +1087,72 @@ export async function startConsent(params: {
     // a scope deactivated a moment ago cannot still be granted.
     if (grantedScopes.length > 0) {
       const configured = await loadConsentScopes(tx, studyId);
-      const problem = validateScopes({
-        type: consentType,
-        granted: grantedScopes,
-        configured,
-      });
+      const problem = validateScopes({ type: "PHYSICAL", granted: grantedScopes, configured });
       if (problem) throw new ScopeError(problem);
-    } else if (!canCarryScopes(consentType) && grantedScopes.length > 0) {
-      throw new ScopeError("scopesNotAllowed");
     }
 
-    // Superseding is scoped TO THE SAME TYPE (D-032). Starting a physical
-    // consent must not quietly retire the digital one: they are two different
-    // decisions the person made at two different moments, and both stay in
-    // force. The partial unique index is per (participant, type) for the same
-    // reason.
-    const [existing] = await tx
-      .select({ id: consents.id, status: consents.status })
-      .from(consents)
-      .where(
-        and(
-          eq(consents.participantId, participantId),
-          eq(consents.consentType, consentType),
-          inArray(consents.status, ["PENDING", "CONSENTED"]),
-        ),
-      )
-      .limit(1);
-
-    const [created] = await tx
-      .insert(consents)
-      .values({
-        studyId,
-        participantId,
-        status: "PENDING",
-        consentType,
-        versionLabel,
-        grantedScopes,
-        recordedBy: actorId,
-      })
-      .returning({ id: consents.id });
-
-    if (existing) {
+    const decidedAt = new Date();
+    let consentId = pending?.id;
+    if (consentId) {
       await tx
         .update(consents)
-        .set({ status: "SUPERSEDED", supersededBy: created.id, decidedAt: new Date() })
-        .where(eq(consents.id, existing.id));
-
-      await recordAuditEvent(tx, {
-        studyId,
-        actor: { type: "STAFF", id: actorId },
-        action: "consent.superseded",
-        entityType: "consent",
-        entityId: existing.id,
-        before: { status: existing.status },
-        after: { status: "SUPERSEDED", supersededBy: created.id },
-      });
+        .set({ status: "CONSENTED", grantedScopes, decidedAt, recordedBy: actorId })
+        .where(eq(consents.id, consentId));
+    } else {
+      const [created] = await tx
+        .insert(consents)
+        .values({
+          studyId,
+          participantId,
+          consentType: "PHYSICAL",
+          status: "CONSENTED",
+          grantedScopes,
+          versionLabel: PHYSICAL_CONSENT_LABEL,
+          decidedAt,
+          recordedBy: actorId,
+        })
+        .returning({ id: consents.id });
+      consentId = created.id;
     }
 
     await recordAuditEvent(tx, {
       studyId,
       actor: { type: "STAFF", id: actorId },
-      action: "consent.started",
+      action: "consent.physical_recorded",
       entityType: "consent",
-      entityId: created.id,
-      after: {
-        status: "PENDING",
-        consentType,
-        versionLabel,
-        participantCode: participant.code,
-        // Scope CODES are configuration, so snapshotting them is safe and makes
-        // "what did this person agree to, and when" answerable from the log.
-        grantedScopes,
-      },
+      entityId: consentId,
+      before: { status: pending ? "PENDING" : null },
+      // Scope CODES are configuration, so snapshotting them is safe and makes
+      // "what did this person agree to, and when" answerable from the log.
+      after: { status: "CONSENTED", consentType: "PHYSICAL", grantedScopes, participantCode: participant.code },
     });
-
-    if (participant.enrollmentStatus === null) {
-      await tx
-        .update(participants)
-        .set({ enrollmentStatus: "CONSENT_PENDING" })
-        .where(eq(participants.id, participantId));
-
-      await recordAuditEvent(tx, {
-        studyId,
-        actor: { type: "STAFF", id: actorId },
-        action: "participant.enrollment_changed",
-        entityType: "participant",
-        entityId: participantId,
-        before: { enrollmentStatus: null },
-        after: { enrollmentStatus: "CONSENT_PENDING" },
-        metadata: { via: "consent", consentId: created.id },
-      });
-    }
-
-    return created.id;
+    await recordStudyEvent(tx, {
+      studyId,
+      eventType: "CONSENT_RECORDED",
+      subject: { kind: "PARTICIPANT", id: participantId },
+      metadata: { participantCode: participant.code },
+    });
   });
+}
+
+/** The physical consent in force for each of these participants, if any. */
+export async function listPhysicalConsents(
+  studyId: string,
+  participantIds: readonly string[],
+): Promise<Map<string, Consent>> {
+  if (participantIds.length === 0) return new Map();
+  const rows = await getDb()
+    .select()
+    .from(consents)
+    .where(
+      and(
+        eq(consents.studyId, studyId),
+        eq(consents.consentType, "PHYSICAL"),
+        eq(consents.status, "CONSENTED"),
+        inArray(consents.participantId, [...participantIds]),
+      ),
+    );
+  return new Map(rows.map((r) => [r.participantId, r]));
 }
 
 /**

@@ -20,12 +20,12 @@ import {
 import {
   canTransitionDevice,
   isAvailableForAssignment,
+  isInUse,
   isValidIncidentDescription,
   logisticsStep,
   type DeviceStatus,
   type IncidentKind,
   type LogisticsStep,
-  type VrReadiness,
 } from "@/domain/logistics";
 
 /**
@@ -48,7 +48,8 @@ import {
  * even for an entitled viewer" rule for this build (D-065, temporary, pending
  * the team's decision on shared-monitor exposure).
  *
- * And one it never computes: `readiness` is reported, never inferred (D-003).
+ * `device_assignments.readiness` is no longer written (D-144): the team's headsets
+ * arrive configured. The column keeps what was reported before.
  */
 
 export class InvalidTransitionError extends Error {
@@ -107,7 +108,9 @@ export async function listDevices(studyId: string): Promise<DeviceRow[]> {
       and(eq(deviceAssignments.deviceId, devices.id), isNull(deviceAssignments.closedAt)),
     )
     .leftJoin(participants, eq(participants.id, deviceAssignments.participantId))
-    .where(eq(devices.studyId, studyId))
+    // A removed device that had history is deactivated rather than deleted
+    // (`removeDevice`); it leaves the inventory but its history stays.
+    .where(and(eq(devices.studyId, studyId), eq(devices.active, true)))
     .orderBy(asc(devices.code));
 
   return rows.map((r) => ({
@@ -197,7 +200,6 @@ export async function listOpenAssignments(studyId: string): Promise<AssignmentRo
       deviceStatus: r.deviceStatus,
       handedOverAt: r.assignment.handedOverAt,
       receivedAt: r.assignment.receivedAt,
-      readiness: r.assignment.readiness,
       expectedReturnAt: r.assignment.expectedReturnAt,
       returnedAt: r.assignment.returnedAt,
       closedAt: r.assignment.closedAt,
@@ -343,7 +345,10 @@ export async function setDeviceStatus(params: {
       throw new InvalidTransitionError(current.status, status);
     }
 
-    await tx.update(devices).set({ status }).where(eq(devices.id, deviceId));
+    await tx
+      .update(devices)
+      .set({ status, ...(status === "RETURNED" ? NO_LOCATION : {}) })
+      .where(eq(devices.id, deviceId));
 
     await recordAuditEvent(tx, {
       studyId,
@@ -353,6 +358,73 @@ export async function setDeviceStatus(params: {
       entityId: deviceId,
       before: { status: current.status },
       after: { status, code: current.code },
+    });
+  });
+}
+
+/**
+ * A headset that has come back is no longer at anyone's home, and keeping the
+ * last pin would be a record of where a participant lives with no purpose left.
+ */
+const NO_LOCATION = {
+  locationLabel: null,
+  locationLat: null,
+  locationLng: null,
+  locationUpdatedAt: null,
+};
+
+/**
+ * Say where a headset is (D-143). The audit row records that the place changed
+ * and whether it has a pin, never the place: it can be a home, and an append-only
+ * log could not erase it.
+ */
+export async function setDeviceLocation(params: {
+  studyId: string;
+  deviceId: string;
+  actorId: string;
+  label: string | null;
+  pin: { lat: number; lng: number } | null;
+}): Promise<void> {
+  const { studyId, deviceId, actorId, label, pin } = params;
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        code: devices.code,
+        label: devices.locationLabel,
+        lat: devices.locationLat,
+        lng: devices.locationLng,
+      })
+      .from(devices)
+      .where(and(eq(devices.id, deviceId), eq(devices.studyId, studyId)))
+      .limit(1);
+    if (!current) throw new NotFoundError("device", deviceId);
+    if (
+      current.label === label &&
+      current.lat === (pin?.lat ?? null) &&
+      current.lng === (pin?.lng ?? null)
+    ) {
+      return;
+    }
+
+    await tx
+      .update(devices)
+      .set({
+        locationLabel: label,
+        locationLat: pin?.lat ?? null,
+        locationLng: pin?.lng ?? null,
+        locationUpdatedAt: label || pin ? new Date() : null,
+      })
+      .where(eq(devices.id, deviceId));
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "device.location_changed",
+      entityType: "device",
+      entityId: deviceId,
+      before: { hasLabel: Boolean(current.label), hasPin: current.lat !== null },
+      after: { code: current.code, hasLabel: Boolean(label), hasPin: Boolean(pin) },
     });
   });
 }
@@ -512,7 +584,10 @@ export async function recordAssignmentMilestone(params: {
           : { returnedAt: at };
 
     await tx.update(deviceAssignments).set(patch).where(eq(deviceAssignments.id, assignmentId));
-    await tx.update(devices).set({ status: deviceStatus }).where(eq(devices.id, row.deviceId));
+    await tx
+      .update(devices)
+      .set({ status: deviceStatus, ...(milestone === "RETURNED" ? NO_LOCATION : {}) })
+      .where(eq(devices.id, row.deviceId));
 
     await recordAuditEvent(tx, {
       studyId,
@@ -542,45 +617,6 @@ export async function recordAssignmentMilestone(params: {
         metadata: { deviceCode: row.deviceCode, participantCode: row.participantCode },
       });
     }
-  });
-}
-
-/** Record reported setup readiness. Reported, never inferred (D-003). */
-export async function reportReadiness(params: {
-  studyId: string;
-  assignmentId: string;
-  actorId: string;
-  readiness: Exclude<VrReadiness, "UNKNOWN">;
-}): Promise<void> {
-  const { studyId, assignmentId, actorId, readiness } = params;
-
-  await getDb().transaction(async (tx) => {
-    const [row] = await tx
-      .select({
-        id: deviceAssignments.id,
-        readiness: deviceAssignments.readiness,
-        participantCode: participants.code,
-      })
-      .from(deviceAssignments)
-      .innerJoin(participants, eq(participants.id, deviceAssignments.participantId))
-      .where(and(eq(deviceAssignments.id, assignmentId), eq(deviceAssignments.studyId, studyId)))
-      .limit(1);
-    if (!row) throw new NotFoundError("device assignment", assignmentId);
-
-    await tx
-      .update(deviceAssignments)
-      .set({ readiness, readinessReportedAt: new Date() })
-      .where(eq(deviceAssignments.id, assignmentId));
-
-    await recordAuditEvent(tx, {
-      studyId,
-      actor: { type: "STAFF", id: actorId },
-      action: "device_assignment.readiness_reported",
-      entityType: "device_assignment",
-      entityId: assignmentId,
-      before: { readiness: row.readiness },
-      after: { readiness, participantCode: row.participantCode },
-    });
   });
 }
 
@@ -728,6 +764,195 @@ export async function resolveIncident(params: {
 }
 
 /** Devices free to hand out. */
+/**
+ * Rename a headset, or correct its model or serial (2026-10-28 request: "edit
+ * their name"). The code stays unique within the study.
+ */
+export async function updateDevice(params: {
+  studyId: string;
+  deviceId: string;
+  actorId: string;
+  code: string;
+  model?: string | null;
+  serial?: string | null;
+}): Promise<void> {
+  const { studyId, deviceId, actorId } = params;
+  const code = params.code.trim().toUpperCase();
+
+  await getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(devices)
+      .where(and(eq(devices.id, deviceId), eq(devices.studyId, studyId), eq(devices.active, true)))
+      .limit(1);
+    if (!current) throw new NotFoundError("device", deviceId);
+
+    if (code !== current.code) {
+      const [clash] = await tx
+        .select({ id: devices.id })
+        .from(devices)
+        .where(and(eq(devices.studyId, studyId), eq(devices.code, code)))
+        .limit(1);
+      if (clash) throw new ConflictError("duplicateCode");
+    }
+
+    const patch = {
+      code,
+      model: params.model?.trim() || null,
+      serial: params.serial?.trim() || null,
+    };
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+    for (const key of ["code", "model", "serial"] as const) {
+      if (patch[key] !== current[key]) {
+        before[key] = current[key];
+        after[key] = patch[key];
+      }
+    }
+    if (Object.keys(after).length === 0) return;
+
+    await tx.update(devices).set({ ...patch, updatedAt: new Date() }).where(eq(devices.id, deviceId));
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "device.updated",
+      entityType: "device",
+      entityId: deviceId,
+      before,
+      after,
+    });
+  });
+}
+
+/**
+ * Take a headset out of the inventory (2026-10-28 request). Refused while it
+ * is out with someone. One that was never assigned and never had an incident
+ * is deleted outright — a typo, or a device that never existed; one with any
+ * history is deactivated instead, because "assignment history must stay
+ * readable" (the `devices.active` column). Either way it leaves the list.
+ */
+export async function removeDevice(params: {
+  studyId: string;
+  deviceId: string;
+  actorId: string;
+}): Promise<"deleted" | "deactivated"> {
+  const { studyId, deviceId, actorId } = params;
+
+  return getDb().transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(devices)
+      .where(and(eq(devices.id, deviceId), eq(devices.studyId, studyId), eq(devices.active, true)))
+      .limit(1);
+    if (!current) throw new NotFoundError("device", deviceId);
+
+    const [open] = await tx
+      .select({ id: deviceAssignments.id })
+      .from(deviceAssignments)
+      .where(and(eq(deviceAssignments.deviceId, deviceId), isNull(deviceAssignments.closedAt)))
+      .limit(1);
+    if (open || isInUse(current.status)) throw new ConflictError("deviceAlreadyOut");
+
+    // Any row anywhere that points at this device is history worth keeping.
+    const [{ refs }] = await tx.execute<{ refs: number }>(sql`
+      select (
+        (select count(*) from device_assignments where device_id = ${deviceId}) +
+        (select count(*) from device_incidents where device_id = ${deviceId}) +
+        (select count(*) from scheduled_actions where device_id = ${deviceId}) +
+        (select count(*) from tasks where device_id = ${deviceId}) +
+        (select count(*) from alerts where device_id = ${deviceId}) +
+        (select count(*) from study_events where device_id = ${deviceId})
+      )::int as refs
+    `);
+    const outcome = Number(refs) > 0 ? "deactivated" : "deleted";
+
+    if (outcome === "deleted") {
+      await tx.delete(devices).where(eq(devices.id, deviceId));
+    } else {
+      await tx.update(devices).set({ active: false, updatedAt: new Date() }).where(eq(devices.id, deviceId));
+    }
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: outcome === "deleted" ? "device.deleted" : "device.deactivated",
+      entityType: "device",
+      entityId: deviceId,
+      before: { code: current.code, status: current.status },
+    });
+    return outcome;
+  });
+}
+
+export interface AllocationRow {
+  participantId: string;
+  participantCode: string;
+  /** Gate rendering on `participants.contact.read`, as `AssignmentRow` does. */
+  participantName: string | null;
+  cohortId: string;
+  cohortCode: string;
+  cohortName: string;
+  /** The open assignment, if a headset is allocated. */
+  assignment: DeviceAssignment | null;
+  deviceId: string | null;
+  deviceCode: string | null;
+  deviceStatus: DeviceStatus | null;
+  /** Where the headset is. The page shows it under `participants.contact.read`. */
+  locationLabel: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
+}
+
+/**
+ * Who has which headset (2026-10-28 request: "the allocation of headsets to
+ * the participants ... and the cohort the participant is in"). One row per
+ * current member of every live cohort that runs its own sessions — a cohort
+ * that follows another (`paired_cohort_id`, the control group, D-116) gets no
+ * headset and is left out. The planned delivery and pickup dates come from
+ * the participants' individual visits (`listVisitsFor`), joined by the page.
+ */
+export async function listAllocations(studyId: string): Promise<AllocationRow[]> {
+  const rows = await getDb()
+    .select({
+      participantId: participants.id,
+      participantCode: participants.code,
+      participantName: participantContacts.fullName,
+      cohortId: cohorts.id,
+      cohortCode: cohorts.code,
+      cohortName: cohorts.name,
+      assignment: deviceAssignments,
+      deviceId: devices.id,
+      deviceCode: devices.code,
+      deviceStatus: devices.status,
+      locationLabel: devices.locationLabel,
+      locationLat: devices.locationLat,
+      locationLng: devices.locationLng,
+    })
+    .from(participantCohortAssignments)
+    .innerJoin(cohorts, eq(cohorts.id, participantCohortAssignments.cohortId))
+    .innerJoin(participants, eq(participants.id, participantCohortAssignments.participantId))
+    .leftJoin(participantContacts, eq(participantContacts.participantId, participants.id))
+    .leftJoin(
+      deviceAssignments,
+      and(eq(deviceAssignments.participantId, participants.id), isNull(deviceAssignments.closedAt)),
+    )
+    .leftJoin(devices, eq(devices.id, deviceAssignments.deviceId))
+    .where(
+      and(
+        eq(cohorts.studyId, studyId),
+        isNull(participantCohortAssignments.removedAt),
+        isNull(cohorts.archivedAt),
+        isNull(cohorts.pairedCohortId),
+      ),
+    )
+    .orderBy(asc(cohorts.code), asc(participants.code));
+
+  return rows.map((r) => ({
+    ...r,
+    assignment: r.assignment ?? null,
+    deviceStatus: r.deviceStatus ?? null,
+  }));
+}
+
 export async function listAvailableDevices(studyId: string): Promise<Device[]> {
   return getDb()
     .select()

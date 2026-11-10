@@ -2,7 +2,7 @@ import "server-only";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
-import { getDb } from "@/db/client";
+import { getDb, type DbExecutor } from "@/db/client";
 import {
   initialVisits,
   participantResponsibilities,
@@ -225,79 +225,111 @@ export async function revokeResponsible(params: {
 // Initial visit writes
 // ---------------------------------------------------------------------------
 
-export async function scheduleInitialVisit(params: {
-  studyId: string;
-  participantId: string;
-  actorId: string;
-  scheduledAt: Date;
-  location?: string | null;
-  notes?: string | null;
-}): Promise<string> {
-  const { studyId, participantId, actorId, scheduledAt } = params;
-  const location = params.location?.trim().slice(0, VISIT_LOCATION_MAX_LENGTH) || null;
-  const notes = params.notes?.trim() || null;
+/**
+ * Keep the initial visit in step with the date on the cohort's visit card
+ * (D-140), inside the caller's transaction: the card is where it is booked, and
+ * this row is where its responsible, place, notes and outcome live.
+ *
+ * Clearing the date cancels an open visit. A visit that happened is never
+ * reopened or moved, so a date changed afterwards leaves it alone; after a
+ * no-show or a cancellation, a new date is a new row, as a repeat always was.
+ */
+export async function syncInitialVisit(
+  tx: DbExecutor,
+  params: {
+    studyId: string;
+    participantId: string;
+    participantCode: string;
+    actorId: string;
+    scheduledAt: Date | null;
+  },
+): Promise<void> {
+  const { studyId, participantId, participantCode, actorId, scheduledAt } = params;
 
-  if (notes && !isValidVisitNotes(notes)) throw new ConflictError("notesTooLong");
+  const rows = await tx
+    .select({ id: initialVisits.id, status: initialVisits.status, scheduledAt: initialVisits.scheduledAt })
+    .from(initialVisits)
+    .where(eq(initialVisits.participantId, participantId));
+  const open = rows.find((v) => v.status === "SCHEDULED");
 
-  return getDb().transaction(async (tx) => {
-    const [participant] = await tx
-      .select({ id: participants.id, code: participants.code })
-      .from(participants)
-      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
-      .limit(1);
-    if (!participant) throw new NotFoundError("participant", participantId);
+  if (!scheduledAt) {
+    if (!open) return;
+    await tx
+      .update(initialVisits)
+      .set({ status: "CANCELLED", recordedBy: actorId })
+      .where(eq(initialVisits.id, open.id));
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "initial_visit.closed",
+      entityType: "initial_visit",
+      entityId: open.id,
+      before: { status: "SCHEDULED" },
+      after: { status: "CANCELLED", participantCode },
+      metadata: { via: "visit_card" },
+    });
+    return;
+  }
 
-    const [open] = await tx
-      .select({ id: initialVisits.id })
-      .from(initialVisits)
-      .where(
-        and(eq(initialVisits.participantId, participantId), eq(initialVisits.status, "SCHEDULED")),
-      )
-      .limit(1);
-    if (open) throw new ConflictError("visitAlreadyOpen");
-
+  let visitId = open?.id;
+  if (open) {
+    if (open.scheduledAt?.getTime() === scheduledAt.getTime()) return;
+    await tx.update(initialVisits).set({ scheduledAt, recordedBy: actorId }).where(eq(initialVisits.id, open.id));
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "initial_visit.rescheduled",
+      entityType: "initial_visit",
+      entityId: open.id,
+      before: { scheduledAt: open.scheduledAt?.toISOString() ?? null },
+      after: { scheduledAt: scheduledAt.toISOString(), participantCode },
+    });
+  } else {
+    if (rows.some((v) => v.status === "COMPLETED")) return;
     const [created] = await tx
       .insert(initialVisits)
-      .values({
-        studyId,
-        participantId,
-        status: "SCHEDULED",
-        scheduledAt,
-        location,
-        notes,
-        recordedBy: actorId,
-      })
+      .values({ studyId, participantId, status: "SCHEDULED", scheduledAt, recordedBy: actorId })
       .returning({ id: initialVisits.id });
-
+    visitId = created.id;
     await recordAuditEvent(tx, {
       studyId,
       actor: { type: "STAFF", id: actorId },
       action: "initial_visit.scheduled",
       entityType: "initial_visit",
       entityId: created.id,
-      after: {
-        participantCode: participant.code,
-        status: "SCHEDULED",
-        scheduledAt: scheduledAt.toISOString(),
-        // Whether a note exists, never what it says: an append-only log is the
-        // one place free text about a person could not later be erased.
-        hasLocation: Boolean(location),
-        hasNotes: Boolean(notes),
-      },
+      after: { participantCode, status: "SCHEDULED", scheduledAt: scheduledAt.toISOString() },
     });
+  }
 
-    // Anchored on the appointment. "Two days before the initial visit" is then
-    // a rule row, not a number in this file.
-    await recordStudyEvent(tx, {
-      studyId,
-      eventType: "VISIT_SCHEDULED",
-      subject: { kind: "PARTICIPANT", id: participantId },
-      anchorAt: scheduledAt,
-      metadata: { participantCode: participant.code },
-    });
-
-    return created.id;
+  // Anchored on the appointment. "Two days before the initial visit" is then
+  // a rule row, not a number in this file.
+  await recordStudyEvent(tx, {
+    studyId,
+    eventType: "VISIT_SCHEDULED",
+    subject: { kind: "PARTICIPANT", id: participantId },
+    anchorAt: scheduledAt,
+    metadata: { participantCode, visitId },
   });
+}
+
+/** Initial visits for many participants at once, newest first, for the cohort's cards. */
+export async function listInitialVisitsFor(
+  studyId: string,
+  participantIds: readonly string[],
+): Promise<Map<string, InitialVisit[]>> {
+  const byParticipant = new Map<string, InitialVisit[]>();
+  if (participantIds.length === 0) return byParticipant;
+  const rows = await getDb()
+    .select()
+    .from(initialVisits)
+    .where(and(eq(initialVisits.studyId, studyId), inArray(initialVisits.participantId, [...participantIds])))
+    .orderBy(desc(initialVisits.createdAt));
+  for (const r of rows) {
+    const list = byParticipant.get(r.participantId) ?? [];
+    list.push(r);
+    byParticipant.set(r.participantId, list);
+  }
+  return byParticipant;
 }
 
 /** Close a visit with its outcome. A visit that happened is never rewritten. */

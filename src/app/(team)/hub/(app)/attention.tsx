@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CohortOccupancy } from "@/components/team/cohort-occupancy";
+import { GlowTracker } from "@/components/team/glow-tracker";
 import { StatusBadge } from "@/components/status-badge";
 import type { StudyContext } from "@/auth/study-context";
 import { needsAttention } from "@/domain/logistics";
@@ -148,7 +149,7 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
       cards: [
         {
           key: "review",
-          href: `${TEAM_BASE_PATH}/participantes?elegibilidad=REVIEW_REQUIRED`,
+          href: `${TEAM_BASE_PATH}/participantes?vista=list&elegibilidad=REVIEW_REQUIRED`,
           primary: t("reviewRequired", { count: ops.reviewRequired }),
         },
       ],
@@ -162,7 +163,7 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
       cards: [
         {
           key: "waiting",
-          href: `${TEAM_BASE_PATH}/participantes?elegibilidad=ELIGIBLE`,
+          href: `${TEAM_BASE_PATH}/participantes?vista=list&elegibilidad=ELIGIBLE`,
           primary: t("waitingForAllocation", { count: ops.waitingForAllocation }),
         },
       ],
@@ -197,7 +198,7 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
       title: t("logistics"),
       cards: logisticsWorthSeeing.slice(0, 8).map((a) => ({
         key: a.assignment.id,
-        href: `${TEAM_BASE_PATH}/logistica-vr`,
+        href: `${TEAM_BASE_PATH}/logistica-vr?vista=asignacion`,
         primary: a.deviceCode,
         secondary: showNames && a.participantName ? `${a.participantName} (${a.participantCode})` : a.participantCode,
         badge: t(`logisticsStep.${a.step}`),
@@ -206,23 +207,28 @@ export async function AttentionPanel({ ctx }: { ctx: StudyContext }) {
     });
   }
 
+  // Edge glow on the panel and on every card (2026-11-09 request), the same
+  // `.edge-glow` light as the cohort cards: the panel's ring is on at rest
+  // (`.glow-idle`), and each card's follows the pointer via GlowTracker.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {columns.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
-            {columns.map((col) => (
-              <Column key={col.key} column={col} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <GlowTracker>
+      <Card className="edge-glow glow-idle">
+        <CardHeader>
+          <CardTitle>{t("title")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {columns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
+              {columns.map((col) => (
+                <Column key={col.key} column={col} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </GlowTracker>
   );
 }
 
@@ -259,7 +265,14 @@ function Column({ column }: { column: KanbanColumn }) {
           <li key={card.key}>
             <Link
               href={card.href}
-              className="group flex flex-col gap-1 rounded-xl bg-card p-2.5 shadow-soft transition-shadow duration-200 hover:shadow-lift focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              // A warning column's cards glow in the warning colour, so the
+              // light also says which ones are urgent.
+              style={
+                column.tone === "warning"
+                  ? ({ "--glow-color": "var(--status-warning-fg)" } as React.CSSProperties)
+                  : undefined
+              }
+              className="edge-glow group flex flex-col gap-1 rounded-xl bg-card p-2.5 shadow-soft focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <span className="flex items-center gap-2 text-sm">
                 <span className="min-w-0 flex-1 truncate font-medium">{card.primary}</span>

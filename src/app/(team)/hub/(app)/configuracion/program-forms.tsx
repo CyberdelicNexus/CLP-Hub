@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { SessionModality } from "@/domain/session";
+import type { DeviceHandoff, SessionAttendance, SessionModality, VisitCheck } from "@/domain/session";
 import {
   createProgramStageAction,
   createSessionTemplateAction,
@@ -293,6 +293,9 @@ export function EditSessionTemplateForm({
     durationMinutes: number | null;
     dayOffset: number | null;
     position: number;
+    attendance: SessionAttendance;
+    deviceHandoff: DeviceHandoff;
+    visitChecks: string[];
   };
   stages: { id: string; nameEs: string }[];
   arms: { id: string; label: string }[];
@@ -310,6 +313,12 @@ export function EditSessionTemplateForm({
     dayOffsetHelp: string;
     position: string;
     saved: string;
+    /** How it is scheduled (2026-10-28, D-136), one option per combination. */
+    scheduling: string;
+    schedulingHelp: string;
+    schedulingOptions: { value: string; label: string }[];
+    visitChecks: string;
+    visitCheckOptions: { value: VisitCheck; label: string }[];
   };
 }) {
   const [state, action, pending] = useActionState(updateSessionTemplateAction, initial);
@@ -387,6 +396,37 @@ export function EditSessionTemplateForm({
         />
         <p className="text-xs text-muted-foreground">{labels.dayOffsetHelp}</p>
       </div>
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor={`edit-tpl-scheduling-${p}`}>{labels.scheduling}</Label>
+        <select
+          id={`edit-tpl-scheduling-${p}`}
+          name="scheduling"
+          defaultValue={template.attendance === "GROUP" ? "GROUP" : `INDIVIDUAL:${template.deviceHandoff}`}
+          className={SELECT_CLASS}
+        >
+          {labels.schedulingOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">{labels.schedulingHelp}</p>
+      </div>
+      <fieldset className="space-y-1.5 sm:col-span-2">
+        <legend className="text-sm font-medium">{labels.visitChecks}</legend>
+        {labels.visitCheckOptions.map((o) => (
+          <label key={o.value} className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="visitChecks"
+              value={o.value}
+              defaultChecked={template.visitChecks.includes(o.value)}
+              className="mt-0.5 size-4 rounded border-input accent-primary"
+            />
+            <span className="leading-snug">{o.label}</span>
+          </label>
+        ))}
+      </fieldset>
       <div className="space-y-1.5">
         <Label htmlFor={`edit-tpl-position-${p}`}>{labels.position}</Label>
         <Input

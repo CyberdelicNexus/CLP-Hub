@@ -134,6 +134,8 @@
 
   /* Chart series: >= 3:1 against --card, distinguishable in both modes. */
   --chart-1: oklch(0.63 0.15 285);
+  /* The agenda's day headings (2026-10-28): the purple, darkened for contrast on white. */
+  --cal-day-ink: color-mix(in oklch, var(--chart-1) 75%, black);
   --chart-2: oklch(0.68 0.13 232);
   --chart-3: oklch(0.72 0.12 172);
   --chart-4: oklch(0.75 0.13 52);
@@ -209,6 +211,7 @@
 }
 
 .dark {
+  --cal-day-ink: color-mix(in oklch, var(--chart-1) 70%, white);
   --background: oklch(0.163 0.013 268);
   --foreground: oklch(0.968 0.003 265);
   --card: oklch(0.211 0.015 268);
@@ -469,12 +472,15 @@
 
   /* Edge glow on the cohort cards (2026-10-14 request). A 1.5px ring drawn by
    * a masked pseudo-element: a radial light that sits at the top edge at rest
-   * and follows the pointer (--glow-x / --glow-y, set by CohortWorkspace) on
+   * and follows the pointer (--glow-x / --glow-y, set by CohortWorkspace or Kanban) on
    * hover, plus a soft outer halo as a box-shadow, which the card's own
    * `overflow: hidden` does not clip. --glow-color is the card's study group
    * colour (ArmBadge), so the glow also says which group it is. */
   .edge-glow {
     --glow-color: var(--chart-1);
+    /* Set on every glowing element so a card inside a glowing panel does
+     * not inherit the panel's larger light. */
+    --glow-size: 16rem;
     position: relative;
     isolation: isolate;
     transition:
@@ -490,7 +496,7 @@
     border-radius: inherit;
     padding: 1.5px;
     background: radial-gradient(
-      16rem circle at var(--glow-x, 30%) var(--glow-y, 0%),
+      var(--glow-size, 16rem) circle at var(--glow-x, 30%) var(--glow-y, 0%),
       color-mix(in oklch, var(--glow-color) 85%, white) 0%,
       color-mix(in oklch, var(--glow-color) 55%, transparent) 35%,
       transparent 70%
@@ -513,6 +519,151 @@
   .edge-glow:hover::before,
   .edge-glow:focus-visible::before {
     opacity: 1;
+  }
+  /* On a `.card-accent` card (the open cohort) the glow sits ON the 1.5px
+   * gradient border rather than 1.5px inside it, where it drew a second,
+   * slightly mis-curved edge (2026-10-28 report). Unclipped so it can. */
+  .edge-glow.card-accent {
+    overflow: visible;
+  }
+  .edge-glow.card-accent::before {
+    inset: -1.5px;
+  }
+  /* Inside the open cohort list (`.glow-tight`, a scroll box with only 1rem
+   * of room each side) the halo above reached ~26px sideways and was clipped
+   * into a hard vertical line against the sidebar (2026-11-09 report, worst
+   * in dark mode where the halo is brightest). Same light, pulled in so its
+   * visible tail ends inside the box: ~16px sideways, still falling below. */
+  .glow-tight .edge-glow:hover,
+  .glow-tight .edge-glow:focus-visible {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--glow-color) 30%, transparent),
+      0 14px 30px -14px color-mix(in oklch, var(--glow-color) 60%, transparent);
+  }
+
+  /* Glow that is on at rest, not only on hover (2026-11-09: "more edge glow"
+   * on Requiere atención). The ring sits at a brighter idle opacity and the
+   * halo is a faint standing light; hover still brightens both. */
+  /* On a wide panel the card-sized 16rem light only touched a sliver of the
+   * edge, so the panel's light is larger and its ring is brighter at rest. */
+  .edge-glow.glow-idle {
+    --glow-size: 42rem;
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--glow-color) 18%, transparent),
+      0 10px 40px -18px color-mix(in oklch, var(--glow-color) 55%, transparent);
+  }
+  .edge-glow.glow-idle::before {
+    opacity: 0.85;
+  }
+  .edge-glow.glow-idle:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--glow-color) 30%, transparent),
+      0 14px 48px -16px color-mix(in oklch, var(--glow-color) 65%, transparent);
+  }
+
+  /* A scroll box whose bar is hidden until it's wanted (2026-11-10, the open
+   * cohort list): invisible at rest, shown while the pointer is over the box
+   * or while it scrolls (`.is-scrolling`, set by CohortWorkspace for a moment
+   * after each scroll, so a trackpad or keyboard scroll also reveals it). The
+   * space stays reserved, so the cards never shift when it appears. */
+  .scroll-autohide {
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable;
+  }
+  .scroll-autohide:hover,
+  .scroll-autohide.is-scrolling {
+    scrollbar-color: var(--border) transparent;
+  }
+  .scroll-autohide::-webkit-scrollbar-thumb {
+    background-color: transparent;
+  }
+  .scroll-autohide:hover::-webkit-scrollbar-thumb,
+  .scroll-autohide.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+  }
+
+  /* Consultas chat (2026-11-10): the person's message and the team's side
+   * read apart at a glance. Sky blue for the person (left), the brand purple
+   * for the team (right), each a light wash mixed against --card so it holds
+   * in both themes, with its edge glow on at rest. */
+  .chat-them.edge-glow,
+  .chat-team.edge-glow {
+    background-color: color-mix(in oklch, var(--glow-color) 12%, var(--card));
+    box-shadow: 0 6px 22px -14px color-mix(in oklch, var(--glow-color) 60%, transparent);
+  }
+  .chat-them.edge-glow {
+    --glow-color: var(--surface-sky-ink);
+  }
+  .chat-team.edge-glow {
+    --glow-color: var(--chart-1);
+  }
+  .chat-them.edge-glow::before,
+  .chat-team.edge-glow::before {
+    opacity: 0.8;
+  }
+  .chat-team-composer {
+    background-color: color-mix(in oklch, var(--chart-1) 6%, var(--card));
+  }
+
+  /* The cohort's programme rows (2026-11-09: hover animation on the session
+   * toggles). The row picks up a faint brand wash and a hairline ring, and
+   * its stage glyph lifts, tilts and blooms, so the row reads as the thing
+   * you press. Reduced motion keeps the colour and drops the movement (the
+   * global rule below shortens every transition). */
+  .session-toggle {
+    transition:
+      background-color 0.2s var(--ease-out-soft),
+      box-shadow 0.25s var(--ease-out-soft);
+  }
+  .session-toggle:hover,
+  .session-toggle:focus-visible {
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--chart-1) 12%, transparent),
+      transparent 75%
+    );
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--chart-1) 28%, transparent),
+      0 8px 22px -14px color-mix(in oklch, var(--chart-1) 70%, transparent);
+  }
+  .session-toggle .stage-glyph {
+    transition:
+      transform 0.35s var(--ease-out-soft),
+      box-shadow 0.35s var(--ease-out-soft);
+  }
+  .session-toggle:hover .stage-glyph,
+  .session-toggle:focus-visible .stage-glyph {
+    transform: scale(1.15) rotate(-10deg);
+    box-shadow:
+      0 0 0 3px color-mix(in oklch, var(--chart-1) 22%, transparent),
+      0 0 16px color-mix(in oklch, var(--chart-1) 55%, transparent);
+  }
+  .session-toggle .session-title {
+    transition: translate 0.3s var(--ease-out-soft);
+  }
+  .session-toggle:hover .session-title {
+    translate: 2px 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .session-toggle:hover .stage-glyph,
+    .session-toggle:focus-visible .stage-glyph {
+      transform: none;
+    }
+    .session-toggle:hover .session-title {
+      translate: none;
+    }
+  }
+
+  /* A session in the calendar's month grid (2026-10-28): a brand-tinted chip
+   * with a solid edge, mixed against --card so it holds in both themes. */
+  .cal-event {
+    background-color: color-mix(in oklch, var(--chart-1) 20%, var(--card));
+    border-left: 3px solid var(--chart-1);
+    color: var(--foreground);
+    transition: background-color 0.15s var(--ease-out-soft);
+  }
+  .cal-event:hover {
+    background-color: color-mix(in oklch, var(--chart-1) 34%, var(--card));
   }
 
   /* A cohort's details fade in beside the list once its card has moved

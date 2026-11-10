@@ -56,6 +56,7 @@ export function CohortWorkspace({
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const previous = useRef<Map<string, Box>>(new Map());
+  const scrollTimer = useRef<number | undefined>(undefined);
 
   useLayoutEffect(() => {
     const root = listRef.current;
@@ -113,11 +114,28 @@ export function CohortWorkspace({
           card.style.setProperty("--glow-x", `${e.clientX - r.left}px`);
           card.style.setProperty("--glow-y", `${e.clientY - r.top}px`);
         }}
+        // Reveal the hidden scrollbar while scrolling (`.scroll-autohide`).
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          el.classList.add("is-scrolling");
+          window.clearTimeout(scrollTimer.current);
+          scrollTimer.current = window.setTimeout(() => el.classList.remove("is-scrolling"), 900);
+        }}
         className={cn(
           "min-w-0",
+          open && "scroll-autohide",
+          // `.glow-tight` pulls the cards' hover halo inside this box's
+          // 1rem of side room, so it fades out instead of being cut (2026-11-09).
+          open && "glow-tight",
           // On a phone the open cohort takes the screen; the list returns
           // through the "all cohorts" link at the top of the details.
-          open && "max-lg:hidden lg:sticky lg:top-[4.875rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-2",
+          // The padding (cancelled by the negative margin) gives the cards'
+          // hover glow and shadow room inside the scroll box, which otherwise
+          // clips them into a hard-edged rectangle (2026-10-28 report). The
+          // bottom is deeper because the shadow falls 2.25rem below a card;
+          // the sides stay at the column gap, so the box never covers the details.
+          open &&
+            "max-lg:hidden lg:sticky lg:top-[3.875rem] lg:-m-4 lg:-mb-10 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:p-4 lg:pb-10",
         )}
       >
         {list}

@@ -266,3 +266,28 @@ export async function countExclusionsWithoutReason(studyId: string): Promise<num
     );
   return Number(row?.n ?? 0);
 }
+
+/**
+ * Who those exclusions belong to, by participant code (never a name), so the
+ * flow summary's warning can link straight to each record (D-150). Capped:
+ * past a handful, the list stops being the useful part.
+ */
+export async function listExclusionsWithoutReason(
+  studyId: string,
+  limit = 10,
+): Promise<{ participantId: string; code: string }[]> {
+  return getDb()
+    .selectDistinct({ participantId: participants.id, code: participants.code })
+    .from(screenings)
+    .innerJoin(participants, eq(participants.id, screenings.participantId))
+    .where(
+      and(
+        eq(screenings.studyId, studyId),
+        eq(screenings.result, "INELIGIBLE"),
+        isNotNull(screenings.completedAt),
+        sql`${screenings.reasonId} is null`,
+      ),
+    )
+    .orderBy(participants.code)
+    .limit(limit);
+}

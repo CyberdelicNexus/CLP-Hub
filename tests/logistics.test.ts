@@ -12,7 +12,8 @@ import {
   isValidIncidentDescription,
   logisticsStep,
   needsAttention,
-  readinessNeedsAction,
+  parseCoordinates,
+  parsePlaces,
   type AssignmentSnapshot,
 } from "@/domain/logistics";
 import { hasPermission } from "@/domain/permissions";
@@ -21,7 +22,6 @@ const snap = (over: Partial<AssignmentSnapshot> = {}): AssignmentSnapshot => ({
   deviceStatus: "RESERVED",
   handedOverAt: null,
   receivedAt: null,
-  readiness: "UNKNOWN",
   expectedReturnAt: null,
   returnedAt: null,
   closedAt: null,
@@ -82,7 +82,6 @@ describe("readiness is reported, never inferred", () => {
     // "Nobody has told us" is a different fact from "it does not work", and
     // defaulting to NOT_READY would be the application asserting the second.
     expect(VR_READINESS_STATES[0]).toBe("UNKNOWN");
-    expect(snap().readiness).toBe("UNKNOWN");
   });
 
   /**
@@ -92,9 +91,7 @@ describe("readiness is reported, never inferred", () => {
    */
   it("keeps NEEDS_SUPPORT separate from NOT_READY", () => {
     expect(VR_READINESS_STATES).toContain("NEEDS_SUPPORT");
-    expect(readinessNeedsAction("NEEDS_SUPPORT")).toBe(true);
-    expect(readinessNeedsAction("NOT_READY")).toBe(true);
-    expect(readinessNeedsAction("READY")).toBe(false);
+    expect(VR_READINESS_STATES).toContain("NOT_READY");
   });
 
   it("contains no inference in the domain module", () => {
@@ -118,7 +115,7 @@ describe("the outstanding logistics step", () => {
       logisticsStep(
         snap({ deviceStatus: "DELIVERED", handedOverAt: new Date(), receivedAt: new Date() }),
       ),
-    ).toBe("CONFIRM_SETUP");
+    ).toBe("NONE");
   });
 
   /**
@@ -133,7 +130,6 @@ describe("the outstanding logistics step", () => {
           deviceStatus: "ACTIVE",
           handedOverAt: new Date(),
           receivedAt: new Date(),
-          readiness: "READY",
           openIncidents: 2,
         }),
       ),
@@ -144,7 +140,6 @@ describe("the outstanding logistics step", () => {
     deviceStatus: "ACTIVE" as const,
     handedOverAt: new Date(),
     receivedAt: new Date(),
-    readiness: "READY" as const,
   };
 
   /**
@@ -276,6 +271,34 @@ describe("migration 0011", () => {
     expect(sql).not.toMatch(/drop\s+column/i);
     expect(sql).not.toMatch(/delete\s+from/i);
     expect(sql).not.toMatch(/rename\s+column/i);
+  });
+});
+
+describe("parseCoordinates", () => {
+  it("reads a pin, and no pin from two empty fields", () => {
+    expect(parseCoordinates("40.41", "-3.70")).toEqual({ lat: 40.41, lng: -3.7 });
+    expect(parseCoordinates("  ", "")).toBeNull();
+  });
+
+  it("refuses half a pin and anything off the map", () => {
+    expect(parseCoordinates("40.41", "")).toBe("bad");
+    expect(parseCoordinates("91", "0")).toBe("bad");
+    expect(parseCoordinates("0", "181")).toBe("bad");
+    expect(parseCoordinates("north", "0")).toBe("bad");
+  });
+});
+
+describe("parsePlaces", () => {
+  it("reads a geocoder's rows into places", () => {
+    expect(parsePlaces([{ display_name: "Madrid, España", lat: "40.41", lon: "-3.70" }])).toEqual([
+      { label: "Madrid, España", lat: 40.41, lng: -3.7 },
+    ]);
+  });
+
+  it("drops anything that could not be a pin", () => {
+    expect(parsePlaces({ error: "nope" })).toEqual([]);
+    expect(parsePlaces([{ display_name: "No coordinates" }, { lat: "1", lon: "2" }, null])).toEqual([]);
+    expect(parsePlaces([{ display_name: "Off the map", lat: "95", lon: "0" }])).toEqual([]);
   });
 });
 

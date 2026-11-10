@@ -49,12 +49,13 @@ import {
 } from "../../cohortes/cohort-forms";
 import {
   CloseScreeningForm,
+  CompleteReasonForm,
   CompleteScreeningForm,
   ConsentDecisionForm,
+  PhysicalConsentCheck,
   ContactField,
   EnrollmentForm,
   ScheduleScreeningForm,
-  StartConsentForm,
 } from "../participant-forms";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -144,6 +145,9 @@ export default async function ParticipantDetailPage({
 
   // What the study configured as required, minus what is recorded. Advisory
   // only: nothing here refuses an action because a consent is missing.
+  const digitalConsent = consents.find((c) => c.consentType === "DIGITAL" && c.status !== "SUPERSEDED") ?? null;
+  const physicalConsent = consents.find((c) => c.consentType === "PHYSICAL" && c.status === "CONSENTED") ?? null;
+  const physicalRequired = placement?.randomization?.requiresPhysicalConsent ?? null;
   const missingConsents = includeConsent
     ? missingConsentTypes({
         requiresPhysical: placement?.randomization?.requiresPhysicalConsent ?? null,
@@ -196,6 +200,8 @@ export default async function ParticipantDetailPage({
     armNotRecorded: t("cohorts.error.armNotRecorded"),
     sameCohort: t("cohorts.error.sameCohort"),
     duplicateEmail: t("participants.error.duplicateEmail"),
+    scopesNotAllowed: t("participants.error.scopesNotAllowed"),
+    unknownScope: t("participants.error.unknownScope"),
   };
   const formBase = { submit: t("common.save"), submitting: t("common.loading"), errors: errorLabels };
 
@@ -287,6 +293,37 @@ export default async function ParticipantDetailPage({
                             <span className="text-xs text-muted-foreground italic">
                               {s.reasonNote}
                             </span>
+                          ) : null}
+                          {/* An exclusion saved before reasons were required
+                              (D-150): flagged, and completable in place so the
+                              flow summary can count it. */}
+                          {s.status === "COMPLETED" &&
+                          !s.reasonId &&
+                          (s.result === "INELIGIBLE" || s.result === "REVIEW_REQUIRED") ? (
+                            <>
+                              <span className="rounded-md bg-surface-peach px-2 py-0.5 text-xs text-surface-peach-ink">
+                                {t("participants.missingReason")}
+                              </span>
+                              {canManageScreening ? (
+                                <CompleteReasonForm
+                                  participantId={participant.id}
+                                  screeningId={s.id}
+                                  result={s.result}
+                                  reasons={reasons
+                                    .filter((r) => r.active)
+                                    .map((r) => ({ id: r.id, label: r.labelEs, appliesTo: [...r.appliesTo] }))}
+                                  labels={{
+                                    ...formBase,
+                                    open: t("participants.addReason"),
+                                    cancel: t("common.cancel"),
+                                    reason: t("participants.reason"),
+                                    reasonNote: t("participants.reasonNote"),
+                                    reasonNoteHelp: t("participants.reasonNoteHelp"),
+                                    reasonNoneConfigured: t("participants.reasonNoneConfigured"),
+                                  }}
+                                />
+                              ) : null}
+                            </>
                           ) : null}
                           {s.externalRecordId ? (
                             <span className="font-mono text-xs text-muted-foreground">
@@ -381,9 +418,70 @@ export default async function ParticipantDetailPage({
                     </p>
                   ) : null}
 
-                  {consents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t("participants.noConsents")}</p>
-                  ) : (
+                  <div className="space-y-3 rounded-xl bg-muted/50 p-4">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {t("participants.consentType.DIGITAL")}
+                      </p>
+                      {digitalConsent ? (
+                        <p className="flex flex-wrap items-center gap-2 text-sm">
+                          <ConsentBadge
+                            status={digitalConsent.status as ConsentStatus}
+                            label={t(`participants.consentStatus.${digitalConsent.status}`)}
+                          />
+                          <span className="text-muted-foreground">{t("participants.digitalConsentRecorded")}</span>
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t("participants.digitalConsentPending")}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 border-t border-border pt-3">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {t("participants.consentType.PHYSICAL")}
+                      </p>
+                      {physicalConsent || physicalRequired === true ? (
+                        <PhysicalConsentCheck
+                          key={physicalConsent?.id ?? "unsigned"}
+                          participantId={participant.id}
+                          signed={
+                            physicalConsent
+                              ? {
+                                  dateLabel: physicalConsent.decidedAt
+                                    ? formatDate(physicalConsent.decidedAt, ctx.study.timezone)
+                                    : "",
+                                  scopes: describeScopes(scopes, physicalConsent.grantedScopes),
+                                }
+                              : null
+                          }
+                          scopes={scopes
+                            .filter((sc) => sc.active && sc.consentType === "PHYSICAL")
+                            .map((sc) => ({ code: sc.code, label: sc.labelEs }))}
+                          canManage={canManageConsent}
+                          labels={{
+                            check: t("participants.physicalConsent.check"),
+                            scopes: t("participants.physicalConsent.scopes"),
+                            save: t("common.save"),
+                            undo: t("participants.physicalConsent.undo"),
+                            errors: errorLabels,
+                          }}
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {physicalRequired === false
+                            ? t("participants.physicalConsent.notThisArm")
+                            : t("participants.physicalConsent.unallocated")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {consents.length > 0 ? (
+                    <details className="group">
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        {t("participants.consentHistory")}
+                      </summary>
+                      <div className="mt-3 space-y-4">
                     <ul className="divide-y divide-border">
                       {consents.map((c) => (
                         <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
@@ -413,79 +511,42 @@ export default async function ParticipantDetailPage({
                         </li>
                       ))}
                     </ul>
-                  )}
-
-                  {canManageConsent ? (
-                    <div className="space-y-4 rounded-xl bg-muted/50 p-4">
-                      {/*
-                        One decision form per consent in force, labelled by type,
-                        so recording the physical signature cannot be mistaken for
-                        acting on the digital one.
-                      */}
-                      {activeConsents.map(({ type, consent }) =>
-                        consent && consent.status === "PENDING" ? (
-                          <div key={consent.id} className="space-y-2">
-                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                              {t(`participants.consentType.${type}`)}
-                            </p>
-                            <ConsentDecisionForm
-                              participantId={participant.id}
-                              consentId={consent.id}
-                              options={["CONSENTED", "DECLINED"].map((st) => ({
-                                value: st,
-                                label: t(`participants.consentAction.${st}`),
-                              }))}
-                              labels={{ ...formBase, reference: t("participants.externalRef") }}
-                            />
-                          </div>
-                        ) : consent && consent.status === "CONSENTED" ? (
-                          <div key={consent.id} className="space-y-2">
-                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                              {t(`participants.consentType.${type}`)}
-                            </p>
-                            <ConsentDecisionForm
-                              participantId={participant.id}
-                              consentId={consent.id}
-                              options={[
-                                {
-                                  value: "WITHDRAWN",
-                                  label: t("participants.consentAction.WITHDRAWN"),
-                                },
-                              ]}
-                              labels={{ ...formBase, reference: t("participants.externalRef") }}
-                            />
-                          </div>
-                        ) : null,
-                      )}
-
-                      <StartConsentForm
-                        participantId={participant.id}
-                        types={CONSENT_TYPES.map((ty) => ({
-                          value: ty,
-                          label: t(`participants.consentType.${ty}`),
-                        }))}
-                        scopes={scopes
-                          .filter((sc) => sc.active)
-                          .map((sc) => ({ code: sc.code, label: sc.labelEs }))}
-                        labels={{
-                          ...formBase,
-                          submit:
-                            activeConsents.length > 0
-                              ? t("participants.startNewConsent")
-                              : t("participants.startConsent"),
-                          version: t("participants.consentVersion"),
-                          versionHelp: t("participants.consentVersionHelp"),
-                          type: t("participants.consentTypeLabel"),
-                          scopes: t("participants.consentScopes"),
-                          scopesHelp: t("participants.consentScopesHelp"),
-                        }}
-                      />
-                    </div>
+                        {canManageConsent
+                          ? activeConsents.map(({ type, consent }) =>
+                              consent && consent.status === "CONSENTED" ? (
+                                <div key={consent.id} className="space-y-2">
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    {t(`participants.consentType.${type}`)}
+                                  </p>
+                                  <ConsentDecisionForm
+                                    participantId={participant.id}
+                                    consentId={consent.id}
+                                    options={[
+                                      { value: "WITHDRAWN", label: t("participants.consentAction.WITHDRAWN") },
+                                    ]}
+                                    labels={{ ...formBase, reference: t("participants.externalRef") }}
+                                  />
+                                </div>
+                              ) : null,
+                            )
+                          : null}
+                      </div>
+                    </details>
                   ) : null}
                 </>
               )}
             </CardContent>
           </Card>
+
+          <CarePanel
+            participantId={participant.id}
+            responsibles={responsibles}
+            visits={visits}
+            candidates={responsibleCandidates}
+            canManage={canManageParticipant}
+            timezone={ctx.study.timezone}
+            formBase={formBase}
+          />
         </div>
 
         {/* Sidebar ---------------------------------------------------------- */}
@@ -689,16 +750,6 @@ export default async function ParticipantDetailPage({
           ) : null}
         </div>
       </div>
-
-      <CarePanel
-        participantId={participant.id}
-        responsibles={responsibles}
-        visits={visits}
-        candidates={responsibleCandidates}
-        canManage={canManageParticipant}
-        timezone={ctx.study.timezone}
-        formBase={formBase}
-      />
 
       {/* Reading the audit log needs its own permission; writing it never did. */}
       {ctx.permissions.has("audit.read") ? (

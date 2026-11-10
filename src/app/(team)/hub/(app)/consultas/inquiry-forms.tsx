@@ -37,7 +37,8 @@ function ErrorLine({ state, errors }: { state: InquiryActionState; errors: Recor
 export function ReplyComposer({ inquiryId, labels }: { inquiryId: string; labels: InquiryLabels }) {
   const [state, action, pending] = useActionState(answerInquiryAction, initial);
   return (
-    <form action={action} className="space-y-2 border-t bg-card p-3">
+    // Tinted the team's purple, like the team's bubbles (2026-11-10).
+    <form action={action} className="chat-team-composer space-y-2 border-t p-3">
       <input type="hidden" name="inquiryId" value={inquiryId} />
       <ErrorLine state={state} errors={labels.errors} />
       <div className="flex items-end gap-2">

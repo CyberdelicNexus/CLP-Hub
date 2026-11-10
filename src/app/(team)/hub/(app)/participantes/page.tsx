@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ChevronRight } from "lucide-react";
 import { getStudyContext } from "@/auth/study-context";
+import { armGlowColor } from "@/components/team/arm-badge";
 import { NoAccess } from "@/components/team/no-access";
 import {
   EligibilityBadge,
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { NextStepBadge } from "@/components/team/next-step-badge";
 import { nextStep } from "@/domain/next-step";
+import { RESPONSIBILITY_ROLES, type ResponsibilityRole } from "@/domain/responsibility";
 import {
   ELIGIBILITY_STATUSES,
   ENROLLMENT_STATUSES,
@@ -20,9 +22,13 @@ import {
   isEnrollmentStatus,
   type EligibilityStatus,
 } from "@/domain/participant-state";
-import { listParticipants, listOpenScreenings } from "@/services/participant-ops";
-import { listCohorts, listStudyArms } from "@/services/cohorts";
-import { listResponsibleCandidates } from "@/services/participant-care";
+import { listEligibilityReasons, listParticipants } from "@/services/participant-ops";
+import { listAssignableCohorts, listCohorts, listStudyArms } from "@/services/cohorts";
+import {
+  listResponsibleCandidates,
+  responsiblesByParticipant,
+  type ResponsibleRow,
+} from "@/services/participant-care";
 import { ParticipantsKanban } from "./participants-kanban";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -57,11 +63,12 @@ export default async function ParticipantsPage({
   const params = await searchParams;
   const eligibility = isEligibilityStatus(params.elegibilidad) ? params.elegibilidad : undefined;
   const enrollment = isEnrollmentStatus(params.estado) ? params.estado : undefined;
-  const isKanban = params.vista === "kanban";
+  const isKanban = params.vista !== "list";
   const includeContact = ctx.permissions.has("participants.contact.read");
   const canManageScreening = ctx.permissions.has("screening.manage");
+  const canManageParticipant = ctx.permissions.has("participants.manage");
 
-  const [rows, cohortOptions, armOptions, staffOptions, openScreenings] = await Promise.all([
+  const [rows, cohortOptions, armOptions, staffOptions, reasons] = await Promise.all([
     listParticipants(ctx.study.id, {
       includeContact,
       // The kanban lays every eligibility status out as its own column, same
@@ -81,22 +88,23 @@ export default async function ParticipantsPage({
     ctx.permissions.has("randomization.read")
       ? listStudyArms(ctx.study.id)
       : Promise.resolve([]),
-    ctx.permissions.has("participants.manage")
-      ? listResponsibleCandidates(ctx.study.id)
-      : Promise.resolve([]),
-    // Only fetched for the kanban, to know which participants have an open
-    // screening a drag-to-ELIGIBLE/WAITLIST can complete.
-    isKanban && canManageScreening
-      ? listOpenScreenings(ctx.study.id, { includeContact: false })
-      : Promise.resolve([]),
+    canManageParticipant ? listResponsibleCandidates(ctx.study.id) : Promise.resolve([]),
+    // Only fetched for the kanban, which asks for one on some drops.
+    isKanban && canManageScreening ? listEligibilityReasons(ctx.study.id) : Promise.resolve([]),
   ]);
 
-  const openScreeningByParticipant = Object.fromEntries(
-    openScreenings.map((s) => [s.participantId, s.id]),
-  );
+  // Only the board's cards show these, and they need the rows first.
+  const [assignableCohorts, responsibles] = isKanban
+    ? await Promise.all([
+        ctx.permissions.has("cohorts.manage")
+          ? listAssignableCohorts(ctx.study.id, { scope: ctx.cohortScope })
+          : Promise.resolve([]),
+        responsiblesByParticipant(rows.map((r) => r.id)),
+      ])
+    : [[], new Map()];
 
   const base = `${TEAM_BASE_PATH}/participantes`;
-  const viewHref = (v: "list" | "kanban") => (v === "list" ? base : `${base}?vista=kanban`);
+  const viewHref = (v: "list" | "kanban") => (v === "list" ? `${base}?vista=list` : base);
 
   /**
    * A next step is only shown when the viewer can see the whole picture.
@@ -111,6 +119,7 @@ export default async function ParticipantsPage({
   const withParam = (key: string, value: string | undefined) => {
     const next = new URLSearchParams();
     const current: Record<string, string | undefined> = {
+      vista: isKanban ? undefined : "list",
       elegibilidad: eligibility,
       estado: enrollment,
       cohorte: params.cohorte,
@@ -141,7 +150,7 @@ export default async function ParticipantsPage({
         {/* Hidden in kanban view, which already segments by eligibility visually. */}
         {isKanban ? null : (
           <nav aria-label={t("participants.filterLabel")} className="flex flex-wrap gap-2">
-            <FilterChip href={base} active={!eligibility && !enrollment} label={t("participants.all")} />
+            <FilterChip href={viewHref("list")} active={!eligibility && !enrollment} label={t("participants.all")} />
             {ELIGIBILITY_STATUSES.map((st) => (
               <FilterChip
                 key={st}
@@ -221,9 +230,10 @@ export default async function ParticipantsPage({
       ) : isKanban ? (
         <ParticipantsKanban
           rows={rows}
-          includeContact={includeContact}
           readOnly={!canManageScreening}
-          openScreeningByParticipant={openScreeningByParticipant}
+          reasons={reasons
+            .filter((r) => r.active)
+            .map((r) => ({ id: r.id, label: r.labelEs, appliesTo: [...r.appliesTo] }))}
           statusLabels={Object.fromEntries(
             ELIGIBILITY_STATUSES.map((s) => [s, t(`participants.eligibility.${s}`)]),
           ) as Record<EligibilityStatus, string>}
@@ -233,6 +243,89 @@ export default async function ParticipantsPage({
             notFound: t("participants.error.notFound"),
             failed: t("participants.error.failed"),
             reasonRequired: t("participants.error.reasonRequired"),
+            reasonNotAllowed: t("participants.error.reasonNotAllowed"),
+            reasonNotApplicable: t("participants.error.reasonNotApplicable"),
+            noteTooLong: t("participants.error.noteTooLong"),
+          }}
+          reasonLabels={{
+            reason: t("participants.reason"),
+            reasonRequiredHint: t("participants.reasonRequiredHint"),
+            reasonNote: t("participants.reasonNote"),
+            reasonNoteHelp: t("participants.reasonNoteHelp"),
+            reasonNoneConfigured: t("participants.reasonNoneConfigured"),
+            confirm: t("participants.recordResult"),
+            cancel: t("common.cancel"),
+          }}
+          // armOptions is gated on randomization.read, so a colour can't tell
+          // someone without that permission which group a person is in.
+          armGlow={Object.fromEntries(armOptions.map((a, i) => [a.id, armGlowColor(i)]))}
+          card={{
+            includeContact,
+            canManageParticipant,
+            cohorts: assignableCohorts.map((c) => ({ id: c.id, label: `${c.code} · ${c.name}` })),
+            candidates: staffOptions.map((u) => ({ id: u.id, label: u.displayName })),
+            responsibles: Object.fromEntries(
+              [...responsibles].map(([participantId, held]) => [
+                participantId,
+                held.map((r: ResponsibleRow) => ({
+                  role: r.role,
+                  userId: r.userId,
+                  displayName: r.displayName,
+                })),
+              ]),
+            ),
+            labels: {
+              openParticipant: t("participants.openCard", { code: "{code}" }),
+              showProperties: t("participants.showProperties"),
+              hideProperties: t("participants.hideProperties"),
+              name: t("applications.field.name"),
+              phone: t("applications.field.phone"),
+              email: t("applications.field.email"),
+              cohort: t("participants.table.cohort"),
+              unassigned: t("care.unassigned"),
+              roles: Object.fromEntries(
+                RESPONSIBILITY_ROLES.map((r) => [r, t(`care.role.${r}`)]),
+              ) as Record<ResponsibilityRole, string>,
+              contactName: {
+                empty: t("participants.contactName.empty"),
+                edit: t("participants.contactName.edit"),
+              },
+              contactPhone: {
+                empty: t("participants.contactPhone.empty"),
+                edit: t("participants.contactPhone.edit"),
+              },
+              contactEmail: {
+                empty: t("participants.contactEmail.empty"),
+                edit: t("participants.contactEmail.edit"),
+              },
+              form: {
+                submit: t("common.save"),
+                submitting: t("common.loading"),
+                errors: {
+                  forbidden: t("common.noAccess"),
+                  invalid: t("participants.error.invalid"),
+                  notFound: t("participants.error.notFound"),
+                  failed: t("participants.error.failed"),
+                  duplicateEmail: t("participants.error.duplicateEmail"),
+                },
+              },
+              cohortErrors: {
+                forbidden: t("common.noAccess"),
+                invalid: t("participants.error.invalid"),
+                notFound: t("participants.error.notFound"),
+                failed: t("participants.error.failed"),
+                alreadyAssigned: t("cohorts.error.alreadyAssigned"),
+                cohortClosed: t("cohorts.error.cohortClosed"),
+                armMismatch: t("cohorts.error.armMismatch"),
+                armNotRecorded: t("cohorts.error.armNotRecorded"),
+              },
+              careErrors: {
+                forbidden: t("common.noAccess"),
+                invalid: t("participants.error.invalid"),
+                notFound: t("participants.error.notFound"),
+                failed: t("participants.error.failed"),
+              },
+            },
           }}
         />
       ) : (
@@ -360,7 +453,9 @@ function FilterSelect({
   const selected = options.find((o) => o.value === value);
 
   return (
-    <details className="group relative">
+    // `data-popover`: closes on choosing an option, clicking outside or Escape
+    // (PopoverDetails in the team shell).
+    <details data-popover className="group relative">
       <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg bg-card px-3 py-1.5 text-xs font-medium ring-1 ring-foreground/10 transition-colors hover:text-foreground">
         <span className="text-muted-foreground">{label}</span>
         <span>{selected ? selected.label : anyLabel}</span>

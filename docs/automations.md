@@ -49,6 +49,15 @@ A rule may name an **arm** and, for session events, a **session template**. Both
 - A control cohort has no sessions. Pair it with the programme cohort, and a rule "control arm, SESSION_SCHEDULED, S0, +7 days" emails the control cohort's members a week after the programme cohort's S0. The action records whose members it is for in `scheduled_actions.audience_cohort_id`.
 - The scope is re-checked when the action comes due; a person no longer in a cohort of that arm is skipped as `outOfScope`.
 
+## A cohort's dated plan (D-136)
+
+A control cohort can also carry its messages directly, each with a date set by staff while setting the cohort up (`cohort_planned_messages`, the cohort's "Plan de comunicación"). This is not a rule: there is no event and no offset, just "this template, this cohort, this time".
+
+- The processor run calls `processDuePlannedMessages` after `processDueActions`. A due entry whose template passes `automaticTemplateProblem` is claimed (`processed_at`), then sent through `deliverAutomaticEmail` to each current member — the same single path to an inbox, the same SYSTEM audit rows, the idempotency key built from the entry's id.
+- Anything else (WhatsApp, a group message, an email with `{{enlace}}` or `{{instrucciones}}` still in it) is never touched by the processor. It is shown as "Copiar y enviar a mano" with the text to copy. The template is re-checked when due, so editing a link into it is what makes it send.
+- Nothing is retried. A partial or failed send marks the entry `PARTIAL`/`FAILED` and raises `EMAIL_NOT_SENT` on the cohort, naming codes only. With no sender configured nothing is claimed and the entry waits.
+- Managing the plan needs `communications.manage`.
+
 ## What a rule may test
 
 `conditions_json` is an object of named boolean predicates drawn from a **closed allow-list** (`CONDITION_KEYS`): `participantActive`, `participantEnrolled`, `consentActive`, `cohortActive`, `sessionScheduled`, `attendanceNotRecorded`, `deviceOut`, `vrNotReady`.

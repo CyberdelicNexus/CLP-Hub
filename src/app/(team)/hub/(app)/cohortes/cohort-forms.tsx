@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Archive, ArchiveRestore, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCloseOnSuccess } from "@/components/team/closing-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -103,6 +104,7 @@ export function CreateCohortForm({
   };
 }) {
   const [state, action, pending] = useActionState(createCohortAction, initial);
+  useCloseOnSuccess(state);
   return (
     <form key={state.ok ? "done" : "new"} action={action} className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5">

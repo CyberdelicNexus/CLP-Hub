@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  canTransitionConsent,
+  isActiveConsent,
   CONSENT_TYPES,
   canCarryScopes,
   missingConsentTypes,
@@ -78,6 +80,14 @@ describe("consent types", () => {
   });
 });
 
+describe("a tick made by mistake", () => {
+  it("is voided, which no staff transition can reach and which is never in force", () => {
+    expect(isActiveConsent("VOIDED")).toBe(false);
+    expect(canTransitionConsent("CONSENTED", "VOIDED")).toBe(false);
+    expect(canTransitionConsent("VOIDED", "CONSENTED")).toBe(false);
+  });
+});
+
 describe("which consents are missing", () => {
   /**
    * THE RULE THIS FUNCTION MUST NOT CONTAIN. It does not know that a control arm
@@ -85,9 +95,9 @@ describe("which consents are missing", () => {
    * arm configuration and only subtracts what is recorded from what is required
    * (non-negotiable 3).
    */
-  it("expects the digital consent from everyone", () => {
-    expect(missingConsentTypes({ requiresPhysical: null, activeTypes: [] })).toEqual(["DIGITAL"]);
-    expect(missingConsentTypes({ requiresPhysical: false, activeTypes: [] })).toEqual(["DIGITAL"]);
+  it("never asks the team for the digital consent, which the Hub records itself", () => {
+    expect(missingConsentTypes({ requiresPhysical: null, activeTypes: [] })).toEqual([]);
+    expect(missingConsentTypes({ requiresPhysical: false, activeTypes: [] })).toEqual([]);
   });
 
   it("expects the physical consent only where the arm is configured to need it", () => {

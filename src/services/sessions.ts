@@ -21,6 +21,9 @@ import {
   tallyAttendance,
   type AttendanceStatus,
   type AttendanceTally,
+  type DeviceHandoff,
+  type VisitCheck,
+  type SessionAttendance,
   type SessionModality,
   type SessionStatus,
 } from "@/domain/session";
@@ -211,6 +214,9 @@ export async function createSessionTemplate(params: {
   durationMinutes?: number | null;
   dayOffset?: number | null;
   position?: number;
+  attendance?: SessionAttendance;
+  deviceHandoff?: DeviceHandoff;
+  visitChecks?: readonly VisitCheck[];
 }): Promise<string> {
   const { studyId, actorId } = params;
   const code = params.code.trim().toLowerCase();
@@ -237,6 +243,9 @@ export async function createSessionTemplate(params: {
         durationMinutes: params.durationMinutes ?? null,
         dayOffset: params.dayOffset ?? null,
         position: params.position ?? 0,
+        attendance: params.attendance ?? "GROUP",
+        deviceHandoff: params.deviceHandoff ?? "NONE",
+        visitChecks: [...(params.visitChecks ?? [])],
       })
       .returning({ id: sessionTemplates.id });
 
@@ -255,6 +264,9 @@ export async function createSessionTemplate(params: {
         stageId: params.stageId ?? null,
         armId: params.armId ?? null,
         dayOffset: params.dayOffset ?? null,
+        attendance: params.attendance ?? "GROUP",
+        deviceHandoff: params.deviceHandoff ?? "NONE",
+        visitChecks: params.visitChecks ?? [],
       },
     });
 
@@ -274,6 +286,9 @@ export async function updateSessionTemplate(params: {
   durationMinutes?: number | null;
   dayOffset?: number | null;
   position?: number;
+  attendance?: SessionAttendance;
+  deviceHandoff?: DeviceHandoff;
+  visitChecks?: readonly VisitCheck[];
 }): Promise<void> {
   const { studyId, templateId, actorId } = params;
 
@@ -294,6 +309,9 @@ export async function updateSessionTemplate(params: {
       durationMinutes: params.durationMinutes !== undefined ? params.durationMinutes : current.durationMinutes,
       dayOffset: params.dayOffset !== undefined ? params.dayOffset : current.dayOffset,
       position: params.position ?? current.position,
+      attendance: params.attendance ?? current.attendance,
+      deviceHandoff: params.deviceHandoff ?? current.deviceHandoff,
+      visitChecks: params.visitChecks ? [...params.visitChecks] : current.visitChecks,
     } satisfies Partial<SessionTemplate>;
 
     const fields: (keyof typeof patch)[] = [
@@ -305,11 +323,15 @@ export async function updateSessionTemplate(params: {
       "durationMinutes",
       "dayOffset",
       "position",
+      "attendance",
+      "deviceHandoff",
+      "visitChecks",
     ];
     const before: Record<string, unknown> = {};
     const after: Record<string, unknown> = {};
     for (const key of fields) {
-      if (patch[key] !== current[key]) {
+      // Compared by value: `visitChecks` is an array.
+      if (JSON.stringify(patch[key]) !== JSON.stringify(current[key])) {
         before[key] = current[key];
         after[key] = patch[key];
       }

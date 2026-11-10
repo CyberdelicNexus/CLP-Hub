@@ -80,6 +80,7 @@ Emails stay role-based (unchanged); only the display name is a person's name, so
 - `docs/research-data-boundaries.md` — what this app must never store
 - `docs/development.md` — environments, migrations, seeding, testing
 - `docs/deployment.md` — Vercel: environment variables, what each `APP_ENV` serves, first deploy
+- `docs/load-testing.md` — k6 stress test, pass criteria, Vercel WAF rate-limit rules
 - `docs/decisions.md` — append-only decision log
 
 ## Non-negotiables

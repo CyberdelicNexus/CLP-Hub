@@ -7,7 +7,8 @@ import { NoAccess } from "@/components/team/no-access";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ClosingDialog } from "@/components/team/closing-dialog";
 import { ArmBadge, armGlowColor, armToneClass } from "@/components/team/arm-badge";
 import { CohortOccupancy } from "@/components/team/cohort-occupancy";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
@@ -138,7 +139,9 @@ export default async function CohortsPage({
         // group it is; cohorts with no group keep the brand colour.
         style={arm ? ({ "--glow-color": armGlowColor(arm.position) } as React.CSSProperties) : undefined}
         className={cn(
-          "edge-glow flex flex-col overflow-hidden rounded-2xl",
+          // `min-w-0` (not `overflow-hidden`) keeps a long name truncating;
+          // clipping would cut the selected card's glow off its border.
+          "edge-glow flex min-w-0 flex-col rounded-2xl",
           // Bigger in the grid (2026-10-14 request); compact once the list is a column.
           open ? "gap-2 p-3" : "min-h-44 gap-3 p-5 hover:-translate-y-0.5",
           active
@@ -187,7 +190,7 @@ export default async function CohortsPage({
           <p className="text-sm text-muted-foreground">{t("cohorts.subtitle")}</p>
         </div>
         {canManage ? (
-          <Dialog>
+          <ClosingDialog>
             <DialogTrigger render={<Button size="sm" className="gap-1.5 rounded-lg" />}>
               <Plus className="size-3.5" aria-hidden />
               {t("cohorts.create")}
@@ -225,7 +228,7 @@ export default async function CohortsPage({
                 }}
               />
             </DialogContent>
-          </Dialog>
+          </ClosingDialog>
         ) : null}
       </header>
 

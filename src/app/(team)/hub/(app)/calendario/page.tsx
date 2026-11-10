@@ -268,14 +268,22 @@ function MonthView({
                   {d.day}
                 </span>
                 <div className="flex flex-col gap-0.5">
+                  {/* Bigger, tinted chips with the time (2026-10-28: "need
+                      to look bigger and with some other color so it stands
+                      out in both dark and light theme"). `.cal-event`. */}
                   {rows.slice(0, 2).map((row) => (
                     <Link
                       key={row.id}
                       href={`${TEAM_BASE_PATH}/sesiones/${row.id}`}
-                      className="truncate rounded bg-card px-1 py-0.5 text-[0.65rem] leading-tight shadow-soft hover:shadow-lift"
+                      className="cal-event flex flex-col rounded-md px-1.5 py-1 text-xs leading-tight"
                       title={`${row.cohortCode} · ${row.name}`}
                     >
-                      {row.cohortCode}
+                      <span data-numeric className="font-semibold">
+                        {new Intl.DateTimeFormat("es-ES", { timeZone: timezone, timeStyle: "short" }).format(
+                          row.scheduledStart!,
+                        )}
+                      </span>
+                      <span className="truncate max-sm:hidden">{row.cohortCode}</span>
                     </Link>
                   ))}
                   {rows.length > 2 ? (
@@ -333,9 +341,11 @@ function DayGroup({
     <div>
       <p
         data-numeric
-        className={`mb-2 flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase ${muted ? "text-muted-foreground/70" : "text-muted-foreground"}`}
+        // Bolder and in the brand colour (2026-10-28), so each day stands out
+        // from the sessions under it; past days stay muted.
+        className={`mb-2 flex items-center gap-1.5 text-sm font-semibold tracking-wide uppercase ${muted ? "text-muted-foreground/70" : "text-[var(--cal-day-ink)]"}`}
       >
-        <CalendarDays className="size-3.5" aria-hidden />
+        <CalendarDays className="size-4" aria-hidden />
         {group.label}
       </p>
       <div className="space-y-2">

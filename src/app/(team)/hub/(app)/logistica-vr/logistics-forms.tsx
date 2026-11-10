@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { useCloseOnSuccess } from "@/components/team/closing-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +13,10 @@ import {
   createDeviceAction,
   recordMilestoneAction,
   reportIncidentAction,
-  reportReadinessAction,
+  removeDeviceAction,
   resolveIncidentAction,
   setDeviceStatusAction,
+  updateDeviceAction,
   type LogisticsState,
 } from "./actions";
 
@@ -64,6 +67,77 @@ export function CreateDeviceForm({
           {pending ? labels.submitting : labels.submit}
         </Button>
       </div>
+    </form>
+  );
+}
+
+/** Rename a headset or correct its model/serial; lives in a ClosingDialog. */
+export function EditDeviceForm({
+  device,
+  labels,
+}: {
+  device: { id: string; code: string; model: string | null; serial: string | null };
+  labels: LogLabels & { code: string; model: string; serial: string };
+}) {
+  const [state, action, pending] = useActionState(updateDeviceAction, initial);
+  useCloseOnSuccess(state);
+  const id = (f: string) => `${f}-${device.id}`;
+  return (
+    <form action={action} className="grid gap-3">
+      <input type="hidden" name="deviceId" value={device.id} />
+      <div className="space-y-1.5">
+        <Label htmlFor={id("code")}>{labels.code}</Label>
+        <Input id={id("code")} name="code" required maxLength={32} defaultValue={device.code} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={id("model")}>{labels.model}</Label>
+        <Input id={id("model")} name="model" maxLength={120} defaultValue={device.model ?? ""} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={id("serial")}>{labels.serial}</Label>
+        <Input id={id("serial")} name="serial" maxLength={120} defaultValue={device.serial ?? ""} />
+      </div>
+      <ErrorLine state={state} errors={labels.errors} />
+      <Button type="submit" size="sm" className="justify-self-start rounded-lg" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+    </form>
+  );
+}
+
+/**
+ * Remove a headset from the inventory. Two clicks — the first arms it — rather
+ * than a browser confirm(), which this app avoids.
+ */
+export function RemoveDeviceButton({
+  deviceId,
+  labels,
+}: {
+  deviceId: string;
+  labels: { remove: string; confirm: string; errors: Record<string, string> };
+}) {
+  const [state, action, pending] = useActionState(removeDeviceAction, initial);
+  const [armed, setArmed] = useState(false);
+  return (
+    <form action={action} className="inline-flex items-center gap-1">
+      <input type="hidden" name="deviceId" value={deviceId} />
+      {armed ? (
+        <Button type="submit" size="xs" variant="destructive" className="rounded-md" disabled={pending}>
+          {labels.confirm}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          aria-label={labels.remove}
+          title={labels.remove}
+          onClick={() => setArmed(true)}
+        >
+          <Trash2 className="size-3.5" aria-hidden />
+        </Button>
+      )}
+      <ErrorLine state={state} errors={labels.errors} />
     </form>
   );
 }
@@ -222,49 +296,6 @@ export function MilestoneForm({
         </select>
       </div>
       <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
-        {pending ? labels.submitting : labels.submit}
-      </Button>
-      <div className="w-full">
-        <ErrorLine state={state} errors={labels.errors} />
-      </div>
-    </form>
-  );
-}
-
-/** Reported readiness. Never inferred — a person says how the setup went. */
-export function ReadinessForm({
-  assignmentId,
-  options,
-  labels,
-}: {
-  assignmentId: string;
-  options: { value: string; label: string }[];
-  labels: LogLabels & { readiness: string };
-}) {
-  const [state, action, pending] = useActionState(reportReadinessAction, initial);
-  return (
-    <form action={action} className="flex flex-wrap items-end gap-2">
-      <input type="hidden" name="assignmentId" value={assignmentId} />
-      <div className="space-y-1.5">
-        <Label htmlFor={`rd-${assignmentId}`} className="text-xs">
-          {labels.readiness}
-        </Label>
-        <select
-          id={`rd-${assignmentId}`}
-          name="readiness"
-          required
-          defaultValue=""
-          className={`${SELECT_CLASS} w-44`}
-        >
-          <option value="" disabled />
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <Button type="submit" size="sm" variant="outline" className="rounded-lg" disabled={pending}>
         {pending ? labels.submitting : labels.submit}
       </Button>
       <div className="w-full">

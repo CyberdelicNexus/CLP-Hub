@@ -20,7 +20,7 @@ import { listTasks } from "@/services/automation";
 import { listCohortOptions } from "@/services/communications";
 import { listParticipants } from "@/services/participant-ops";
 import { listAssignableStaff } from "@/services/staff";
-import { getTrelloBoardUrl } from "@/services/trello";
+import { getTrelloBoard, getTrelloBoardUrl } from "@/services/trello";
 import { AssignTaskForm, CloseTaskForm, CreateTaskForm } from "./task-forms";
 import { TasksKanban } from "./tasks-kanban";
 import { TrelloBoard } from "./trello-board";
@@ -89,8 +89,10 @@ export default async function TasksPage({
   ]);
   // General project tasks, not this study's operational ones — see
   // TrelloBoard's doc comment. Null (rendered as "not connected") when
-  // TRELLO_BOARD_URL isn't configured; reading it is synchronous, no request.
+  // TRELLO_BOARD_URL isn't configured. The board's lists and cards are read
+  // per request (D-149); null falls back to the plain link.
   const trelloBoardUrl = getTrelloBoardUrl();
+  const trelloBoard = trelloBoardUrl ? await getTrelloBoard() : null;
 
   const now = new Date();
   const overdue = rows.filter((task) => isOverdue(task, now)).length;
@@ -187,9 +189,17 @@ export default async function TasksPage({
         <CardContent>
           <TrelloBoard
             boardUrl={trelloBoardUrl}
-            notConnectedLabel={t("tasks.trelloNotConnected")}
-            notConnectedHelp={t("tasks.trelloNotConnectedHelp")}
-            openLabel={t("tasks.trelloOpen")}
+            board={trelloBoard}
+            timeZone={ctx.study.timezone}
+            now={now}
+            labels={{
+              notConnected: t("tasks.trelloNotConnected"),
+              notConnectedHelp: t("tasks.trelloNotConnectedHelp"),
+              open: t("tasks.trelloOpen"),
+              emptyList: t("tasks.trelloEmptyList"),
+              readOnly: t("tasks.trelloReadOnly"),
+              done: t("tasks.trelloDone"),
+            }}
           />
         </CardContent>
       </Card>

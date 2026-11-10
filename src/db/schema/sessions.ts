@@ -9,7 +9,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { cohorts, studyArms } from "./cohorts";
-import { attendanceStatusEnum, sessionModalityEnum, sessionStatusEnum } from "./enums";
+import {
+  attendanceStatusEnum,
+  deviceHandoffEnum,
+  sessionAttendanceEnum,
+  sessionModalityEnum,
+  sessionStatusEnum,
+} from "./enums";
 import { participants } from "./participants";
 import { programStages } from "./program-stages";
 import { studies } from "./studies";
@@ -45,6 +51,12 @@ export const sessionTemplates = pgTable(
     durationMinutes: integer("duration_minutes"),
     /** Days after the cohort start date. */
     dayOffset: integer("day_offset"),
+    /** One date for the cohort, or a visit per participant (2026-10-28). */
+    attendance: sessionAttendanceEnum("attendance").notNull().default("GROUP"),
+    /** Whether a visit to this session delivers or picks up the headset. */
+    deviceHandoff: deviceHandoffEnum("device_handoff").notNull().default("NONE"),
+    /** What a visit to this session collects: `VISIT_CHECKS` (D-139). */
+    visitChecks: text("visit_checks").array().notNull().default([]),
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -125,3 +137,42 @@ export const sessionAttendance = pgTable(
 );
 
 export type SessionAttendance = typeof sessionAttendance.$inferSelect;
+
+/**
+ * One participant's own appointment for an INDIVIDUAL session (2026-10-28) —
+ * S0's home visit, the POST pickup. The date is the plan; whether the headset
+ * actually changed hands stays on `device_assignments`, recorded by staff.
+ * Nothing here is clinical: a date, a place, who set it.
+ */
+export const participantVisits = pgTable(
+  "participant_visits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    participantId: uuid("participant_id")
+      .notNull()
+      .references(() => participants.id),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => sessionTemplates.id),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+    /** That the questionnaire was filled in at the visit. Never an answer. */
+    questionnaireCapturedAt: timestamp("questionnaire_captured_at", { withTimezone: true }),
+    questionnaireCapturedBy: uuid("questionnaire_captured_by").references(() => users.id),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("participant_visits_unique").on(t.participantId, t.templateId),
+    index("participant_visits_cohort_idx").on(t.cohortId, t.scheduledAt),
+    index("participant_visits_study_idx").on(t.studyId, t.scheduledAt),
+  ],
+);
+
+export type ParticipantVisit = typeof participantVisits.$inferSelect;

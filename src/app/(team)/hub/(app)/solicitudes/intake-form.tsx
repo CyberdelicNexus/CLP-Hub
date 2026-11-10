@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
+import { useCloseOnSuccess } from "@/components/team/closing-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +37,12 @@ export function QualtricsIntakeForm({
   };
 }) {
   const [state, action, pending] = useActionState(recordQualtricsIntakeAction, initial);
+  // In a modal now (2026-10-28): it closes on success, so the new code is
+  // also announced in a toast that outlives it.
+  useCloseOnSuccess(state);
+  useEffect(() => {
+    if (state.participantCode) toast.success(`${labels.created} ${state.participantCode}`);
+  }, [state, labels.created]);
 
   return (
     <form action={action} className="space-y-3">

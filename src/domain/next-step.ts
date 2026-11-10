@@ -35,8 +35,6 @@ export const NEXT_STEPS = [
   "RECORD_SCREENING_RESULT",
   /** No screening has been booked. */
   "SCHEDULE_SCREENING",
-  /** No digital consent is in force. */
-  "RECORD_DIGITAL_CONSENT",
   /** No allocation has been written down. */
   "RECORD_ALLOCATION",
   /** Allocated, but not in a cohort. */
@@ -86,16 +84,15 @@ export function nextStep(s: ParticipantSnapshot): NextStep {
     return s.hasOpenScreening ? "RECORD_SCREENING_RESULT" : "SCHEDULE_SCREENING";
   }
 
-  if (!s.activeConsentTypes.includes("DIGITAL")) return "RECORD_DIGITAL_CONSENT";
   if (!s.hasAllocation) return "RECORD_ALLOCATION";
+  if (!s.hasCohort) return "ASSIGN_COHORT";
 
-  // Only where the study configured the arm to sign in person. An unallocated
+  // Only where the study configured the arm to sign in person, and after the
+  // cohort: it is signed at the visit that cohort books (D-139). An unallocated
   // participant never reaches here, so `null` cannot be misread as `false`.
   if (s.requiresPhysicalConsent === true && !s.activeConsentTypes.includes("PHYSICAL")) {
     return "RECORD_PHYSICAL_CONSENT";
   }
-
-  if (!s.hasCohort) return "ASSIGN_COHORT";
 
   if (s.initialVisitStatus === null) return "SCHEDULE_INITIAL_VISIT";
   if (s.initialVisitStatus === "SCHEDULED") {
@@ -121,12 +118,11 @@ export function outstandingSteps(s: ParticipantSnapshot): NextStep[] {
   if (!s.hasScreeningResult) {
     steps.push(s.hasOpenScreening ? "RECORD_SCREENING_RESULT" : "SCHEDULE_SCREENING");
   }
-  if (!s.activeConsentTypes.includes("DIGITAL")) steps.push("RECORD_DIGITAL_CONSENT");
   if (!s.hasAllocation) steps.push("RECORD_ALLOCATION");
+  if (!s.hasCohort) steps.push("ASSIGN_COHORT");
   if (s.requiresPhysicalConsent === true && !s.activeConsentTypes.includes("PHYSICAL")) {
     steps.push("RECORD_PHYSICAL_CONSENT");
   }
-  if (!s.hasCohort) steps.push("ASSIGN_COHORT");
   if (s.initialVisitStatus === null) steps.push("SCHEDULE_INITIAL_VISIT");
   if (s.initialVisitStatus === "SCHEDULED") {
     if (!s.hasInitialSessionResponsible) steps.push("ASSIGN_INITIAL_RESPONSIBLE");

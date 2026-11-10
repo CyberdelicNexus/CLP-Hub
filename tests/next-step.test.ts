@@ -41,10 +41,7 @@ describe("the next step is about a missing record", () => {
 
   it("walks the pipeline in order", () => {
     const screened = fresh({ hasScreeningResult: true });
-    expect(nextStep(screened)).toBe("RECORD_DIGITAL_CONSENT");
-
-    const consented = fresh({ hasScreeningResult: true, activeConsentTypes: ["DIGITAL"] });
-    expect(nextStep(consented)).toBe("RECORD_ALLOCATION");
+    expect(nextStep(screened)).toBe("RECORD_ALLOCATION");
 
     const allocated = fresh({
       hasScreeningResult: true,
@@ -85,11 +82,15 @@ describe("the physical consent step", () => {
     hasAllocation: true,
   };
 
-  it("appears only where the arm is configured to sign in person", () => {
-    expect(nextStep(fresh({ ...base, requiresPhysicalConsent: true }))).toBe(
+  // Signed at the visit the cohort books (D-139), so it never comes before it.
+  it("follows the cohort, and only where the arm is configured to sign in person", () => {
+    expect(nextStep(fresh({ ...base, requiresPhysicalConsent: true }))).toBe("ASSIGN_COHORT");
+    expect(nextStep(fresh({ ...base, requiresPhysicalConsent: true, hasCohort: true }))).toBe(
       "RECORD_PHYSICAL_CONSENT",
     );
-    expect(nextStep(fresh({ ...base, requiresPhysicalConsent: false }))).toBe("ASSIGN_COHORT");
+    expect(nextStep(fresh({ ...base, requiresPhysicalConsent: false, hasCohort: true }))).toBe(
+      "SCHEDULE_INITIAL_VISIT",
+    );
   });
 
   /**
@@ -147,7 +148,6 @@ describe("outstanding steps", () => {
   it("lists everything missing, in the same order as the single next step", () => {
     const all = outstandingSteps(fresh());
     expect(all[0]).toBe(nextStep(fresh()));
-    expect(all).toContain("RECORD_DIGITAL_CONSENT");
     expect(all).toContain("RECORD_ALLOCATION");
   });
 

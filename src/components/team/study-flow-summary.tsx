@@ -3,7 +3,13 @@ import { AlertTriangle } from "lucide-react";
 import { Accordion, AccordionItem, AccordionPanel, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Donut } from "@/components/charts/donut";
-import { countExclusionsWithoutReason, getStudyFlowCounts } from "@/services/study-flow";
+import Link from "next/link";
+import { TEAM_BASE_PATH } from "@/domain/navigation";
+import {
+  countExclusionsWithoutReason,
+  getStudyFlowCounts,
+  listExclusionsWithoutReason,
+} from "@/services/study-flow";
 
 /**
  * The study flow, as numbers (Phase 4a), in collapsible sections
@@ -20,12 +26,23 @@ import { countExclusionsWithoutReason, getStudyFlowCounts } from "@/services/stu
  *     relationship instead of a misleading one.
  * Percentages, retention rates and a publication-ready CONSORT diagram are
  * still deliberately absent (D-024).
+ *
+ * Moved from Evaluación to the Hub overview (2026-10-28). The stage counts
+ * now open Solicitudes as its KPI row, so the overview passes
+ * `withStages={false}` rather than show them twice.
  */
-export async function StudyFlowSummary({ studyId }: { studyId: string }) {
+export async function StudyFlowSummary({
+  studyId,
+  withStages = true,
+}: {
+  studyId: string;
+  withStages?: boolean;
+}) {
   const t = await getTranslations("flow");
-  const [counts, unreasoned] = await Promise.all([
+  const [counts, unreasoned, unreasonedPeople] = await Promise.all([
     getStudyFlowCounts(studyId),
     countExclusionsWithoutReason(studyId),
+    listExclusionsWithoutReason(studyId),
   ]);
 
   const stages: { key: string; value: number }[] = [
@@ -69,21 +86,38 @@ export async function StudyFlowSummary({ studyId }: { studyId: string }) {
             className="flex items-start gap-2 rounded-xl bg-surface-peach px-4 py-3 text-xs leading-relaxed text-surface-peach-ink"
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-            <span>{t("unreasoned", { count: unreasoned })}</span>
+            <span>
+              {t("unreasoned", { count: unreasoned })}{" "}
+              {/* Straight to each record, where "Añadir motivo" completes it (D-150). */}
+              {unreasonedPeople.map((p, i) => (
+                <span key={p.participantId}>
+                  {i > 0 ? ", " : null}
+                  <Link
+                    href={`${TEAM_BASE_PATH}/participantes/${p.participantId}`}
+                    data-numeric
+                    className="font-semibold underline underline-offset-2 hover:no-underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {p.code}
+                  </Link>
+                </span>
+              ))}
+            </span>
           </p>
         ) : null}
 
         <Accordion
-          defaultValue={["stages", "notAssessed", "exclusions", "allocation"]}
+          defaultValue={[...(withStages ? ["stages"] : []), "notAssessed", "exclusions", "allocation"]}
           multiple
           className="-mx-1"
         >
-          <AccordionItem value="stages">
-            <AccordionTrigger>{t("stages")}</AccordionTrigger>
-            <AccordionPanel>
-              <Tiles items={stages} labelFor={(key) => t(`stage.${key}`)} />
-            </AccordionPanel>
-          </AccordionItem>
+          {withStages ? (
+            <AccordionItem value="stages">
+              <AccordionTrigger>{t("stages")}</AccordionTrigger>
+              <AccordionPanel>
+                <Tiles items={stages} labelFor={(key) => t(`stage.${key}`)} />
+              </AccordionPanel>
+            </AccordionItem>
+          ) : null}
 
           <AccordionItem value="notAssessed">
             <AccordionTrigger>{t("notAssessed")}</AccordionTrigger>

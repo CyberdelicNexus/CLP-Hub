@@ -4,7 +4,7 @@ import { ContentBlocks } from "@/components/content/blocks";
 import { CoverImage } from "@/components/content/cover-image";
 import type { ContentType } from "@/domain/content";
 import { StudyLanguageLinks } from "@/components/content/language-links";
-import { STUDY_PAGE_COPY } from "@/content/study-pages";
+import { STUDY_PAGE_COPY, studyPageMetadata } from "@/content/study-pages";
 import { getPublicLocale } from "@/i18n/public-locale";
 import { getPublishedForSession, inReadersLanguage } from "@/services/content";
 
@@ -37,7 +37,7 @@ export async function generateMetadata({
   if (!type || !SESSION_CODE_PATTERN.test(sessionCode)) return {};
   const locale = await getPublicLocale();
   const found = await inReadersLanguage(locale, (l) => getPublishedForSession({ sessionCode, type, locale: l }));
-  return found ? { title: found.page.title } : {};
+  return found ? studyPageMetadata(found.page.title, STUDY_PAGE_COPY[locale].shareDescription) : {};
 }
 
 export default async function SessionContentPage({ params }: { params: Promise<Params> }) {

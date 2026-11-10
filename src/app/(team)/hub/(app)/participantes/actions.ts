@@ -4,17 +4,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertPermission, AuthorizationError } from "@/auth/authorize";
 import { getStudyContext } from "@/auth/study-context";
-import {
-  CONSENT_TYPES,
-  CONSENT_VERSION_MAX_LENGTH,
-  SCOPE_CODE_PATTERN,
-} from "@/domain/consent";
+import { SCOPE_CODE_PATTERN } from "@/domain/consent";
 import { isValidReasonNote } from "@/domain/eligibility-reason";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import { logger } from "@/lib/logger";
+import { parseStudyLocal } from "@/lib/study-time";
 import {
   closeScreening,
+  completeExclusionReason,
   completeScreening,
   DuplicateContactEmailError,
   InvalidTransitionError,
@@ -22,12 +20,13 @@ import {
   ReasonError,
   ScopeError,
   recordConsentDecision,
+  recordEligibilityMove,
   scheduleScreening,
   setEnrollmentStatus,
   setParticipantContactEmail,
   setParticipantContactName,
   setParticipantContactPhone,
-  startConsent,
+  setPhysicalConsent,
 } from "@/services/participant-ops";
 
 /**
@@ -104,6 +103,8 @@ function fail(err: unknown, event: string): OpState {
 function revalidate(participantId?: string) {
   revalidatePath(`${TEAM_BASE_PATH}/participantes`);
   revalidatePath(`${TEAM_BASE_PATH}/evaluacion`);
+  // Solicitudes cards carry the screening too (2026-10-28).
+  revalidatePath(`${TEAM_BASE_PATH}/solicitudes`);
   revalidatePath(TEAM_BASE_PATH);
   if (participantId) revalidatePath(`${TEAM_BASE_PATH}/participantes/${participantId}`);
 }
@@ -112,8 +113,8 @@ function revalidate(participantId?: string) {
 
 const scheduleSchema = z.object({
   participantId: uuid,
-  // datetime-local gives "YYYY-MM-DDTHH:mm" with no zone; interpreted as the
-  // server's zone and stored as UTC, which is what the schema expects.
+  // datetime-local gives "YYYY-MM-DDTHH:mm" with no zone; read in the STUDY's
+  // timezone (parseStudyLocal, D-136), not the server's (UTC on Vercel).
   scheduledAt: z.string().min(1),
 });
 
@@ -127,8 +128,8 @@ export async function scheduleScreeningAction(_prev: OpState, formData: FormData
   });
   if (!parsed.success) return { error: "invalid" };
 
-  const when = new Date(parsed.data.scheduledAt);
-  if (Number.isNaN(when.getTime())) return { error: "invalid" };
+  const when = parseStudyLocal(parsed.data.scheduledAt, ctx.study.timezone);
+  if (!when) return { error: "invalid" };
 
   try {
     assertPermission(ctx, "screening.manage");
@@ -200,39 +201,86 @@ export async function completeScreeningAction(_prev: OpState, formData: FormData
   return { error: null, ok: true };
 }
 
-const moveSchema = z.object({
+const reasonSchema = z.object({
   participantId: uuid,
   screeningId: uuid,
+  reasonId: uuid,
+  reasonNote: z
+    .string()
+    .trim()
+    .refine(isValidReasonNote)
+    .optional()
+    .transform((v) => (v ? v : null)),
+});
+
+/** Add the missing reason to a completed exclusion (D-150). */
+export async function completeExclusionReasonAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = reasonSchema.safeParse({
+    participantId: formData.get("participantId"),
+    screeningId: formData.get("screeningId"),
+    reasonId: formData.get("reasonId"),
+    reasonNote: (formData.get("reasonNote") as string | null) || undefined,
+  });
+  if (!parsed.success) return { error: validationError(parsed.error.issues) };
+
+  try {
+    assertPermission(ctx, "screening.manage");
+    await completeExclusionReason({
+      studyId: ctx.study.id,
+      screeningId: parsed.data.screeningId,
+      actorId: ctx.session.userId,
+      reasonId: parsed.data.reasonId,
+      reasonNote: parsed.data.reasonNote,
+    });
+  } catch (err) {
+    return fail(err, "screening.reason_complete");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const moveSchema = z.object({
+  participantId: uuid,
   result: z.enum(["ELIGIBLE", "INELIGIBLE", "REVIEW_REQUIRED", "WAITLIST"]),
+  reasonId: uuid.nullable(),
+  reasonNote: z.string().nullable(),
 });
 
 /**
- * Same write as `completeScreeningAction`, called directly for the
- * participantes kanban's drag-and-drop rather than bound to a `<form>`. The
- * board only offers ELIGIBLE/WAITLIST as drop targets (see
- * `participants-kanban.tsx`'s `isValidTarget`) because INELIGIBLE and
- * REVIEW_REQUIRED require a reason a drag gesture cannot supply — but this
- * still goes through the same `completeScreening` call, so that requirement
- * is enforced here too, not just hinted at client-side.
+ * The participantes board's drop, called directly rather than bound to a
+ * `<form>`. The board asks for the reason INELIGIBLE and REVIEW_REQUIRED need
+ * before it calls this (`participants-kanban.tsx`), and the service still
+ * refuses a drop without one.
  */
 export async function moveParticipantEligibility(
   participantId: string,
-  screeningId: string,
   result: string,
+  reason: { reasonId: string; reasonNote: string | null } | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const ctx = await getStudyContext();
   if (!ctx) return { ok: false, error: "forbidden" };
 
-  const parsed = moveSchema.safeParse({ participantId, screeningId, result });
+  const parsed = moveSchema.safeParse({
+    participantId,
+    result,
+    reasonId: reason?.reasonId ?? null,
+    reasonNote: reason?.reasonNote ?? null,
+  });
   if (!parsed.success) return { ok: false, error: "invalid" };
 
   try {
     assertPermission(ctx, "screening.manage");
-    await completeScreening({
+    await recordEligibilityMove({
       studyId: ctx.study.id,
-      screeningId: parsed.data.screeningId,
+      participantId: parsed.data.participantId,
       actorId: ctx.session.userId,
       result: parsed.data.result,
+      reasonId: parsed.data.reasonId,
+      reasonNote: parsed.data.reasonNote,
     });
   } catch (err) {
     const state = fail(err, "screening.kanban_move");
@@ -278,10 +326,9 @@ export async function closeScreeningAction(_prev: OpState, formData: FormData): 
 
 // --- Consent ----------------------------------------------------------------
 
-const startConsentSchema = z.object({
+const physicalConsentSchema = z.object({
   participantId: uuid,
-  versionLabel: z.string().trim().min(1).max(CONSENT_VERSION_MAX_LENGTH),
-  consentType: z.enum(CONSENT_TYPES).default("DIGITAL"),
+  signed: z.enum(["on", "off"]),
   /**
    * Configured scope codes. Shape-checked here; membership is verified by the
    * service inside the transaction, against the scopes active at that moment.
@@ -289,33 +336,33 @@ const startConsentSchema = z.object({
   grantedScopes: z.array(z.string().regex(SCOPE_CODE_PATTERN)).max(20).default([]),
 });
 
-export async function startConsentAction(_prev: OpState, formData: FormData): Promise<OpState> {
+/** The physical consent's tick, from the participant or from their visit card. */
+export async function setPhysicalConsentAction(_prev: OpState, formData: FormData): Promise<OpState> {
   const ctx = await getStudyContext();
   if (!ctx) return { error: "forbidden" };
 
-  const parsed = startConsentSchema.safeParse({
+  const parsed = physicalConsentSchema.safeParse({
     participantId: formData.get("participantId"),
-    versionLabel: formData.get("versionLabel"),
-    consentType: formData.get("consentType") ?? undefined,
+    signed: formData.get("signed"),
     grantedScopes: formData.getAll("grantedScopes"),
   });
   if (!parsed.success) return { error: "invalid" };
 
   try {
     assertPermission(ctx, "consent.manage");
-    await startConsent({
+    await setPhysicalConsent({
       studyId: ctx.study.id,
       participantId: parsed.data.participantId,
       actorId: ctx.session.userId,
-      versionLabel: parsed.data.versionLabel,
-      consentType: parsed.data.consentType,
+      signed: parsed.data.signed === "on",
       grantedScopes: parsed.data.grantedScopes,
     });
   } catch (err) {
-    return fail(err, "consent.start");
+    return fail(err, "consent.physical");
   }
 
   revalidate(parsed.data.participantId);
+  revalidatePath(`${TEAM_BASE_PATH}/cohortes`);
   return { error: null, ok: true };
 }
 

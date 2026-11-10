@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Pencil } from "lucide-react";
+import { CircleCheck, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { REASON_NOTE_MAX_LENGTH } from "@/domain/eligibility-reason";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import {
   closeScreeningAction,
+  completeExclusionReasonAction,
   completeScreeningAction,
   recordConsentAction,
   scheduleScreeningAction,
@@ -16,7 +17,7 @@ import {
   setContactNameAction,
   setContactPhoneAction,
   setEnrollmentAction,
-  startConsentAction,
+  setPhysicalConsentAction,
   type OpState,
 } from "./actions";
 
@@ -104,7 +105,7 @@ export function ContactField({
   }
 
   return (
-    <form action={action} className="flex items-center gap-1.5">
+    <form action={action} className="flex flex-wrap items-center gap-1.5">
       <input type="hidden" name="participantId" value={participantId} />
       <Input
         name={field}
@@ -112,7 +113,7 @@ export function ContactField({
         autoFocus
         defaultValue={value ?? ""}
         maxLength={maxLength}
-        className="h-7 flex-1 text-sm"
+        className="h-7 min-w-0 flex-1 text-sm"
         onKeyDown={(e) => {
           if (e.key === "Escape") setEditing(false);
         }}
@@ -121,7 +122,7 @@ export function ContactField({
         {pending ? labels.submitting : labels.submit}
       </Button>
       {state.error ? (
-        <span role="alert" className="text-xs text-destructive">
+        <span role="alert" className="basis-full text-xs text-destructive">
           {labels.errors[state.error] ?? state.error}
         </span>
       ) : null}
@@ -304,6 +305,102 @@ export function CompleteScreeningForm({
   );
 }
 
+/**
+ * Add the missing reason to a completed exclusion (D-150): exclusions saved
+ * before reasons were required. Shown only on such a screening, collapsed
+ * behind one button so the history stays a list. Only reasons that apply to
+ * that result are offered; the server re-checks.
+ */
+export function CompleteReasonForm({
+  participantId,
+  screeningId,
+  result,
+  reasons,
+  labels,
+}: {
+  participantId: string;
+  screeningId: string;
+  result: string;
+  reasons: ReasonOption[];
+  labels: FormLabels & {
+    open: string;
+    cancel: string;
+    reason: string;
+    reasonNote: string;
+    reasonNoteHelp: string;
+    reasonNoneConfigured: string;
+  };
+}) {
+  const [state, action, pending] = useActionState(completeExclusionReasonAction, initial);
+  const [open, setOpen] = useState(false);
+  const applicable = reasons.filter((r) => r.appliesTo.includes(result));
+
+  if (state.ok) return null; // the page revalidates and shows the reason
+  if (!open) {
+    return (
+      <Button type="button" size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={() => setOpen(true)}>
+        {labels.open}
+      </Button>
+    );
+  }
+
+  return (
+    <form action={action} className="mt-2 w-full space-y-3 rounded-xl bg-muted/50 p-3">
+      <input type="hidden" name="participantId" value={participantId} />
+      <input type="hidden" name="screeningId" value={screeningId} />
+      {applicable.length === 0 ? (
+        <p role="alert" className="text-sm text-destructive">
+          {labels.reasonNoneConfigured}
+        </p>
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            <Label htmlFor={`addreason-${screeningId}`}>
+              {labels.reason}
+              <span aria-hidden> *</span>
+            </Label>
+            <select
+              id={`addreason-${screeningId}`}
+              name="reasonId"
+              required
+              defaultValue=""
+              className="h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="" disabled />
+              {applicable.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`addnote-${screeningId}`}>{labels.reasonNote}</Label>
+            <Input
+              id={`addnote-${screeningId}`}
+              name="reasonNote"
+              maxLength={REASON_NOTE_MAX_LENGTH}
+              aria-describedby={`addnotehelp-${screeningId}`}
+            />
+            <p id={`addnotehelp-${screeningId}`} className="text-xs text-muted-foreground">
+              {labels.reasonNoteHelp}
+            </p>
+          </div>
+        </>
+      )}
+      <ErrorLine state={state} errors={labels.errors} />
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" className="rounded-lg" disabled={pending || applicable.length === 0}>
+          {pending ? labels.submitting : labels.submit}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" className="rounded-lg" onClick={() => setOpen(false)}>
+          {labels.cancel}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 /** Close a screening that produced no result. */
 export function CloseScreeningForm({
   participantId,
@@ -342,7 +439,6 @@ export function CloseScreeningForm({
   );
 }
 
-/** Open a consent process against a named form version. */
 /** A configured authorization the physical consent may grant. */
 export interface ScopeOption {
   code: string;
@@ -350,90 +446,102 @@ export interface ScopeOption {
 }
 
 /**
- * Open a consent process.
+ * The physical consent as one tick (D-139), on the participant and on the card
+ * of the visit where it is signed. Ticking reveals the study's configured
+ * authorizations, each left unticked: a pre-ticked box is not consent. Parents
+ * key this by the consent's id, so it starts clean after a tick or an undo.
  *
- * The type is chosen explicitly because the two are genuinely different events
- * (D-032): DIGITAL was accepted remotely before any data existed, PHYSICAL is
- * signed at the initial visit. Starting one never retires the other.
- *
- * The authorization checkboxes appear only for PHYSICAL, and only when the study
- * has configured any. They are unchecked by default and stay that way — a
- * pre-ticked consent box is not consent, and the labels come from configuration
- * so no trial's media plan is written into this component.
+ * "Undo" is for a tick made by mistake. A person changing their mind is a
+ * withdrawal, recorded on the participant.
  */
-export function StartConsentForm({
+export function PhysicalConsentCheck({
   participantId,
-  types,
+  signed,
   scopes,
+  canManage,
   labels,
 }: {
   participantId: string;
-  types: { value: string; label: string }[];
+  signed: { dateLabel: string; scopes: string[] } | null;
   scopes: ScopeOption[];
-  labels: FormLabels & {
-    version: string;
-    versionHelp: string;
-    type: string;
-    scopes: string;
-    scopesHelp: string;
-  };
+  canManage: boolean;
+  labels: { check: string; scopes: string; save: string; undo: string; errors: Record<string, string> };
 }) {
-  const [state, action, pending] = useActionState(startConsentAction, initial);
-  const [type, setType] = useState(types[0]?.value ?? "DIGITAL");
-  const showScopes = type === "PHYSICAL" && scopes.length > 0;
+  const [state, action, pending] = useActionState(setPhysicalConsentAction, initial);
+  const [ticked, setTicked] = useState(false);
+
+  if (signed) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-start gap-2 text-sm">
+          <CircleCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 flex-1 leading-snug">
+            {labels.check}
+            <span data-numeric className="block text-xs text-muted-foreground">
+              {signed.dateLabel}
+            </span>
+            {signed.scopes.length > 0 ? (
+              <span className="block text-xs text-muted-foreground">{signed.scopes.join(" · ")}</span>
+            ) : null}
+          </span>
+          {canManage ? (
+            <form action={action}>
+              <input type="hidden" name="participantId" value={participantId} />
+              <input type="hidden" name="signed" value="off" />
+              <button
+                type="submit"
+                disabled={pending}
+                className="rounded text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {labels.undo}
+              </button>
+            </form>
+          ) : null}
+        </div>
+        <ErrorLine state={state} errors={labels.errors} />
+      </div>
+    );
+  }
 
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} className="space-y-2">
       <input type="hidden" name="participantId" value={participantId} />
-
-      <div className="space-y-1.5">
-        <Label htmlFor="consentType">{labels.type}</Label>
-        <select
-          id="consentType"
-          name="consentType"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="h-9 w-full rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          {types.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="versionLabel">{labels.version}</Label>
-        <Input id="versionLabel" name="versionLabel" maxLength={60} required aria-describedby="versionHelp" />
-        <p id="versionHelp" className="text-xs text-muted-foreground">
-          {labels.versionHelp}
-        </p>
-      </div>
-
-      {showScopes ? (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium">{labels.scopes}</legend>
-          <p className="text-xs text-muted-foreground">{labels.scopesHelp}</p>
-          {scopes.map((sc) => (
-            <label key={sc.code} className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="grantedScopes"
-                value={sc.code}
-                // Never defaultChecked. A pre-ticked box is not consent.
-                className="mt-0.5 size-4 rounded border-input accent-primary"
-              />
-              <span className="leading-relaxed">{sc.label}</span>
-            </label>
-          ))}
-        </fieldset>
+      <input type="hidden" name="signed" value="on" />
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={ticked}
+          disabled={!canManage}
+          onChange={(e) => setTicked(e.target.checked)}
+          className="mt-0.5 size-4 rounded border-input accent-primary"
+        />
+        <span className="leading-snug">{labels.check}</span>
+      </label>
+      {ticked ? (
+        <div className="space-y-1.5 pl-6">
+          {scopes.length > 0 ? (
+            <fieldset className="space-y-1.5">
+              <legend className="text-xs text-muted-foreground">{labels.scopes}</legend>
+              {scopes.map((sc) => (
+                <label key={sc.code} className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="grantedScopes"
+                    value={sc.code}
+                    // Never defaultChecked. A pre-ticked box is not consent.
+                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                  />
+                  <span className="leading-snug">{sc.label}</span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+          <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
+            {labels.save}
+          </Button>
+        </div>
       ) : null}
-
       <ErrorLine state={state} errors={labels.errors} />
-      <Button type="submit" size="sm" className="rounded-lg" disabled={pending}>
-        {pending ? labels.submitting : labels.submit}
-      </Button>
     </form>
   );
 }

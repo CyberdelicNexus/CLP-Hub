@@ -7,6 +7,7 @@ import { countNewInquiries } from "@/services/inquiries";
 import { SidebarNav, type NavItem } from "./sidebar-nav";
 import { SidebarShell } from "./sidebar-shell";
 import { Header } from "./header";
+import { PopoverDetails } from "./popover-details";
 
 /**
  * Dashboard frame: a floating sidebar panel on desktop, a sheet on smaller
@@ -94,6 +95,7 @@ export async function TeamShell({ ctx, children }: { ctx: StudyContext; children
         <main id="main" className="flex-1 px-4 pt-2 pb-8 sm:px-6 lg:pr-6 lg:pl-0">
           <PageFade className="mx-auto w-full max-w-6xl">{children}</PageFade>
         </main>
+        <PopoverDetails />
       </div>
     </div>
   );

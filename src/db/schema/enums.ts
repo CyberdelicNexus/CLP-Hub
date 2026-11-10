@@ -15,6 +15,8 @@ import { COHORT_STATUSES } from "@/domain/cohort";
 import { ALLOCATION_METHODS } from "@/domain/randomization";
 import {
   ATTENDANCE_STATUSES,
+  DEVICE_HANDOFFS,
+  SESSION_ATTENDANCES,
   SESSION_MODALITIES,
   SESSION_STATUSES,
 } from "@/domain/session";
@@ -74,6 +76,15 @@ export const allocationMethodEnum = pgEnum("allocation_method", ALLOCATION_METHO
 
 // Sessions and attendance (Phase 3b, migration 0005)
 export const sessionModalityEnum = pgEnum("session_modality", SESSION_MODALITIES);
+export const sessionAttendanceEnum = pgEnum("session_scheduling", SESSION_ATTENDANCES);
+export const deviceHandoffEnum = pgEnum("device_handoff", DEVICE_HANDOFFS);
+export const plannedMessageStatusEnum = pgEnum("planned_message_status", [
+  "PLANNED",
+  "SENT",
+  "PARTIAL",
+  "FAILED",
+  "CANCELLED",
+]);
 export const sessionStatusEnum = pgEnum("session_status", SESSION_STATUSES);
 export const attendanceStatusEnum = pgEnum("attendance_status", ATTENDANCE_STATUSES);
 

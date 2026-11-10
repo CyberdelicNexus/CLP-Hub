@@ -10,6 +10,22 @@ export const SESSION_MODALITIES = ["ZOOM", "VR", "IN_PERSON", "ASYNCHRONOUS", "O
 export type SessionModality = (typeof SESSION_MODALITIES)[number];
 
 /**
+ * How a session is held (2026-10-28). GROUP: one date for the whole cohort.
+ * INDIVIDUAL: one visit per participant, each with its own date (S0 and the
+ * POST visit in this study, but which sessions are individual is configuration).
+ */
+export const SESSION_ATTENDANCES = ["GROUP", "INDIVIDUAL"] as const;
+export type SessionAttendance = (typeof SESSION_ATTENDANCES)[number];
+
+/**
+ * What happens to the headset at an individual visit (2026-10-28): it is
+ * delivered, or picked up. This is what ties a visit to VR logistics; it never
+ * moves a device by itself — the hand-over and return stay staff actions.
+ */
+export const DEVICE_HANDOFFS = ["NONE", "DELIVERY", "PICKUP"] as const;
+export type DeviceHandoff = (typeof DEVICE_HANDOFFS)[number];
+
+/**
  * Operational state of a scheduled session.
  *
  * ASSUMPTION: the brief supplies modality and attendance vocabularies but not
@@ -144,3 +160,13 @@ export const SESSION_LOCATION_MAX_LENGTH = 200;
  */
 export const SESSION_TEMPLATE_CODE_PATTERN = /^[a-z][a-z0-9_-]{1,48}$/;
 export const SESSION_TEMPLATE_NAME_MAX_LENGTH = 120;
+
+/**
+ * What an individual visit collects, shown as a checklist on each person's card
+ * (D-139). Configuration on the session template, so S0 and POST are data here.
+ * PHYSICAL_CONSENT is the participant's consent record; QUESTIONNAIRE only says
+ * that it was filled in, never what it says (rule 4); INITIAL_VISIT makes this
+ * session's date the participant's initial visit (D-140).
+ */
+export const VISIT_CHECKS = ["PHYSICAL_CONSENT", "QUESTIONNAIRE", "INITIAL_VISIT"] as const;
+export type VisitCheck = (typeof VISIT_CHECKS)[number];

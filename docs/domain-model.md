@@ -229,6 +229,38 @@ that hasn't configured stages, is still a valid template without one.
 AUTOMATIC" constraints become "AUTOMATIC only for a MESSAGE"; that the message is
 an individual email is enforced in the service (see `docs/automations.md`).
 
+## Implemented (D-143 · migration 0033)
+
+| Change | Purpose | Notes |
+|---|---|---|
+| `devices.location_label`, `location_lat`, `location_lng`, `location_updated_at` | Where a headset is, in words and as a pin | Contact-gated, erased on return, never audited by value |
+
+## Implemented (D-139 · migration 0031)
+
+| Change | Purpose | Notes |
+|---|---|---|
+| `consent_status` + `VOIDED` | A physical-consent tick made by mistake | Service only, never in force, not a withdrawal |
+| `session_templates.visit_checks` | What an individual visit collects | `PHYSICAL_CONSENT`, `QUESTIONNAIRE`; configuration |
+| `participant_visits.questionnaire_captured_at` / `_by` | That the questionnaire was filled in at the visit | Status only, never an answer |
+
+The DIGITAL consent row is written by the Hub (`ensureDigitalConsent`), not by staff.
+
+Migration 0032 adds `INITIAL_VISIT` to `visit_checks`: that session's date on the
+card keeps `initial_visits` in step (`syncInitialVisit`, D-140).
+
+## Implemented (D-136 · migration 0030)
+
+| Table / column | Purpose |
+|---|---|
+| `session_templates.attendance` | `GROUP` (one date for the cohort, as before) or `INDIVIDUAL` (a visit per participant) |
+| `session_templates.device_handoff` | `NONE`, `DELIVERY` or `PICKUP`: whether an individual visit is when the headset is handed over or collected. Configuration (Configuración → programme); never moves a device by itself |
+| `participant_visits` | One participant's date for an INDIVIDUAL session (S0's home visit, the POST pickup). Unique per participant and template. A plan; the hand-over and return stay on `device_assignments`, recorded by staff |
+| `cohort_planned_messages` | A cohort's dated message plan (the control group, which has no sessions). Unique per cohort and template. An EMAIL the D-116 limits allow is sent at `send_at` by the processor; anything else is a dated reminder to copy. Locked once processed (`SENT`/`PARTIAL`/`FAILED`) |
+
+`devices` rows can now be renamed (`device.updated`) and removed: deleted when
+nothing ever referred to them, otherwise deactivated (`active = false`) so their
+history stays readable.
+
 ## Planned by phase
 
 Every table in the original brief now exists. Further work is refinement of what
@@ -244,14 +276,14 @@ Three independent status fields, never one blended string:
 - **eligibility_status**: PENDING, ELIGIBLE, INELIGIBLE, REVIEW_REQUIRED, WAITLIST
 - **enrollment_status**: CONSENT_PENDING, ENROLLED, RANDOMIZED, COHORT_ASSIGNED, WITHDRAWN, COMPLETED
 
-Transitions of eligibility, consent, randomization and withdrawal are explicit staff actions with audit rows. Nothing transitions automatically without an approved rule.
+Transitions of eligibility, physical consent, randomization and withdrawal are explicit staff actions with audit rows; the digital consent is recorded by the Hub, with its own audit row (D-139). Nothing transitions automatically without an approved rule.
 
 ## Other fixed vocabularies (from the brief)
 
 - Cohort status: PLANNING, RECRUITING, PREPARATION, ACTIVE, INTEGRATION, FOLLOW_UP, COMPLETED
 - Session modality: ZOOM, VR, IN_PERSON, ASYNCHRONOUS, OTHER
 - Attendance: EXPECTED, ATTENDED, LATE, ABSENT, EXCUSED, TECHNICAL_FAILURE, WITHDRAWN (TECHNICAL_FAILURE ≠ ABSENT)
-- Consent status: PENDING, CONSENTED, DECLINED, WITHDRAWN, SUPERSEDED
+- Consent status: PENDING, CONSENTED, DECLINED, WITHDRAWN, SUPERSEDED, VOIDED (D-139)
 - Consent type: DIGITAL, PHYSICAL (D-032)
 - Responsibility role: INITIAL_SESSION, VR_EQUIPMENT (D-035)
 - Visit status: SCHEDULED, COMPLETED, NO_SHOW, CANCELLED (D-035)

@@ -14,7 +14,6 @@ import {
   listOpenScreenings,
 } from "@/services/participant-ops";
 import { CloseScreeningForm, CompleteScreeningForm } from "../participantes/participant-forms";
-import { StudyFlowSummary } from "./flow-summary";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -83,6 +82,22 @@ export default async function ScreeningQueuePage() {
       <p className="rounded-xl bg-muted px-4 py-3 text-xs text-muted-foreground">
         {t("screening.boundary")}
       </p>
+
+      {/* Applications and screening are managed together on the Solicitudes
+          cards now (2026-10-28); this queue stays as a focused view of it.
+          The study flow moved to the Hub overview. */}
+      {ctx.permissions.has("applications.read") ? (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-surface-sky px-4 py-3 text-xs text-surface-sky-ink">
+          {t("screening.managedInApplications")}
+          <Link
+            href={`${TEAM_BASE_PATH}/solicitudes`}
+            className="inline-flex items-center gap-0.5 rounded font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            {t("screening.goToApplications")}
+            <ChevronRight className="size-3" aria-hidden />
+          </Link>
+        </p>
+      ) : null}
 
       {/* The queue is the one actionable thing on this page — everything
           below it is informational — so it leads (2026-09-19 request:
@@ -207,8 +222,6 @@ export default async function ScreeningQueuePage() {
           </Card>
         ))}
       </section>
-
-      <StudyFlowSummary studyId={ctx.study.id} />
     </div>
   );
 }
