@@ -5842,6 +5842,34 @@ David Glowacki commented on the team's "Textos Website - ES EN GL" document.
   checks eligibility (CLAUDE.md rule 3), and the "CRITERIOS" marker still gates the list
   until the full approved set is in.
 
+## D-152 · 2026-11-18 · The team is emailed about each new application, like a new consulta
+
+The founder: Joana and Cathy (and the team) should be told automatically when a
+new application or consulta arrives. Consultas already did this (D-088, D-119);
+applications told nobody, staff only saw them in Solicitudes.
+
+- **One recipient list for both.** `staffNotificationRecipients` (new,
+  `src/services/staff-recipients.ts`) is the consulta notice's list, moved out
+  of `inquiries.ts`: everyone active with `inquiries.manage` in the study, unless
+  `notify_staff_of_inquiries` is off, plus the team mailbox. In CLP today that
+  is Jose (ADMIN), Cathy (STUDY_MANAGER), Joana (RESEARCHER) and
+  joseeduardo.montemayor@usc.es (mailbox). Joana and Cathy were already on it;
+  nothing about them is stored separately. Adding or removing someone is done
+  through roles in Equipo, not a second list. The settings checkbox label now
+  says it covers both.
+- **The application notice** ("Nueva solicitud en el Hub de Clear Light")
+  names nobody and carries no contact detail, only the number of applications
+  still SUBMITTED and a link to Solicitudes; the details are read in the Hub.
+  Sent from the public form's `after()`, after the applicant's own
+  confirmation email (D-151), best effort and logged, never failing the form.
+  A repeat inside the dedupe window sends nothing.
+- **Capped at 5 an hour per study**, because `/participar` has no rate limit of
+  its own: over that, the notice is skipped and logged; the Hub lists everything.
+- Not audited, like the consulta notice: it is a notification to staff, not a
+  research or permission change, and records no participant data.
+- Only the public form notifies. A staff Qualtrics intake (D-031) is entered by
+  the team itself.
+
 ## Open questions for researchers
 
 - D-136: Joana suggested moving the control group's emails (welcome, Qualtrics,
@@ -6216,6 +6244,43 @@ the old one keeps the gap.
   participant by code.
 - Correcting a reason that already exists is still not offered. That stays
   with the open question on correcting determinations.
+
+## D-151 · 2026-11-11 · An automatic "we have your application" email, sent right away
+
+The founder: applicants should get a branded email confirming their application
+and telling them the next step (the team will contact them). The mechanism had
+existed since D-116, but nothing reached anyone:
+
+- **CLP had no rule.** No automation rule on `APPLICATION_SUBMITTED` existed in
+  the real study (DEMO's is a MANUAL WhatsApp). Created through the services,
+  so both are validated and audited, as Jose (ADMIN): template
+  `m00-solicitud-recibida` (EMAIL, one participant, stage
+  `APPLICATION_RECEIVED`, subject "Clear Light: hemos recibido tu solicitud",
+  only `{{nombre}}`) and rule `solicitud-recibida-email` (AUTOMATIC, offset 0,
+  condition `participantActive`). Both are configuration and can be edited or
+  switched off in the Hub; the wording is the team's to change.
+- **The processor runs once a day** (07:00 UTC on Vercel Hobby, D-116), so
+  even with a rule the email would arrive the next morning. The public form now
+  calls `processAutomaticActionsForEvent` from `after()`, once the application's
+  transaction has committed: only that event's AUTOMATIC messages that are
+  already due go out, through the processor's own per-action path (claim
+  PENDING → READY, send, `communications` row, SYSTEM audit, alert on failure).
+  Everything else still waits for the cron, which picks up anything this missed.
+  The visitor never waits on the mail provider.
+- **Delivery configuration** is outside the code: in Vercel, `MAIL_FROM` must be
+  on the verified domain (`info@numadelic.org`, not `onboarding@resend.dev`,
+  which only delivers to the Resend account owner), and `MAIL_ALLOWED_RECIPIENTS`
+  must be unset, or applicants not on that test list are refused and each one
+  raises a CRITICAL `EMAIL_NOT_SENT` alert. `.env.local` keeps both test values.
+
+Not changed: the email is Spanish for everyone (automatic delivery uses
+`body_es`; an English body would need delivery to read the participant's
+locale). A staff Qualtrics intake also emits `APPLICATION_SUBMITTED` but has no
+email on file (D-031), so the rule fails for it at the next cron with an
+`EMAIL_NOT_SENT` alert naming the code; that route is rarely used now that
+`/participar` collects the email. Repeat submissions inside the dedupe window
+send nothing. Checked: the rendered email in the branded frame (screenshot),
+typecheck, lint, build, tests; not yet sent end to end from production.
 
 ## Open questions for researchers
 

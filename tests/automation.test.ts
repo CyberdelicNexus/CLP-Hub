@@ -84,6 +84,7 @@ describe("what the Hub may send on its own (D-116)", () => {
     };
     walk("src");
     expect(callers.sort()).toEqual([
+      "src/services/application-notify.ts",
       "src/services/email-delivery.ts",
       "src/services/inquiries.ts",
       "src/services/mailer.ts",

@@ -477,6 +477,11 @@ export interface InterestResult {
   participantCode: string;
   /** True when this email already had an application inside the dedupe window. */
   deduplicated: boolean;
+  /**
+   * The APPLICATION_SUBMITTED event, so the caller can send its automatic
+   * emails once the transaction has committed (D-151). Absent for a repeat.
+   */
+  eventId?: string;
 }
 
 /**
@@ -602,14 +607,14 @@ export async function submitInterest(params: {
       metadata: { existingParticipant: Boolean(existing) },
     });
 
-    await recordStudyEvent(tx, {
+    const { eventId } = await recordStudyEvent(tx, {
       studyId,
       eventType: "APPLICATION_SUBMITTED",
       subject: { kind: "PARTICIPANT", id: participantId },
       metadata: { participantCode, source: "PUBLIC_FORM" },
     });
 
-    return { participantCode, deduplicated: false };
+    return { participantCode, deduplicated: false, eventId };
   });
 }
 

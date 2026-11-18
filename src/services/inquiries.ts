@@ -1,9 +1,9 @@
 import "server-only";
-import { and, asc, count, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gt, inArray, isNotNull } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { getEnv } from "@/config/env";
 import { getDb } from "@/db/client";
-import { inquiries, studies, userRoles, users, type Inquiry } from "@/db/schema";
+import { inquiries, studies, users, type Inquiry } from "@/db/schema";
 import {
   INQUIRY_HOURLY_CAP,
   INQUIRY_NOTIFY_PER_HOUR,
@@ -13,12 +13,11 @@ import {
 } from "@/domain/inquiry";
 import { ignoreReason, inquiryFromEmail } from "@/domain/inbound-email";
 import { replyEmail, staffNotification, type InquiryLocale } from "@/domain/inquiry-mail";
-import { hasPermission } from "@/domain/permissions";
-import { isStaffRole, type StaffRole } from "@/domain/roles";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
 import { logger } from "@/lib/logger";
 import { inquiryReply, logoAttachment, staffNotice } from "@/emails/render";
 import { fetchReceivedEmail, ownSenderAddress, sendMail } from "./mailer";
+import { staffNotificationRecipients } from "./staff-recipients";
 
 /**
  * The inquiry inbox (D-088). Questions from the public contact form, answered
@@ -191,30 +190,7 @@ async function inquiryStudyId(): Promise<string | null> {
 async function notifyStaff(studyId: string): Promise<void> {
   try {
     const db = getDb();
-    const [study] = await db
-      .select({ contactEmail: studies.contactEmail, notifyStaff: studies.notifyStaffOfInquiries })
-      .from(studies)
-      .where(eq(studies.id, studyId))
-      .limit(1);
-    const rows = await db
-      .select({ email: users.email, role: userRoles.role })
-      .from(userRoles)
-      .innerJoin(users, eq(users.id, userRoles.userId))
-      .where(and(eq(userRoles.studyId, studyId), isNull(userRoles.revokedAt), eq(users.active, true)));
-
-    const byEmail = new Map<string, StaffRole[]>();
-    for (const r of rows) {
-      if (!isStaffRole(r.role)) continue;
-      byEmail.set(r.email, [...(byEmail.get(r.email) ?? []), r.role]);
-    }
-    // Staff are included unless the study switched that off (D-119); the team
-    // mailbox is told either way.
-    const to =
-      study?.notifyStaff === false
-        ? []
-        : [...byEmail].filter(([, roles]) => hasPermission(roles, "inquiries.manage")).map(([email]) => email);
-    const mailbox = study?.contactEmail?.trim();
-    if (mailbox && !to.some((e) => e.toLowerCase() === mailbox.toLowerCase())) to.push(mailbox);
+    const to = await staffNotificationRecipients(studyId);
     if (to.length === 0) return;
 
     const [{ n }] = await db

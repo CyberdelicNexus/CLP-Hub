@@ -172,6 +172,30 @@ export function staffNoticeHtml(params: { count: number; inboxUrl: string | null
   });
 }
 
+/**
+ * To the same people, for a new application (D-152). It names nobody: the
+ * applicant's details are read in the Hub.
+ */
+export function applicationNoticeHtml(params: { count: number; listUrl: string | null; logoSrc?: string }): string {
+  const { count, listUrl } = params;
+  const title = "Ha llegado una solicitud nueva";
+  const lead =
+    count <= 1
+      ? "Alguien ha solicitado participar en el estudio desde la web."
+      : `Alguien ha solicitado participar en el estudio desde la web. Hay ${count} solicitudes pendientes de revisar.`;
+  return layout({
+    lang: "es",
+    title,
+    preview: `${title}. Revísala en el Hub.`,
+    eyebrow: "Hub del equipo",
+    logoSrc: params.logoSrc,
+    content: heading(title) + richText(`${lead} Revísala en Solicitudes.`) + (listUrl ? button(listUrl, "Abrir Solicitudes") : ""),
+    footer:
+      footerLine("Este aviso no incluye los datos de la persona a propósito: se consultan solo en el Hub.") +
+      footerLine("Lo recibes porque respondes consultas del estudio o es el buzón del equipo."),
+  });
+}
+
 const REPLY_COPY: Record<InquiryLocale, { title: string; eyebrow: string; yourQuestion: string; footer: string; site: string }> = {
   es: {
     title: "Respuesta a tu consulta",

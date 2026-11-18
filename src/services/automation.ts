@@ -604,6 +604,48 @@ export async function processDueActions(params: {
     .orderBy(asc(scheduledActions.scheduledFor))
     .limit(limit);
 
+  return runActions(due, now);
+}
+
+/**
+ * An event's AUTOMATIC emails, sent now rather than at the next processor run
+ * (D-151). The cron runs once a day (Vercel Hobby), so an "we have your
+ * application" email would otherwise reach someone up to a day later.
+ *
+ * Exactly the processor's path, narrowed: only this event's actions, only
+ * AUTOMATIC messages, only those already due (offset 0 or less). Everything
+ * else (a MANUAL message, a task, an alert, an email with a later offset) waits
+ * for the cron as before. The claim in `sendAutomatic` (PENDING → READY) means
+ * a cron run overlapping this one cannot send the same email twice.
+ *
+ * Call it after the transaction that recorded the event has committed (from
+ * `after()`), never inside it: it reads committed rows and talks to the
+ * provider, which must not hold a transaction open.
+ */
+export async function processAutomaticActionsForEvent(params: {
+  studyId: string;
+  eventId: string;
+  now?: Date;
+}): Promise<ProcessSummary> {
+  const now = params.now ?? new Date();
+  const due = await getDb()
+    .select()
+    .from(scheduledActions)
+    .where(
+      and(
+        eq(scheduledActions.studyId, params.studyId),
+        eq(scheduledActions.eventId, params.eventId),
+        eq(scheduledActions.status, "PENDING"),
+        eq(scheduledActions.actionKind, "MESSAGE"),
+        eq(scheduledActions.deliveryMode, "AUTOMATIC"),
+        lte(scheduledActions.scheduledFor, now),
+      ),
+    )
+    .orderBy(asc(scheduledActions.scheduledFor));
+  return runActions(due, now);
+}
+
+async function runActions(due: ScheduledAction[], now: Date): Promise<ProcessSummary> {
   const summary: ProcessSummary = {
     examined: due.length,
     prepared: 0,

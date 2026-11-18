@@ -1,6 +1,9 @@
 "use server";
 
+import { after } from "next/server";
 import { getPublicLocale } from "@/i18n/public-locale";
+import { processAutomaticActionsForEvent } from "@/services/automation";
+import { notifyStaffOfApplication } from "@/services/application-notify";
 import { logger } from "@/lib/logger";
 import {
   fullNameOf,
@@ -54,7 +57,7 @@ export async function submitInterestAction(_prev: InterestState, form: FormData)
     // Participant records know es/en only; study content is Spanish first, so
     // a visitor reading the site in Galician is recorded as es.
     const publicLocale = await getPublicLocale();
-    await submitInterest({
+    const result = await submitInterest({
       studyId: study.id,
       locale: publicLocale === "en" ? "en" : "es",
       firstName: input.firstName,
@@ -63,6 +66,25 @@ export async function submitInterestAction(_prev: InterestState, form: FormData)
       email: input.email,
       phone: input.phone,
     });
+    // The study's "we have your application" email, if it configured one as an
+    // AUTOMATIC rule, goes out now instead of at the next daily cron (D-151).
+    // After the response, so the visitor never waits on the mail provider, and
+    // a failure here is the processor's to report (an alert), not the form's.
+    const eventId = result.eventId;
+    if (eventId) {
+      after(async () => {
+        try {
+          await processAutomaticActionsForEvent({ studyId: study.id, eventId });
+        } catch (err) {
+          logger.error(
+            { event: "participar.ack_failed", err: err instanceof Error ? err.message : String(err) },
+            "participar: automatic email after an application failed",
+          );
+        }
+        // And the team hears about it, as for a new consulta (D-152).
+        await notifyStaffOfApplication(study.id);
+      });
+    }
     return { status: "ok" };
   } catch (err) {
     // No contact details in the log line.

@@ -8,6 +8,10 @@ A MANUAL or APPROVAL_REQUIRED action that comes due and still makes sense reache
 
 Since D-116 an AUTOMATIC action **sends**, under three limits: the template is an EMAIL, it is addressed to one participant (`audience = PARTICIPANT`), and its body uses only `{{nombre}}`, `{{codigo}}` and `{{cohorte}}`. `createRule` refuses anything else, and the processor re-checks the template when the action comes due. Sending goes through `src/services/email-delivery.ts`, one email per person, each recorded as a `communications` row (`sent_by` null) with a SYSTEM audit row. The automation domain, service and processor route still hold no HTTP client or credential; `tests/automation.test.ts` asserts that, and that `sendMail` has no caller other than the delivery module and the inquiry inbox.
 
+The cron runs once a day, so the public application form does not wait for it: after the application commits, `processAutomaticActionsForEvent` (from `after()`) sends that event's AUTOMATIC emails that are already due, through the same per-action path (D-151). CLP's "hemos recibido tu solicitud" email is rule `solicitud-recibida-email`.
+
+The same `after()` then emails the team a "Nueva solicitud" notice, outside the automation rules: same recipients as a new consulta (`staffNotificationRecipients`), no applicant details, at most 5 an hour per study (D-152).
+
 `scheduled_actions.status` has no `SENT` and no `DELIVERED`: what went out is the `communications` rows. An automatic action is claimed (PENDING → READY) before sending and ends DONE, or FAILED if nobody could be emailed. Recipients that failed raise a CRITICAL `EMAIL_NOT_SENT` alert by code; nothing is retried. With no sender configured nothing is claimed, the action stays PENDING behind an `EMAIL_NOT_CONFIGURED` alert, and goes out late once mail works.
 
 ## Tables

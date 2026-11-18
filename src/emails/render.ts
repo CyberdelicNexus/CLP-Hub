@@ -2,7 +2,7 @@ import "server-only";
 import { getEnv } from "@/config/env";
 import { PUBLIC_BASE_PATH } from "@/domain/navigation";
 import type { InquiryLocale } from "@/domain/inquiry-mail";
-import { LOGO_CID, inquiryReplyHtml, participantMessageHtml, staffNoticeHtml } from "./html";
+import { LOGO_CID, applicationNoticeHtml, inquiryReplyHtml, participantMessageHtml, staffNoticeHtml } from "./html";
 import { LOGO_PNG_BASE64 } from "./logo";
 
 /**
@@ -30,6 +30,10 @@ function siteUrl(): string | null {
 
 export function staffNotice(params: { count: number; inboxUrl: string | null }): string {
   return staffNoticeHtml(params);
+}
+
+export function applicationNotice(params: { count: number; listUrl: string | null }): string {
+  return applicationNoticeHtml(params);
 }
 
 export function inquiryReply(params: { locale: InquiryLocale; reply: string; question: string }): string {
