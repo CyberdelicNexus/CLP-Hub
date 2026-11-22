@@ -12,6 +12,7 @@ import {
 import { ViewToggle } from "@/components/team/view-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { RESIDENCE_FILTERS, isResidenceFilter } from "@/domain/residence";
 import { NextStepBadge } from "@/components/team/next-step-badge";
 import { nextStep } from "@/domain/next-step";
 import { RESPONSIBILITY_ROLES, type ResponsibilityRole } from "@/domain/responsibility";
@@ -49,6 +50,7 @@ export default async function ParticipantsPage({
     cohorte?: string;
     grupo?: string;
     responsable?: string;
+    residencia?: string;
     vista?: string;
   }>;
 }) {
@@ -65,6 +67,8 @@ export default async function ParticipantsPage({
   const enrollment = isEnrollmentStatus(params.estado) ? params.estado : undefined;
   const isKanban = params.vista !== "list";
   const includeContact = ctx.permissions.has("participants.contact.read");
+  // Country is contact data (D-153): the filter exists only for those who may see it.
+  const residence = includeContact && isResidenceFilter(params.residencia) ? params.residencia : undefined;
   const canManageScreening = ctx.permissions.has("screening.manage");
   const canManageParticipant = ctx.permissions.has("participants.manage");
 
@@ -79,6 +83,7 @@ export default async function ParticipantsPage({
       cohortId: params.cohorte,
       armId: params.grupo,
       responsibleUserId: params.responsable,
+      residence,
     }),
     // Cohort options respect the caller's cohort scope, so a facilitator cannot
     // discover cohorts they do not staff through a filter dropdown (D-022).
@@ -125,6 +130,7 @@ export default async function ParticipantsPage({
       cohorte: params.cohorte,
       grupo: params.grupo,
       responsable: params.responsable,
+      residencia: residence,
     };
     current[key] = value;
     for (const [k, v] of Object.entries(current)) if (v) next.set(k, v);
@@ -161,6 +167,19 @@ export default async function ParticipantsPage({
             ))}
           </nav>
         )}
+
+        {includeContact ? (
+          <nav aria-label={t("participants.residenceFilter.label")} className="flex flex-wrap gap-2">
+            {RESIDENCE_FILTERS.map((r) => (
+              <FilterChip
+                key={r}
+                href={withParam("residencia", residence === r ? undefined : r)}
+                active={residence === r}
+                label={t(`participants.residenceFilter.${r}`)}
+              />
+            ))}
+          </nav>
+        ) : null}
 
         <nav aria-label={t("participants.filterEnrollment")} className="flex flex-wrap gap-2">
           {ENROLLMENT_STATUSES.map((st) => (

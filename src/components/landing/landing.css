@@ -1820,7 +1820,8 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
 @media (max-width: 480px) { .apply__pair { grid-template-columns: 1fr; } }
 .apply__field { display: grid; gap: 0.45rem; min-width: 0; }
 .apply__field label { font-size: 0.95rem; color: var(--sc-ink); }
-.apply__field input {
+.apply__field input,
+.apply__field select {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -1831,8 +1832,12 @@ html:not(.sc-ready) .cl :is([data-sc-cue], [data-sc-in], [data-sc-stagger] > *) 
   border-radius: calc(var(--cl-radius) * 0.6);
   padding: 0.8rem 0.95rem;
 }
-.apply__field input:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 1px; border-color: transparent; }
-.apply__field input[aria-invalid="true"] { border-color: var(--cl-accent-strong); }
+.apply__field input:focus-visible,
+.apply__field select:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 1px; border-color: transparent; }
+.apply__field input[aria-invalid="true"],
+.apply__field select[aria-invalid="true"] { border-color: var(--cl-accent-strong); }
+/* The options list is drawn by the OS: give it the page's colours, not white on white. */
+.apply__field select option { color: var(--sc-ink); background: var(--sc-canvas); }
 .apply__check { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; align-items: start; color: var(--sc-ink-soft); font-size: 0.95rem; line-height: 1.55; }
 .apply__check input { width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; accent-color: var(--sc-accent); }
 .apply__check .cl-link { padding: 0; }

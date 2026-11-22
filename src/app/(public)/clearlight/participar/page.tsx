@@ -11,6 +11,7 @@ import { isProduction } from "@/config/env";
 import { missingContentList } from "@/content/landing/clear-light";
 import { LANDING_COPY } from "@/content/landing/copy";
 import { getPublicLocale } from "@/i18n/public-locale";
+import { countryOptions } from "@/domain/residence";
 import { openScreeningUrl } from "../screening-url";
 import "@/components/landing/scrollcraft.css";
 import "@/components/landing/landing.css";
@@ -96,7 +97,7 @@ export default async function ApplyPage() {
         </section>
 
         {url ? (
-          <ApplyFlow url={url} apply={APPLY} />
+          <ApplyFlow url={url} apply={APPLY} countries={countryOptions(locale)} />
         ) : (
           <p className="apply__closed">{INVITATION.closed}</p>
         )}

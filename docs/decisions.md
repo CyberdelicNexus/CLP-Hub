@@ -5870,6 +5870,42 @@ applications told nobody, staff only saw them in Solicitudes.
 - Only the public form notifies. A staff Qualtrics intake (D-031) is entered by
   the team itself.
 
+## D-153 · 2026-11-22 · The application form asks for the country of residence
+
+The founder: applicants should say where they live, so the team can filter
+those in Spain from those who are not. Applications already in are completed by
+hand. Chosen with the founder: a required country list, not a yes/no and not a
+city.
+
+- **What is stored.** `participant_contacts.residence_country` (migration
+  0034), an ISO 3166-1 alpha-2 code checked by the database (`^[A-Z]{2}$`) and
+  by `isCountryCode`. It is contact data (Category A, D-014 allows location):
+  read with the name, email and phone under `participants.contact.read`, and
+  erased with them. Never free text.
+- **The form** (`/participar`) gains one required `<select>`, "País de
+  residencia", Spain first and the rest by name in the visitor's language
+  (`Intl.DisplayNames`, so no list to translate). This widens D-086's
+  "exactly three facts" to four; the step copy and the privacy policy (es, en,
+  gl) now say so. The policy wording is the minimum change and still needs the
+  same legal review as the rest of that page.
+- **Reapplying.** The public route still never overwrites an existing person's
+  contact details, but fills in a country nobody has recorded yet, so someone
+  who applied before the question gives it when they apply again.
+- **By hand.** The participant page shows the country under the contact
+  details, editable from a list by `participants.manage`, audited as
+  `participant.residence_country_set` with the code before and after.
+- **The filter.** Participantes (list and kanban) and Solicitudes (every view,
+  the kanban included) have "En España / Fuera de España / País sin indicar"
+  chips, shown and applied only to viewers with `participants.contact.read`.
+- **Not a rule.** Nothing excludes, flags or routes anyone by country: no
+  eligibility, next-step or automation code reads it (a test pins this).
+  Whether living outside Spain rules someone out is the study team's call,
+  made by a person.
+
+Not done: the country is not shown on the cards themselves, only on the
+participant page and through the filter; a staff Qualtrics intake (D-031) does
+not ask it. The demo seed now gives its people a country (mostly ES).
+
 ## Open questions for researchers
 
 - D-136: Joana suggested moving the control group's emails (welcome, Qualtrics,

@@ -79,10 +79,13 @@ door is more likely to receive Category C text; it is erased on answer like
 everything else, but it does sit in the inbox until then. Resend also keeps its
 own copy of received mail under its retention policy, outside the Hub.
 
-`/participar` takes exactly three facts before the Qualtrics questionnaire:
+`/participar` takes exactly four facts before the Qualtrics questionnaire:
 name (as first name and surname), email and phone (D-086, D-087), so the team
-can contact the person. A test pins that the server action reads only those
-fields. This deliberately reverses D-031's order (consent in Qualtrics before any
+can contact the person, and the country they live in (D-153), picked from a
+list and stored as a two-letter code in `participant_contacts.residence_country`
+(contact data, behind `participants.contact.read`). A test pins that the server
+action reads only those fields. The country is a filter for staff, never an
+input to any rule. This deliberately reverses D-031's order (consent in Qualtrics before any
 datum), at the founder's direction; whether that fits the ethics-approved
 procedure is an open question for the study team. Everything else, including the
 consent and every screening answer, stays in Qualtrics.

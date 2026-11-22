@@ -149,6 +149,8 @@ async function main() {
         fullName: `${first} ${last}`,
         email,
         phone: `+34 600 0${String(phoneSeq).slice(-2)} ${String(phoneSeq * 7).padStart(3, "0").slice(-3)}`,
+        // Mostly Spain, a few abroad, so the Spain filter (D-153) has something to show.
+        residenceCountry: phoneSeq % 6 === 0 ? "PT" : phoneSeq % 9 === 0 ? "FR" : "ES",
       });
     }
     phoneSeq++;

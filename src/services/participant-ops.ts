@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
 import { getDb, type DbExecutor } from "@/db/client";
@@ -18,6 +18,7 @@ import {
   type Screening,
 } from "@/db/schema";
 import type { ParticipantSnapshot } from "@/domain/next-step";
+import { SPAIN, isCountryCode, type ResidenceFilter } from "@/domain/residence";
 import { isVisitStatus } from "@/domain/responsibility";
 import {
   canTransitionConsent,
@@ -113,6 +114,8 @@ export interface ParticipantListRow {
   fullName: string | null;
   email: string | null;
   phone: string | null;
+  /** ISO 3166-1 alpha-2 (D-153). Contact data: null without participants.contact.read. */
+  residenceCountry: string | null;
   /** Cohort and arm, for filtering and for the operational columns. */
   cohortId: string | null;
   cohortCode: string | null;
@@ -129,6 +132,11 @@ export interface ParticipantFilters {
   armId?: string;
   /** Narrow to participants this staff member is responsible for. */
   responsibleUserId?: string;
+  /**
+   * Living in Spain, elsewhere, or not given (D-153). Country is contact data,
+   * so callers pass it only when the viewer holds participants.contact.read.
+   */
+  residence?: ResidenceFilter;
 }
 
 /**
@@ -165,6 +173,9 @@ export async function listParticipants(
   if (options.armId) {
     conditions.push(sql`${randomizations.armId} = ${options.armId}`);
   }
+  if (options.residence && includeContact) {
+    conditions.push(residenceCondition(options.residence));
+  }
   if (options.responsibleUserId) {
     conditions.push(sql`exists (
       select 1 from participant_responsibilities pr
@@ -185,6 +196,7 @@ export async function listParticipants(
       fullName: includeContact ? participantContacts.fullName : sql<null>`null`,
       email: includeContact ? participantContacts.email : sql<null>`null`,
       phone: includeContact ? participantContacts.phone : sql<null>`null`,
+      residenceCountry: includeContact ? participantContacts.residenceCountry : sql<null>`null`,
       cohortId: cohorts.id,
       cohortCode: cohorts.code,
       armId: studyArms.id,
@@ -240,6 +252,7 @@ export async function listParticipants(
     fullName: r.fullName,
     email: r.email,
     phone: r.phone,
+    residenceCountry: r.residenceCountry,
     cohortId: r.cohortId,
     cohortCode: r.cohortCode,
     armId: r.armId,
@@ -269,7 +282,13 @@ export interface ParticipantDetail {
     enrollmentStatus: EnrollmentStatus | null;
     createdAt: Date;
   };
-  contact: { fullName: string | null; email: string | null; phone: string | null } | null;
+  contact: {
+    fullName: string | null;
+    email: string | null;
+    phone: string | null;
+    /** ISO 3166-1 alpha-2 (D-153). */
+    residenceCountry: string | null;
+  } | null;
   screenings: Screening[];
   consents: Consent[];
 }
@@ -305,6 +324,7 @@ export async function getParticipantDetail(
             fullName: participantContacts.fullName,
             email: participantContacts.email,
             phone: participantContacts.phone,
+            residenceCountry: participantContacts.residenceCountry,
           })
           .from(participantContacts)
           .where(eq(participantContacts.participantId, participantId))
@@ -1476,4 +1496,62 @@ export async function setParticipantContactPhone(params: {
       after: { phone, participantCode: participant.code },
     });
   });
+}
+
+/**
+ * Set (or clear) a participant's country of residence from the staff UI
+ * (D-153): applications from before the form asked for it are completed by
+ * hand. Audited with the code, like the other contact fields.
+ */
+export async function setParticipantResidenceCountry(params: {
+  studyId: string;
+  participantId: string;
+  actorId: string;
+  residenceCountry: string | null;
+}): Promise<void> {
+  const { studyId, participantId, actorId, residenceCountry } = params;
+  if (residenceCountry !== null && !isCountryCode(residenceCountry)) {
+    throw new Error(`Not a country code: ${residenceCountry}`);
+  }
+
+  await getDb().transaction(async (tx) => {
+    const [participant] = await tx
+      .select({ id: participants.id, code: participants.code })
+      .from(participants)
+      .where(and(eq(participants.id, participantId), eq(participants.studyId, studyId)))
+      .limit(1);
+    if (!participant) throw new NotFoundError("participant", participantId);
+
+    const [existing] = await tx
+      .select({ residenceCountry: participantContacts.residenceCountry })
+      .from(participantContacts)
+      .where(eq(participantContacts.participantId, participantId))
+      .limit(1);
+
+    if (existing) {
+      await tx
+        .update(participantContacts)
+        .set({ residenceCountry, updatedAt: new Date() })
+        .where(eq(participantContacts.participantId, participantId));
+    } else {
+      await tx.insert(participantContacts).values({ participantId, studyId, residenceCountry });
+    }
+
+    await recordAuditEvent(tx, {
+      studyId,
+      actor: { type: "STAFF", id: actorId },
+      action: "participant.residence_country_set",
+      entityType: "participant",
+      entityId: participantId,
+      before: { residenceCountry: existing?.residenceCountry ?? null },
+      after: { residenceCountry, participantCode: participant.code },
+    });
+  });
+}
+
+/** The SQL for the Spain / elsewhere / not given filter (D-153). */
+export function residenceCondition(filter: ResidenceFilter): SQL {
+  if (filter === "espana") return sql`${participantContacts.residenceCountry} = ${SPAIN}`;
+  if (filter === "fuera") return sql`${participantContacts.residenceCountry} <> ${SPAIN}`;
+  return sql`${participantContacts.residenceCountry} is null`;
 }

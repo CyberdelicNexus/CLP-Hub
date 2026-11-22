@@ -459,7 +459,7 @@ export const APPLY = {
   steps: [
     {
       title: "Primero, tus datos de contacto",
-      body: "Nos dejas tu nombre, tu correo y tu teléfono para que el equipo pueda contactarte. Son los únicos datos que guarda esta web.",
+      body: "Nos dejas tu nombre, tu correo, tu teléfono y el país donde vives para que el equipo pueda contactarte. Son los únicos datos que guarda esta web.",
     },
     {
       title: "Después, el cuestionario",
@@ -486,6 +486,8 @@ export const APPLY = {
     lastName: "Apellidos",
     email: "Correo electrónico",
     phone: "Teléfono",
+    country: "País de residencia",
+    countryPlaceholder: "Elige el país donde vives",
     privacyBefore: "He leído la",
     privacyLink: "política de privacidad",
     privacyAfter: " y acepto que el equipo del estudio guarde estos datos para contactarme.",
@@ -499,6 +501,7 @@ export const APPLY = {
       invalidName: "Revisa este dato.",
       invalidEmail: "Revisa el correo electrónico.",
       invalidPhone: "Revisa el teléfono.",
+      invalidCountry: "Elige un país de la lista.",
       privacy: "Para continuar, acepta la política de privacidad.",
       closed: "El cuestionario de interés no está disponible en este momento.",
       failed: "No hemos podido guardar tus datos. Inténtalo de nuevo más tarde.",

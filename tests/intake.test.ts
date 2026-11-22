@@ -157,14 +157,14 @@ describe("application sources", () => {
  * and nothing else. These pin that boundary in the code that reads the request
  * and the code that renders the form.
  */
-describe("the public page takes three contact fields and nothing else (D-086)", () => {
+describe("the public page takes three contact fields and a country, nothing else (D-086, D-153)", () => {
   const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
   const action = read("src/app/(public)/clearlight/participar/actions.ts");
   const flow = read("src/components/landing/apply-flow.tsx");
 
-  it("reads only name, email, phone, the privacy tick and the honeypot from the request", () => {
+  it("reads only name, email, phone, country, the privacy tick and the honeypot from the request", () => {
     const keys = [...action.matchAll(/(?:text\(form|form\.get\()\s*,?\s*"([^"]+)"/g)].map((m) => m[1]).sort();
-    expect(keys).toEqual(["email", "firstName", "lastName", "phone", "privacy", "website"]);
+    expect(keys).toEqual(["email", "firstName", "lastName", "phone", "privacy", "residenceCountry", "website"]);
     // The study comes from the server, never from the request.
     expect(action).toMatch(/getOpenRecruitmentStudy\(\)/);
     expect(action).not.toMatch(/studyId: text\(|form\.get\("studyId"\)/);
@@ -178,14 +178,17 @@ describe("the public page takes three contact fields and nothing else (D-086)", 
     expect(action).toMatch(/\| \{ status: "ok" \};/);
   });
 
-  it("renders only those inputs, and no free-text area", () => {
+  it("renders only those inputs, the country as a fixed list, and no free-text area", () => {
     const fieldNames = [...flow.matchAll(/field\("([a-zA-Z]+)"/g)].map((m) => m[1]);
     expect(fieldNames.sort()).toEqual(["email", "firstName", "lastName", "phone"]);
     // One <input> inside the field helper, plus the honeypot and the privacy tick.
     expect(flow.match(/<input/g)).toHaveLength(3);
     expect(flow).toMatch(/name="website"/);
     expect(flow).toMatch(/name="privacy"/);
-    expect(flow).not.toMatch(/<textarea|<select/);
+    expect(flow).not.toMatch(/<textarea/);
+    // The one <select> is the country (D-153): codes from a list, never typed.
+    expect(flow.match(/<select/g)).toHaveLength(1);
+    expect(flow).toMatch(/name="residenceCountry"/);
   });
 });
 

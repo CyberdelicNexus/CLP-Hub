@@ -13,13 +13,22 @@ import type { LandingCopy } from "@/content/landing/clear-light";
 
 /**
  * /participar in two steps (D-086). First the contact details the Hub keeps
- * (first name and surname, email, phone); the server creates the application
+ * (first name and surname, email, phone, country of residence, D-153); the server creates the application
  * (with a participant code the visitor is never shown, D-087). Then the
  * Qualtrics questionnaire.
  * Its responses carry no code, so the person is asked to type their details
  * the same way there, and the team matches the two records by name.
  */
-export function ApplyFlow({ url, apply: APPLY }: { url: string; apply: LandingCopy["APPLY"] }) {
+export function ApplyFlow({
+  url,
+  apply: APPLY,
+  countries,
+}: {
+  url: string;
+  apply: LandingCopy["APPLY"];
+  /** Spain first, then the rest by name in the visitor's language (D-153). */
+  countries: readonly { code: string; name: string }[];
+}) {
   const [state, action, pending] = useActionState<InterestState, FormData>(submitInterestAction, { status: "idle" });
   const { form } = APPLY;
 
@@ -74,6 +83,32 @@ export function ApplyFlow({ url, apply: APPLY }: { url: string; apply: LandingCo
       </div>
       {field("email", form.email, "email", "email", INTEREST_EMAIL_MAX_LENGTH)}
       {field("phone", form.phone, "tel", "tel", INTEREST_PHONE_MAX_LENGTH)}
+      <div className="apply__field">
+        <label htmlFor="interest-residenceCountry">{form.country}</label>
+        <select
+          id="interest-residenceCountry"
+          name="residenceCountry"
+          autoComplete="country"
+          required
+          defaultValue=""
+          aria-invalid={fieldError("residenceCountry") ? true : undefined}
+          aria-describedby={fieldError("residenceCountry") ? "interest-residenceCountry-error" : undefined}
+        >
+          <option value="" disabled>
+            {form.countryPlaceholder}
+          </option>
+          {countries.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        {fieldError("residenceCountry") ? (
+          <p id="interest-residenceCountry-error" className="apply__error">
+            {fieldError("residenceCountry")}
+          </p>
+        ) : null}
+      </div>
       {/* Honeypot, hidden from people and from assistive tech. */}
       <div className="apply__hp" aria-hidden>
         <label htmlFor="interest-website">Website</label>

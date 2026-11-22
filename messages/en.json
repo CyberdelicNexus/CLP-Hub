@@ -190,7 +190,8 @@
     "field": {
       "name": "Name",
       "email": "Email",
-      "phone": "Phone"
+      "phone": "Phone",
+      "residenceCountry": "Country of residence"
     },
     "error": {
       "invalid": "That status change is not allowed.",
@@ -354,6 +355,17 @@
       "undo": "Undo",
       "notThisArm": "Their group does not sign a physical consent.",
       "unallocated": "Signed in person if their group requires it. No group allocated yet."
+    },
+    "residenceCountry": {
+      "empty": "Not given",
+      "edit": "Edit country of residence",
+      "choose": "Not given"
+    },
+    "residenceFilter": {
+      "label": "Filter by country of residence",
+      "espana": "In Spain",
+      "fuera": "Outside Spain",
+      "sin-indicar": "Country not given"
     }
   },
   "screening": {
@@ -1070,7 +1082,8 @@
       "consent__voided": "Consent voided as a recording error",
       "visit__questionnaire_recorded": "Questionnaire marked as collected",
       "visit__questionnaire_cleared": "Questionnaire unticked",
-      "initial_visit__rescheduled": "Initial visit moved to another date"
+      "initial_visit__rescheduled": "Initial visit moved to another date",
+      "participant__residence_country_set": "Country of residence updated"
     }
   },
   "logistics": {

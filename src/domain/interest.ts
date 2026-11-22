@@ -1,8 +1,10 @@
 /**
  * The public expression of interest on /participar (D-086).
  *
- * BOUNDARY: exactly three facts about a person reach CLP Hub from the public
- * site: name, email and phone, so the team can contact them. Everything else
+ * BOUNDARY: exactly four facts about a person reach CLP Hub from the public
+ * site: name, email and phone, so the team can contact them, and the country
+ * they live in (D-153, a country code), so the team can tell applicants in
+ * Spain from the rest. Everything else
  * they answer (the information sheet, the consent, the screening questions)
  * stays in Qualtrics. Adding a field here widens what the public can write into
  * the Hub; it is a study-team decision, not a code change.
@@ -15,6 +17,8 @@
  * by name, email and phone, which the questionnaire asks for too (D-087).
  */
 
+import { isCountryCode } from "./residence";
+
 export const INTEREST_NAME_MAX_LENGTH = 120;
 export const INTEREST_EMAIL_MAX_LENGTH = 200;
 export const INTEREST_PHONE_MAX_LENGTH = 30;
@@ -24,10 +28,12 @@ export interface InterestInput {
   lastName: string;
   email: string;
   phone: string;
+  /** ISO 3166-1 alpha-2 (D-153). */
+  residenceCountry: string;
 }
 
 export type InterestField = keyof InterestInput;
-export type InterestError = "required" | "tooLong" | "invalidName" | "invalidEmail" | "invalidPhone";
+export type InterestError = "required" | "tooLong" | "invalidName" | "invalidEmail" | "invalidPhone" | "invalidCountry";
 
 // Same permissive rule as the application form: it rejects typos, not exotic
 // addresses. Deliverability is confirmed by contacting the person.
@@ -43,6 +49,7 @@ export function normalizeInterest(raw: InterestInput): InterestInput {
     lastName: squash(raw.lastName),
     email: raw.email.trim(),
     phone: squash(raw.phone),
+    residenceCountry: raw.residenceCountry.trim().toUpperCase(),
   };
 }
 
@@ -71,6 +78,9 @@ export function validateInterest(input: InterestInput): Partial<Record<InterestF
   else if (!PHONE_PATTERN.test(input.phone) || input.phone.replace(/\D/g, "").length < 7) {
     errors.phone = "invalidPhone";
   }
+
+  if (!input.residenceCountry) errors.residenceCountry = "required";
+  else if (!isCountryCode(input.residenceCountry)) errors.residenceCountry = "invalidCountry";
 
   return errors;
 }

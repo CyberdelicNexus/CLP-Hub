@@ -78,6 +78,8 @@ export const participantContacts = pgTable(
     emailNormalized: text("email_normalized"),
     phone: text("phone"),
     timezone: text("timezone"),
+    /** ISO 3166-1 alpha-2 country of residence (D-153); null = not given yet. */
+    residenceCountry: text("residence_country"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -341,7 +341,7 @@ export const LANDING_EN: LandingCopy = {
     steps: [
       {
         title: "First, your contact details",
-        body: "You leave your name, email and phone number so the team can contact you. They are the only details this website keeps.",
+        body: "You leave your name, email, phone number and the country you live in so the team can contact you. They are the only details this website keeps.",
       },
       {
         title: "Then, the questionnaire",
@@ -368,6 +368,8 @@ export const LANDING_EN: LandingCopy = {
       lastName: "Surname",
       email: "Email",
       phone: "Phone",
+      country: "Country of residence",
+      countryPlaceholder: "Choose the country you live in",
       privacyBefore: "I have read the",
       privacyLink: "privacy policy",
       privacyAfter: " and agree that the study team may keep these details to contact me.",
@@ -381,6 +383,7 @@ export const LANDING_EN: LandingCopy = {
         invalidName: "Please check this.",
         invalidEmail: "Please check the email address.",
         invalidPhone: "Please check the phone number.",
+        invalidCountry: "Please choose a country from the list.",
         privacy: "To continue, please accept the privacy policy.",
         closed: "The interest questionnaire is not available right now.",
         failed: "We could not save your details. Please try again later.",

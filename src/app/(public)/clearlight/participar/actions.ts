@@ -29,8 +29,8 @@ const text = (form: FormData, key: string) => {
 };
 
 /**
- * The public expression of interest (D-086). Reads exactly three facts (the
- * name as first name and surname, email, phone), plus the privacy
+ * The public expression of interest (D-086). Reads exactly four facts (the
+ * name as first name and surname, email, phone, and country of residence, D-153), plus the privacy
  * acknowledgement and a honeypot; anything else in the request is ignored. The study is the one open for recruitment, decided here on the
  * server, never taken from the request.
  */
@@ -44,6 +44,7 @@ export async function submitInterestAction(_prev: InterestState, form: FormData)
     lastName: text(form, "lastName"),
     email: text(form, "email"),
     phone: text(form, "phone"),
+    residenceCountry: text(form, "residenceCountry"),
   });
   const errors = validateInterest(input);
   const privacy = form.get("privacy") === "on";
@@ -65,6 +66,7 @@ export async function submitInterestAction(_prev: InterestState, form: FormData)
       fullName: fullNameOf(input),
       email: input.email,
       phone: input.phone,
+      residenceCountry: input.residenceCountry,
     });
     // The study's "we have your application" email, if it configured one as an
     // AUTOMATIC rule, goes out now instead of at the next daily cron (D-151).

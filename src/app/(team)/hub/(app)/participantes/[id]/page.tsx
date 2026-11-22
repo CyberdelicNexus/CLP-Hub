@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { getStudyContext } from "@/auth/study-context";
 import { NoAccess } from "@/components/team/no-access";
@@ -20,6 +20,7 @@ import {
   type ConsentStatus,
 } from "@/domain/consent";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { countryName, countryOptions } from "@/domain/residence";
 import { NextStepBadge } from "@/components/team/next-step-badge";
 import { nextStep, outstandingSteps } from "@/domain/next-step";
 import { ENROLLMENT_TRANSITIONS } from "@/domain/participant-state";
@@ -54,6 +55,7 @@ import {
   ConsentDecisionForm,
   PhysicalConsentCheck,
   ContactField,
+  CountryField,
   EnrollmentForm,
   ScheduleScreeningForm,
 } from "../participant-forms";
@@ -79,6 +81,7 @@ export default async function ParticipantDetailPage({
   if (!ctx) return null;
 
   const t = await getTranslations();
+  const locale = await getLocale();
   if (!ctx.permissions.has("participants.read")) {
     return <NoAccess message={t("common.noAccess")} />;
   }
@@ -613,6 +616,28 @@ export default async function ParticipantDetailPage({
                       />
                     ) : (
                       <dd className="break-words">{contact?.phone ?? "—"}</dd>
+                    )}
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t("applications.field.residenceCountry")}</dt>
+                    {canManageParticipant ? (
+                      <CountryField
+                        participantId={participant.id}
+                        value={contact?.residenceCountry ?? null}
+                        countries={countryOptions(locale)}
+                        labels={{
+                          ...formBase,
+                          empty: t("participants.residenceCountry.empty"),
+                          edit: t("participants.residenceCountry.edit"),
+                          choose: t("participants.residenceCountry.choose"),
+                        }}
+                      />
+                    ) : (
+                      <dd className="break-words">
+                        {contact?.residenceCountry
+                          ? countryName(contact.residenceCountry, locale)
+                          : t("participants.residenceCountry.empty")}
+                      </dd>
                     )}
                   </div>
                 </dl>

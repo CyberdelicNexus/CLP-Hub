@@ -14,7 +14,7 @@ import {
   withCollisionSuffix,
 } from "@/domain/recruitment";
 
-const ok = { firstName: "Persona", lastName: "Sintética", email: "sintetica@example.org", phone: "+34 600 000 000" };
+const ok = { firstName: "Persona", lastName: "Sintética", email: "sintetica@example.org", phone: "+34 600 000 000", residenceCountry: "ES" };
 
 describe("the public expression of interest (D-086)", () => {
   it("accepts a first name, a surname, an email and a phone", () => {
@@ -22,11 +22,12 @@ describe("the public expression of interest (D-086)", () => {
   });
 
   it("requires all of them", () => {
-    expect(validateInterest({ firstName: "", lastName: "", email: "", phone: "" })).toEqual({
+    expect(validateInterest({ firstName: "", lastName: "", email: "", phone: "", residenceCountry: "" })).toEqual({
       firstName: "required",
       lastName: "required",
       email: "required",
       phone: "required",
+      residenceCountry: "required",
     });
   });
 
@@ -37,14 +38,20 @@ describe("the public expression of interest (D-086)", () => {
     expect(validateInterest({ ...ok, phone: "(981) 55-44-33" })).toEqual({});
   });
 
+  it("takes the country as a code from the list, never free text (D-153)", () => {
+    expect(validateInterest({ ...ok, residenceCountry: "PT" })).toEqual({});
+    expect(validateInterest({ ...ok, residenceCountry: "España" }).residenceCountry).toBe("invalidCountry");
+    expect(validateInterest({ ...ok, residenceCountry: "XX" }).residenceCountry).toBe("invalidCountry");
+  });
+
   it("caps a name so a narrative cannot be pasted in, and needs a letter for the code", () => {
     expect(validateInterest({ ...ok, lastName: "a".repeat(INTEREST_NAME_MAX_LENGTH + 1) }).lastName).toBe("tooLong");
     expect(validateInterest({ ...ok, firstName: "1234" }).firstName).toBe("invalidName");
   });
 
   it("trims and collapses whitespace, and joins the name the way Qualtrics asks for it", () => {
-    const n = normalizeInterest({ firstName: "  Persona  ", lastName: " Sintética   Prueba ", email: " a@b.co ", phone: " 600  000 000 " });
-    expect(n).toEqual({ firstName: "Persona", lastName: "Sintética Prueba", email: "a@b.co", phone: "600 000 000" });
+    const n = normalizeInterest({ firstName: "  Persona  ", lastName: " Sintética   Prueba ", email: " a@b.co ", phone: " 600  000 000 ", residenceCountry: " es " });
+    expect(n).toEqual({ firstName: "Persona", lastName: "Sintética Prueba", email: "a@b.co", phone: "600 000 000", residenceCountry: "ES" });
     expect(fullNameOf(n)).toBe("Persona Sintética Prueba");
   });
 });

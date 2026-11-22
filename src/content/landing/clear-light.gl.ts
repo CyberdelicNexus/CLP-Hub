@@ -340,7 +340,7 @@ export const LANDING_GL: LandingCopy = {
     steps: [
       {
         title: "Primeiro, os teus datos de contacto",
-        body: "Déixasnos o teu nome, o teu correo e o teu teléfono para que o equipo poida contactar contigo. Son os únicos datos que garda esta web.",
+        body: "Déixasnos o teu nome, o teu correo, o teu teléfono e o país onde vives para que o equipo poida contactar contigo. Son os únicos datos que garda esta web.",
       },
       {
         title: "Despois, o cuestionario",
@@ -367,6 +367,8 @@ export const LANDING_GL: LandingCopy = {
       lastName: "Apelidos",
       email: "Correo electrónico",
       phone: "Teléfono",
+      country: "País de residencia",
+      countryPlaceholder: "Escolle o país onde vives",
       privacyBefore: "Lin a",
       privacyLink: "política de privacidade",
       privacyAfter: " e acepto que o equipo do estudo garde estes datos para contactar comigo.",
@@ -380,6 +382,7 @@ export const LANDING_GL: LandingCopy = {
         invalidName: "Revisa este dato.",
         invalidEmail: "Revisa o correo electrónico.",
         invalidPhone: "Revisa o teléfono.",
+        invalidCountry: "Escolle un país da lista.",
         privacy: "Para continuar, acepta a política de privacidade.",
         closed: "O cuestionario de interese non está dispoñible neste momento.",
         failed: "Non puidemos gardar os teus datos. Téntao de novo máis tarde.",

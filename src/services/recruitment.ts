@@ -1,8 +1,8 @@
 import "server-only";
-import { and, asc, count, desc, eq, gt, inArray, like, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNull, like, sql } from "drizzle-orm";
 import { recordAuditEvent } from "@/audit/record";
 import { recordStudyEvent } from "./automation";
-import { ensureDigitalConsent } from "./participant-ops";
+import { ensureDigitalConsent, residenceCondition } from "./participant-ops";
 import { getDb, type DbExecutor } from "@/db/client";
 import {
   applicationAnswers,
@@ -21,6 +21,7 @@ import { isValidExternalRef } from "@/domain/intake";
 import type { Locale } from "@/domain/locale";
 import type { EligibilityStatus } from "@/domain/participant-state";
 import type { ScreeningStatus } from "@/domain/screening";
+import type { ResidenceFilter } from "@/domain/residence";
 import {
   canTransitionApplication,
   formatInterestCode,
@@ -146,6 +147,8 @@ export async function listApplications(
 export interface ApplicationCardRow extends ApplicationListRow {
   /** Only populated when the caller holds participants.contact.read. */
   phone: string | null;
+  /** ISO 3166-1 alpha-2 (D-153); same gate as phone. */
+  residenceCountry: string | null;
   eligibilityStatus: EligibilityStatus;
   /** The participant's most recent screening, if any was ever booked. */
   screening: {
@@ -166,9 +169,15 @@ export interface ApplicationCardRow extends ApplicationListRow {
  */
 export async function listApplicationCards(
   studyId: string,
-  options: { includeContact: boolean; status?: ApplicationStatus; limit?: number },
+  options: {
+    includeContact: boolean;
+    status?: ApplicationStatus;
+    /** Spain / elsewhere / not given (D-153); ignored without includeContact. */
+    residence?: ResidenceFilter;
+    limit?: number;
+  },
 ): Promise<ApplicationCardRow[]> {
-  const { includeContact, status, limit = 200 } = options;
+  const { includeContact, status, residence, limit = 200 } = options;
   const db = getDb();
 
   const rows = await db
@@ -183,14 +192,17 @@ export async function listApplicationCards(
       fullName: includeContact ? participantContacts.fullName : sql<null>`null`,
       email: includeContact ? participantContacts.email : sql<null>`null`,
       phone: includeContact ? participantContacts.phone : sql<null>`null`,
+      residenceCountry: includeContact ? participantContacts.residenceCountry : sql<null>`null`,
     })
     .from(applications)
     .innerJoin(participants, eq(participants.id, applications.participantId))
     .leftJoin(participantContacts, eq(participantContacts.participantId, participants.id))
     .where(
-      status
-        ? and(eq(applications.studyId, studyId), eq(applications.status, status))
-        : eq(applications.studyId, studyId),
+      and(
+        eq(applications.studyId, studyId),
+        status ? eq(applications.status, status) : undefined,
+        residence && includeContact ? residenceCondition(residence) : undefined,
+      ),
     )
     .orderBy(desc(applications.submittedAt))
     .limit(limit);
@@ -512,8 +524,10 @@ export async function submitInterest(params: {
   fullName: string;
   email: string;
   phone: string;
+  /** ISO 3166-1 alpha-2 (D-153); callers have validated it. */
+  residenceCountry: string;
 }): Promise<InterestResult> {
-  const { studyId, locale, firstName, lastName, fullName, email, phone } = params;
+  const { studyId, locale, firstName, lastName, fullName, email, phone, residenceCountry } = params;
   const emailNormalized = normalizeEmail(email);
 
   return getDb().transaction(async (tx) => {
@@ -537,6 +551,13 @@ export async function submitInterest(params: {
         )
         .limit(1);
       if (recent) return { participantCode, deduplicated: true };
+      // Contact details are never overwritten from this unauthenticated route,
+      // but a country nobody has recorded yet is filled in (D-153): someone
+      // who applied before the question existed gives it when they reapply.
+      await tx
+        .update(participantContacts)
+        .set({ residenceCountry, updatedAt: new Date() })
+        .where(and(eq(participantContacts.participantId, participantId), isNull(participantContacts.residenceCountry)));
     } else {
       const [study] = await tx
         .select({ timezone: studies.timezone })
@@ -572,6 +593,7 @@ export async function submitInterest(params: {
         email,
         emailNormalized,
         phone,
+        residenceCountry,
       });
 
       await recordAuditEvent(tx, {

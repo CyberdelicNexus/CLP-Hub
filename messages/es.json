@@ -190,7 +190,8 @@
     "field": {
       "name": "Nombre",
       "email": "Correo electrónico",
-      "phone": "Teléfono"
+      "phone": "Teléfono",
+      "residenceCountry": "País de residencia"
     },
     "error": {
       "invalid": "Ese cambio de estado no es posible.",
@@ -354,6 +355,17 @@
       "undo": "Deshacer",
       "notThisArm": "Su grupo no firma consentimiento físico.",
       "unallocated": "Se firma en persona si su grupo lo requiere. Aún no tiene grupo asignado."
+    },
+    "residenceCountry": {
+      "empty": "Sin indicar",
+      "edit": "Editar país de residencia",
+      "choose": "Sin indicar"
+    },
+    "residenceFilter": {
+      "label": "Filtrar por país de residencia",
+      "espana": "En España",
+      "fuera": "Fuera de España",
+      "sin-indicar": "País sin indicar"
     }
   },
   "screening": {
@@ -1070,7 +1082,8 @@
       "consent__voided": "Consentimiento anulado por error de registro",
       "visit__questionnaire_recorded": "Cuestionario marcado como recogido",
       "visit__questionnaire_cleared": "Cuestionario desmarcado",
-      "initial_visit__rescheduled": "Visita inicial cambiada de fecha"
+      "initial_visit__rescheduled": "Visita inicial cambiada de fecha",
+      "participant__residence_country_set": "País de residencia actualizado"
     }
   },
   "logistics": {

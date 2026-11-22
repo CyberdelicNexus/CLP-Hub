@@ -7,6 +7,7 @@ import { getStudyContext } from "@/auth/study-context";
 import { SCOPE_CODE_PATTERN } from "@/domain/consent";
 import { isValidReasonNote } from "@/domain/eligibility-reason";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { isCountryCode } from "@/domain/residence";
 import { EXTERNAL_RECORD_ID_MAX_LENGTH } from "@/domain/screening";
 import { logger } from "@/lib/logger";
 import { parseStudyLocal } from "@/lib/study-time";
@@ -26,6 +27,7 @@ import {
   setParticipantContactEmail,
   setParticipantContactName,
   setParticipantContactPhone,
+  setParticipantResidenceCountry,
   setPhysicalConsent,
 } from "@/services/participant-ops";
 
@@ -516,6 +518,48 @@ export async function setContactPhoneAction(_prev: OpState, formData: FormData):
     });
   } catch (err) {
     return fail(err, "participant.contact_phone");
+  }
+
+  revalidate(parsed.data.participantId);
+  return { error: null, ok: true };
+}
+
+const residenceCountrySchema = z.object({
+  participantId: uuid,
+  // Empty clears it; anything else must be a code from the list.
+  residenceCountry: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v.toUpperCase() : null))
+    .refine((v) => v === null || isCountryCode(v)),
+});
+
+/**
+ * Set (or clear) a participant's country of residence (D-153), for
+ * applications that arrived before the form asked for it. Same permission as
+ * the other contact fields.
+ */
+export async function setResidenceCountryAction(_prev: OpState, formData: FormData): Promise<OpState> {
+  const ctx = await getStudyContext();
+  if (!ctx) return { error: "forbidden" };
+
+  const parsed = residenceCountrySchema.safeParse({
+    participantId: formData.get("participantId"),
+    residenceCountry: formData.get("residenceCountry") ?? undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  try {
+    assertPermission(ctx, "participants.manage");
+    await setParticipantResidenceCountry({
+      studyId: ctx.study.id,
+      participantId: parsed.data.participantId,
+      actorId: ctx.session.userId,
+      residenceCountry: parsed.data.residenceCountry,
+    });
+  } catch (err) {
+    return fail(err, "participant.residence_country");
   }
 
   revalidate(parsed.data.participantId);

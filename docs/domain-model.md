@@ -19,7 +19,7 @@ Enums: `staff_role`, `study_status`, `ui_locale`, `audit_actor_type`. Every enum
 | Table | Purpose | Notes |
 |---|---|---|
 | `participants` | People in the intake funnel | `code` from `participant_code_seq` (D-016); `recruitment_status` only — eligibility/enrollment are Phase 2 |
-| `participant_contacts` | Category A identity, 1:1 with participant | Gated by `participants.contact.read`; unique `(study_id, email_normalized)` enforces duplicate linking (D-013) |
+| `participant_contacts` | Category A identity, 1:1 with participant | Gated by `participants.contact.read`; unique `(study_id, email_normalized)` enforces duplicate linking (D-013); `residence_country` is an ISO alpha-2 code from the public form (D-153) |
 | `application_questions` | Per-study form configuration | Operational questions only (D-014); Spanish label required |
 | `applications` | One submission | `status` is operational triage, **not** an eligibility decision |
 | `application_answers` | Answers, one per question | `value` is jsonb (scalar, or array for MULTI_SELECT) |

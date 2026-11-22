@@ -18,6 +18,7 @@ import {
   setContactPhoneAction,
   setEnrollmentAction,
   setPhysicalConsentAction,
+  setResidenceCountryAction,
   type OpState,
 } from "./actions";
 
@@ -118,6 +119,80 @@ export function ContactField({
           if (e.key === "Escape") setEditing(false);
         }}
       />
+      <Button type="submit" size="sm" variant="outline" className="h-7 rounded-lg px-2 text-xs" disabled={pending}>
+        {pending ? labels.submitting : labels.submit}
+      </Button>
+      {state.error ? (
+        <span role="alert" className="basis-full text-xs text-destructive">
+          {labels.errors[state.error] ?? state.error}
+        </span>
+      ) : null}
+    </form>
+  );
+}
+
+/**
+ * The country of residence (D-153), editable inline like the other contact
+ * fields but picked from a list: it is stored as a code so the Spain filter
+ * works. Filled in by hand for applications from before the form asked.
+ */
+export function CountryField({
+  participantId,
+  value,
+  countries,
+  labels,
+}: {
+  participantId: string;
+  value: string | null;
+  /** Spain first, then by name in the staff member's language. */
+  countries: readonly { code: string; name: string }[];
+  labels: FormLabels & { empty: string; edit: string; choose: string };
+}) {
+  const [state, action, pending] = useActionState(setResidenceCountryAction, initial);
+  const [editing, setEditing] = useState(false);
+  const [prevState, setPrevState] = useState(state);
+  if (state !== prevState) {
+    setPrevState(state);
+    if (state.ok) setEditing(false);
+  }
+  const name = value ? (countries.find((c) => c.code === value)?.name ?? value) : null;
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <dd className="break-words">{name ?? labels.empty}</dd>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label={labels.edit}
+          className="inline-flex rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          <Pencil className="size-3" aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-1.5">
+      <input type="hidden" name="participantId" value={participantId} />
+      <select
+        name="residenceCountry"
+        autoFocus
+        defaultValue={value ?? ""}
+        aria-label={labels.edit}
+        className="h-7 min-w-0 flex-1 rounded-lg border border-input bg-card px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setEditing(false);
+        }}
+      >
+        <option value="">{labels.choose}</option>
+        {countries.map((c) => (
+          <option key={c.code} value={c.code}>
+            {c.name}
+          </option>
+        ))}
+      </select>
       <Button type="submit" size="sm" variant="outline" className="h-7 rounded-lg px-2 text-xs" disabled={pending}>
         {pending ? labels.submitting : labels.submit}
       </Button>

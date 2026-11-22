@@ -14,6 +14,7 @@ import { APPLICATION_STATUSES, isApplicationStatus, type ApplicationStatus } fro
 import { SCREENING_STATUSES } from "@/domain/screening";
 import { ELIGIBILITY_STATUSES } from "@/domain/participant-state";
 import { TEAM_BASE_PATH } from "@/domain/navigation";
+import { RESIDENCE_FILTERS, isResidenceFilter, type ResidenceFilter } from "@/domain/residence";
 import { listEligibilityReasons } from "@/services/participant-ops";
 import { countApplicationsByStatus, listApplicationCards } from "@/services/recruitment";
 import { getStudyFlowCounts } from "@/services/study-flow";
@@ -45,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; vista?: string }>;
+  searchParams: Promise<{ estado?: string; vista?: string; residencia?: string }>;
 }) {
   const ctx = await getStudyContext();
   if (!ctx) return null;
@@ -55,11 +56,13 @@ export default async function ApplicationsPage({
     return <NoAccess message={t("common.noAccess")} />;
   }
 
-  const { estado, vista } = await searchParams;
+  const { estado, vista, residencia } = await searchParams;
   const view: View = vista === "kanban" ? "kanban" : vista === "lista" ? "list" : "gallery";
   const status = isApplicationStatus(estado) ? estado : undefined;
   const isKanban = view === "kanban";
   const includeContact = ctx.permissions.has("participants.contact.read");
+  // Country is contact data (D-153): the filter exists only for those who may see it.
+  const residence = includeContact && isResidenceFilter(residencia) ? residencia : undefined;
   const canCreate = ctx.permissions.has("participants.manage");
   const canManage = ctx.permissions.has("applications.manage");
   // The KPI row carries eligibility counts, so it follows Evaluación's gate.
@@ -69,7 +72,7 @@ export default async function ApplicationsPage({
   const [rows, counts, flow, reasons] = await Promise.all([
     // The kanban lays every status out as its own column, so a single-status
     // filter would just empty every column but one — fetch everything instead.
-    listApplicationCards(ctx.study.id, { includeContact, status: isKanban ? undefined : status }),
+    listApplicationCards(ctx.study.id, { includeContact, status: isKanban ? undefined : status, residence }),
     countApplicationsByStatus(ctx.study.id),
     canReadScreening ? getStudyFlowCounts(ctx.study.id) : Promise.resolve(null),
     canManageScreening ? listEligibilityReasons(ctx.study.id) : Promise.resolve([]),
@@ -77,12 +80,15 @@ export default async function ApplicationsPage({
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const base = `${TEAM_BASE_PATH}/solicitudes`;
-  const hrefWith = (params: { view?: View; status?: ApplicationStatus | null }) => {
+  const hrefWith = (params: { view?: View; status?: ApplicationStatus | null; residence?: ResidenceFilter | null }) => {
     const q = new URLSearchParams();
     const v = params.view ?? view;
     const st = params.status === undefined ? status : params.status;
+    const res = params.residence === undefined ? residence : params.residence;
     if (VIEW_PARAM[v]) q.set("vista", VIEW_PARAM[v] as string);
     if (st && v !== "kanban") q.set("estado", st);
+    // Unlike status, the kanban keeps this one: it narrows every column alike.
+    if (res) q.set("residencia", res);
     const qs = q.toString();
     return qs ? `${base}?${qs}` : base;
   };
@@ -257,6 +263,18 @@ export default async function ApplicationsPage({
             ))}
           </nav>
         )}
+        {includeContact ? (
+          <nav aria-label={t("participants.residenceFilter.label")} className="flex flex-wrap gap-2">
+            {RESIDENCE_FILTERS.map((r) => (
+              <FilterChip
+                key={r}
+                href={hrefWith({ residence: residence === r ? null : r })}
+                active={residence === r}
+                label={t(`participants.residenceFilter.${r}`)}
+              />
+            ))}
+          </nav>
+        ) : null}
       </div>
 
       {!includeContact ? (
@@ -376,7 +394,7 @@ function FilterChip({
   href: string;
   active: boolean;
   label: string;
-  count: number;
+  count?: number;
 }) {
   return (
     <Link
@@ -389,9 +407,11 @@ function FilterChip({
       }
     >
       {label}
-      <span data-numeric className="opacity-70">
-        {count}
-      </span>
+      {count === undefined ? null : (
+        <span data-numeric className="opacity-70">
+          {count}
+        </span>
+      )}
     </Link>
   );
 }
